@@ -39,7 +39,7 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
 {
     // write the number of the neuron, it can be whichever identifier used to
     // distinguish between neurons.
-    swc_file_ << "# neuron number " << gid << "\n";
+    swc_file_ << "#start_neuron gid " << gid << "\n";
 
     // start the swc format, the first point is the soma
     // and it s written as a single point which is meant as a
@@ -120,6 +120,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 // TNodePtr node = nodes.front().second;
                 /*}*/
             }
+
+        swc_file_ << "#end_neuron gid " << gid << "\n";
         }
     }
 }

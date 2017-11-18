@@ -5,9 +5,8 @@ import os,csv
 from os.path import join, isfile
 from os import listdir
 import json
-from .dataIO_rw import ImportSwc
+from .dataIO_swc import ImportSwc
 import numpy as np
-# from dataIO_rw import GrowthConeDynamicsAnalyzer
 
 from . import _pygrowth as _pg
 from .utils import HashID
@@ -86,10 +85,10 @@ def SimulationsFromFolder(simulation_folder):
     simulation_folder =os.path.join(os.getcwd(),simulation_folder)
     morph = os.path.join(simulation_folder,"morphology.swc")
     if os.path.isfile(morph):
-        neuronfiles = [simulation_folder]
+        simulations= NeuronsFromSimulation(simulation_folder)
     else:
         neuronfiles = [os.path.join(simulation_folder, f) for f in listdir(simulation_folder) if os.path.isdir(os.path.join(simulation_folder, f))]
-    simulations= map(NeuronsFromSimulation, neuronfiles)
+        simulations= map(NeuronsFromSimulation, neuronfiles)
     return simulations
 
 

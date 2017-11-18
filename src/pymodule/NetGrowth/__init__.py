@@ -8,8 +8,8 @@ import atexit as _atexit
 
 from . import _pygrowth
 from ._pygrowth import *
-from .dataIO import HashID, SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder, ImportSwc
-from .dataIO_rw import get_axon_path, get_properties
+from .dataIO import HashID, SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder
+from .dataIO_swc import GetPath, GetProperties, ImportSwc, SwcToSegments, SegmentsToNetgrowth, SWC_ensemble
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
 from .geometry import Shape, culture_from_file
 

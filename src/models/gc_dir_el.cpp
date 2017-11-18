@@ -27,8 +27,8 @@ GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::
       // here the right copy constructor to call is
       // ElongationModel(copy)
       // btw it's not working properly: it won't break, but neither will execute
-      // the  lines into the ElongationModel copy-constructor  I think the issue is
-      // related to this:
+      // the  lines into the ElongationModel copy-constructor  I think the issue
+      // is related to this:
       // https://stackoverflow.com/questions/19167201/copy-constructor-of-template-class
       // but I cannot find a proper solution.
     GrowthCone(copy)

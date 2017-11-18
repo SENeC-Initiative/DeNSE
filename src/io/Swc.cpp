@@ -121,7 +121,7 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 /*}*/
             }
 
-        swc_file_ << "#end_neuron gid " << gid << "\n";
+            swc_file_ << "#end_neuron gid " << gid << "\n";
         }
     }
 }

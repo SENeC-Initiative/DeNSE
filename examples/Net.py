@@ -2,17 +2,21 @@
 #-*- coding:utf-8 -*-
 # This software is part of the NetGrowth project and the SENEC initiative
 
-import NetGrowth
-from NetGrowth import SWC_ensemble
+import os, shutil
+
 import numpy as np
 import matplotlib.pyplot as plt
-import os, shutil
+
+import NetGrowth as ng
+from NetGrowth import SwcEnsemble
+
 
 def CleanFolder(tmp_dir, make=True):
     if os.path.isdir(tmp_dir):
         shutil.rmtree(tmp_dir)
     if make:
         os.mkdir(tmp_dir)
+
 
 def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params, save_path = "tmp_net", plot=False):
     """
@@ -24,43 +28,45 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params, save_path = "tmp
     experiment_params={}
     experiment_params["num_neurons"]=n_samples
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, NetGrowth.GenerateSimulationID())
+    ng.SetKernelStatus(kernel, ng.GenerateSimulationID())
     culture_file =  "../culture/culture_from_filled_polygons.svg"
-    culture = NetGrowth.CreateEnvironment(culture_file, min_x=0, max_x=1000)
+    culture = ng.CreateEnvironment(culture_file, min_x=0, max_x=1000)
     # pos_left = culture.seed_neurons(neurons=experiment_params["num_neurons"], xmax=200, soma_radius=10.)
 
     neuron_params['growth_cone_model']='random_walk'
     # neuron_params['position'] = pos_left
 
-    gids =None
+    gids = None
     # plt.show()
-    gids = NetGrowth.CreateNeurons( experiment_params["num_neurons"],
+    gids = ng.CreateNeurons( experiment_params["num_neurons"],
                                         "random_walk",
                                         culture=culture,
                                         params=neuron_params,
                                         num_neurites=3
                                         )
-    NetGrowth.Simulate(sim_length)
+    ng.Simulate(sim_length)
     fig, ax = plt.subplots()
-    NetGrowth.plot.PlotNeuron(gid=range(experiment_params["num_neurons"]), culture=culture, soma_color="k",
+    ng.plot.PlotNeuron(gid=range(experiment_params["num_neurons"]), culture=culture, soma_color="k",
                        axon_color='g', axis=ax, show=True)
     # if plot:
-        # NetGrowth.PlotNeuron()
-    NetGrowth.SaveJson(filepath=save_path)
-    NetGrowth.SaveSwc (filepath=save_path,swc_resolution = 10)
-    # NetGrowth.SaveJson(filepath=tmp_dir)
-    NetGrowth.SaveSwc(filepath=os.path.join(os.getcwd(),save_path),swc_resolution = 10)
-    # NetGrowth.PlotNeuron(show_nodes=True)
-    NetGrowth.ResetKernel()
+        # ng.PlotNeuron()
+    ng.SaveJson(filepath=save_path)
+    ng.SaveSwc (filepath=save_path,swc_resolution = 10)
+    # ng.SaveJson(filepath=tmp_dir)
+    ng.SaveSwc(filepath=os.path.join(os.getcwd(),save_path),swc_resolution = 10)
+    # ng.PlotNeuron(show_nodes=True)
+    ng.ResetKernel()
+
 
 def Test(neuron_params, sim_length=500, sim_samples=30, plot=False):
     folder = os.path.join(os.getcwd(),"net_measure")
     CleanFolder(folder)
     RunNetGrowth(sim_samples, sim_length,5,  neuron_params, folder )
-    NG_population = NetGrowth.SimulationsFromFolder(folder)
-    ensemble = SWC_ensemble.FromPopulation(NG_population)
+    ng_population = ng.SimulationsFromFolder(folder)
+    ensemble = SwcEnsemble.from_population(ng_population)
     CleanFolder(folder)
     return ensemble
+
 
 def check_intersection(ensemble):
     from shapely.geometry import LineString
@@ -78,18 +84,26 @@ def check_intersection(ensemble):
                 intersection[axon[0]].append(dendrite[0])
     return intersection
 
+
 def CreateGraph(ensemble, intersection):
-    import nngt
-    num_neurons=len(ensemble.axon['gid'])
-    positions = np.array([ensemble.info['neurons'][str(gid)]['position'] for gid in ensemble.axon['gid']])
-    graph = nngt.SpatialGraph(nodes = num_neurons, positions=positions)
-    for node_out in intersection.keys():
-        for node_in in intersection[node_out]:
-            graph.new_edge(node_out,node_in)
+    try:
+        import nngt
+    except ImportError:
+        raise RuntimeError("This function requires the NNGT library to work. "
+                           "Please install it by refering to the install "
+                           "section of the documentation: http://nngt."
+                           "readthedocs.org/en/latest/.")
+    num_neurons = len(ensemble.neurons)
+    positions   = np.zeros((num_neurons, 2))
+    for neuron in ensemble.neurons:
+        positions[int(neuron.gid)] = neuron.position
+    graph       = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
+    for node_out, nodes_in in intersection.items():
+        edges       = np.zeros((len(nodes_in), 2), dtype=int)
+        edges[:, 0] = node_out
+        edges[:, 1] = nodes_in
+        graph.new_edges(edges)
     return graph
-    # for synapse in interse
-
-
 
 
 if __name__ =="__main__":

@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import os
+import shutil
 import time
 
 import numpy as np
@@ -9,12 +10,20 @@ import matplotlib.pyplot as plt
 import random, shutil
 import os
 
+import nngt
+import NetGrowth as ng
+
+
+nngt.use_library("networkx")
+
+
 def CleanFolder(tmp_dir, make=True):
     if os.path.isdir(tmp_dir):
         shutil.rmtree(tmp_dir)
     if make:
         os.mkdir(tmp_dir)
     return tmp_dir
+
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
@@ -98,10 +107,6 @@ if __name__ =='__main__':
 
     if kernel["environment_required"]:
         culture = ng.CreateEnvironment(culture_file, min_x=0, max_x=1800)
-
-        #~ ng.geometry.plot.plot_shape(culture)
-        #~ plt.show()
-
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(neurons=100, xmax=540, soma_radius=10.)
         pos_right = culture.seed_neurons(neurons=100, xmin=1260, soma_radius=10.)
@@ -121,32 +126,28 @@ if __name__ =='__main__':
     step(5000, 0, False)
     #~ for loop_n in range(5):
          #~ step(500, loop_n, True)
+    print("duration", time.time() - start)
+
     print("analyze")
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)
 
     #### Import population for network analysis
-    NG_population = ng.SimulationsFromFolder(save_path)
-    population = ng.SWC_ensemble.FromPopulation(NG_population)
+    ng_population = ng.SimulationsFromFolder(save_path)
+    population = ng.SwcEnsemble.from_population(ng_population)
     intersection = ng.IntersectionsFromEnsemble(population)
+    num_connections = np.sum([len(a) for a in intersection.values()])
     graph = ng.CreateGraph(population, intersection)
-    pos={}
-    for x in population.neurons:
-        pos[x.gid] = x.position
 
     # prepare the plot
     fig, ax = plt.subplots()
-    #~ ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
-                       #~ axon_color='#00ff00a0', axis=ax, show=False)
-    #~ ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
-                       #~ soma_color='k', axon_color='#ffa000a0',
-                       #~ show=True)
     ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
                        axon_color='g', axis=ax, show=False)
     ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
                        soma_color='k', axon_color='darkorange',
                        show=True)
-    import networkx as nx
-    nx.draw(graph,pos)
+    # graph info
+    nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
+    nngt.plot.draw_network(graph, show=True)
 

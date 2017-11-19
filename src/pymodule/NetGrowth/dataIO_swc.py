@@ -1,8 +1,13 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
 import os
-import warnings
 from os.path import join, isfile
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 __all__=[
         "SplitSwcFile",
@@ -13,23 +18,29 @@ __all__=[
         "GetProperties",
         "IntersectionsFromEnsemble",
         "CreateGraph",
-        "SWC_ensemble"
+        "SwcEnsemble"
         ]
 
-class Neuron():
+
+class Neuron(object):
+
     """
     Container to facilitate post processing of SWC files
     """
+
     def __init__(self, soma_position, gid):
         self.position = soma_position
         self.gid = gid
         self.axon=None
         self.dendrites=None
 
-class Neurite():
+
+class Neurite(object):
+
     """
     Container to facilitate post processing of SWC files
     """
+
     def __init__(self, neurite_path, gid, position):
         self.xy = neurite_path[0]
         self.theta = neurite_path[1]
@@ -38,18 +49,21 @@ class Neurite():
         self.gid = gid
         self.positions = position
 
-class SWC_ensemble(object):
+
+class SwcEnsemble(object):
+
     """
-    Stores all the neurons in an unique object. Keeps data and info on each neuron.
+    Stores all the neurons in an unique object. Keeps data and info on each
+    neuron.
     Each neuron is identified with its `gid`.
     Ensemble keeps the `info.json` file.
-    In case the `info.json` is absent it's possile to pass a description with a dictionary
-    with `name` and `description`
+    In case the `info.json` is absent it's possile to pass a description with a
+    dictionary with `name` and `description`
     """
 
     def __init__(self, info):
         try:
-            self.name, self.info =GetProperties(info)
+            self.name, self.info = GetProperties(info)
         except:
             self.name, self.info = info["name"], info["description"]
         #### Store a (N,max_len) matrix, where each neuron maintain it's properties
@@ -57,7 +71,7 @@ class SWC_ensemble(object):
         # {"theta" : [],"r":[],"xy":[],"diameter":[],"gid":[]}
         # {"theta":[],"r":[],"xy":[],"diameter":[], "gid":[], "positions":[]}
 
-    def add_population(self,neurons):
+    def add_population(self, neurons):
         """
         add population
         """
@@ -74,22 +88,32 @@ class SWC_ensemble(object):
                 self.neurons[-1].dendrites = Neurite(dendrite_path,neuron,position)
 
     @classmethod
-    def FromPopulation(Ensemble,population):
-        ensemble=Ensemble(population['info'])
+    def from_population(cls, population):
+        ensemble = cls(population['info'])
         ensemble.add_population(population['neurons'])
         return ensemble
 
 
 def CreateGraph(ensemble, intersection):
-    import networkx as nx
-    # num_neurons=len(ensemble.neurons)
-    # positions = np.array([neuron.position for neuron in ensemble.neurons])
-    # graph = nngt.SpatialGraph(num_neurons, positions=positions)
-    graph=nx.DiGraph()
-    for node_out in intersection.keys():
-        for node_in in intersection[node_out]:
-            graph.add_edge(node_out,node_in)
+    try:
+        import nngt
+    except ImportError:
+        raise RuntimeError("This function requires the NNGT library to work. "
+                           "Please install it by refering to the install "
+                           "section of the documentation: http://nngt."
+                           "readthedocs.org/en/latest/.")
+    num_neurons = len(ensemble.neurons)
+    positions   = np.zeros((num_neurons, 2))
+    for neuron in ensemble.neurons:
+        positions[int(neuron.gid)] = neuron.position
+    graph       = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
+    for node_out, nodes_in in intersection.items():
+        edges       = np.zeros((len(nodes_in), 2), dtype=int)
+        edges[:, 0] = node_out
+        edges[:, 1] = nodes_in
+        graph.new_edges(edges)
     return graph
+
 
 def IntersectionsFromEnsemble(ensemble):
     """
@@ -108,6 +132,7 @@ def IntersectionsFromEnsemble(ensemble):
             if axon[1].intersects(dendrite[1]):
                 intersection[axon[0]].append(dendrite[0])
     return intersection
+
 
 def ImportSwc(swc_file):
     """
@@ -163,6 +188,7 @@ def SplitSwcFile(input_file):
             stored_data=False
     return gid
 
+
 def SwcToSegments(input_file, angle_thresh, length_thresh, element_type=[3]):
     """
     Import a single neuron SWC file, and create a new segments for each branching point.
@@ -185,6 +211,7 @@ def SwcToSegments(input_file, angle_thresh, length_thresh, element_type=[3]):
     if paths.shape[0] ==0:
         raise ValueError("Segments list is empty")
     return paths
+
 
 def SegmentsToNetgrowth(paths, name, info):
     """
@@ -267,6 +294,7 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
             raise ValueError("xy neuron data ar ill formed. xy is {}", xy.shape)
         modules=_module_from_xy(xy)
         return xy, np.array([modules,angles])
+
 
 def GetProperties(info):
         props = info['neurons']['0']['axon_params']

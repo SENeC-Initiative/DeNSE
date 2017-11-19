@@ -1,13 +1,13 @@
-#!/usr/bin/env cython
+#!/usr/bin/env python
 #-*- coding:utf-8 -*-
-#cython: boundscheck=False, wraparound=False, initializedcheck=False
-#cython: cdivision=True, embedsignature=True
+
+import os
+
+import numpy as np
+import matplotlib.pyplot as plt
 
 from . import _pygrowth as _pg
 from .dataIO import ImportRecordFile
-import numpy as np
-import matplotlib.pyplot as plt
-import os
 
 
 def GrowthConeDynamicsAnalyzer(record_file_="default"):
@@ -16,6 +16,7 @@ def GrowthConeDynamicsAnalyzer(record_file_="default"):
     events,steps = ImportRecordFile(record_file_)
     gc_list = _step_data_array(steps)
     plot_dynamic_data(gc_list)
+
 
 def _step_data_array(steps):
     """

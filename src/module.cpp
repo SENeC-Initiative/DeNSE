@@ -68,6 +68,7 @@ statusMap get_neurite_status(size_t gid, const std::string &neurite_type)
     return kernel().neuron_manager.get_neurite_status(gid, neurite_type);
 }
 
+
 void get_defaults(const std::string &object_name,
                   const std::string &object_type, statusMap &status)
 {
@@ -103,11 +104,13 @@ void init_growth(int *argc, char **argv[])
     init_models();
 }
 
+
 void finalize_growth()
 {
     kernel().parallelism_manager.mpi_finalize();
     KernelManager::destroy_kernel_manager();
 }
+
 
 std::string object_type(size_t gid)
 {
@@ -117,7 +120,9 @@ std::string object_type(size_t gid)
         throw std::runtime_error("Object does not exist.");
 }
 
+
 void reset_kernel() { kernel().reset(); }
+
 
 void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
 {
@@ -125,17 +130,21 @@ void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
     kernel().set_status(status_dict);
 }
 
+
 std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
+
 
 void set_environment(GEOSGeom environment)
 {
     kernel().space_manager.set_environment(environment);
 }
 
+
 void get_environment(GEOSGeom &environment)
 {
     kernel().space_manager.get_environment(environment);
 }
+
 
 void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
                 statusMap dendrites_status)
@@ -158,11 +167,13 @@ void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
     neuron->set_neurite_status("dendrites", local_params);
 }
 
+
 void test_random_generator(Random_vecs &values, size_t size)
 {
     kernel().simulation_manager.test_random_generator(values, size);
     printf("%lu number generated from rng\n", values[0].size());
 }
+
 
 void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
                   SkelNeurite &growth_cones, SkelSomas &somas,
@@ -232,6 +243,7 @@ void simulate(const Time &simtime)
     kernel().simulation_manager.simulate(simtime);
 }
 
+
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan)
 {
@@ -247,6 +259,8 @@ void _fill_skel(const SkelNeurite &source_container,
         target_container.second.push_back(std::nan(""));
     }
 }
+
+
 void _fill_swc(const SkelNeurite &source_container,
                SkelNeurite &target_container, bool add_nan)
 {
@@ -262,6 +276,8 @@ void _fill_swc(const SkelNeurite &source_container,
         target_container.second.push_back(std::nan(""));
     }
 }
+
+
 std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
 
 // tool function

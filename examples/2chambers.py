@@ -126,9 +126,17 @@ if __name__ =='__main__':
     step(5000, 0, False)
     #~ for loop_n in range(5):
          #~ step(500, loop_n, True)
-    print("duration", time.time() - start)
+    duration = time.time() - start
 
-    print("analyze")
+    # prepare the plot
+    fig, ax = plt.subplots()
+    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
+                       axon_color='g', axis=ax, show=False)
+    ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+                       soma_color='k', axon_color='darkorange',
+                       show=True)
+
+    # save
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)
@@ -139,15 +147,8 @@ if __name__ =='__main__':
     intersection = ng.IntersectionsFromEnsemble(population)
     num_connections = np.sum([len(a) for a in intersection.values()])
     graph = ng.CreateGraph(population, intersection)
-
-    # prepare the plot
-    fig, ax = plt.subplots()
-    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
-                       axon_color='g', axis=ax, show=False)
-    ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
-                       soma_color='k', axon_color='darkorange',
-                       show=True)
     # graph info
     nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
     nngt.plot.draw_network(graph, show=True)
 
+    print("duration", duration)

@@ -1,5 +1,8 @@
 #ifndef SPATIAL_TYPES_H
 #define SPATIAL_TYPES_H
+#ifndef GEOS_USE_ONLY_R_API
+#define GEOS_USE_ONLY_R_API
+#endif
 
 // C++ include
 #include <cmath>

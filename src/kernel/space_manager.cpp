@@ -54,7 +54,7 @@ void SpaceManager::initialize()
 }
 
 
-void SpaceManager::finalize() { finishGEOS(); }
+void SpaceManager::finalize() { finishGEOS_r(context_handler_); }
 
 
 GeomPtr SpaceManager::geosline_from_points(const Point &pointA,
@@ -78,7 +78,7 @@ GeomPtr SpaceManager::geospoint_from_point(const Point &point) const
     /*    if (dim==3)*/
     /*{GEOSCoordSeq_setZ( sequence, 2, point.at(2));}*/
     GeomPtr geospoint = GeomPtr(GEOSGeom_createPoint_r(context_handler_, sq));
-    assert(GEOSisValid(geospoint.get()));
+    assert(GEOSisValid_r(context_handler_, geospoint.get()));
     return geospoint;
 }
 
@@ -116,13 +116,9 @@ bool SpaceManager::env_intersect(GeomPtr line) const
     {
         return 0;
     }
-    bool intersect;
-#pragma omp critical
-    {
-        intersect = GEOSPreparedIntersects_r(
-            context_handler_, environment_manager_->get_border(), line.get());
-    }
-    return intersect;
+    int omp = kernel().parallelism_manager.get_thread_local_id();
+    return GEOSPreparedIntersects_r(
+        context_handler_, environment_manager_->get_border(omp), line.get());
 }
 
 
@@ -132,15 +128,11 @@ bool SpaceManager::env_contains(const Point &point) const
     {
         return 1;
     }
-    bool contain;
-#pragma omp critical
-    {
-        GeomPtr geospoint = geospoint_from_point(point);
-        contain           = GEOSPreparedContains_r(context_handler_,
-                                         environment_manager_->get_prepared(),
-                                         geospoint.get());
-    }
-    return contain;
+    int omp = kernel().parallelism_manager.get_thread_local_id();
+    GeomPtr geospoint = geospoint_from_point(point);
+    return GEOSPreparedContains_r(context_handler_,
+                                  environment_manager_->get_prepared(omp),
+                                  geospoint.get());
 }
 
 
@@ -150,7 +142,7 @@ bool SpaceManager::has_environment() const { return environment_initialized_; }
 void SpaceManager::set_environment(GEOSGeom environment)
 {
     const GEOSGeom env = static_cast<GEOSGeom>(environment);
-    assert(GEOSisValid(env));
+    assert(GEOSisValid_r(context_handler_, env));
     environment_initialized_ = true;
     //@TODO  make a unique pointer<Right>
     environment_manager_ =
@@ -210,24 +202,29 @@ Environment::Environment(GEOSGeom environment,
 {
 
     assert(0 != environment_);
-    prepared_env_         = GEOSPrepare_r(context_handler, environment_);
-    const GEOSGeom border = GEOSBoundary_r(context_handler, environment_);
-    prepared_border_      = GEOSPrepare_r(context_handler, border);
-    assert(0 != prepared_env_);
-    assert(0 != prepared_border_);
+    for (int i=0; i<kernel().parallelism_manager.get_num_local_threads(); i++)
+    {
+        prepared_env_.push_back(GEOSPrepare_r(context_handler, environment_));
+        const GEOSGeom border = GEOSBoundary_r(context_handler, environment_);
+        prepared_border_.push_back(GEOSPrepare_r(context_handler, border));
+        assert(prepared_env_[i] != 0);
+        assert(prepared_border_[i] != 0);
+    }
 }
 
 
 GEOSGeom Environment::get_environment() const { return environment_; }
 
 
-const GEOSPreparedGeometry *Environment::get_prepared() const
+const GEOSPreparedGeometry *Environment::get_prepared(int omp_id) const
 {
-    return prepared_env_;
+    return prepared_env_[omp_id];
 }
-const GEOSPreparedGeometry *Environment::get_border() const
+
+
+const GEOSPreparedGeometry *Environment::get_border(int omp_id) const
 {
-    return prepared_border_;
+    return prepared_border_[omp_id];
 }
 
 } // namespace growth

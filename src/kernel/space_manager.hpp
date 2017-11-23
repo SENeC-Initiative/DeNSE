@@ -1,5 +1,8 @@
 #ifndef SPACE_M_H
 #define SPACE_M_H
+#ifndef GEOS_USE_ONLY_R_API
+#define GEOS_USE_ONLY_R_API
+#endif
 
 // C++ include
 #include <memory>
@@ -22,13 +25,13 @@ class Environment
     Environment(GEOSGeom environment, GEOSContextHandle_t handler);
     friend class SpaceManager;
     GEOSGeom environment_;
-    const GEOSPreparedGeometry *prepared_env_;
-    const GEOSPreparedGeometry *prepared_border_;
+    std::vector<const GEOSPreparedGeometry*> prepared_env_;
+    std::vector<const GEOSPreparedGeometry*> prepared_border_;
 
   public:
     GEOSGeom get_environment() const;
-    const GEOSPreparedGeometry *get_prepared() const;
-    const GEOSPreparedGeometry *get_border() const;
+    const GEOSPreparedGeometry *get_prepared(int omp_id) const;
+    const GEOSPreparedGeometry *get_border(int omp_id) const;
 };
 
 

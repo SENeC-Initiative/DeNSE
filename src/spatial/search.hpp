@@ -1,5 +1,8 @@
 #ifndef SEARCH_H
 #define SEARCH_H
+#ifndef GEOS_USE_ONLY_R_API
+#define GEOS_USE_ONLY_R_API
+#endif
 
 #include "elements_types.hpp"
 #include "spatial_types.hpp"

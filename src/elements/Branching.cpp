@@ -81,34 +81,6 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
     }
 }
 
-/**
- * @brief Proxy function to branching next_event functions
- *  COULD BE USEFUL ONE DAY!!
- *
- * @param rnd_engine
- */
-// void Branching::compute_next_event(mtPtr rnd_engine)
-//{
-// printf(" compute next event before : %lu , %lu  \n", next_lateral_event_,
-// next_vanpelt_event_);
-
-//// next uniform event is recomputed only after the previous one happened,
-//// i.e. if `next_lateral_event_` was resetted to 0 (different branching do
-//// not interact with one another).
-// if (use_lateral_branching_ && !next_lateral_event_)
-//{
-// compute_lateral_event(rnd_engine);
-//}
-//// next van Pelt event is recomputed only after the previous one happened,
-//// i.e. if `next_vanpelt_event_` was resetted to 0
-// if (use_van_pelt_ && !next_vanpelt_event_)
-//{
-// compute_vanpelt_event(rnd_engine);
-//}
-
-//// printf(" compute next event after : %lu , %lu \n", next_lateral_event_,
-//[>next_vanpelt_event_);<]
-//}
 
 /**
  * @brief Update each growth cone as the user defined in the branching model
@@ -129,7 +101,7 @@ void Branching::update_growth_cones(mtPtr rnd_engine)
         for (auto &gc : neurite_->growth_cones_)
         {
             //@TODO move this into the neurite
-            CR_tot_demand_ += gc->compute_CR_demand(rnd_engine);
+            CR_tot_demand_ += gc.second->compute_CR_demand(rnd_engine);
         }
         if (CR_tot_demand_ != 0)
         {
@@ -167,10 +139,10 @@ void Branching::branching_event(long int step, mtPtr rnd_engine)
     {
         for (auto &gc : neurite_->growth_cones_)
         {
-            if (gc->get_CR_received() > CR_split_th_)
+            if (gc.second->get_CR_received() > CR_split_th_)
             {
-                gc->reset_CR_demand();
-                CR_new_branch(rnd_engine, gc);
+                gc.second->reset_CR_demand();
+                CR_new_branch(rnd_engine, gc.second);
             }
         }
     }
@@ -233,24 +205,24 @@ void Branching::uniform_new_branch(mtPtr rnd_engine)
     // select a random node of the tree, excluding the firstNode_
     // This is a reservoir sampling algorithm
     double max = 0;
-    for (auto cone : neurite_->growth_cones_)
+    for (auto& cone : neurite_->growth_cones_)
     {
         // check if the elected cone is not dead and waiting for removal!
-        if (not cone->is_dead() and cone->get_branch_size() > 3)
+        if (not cone.second->is_dead() and cone.second->get_branch_size() > 3)
         {
             auto key = powf(uniform_(*(rnd_engine).get()),
-                            1. / cone->get_branch_size());
+                            1. / cone.second->get_branch_size());
             if (key > max)
             {
                 max            = key;
-                branching_cone = cone;
+                branching_cone = cone.second;
             }
         }
     }
 
     branching_node = branching_cone;
 
-    for (auto node : neurite_->nodes_)
+    for (auto& node : neurite_->nodes_)
     {
         if (node.second->get_branch()->size() > 3)
         {
@@ -361,17 +333,17 @@ void Branching::vanpelt_new_branch(mtPtr rnd_engine)
     // choice
     GCPtr next_vanpelt_cone_;
     double max = 0;
-    for (auto cone : neurite_->growth_cones_)
+    for (auto& cone : neurite_->growth_cones_)
     {
         // printf("this cone %s \n", cone->get_treeID().c_str());
 
-        auto key =
-            powf(uniform_(*(rnd_engine).get()), cone->get_centrifugal_order());
+        auto key = powf(uniform_(*(rnd_engine).get()),
+                                 cone.second->get_centrifugal_order());
         // printf("this key %f\n", key);
         if (key > max)
         {
             max                = key;
-            next_vanpelt_cone_ = cone;
+            next_vanpelt_cone_ = cone.second;
         }
     }
 #ifndef NDEBUG
@@ -427,9 +399,12 @@ void Branching::CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone)
            splitting_cone->move_.angle * 180 / 3.14);
 }
 
+
 double Branching::get_CR_quotient() const { return CR_tot_demand_; }
 
+
 double Branching::get_CR_amount() const { return CR_amount_; }
+
 
 void Branching::set_status(const statusMap &status)
 {

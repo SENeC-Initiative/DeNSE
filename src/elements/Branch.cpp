@@ -14,6 +14,7 @@ Branch::Branch()
     points = {{x, y, l}};
 }
 
+
 Branch::Branch(const Branch &copy)
 {
     points[0].insert(points[0].end(), copy.points[0].begin(),
@@ -34,20 +35,17 @@ Branch::Branch(const Point &initial_position, double initial_length)
     points[2].push_back(initial_length);
 }
 
+
 Branch::~Branch() {}
+
 
 void Branch::add_point(const Point &p, double length)
 {
     points[0].push_back(p.at(0));
     points[1].push_back(p.at(1));
     points[2].push_back(points[2].back() + length);
-
-
-    // printf("x, y, l : %f, %f, %f (%f) \n", points[0].back(),
-    // points[1].back(),
-    // points[2].back(), length);
-    // printf(" branch size is %lu \n", size());
 }
+
 
 double Branch::module_from_points(const Point &p)
 {
@@ -72,12 +70,16 @@ void Branch::retract()
     points[1].pop_back();
     points[2].pop_back();
 }
+
+
 void Branch::resize_tail(size_t new_size)
 {
     points[0].resize(new_size);
     points[1].resize(new_size);
     points[2].resize(new_size);
 }
+
+
 /**
  * @brief Resize the head of the Branch, last segment stays, first segment is
  * cut out
@@ -115,22 +117,29 @@ void Branch::append_branch(BranchPtr appended_branch)
 
     assert(points[2].size() == total_size);
 }
+
+
 PointArray Branch::get_last_point() const
 {
     return {{points[0].back(), points[1].back(), points[2].back()}};
 }
+
 
 Point Branch::get_last_xy() const
 {
     return Point(points[0].back(), points[1].back());
 }
 
+
 double Branch::get_distance_to_soma() const { return points[2].back(); }
+
 
 PointArray Branch::at(size_t idx) const
 {
     return {{points[0].at(idx), points[1].at(idx), points[2].at(idx)}};
 }
 
+
 size_t Branch::size() const { return points[0].size(); }
-}
+
+} /* namespace */

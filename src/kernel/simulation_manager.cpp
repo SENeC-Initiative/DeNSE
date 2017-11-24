@@ -138,10 +138,15 @@ void SimulationManager::simulate(const Time &t)
         {
             step_[omp_id]++;
 
+            // update neurons
             for (auto &neuron : local_neurons)
             {
                 neuron->grow(rnd_engine);
             }
+
+            // record their state
+            kernel().record_manager.record(omp_id);
+
 #ifndef NDEBUG
             if (step_[omp_id] % 50 == 0)
             {
@@ -166,6 +171,9 @@ void SimulationManager::finalize_simulation_(const Time &t)
     //    assert(initial_time_.get_total_seconds() ==
     //    final_time_.get_total_seconds());
     initial_time_.update(step_.front());
+
+    // finalize recorder times
+    kernel().record_manager.finalize_simulation(steps);
 
     final_step_ = step_.front();
 }

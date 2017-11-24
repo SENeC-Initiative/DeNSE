@@ -90,6 +90,11 @@ main culture.
 What needs improving:
 ---------------------
 
+### Neurites
+
+Create an ``init_neurite`` function that does PROPERLY `Neuron.cpp#L265-281`!!
+
+
 ### Statuses
 
 * Clean up `set_status` and python `SetStatus`
@@ -100,6 +105,8 @@ What needs improving:
 
 Current implementation works only if `timestep == 1` because of
 `Branching:cppL157`
+
+Clean up the ``Branching`` object.
 
 
 ### OMP

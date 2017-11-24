@@ -85,39 +85,5 @@ class Branching
     void get_status(statusMap &) const;
 };
 
-/*template <typename Iter, typename NodeType, typename NodeGet>*/
-// double weighted_random_sampling(NodeType &selected, Iter it, Iter end,
-// NodeGet, // double get_weight(TNodePtr node),
-// std::function<double()> uniform_rnd,
-// double previous_max);
-
-// template <typename Iter, typename NodeType, typename NodeGet>
-// double weighted_random_sampling(
-// NodeType &selected, Iter it, Iter end,
-// NodeGet get_method, // double get_weight(TNodePtr node),
-// std::function<double()> uniform_rnd, double previous_max)
-//{
-
-// double max = previous_max;
-// double key = 0;
-// for (; it != end; ++it)
-//{
-//// printf("my size is %lu \n", (*it->get().*get_method)());
-//// printf("myrandom is %f, % \n" ,uniform_rnd());
-//// TopologicalNode tnode = *it;
-// key = powf(uniform_rnd(), (*it->get().*get_method)());
-//// printf("my key is %f \n", key);
-// if (key > max)
-//{
-// max      = key;
-// selected = (*it);
-/*                printf("size of selected is %lu \n",
- * (*it)->get_branch()->size());*/
-/*printf("size of selected is %lu \n",
- * selected->get_branch()->size());*/
-//}
-//}
-// return max;
-/*}*/
 }
 #endif /* BRANCHING_H */

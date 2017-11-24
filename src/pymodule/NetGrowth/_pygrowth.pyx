@@ -14,14 +14,14 @@ import numpy as np
 cimport numpy as np
 
 from .geometry import Shape
-from ._helpers import format_time
+from ._helpers import *
 from ._pygrowth cimport *
-from .utils import HashID
 
 
 __all__ = [
     "CreateEnvironment",
     "CreateNeurons",
+    "CreateRecorders",
     "GenerateSimulationID",
     "GetDefaults",
     "GetEnvironment",
@@ -36,7 +36,7 @@ __all__ = [
     "SetKernelStatus",
     "SetStatus",
     "Simulate",
-    "TestRandomGen"
+    "Time",
 ]
 
 
@@ -45,7 +45,7 @@ __all__ = [
 # ----------- #
 
 time_units = ("day", "hour", "minute", "second")
-PyTime = namedtuple("Time", time_units)
+Time = namedtuple("Time", time_units)
 
 
 # ---------- #
@@ -214,9 +214,105 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
         return gids
 
 
+def CreateRecorders(targets, observables, sampling_intervals=None,
+                    start_times=None, end_times=None, levels="auto",
+                    restrict_to=None, record_to="memory", buffer_size=100):
+    '''
+    Create recorders to monitor the state of target neurons in the environment.
+    One recorder is created on each thread containing target neurons for every
+    observable.
+
+    Note
+    ----
+    One recorder records only from the neurons located on the same thread. This
+    means that, when using multithreading, several recorders might be created
+    even for only one observable if the target neurons are handled by several
+    different threads.
+
+    Parameters
+    ----------
+    targets : int or array of ints
+        Gids of the neurons to record from.
+    observables : string or list of strings
+        Names of the properties that will be recorded for each of the target
+        neurons. One recorder will be in charge of only one observable.
+    sampling_intervals : int or list of ints, optional (default: resolution)
+        Interval between two successive recordings for a continuous observable,
+        expressed in seconds. Must be a multiple of the resolution for the
+        current simulation.
+    start_times : Time or list of Times, optional (default: initial time)
+        Time at which the recording should start. (not implemented yet)
+    end_times : Time or list of Times, optional (default: final time)
+        Time at which the recording should stop. (not implemented yet)
+    levels : string or list of strings, optional (default: "auto")
+        Level at which the observable should be recorded, if several levels are
+        possible (e.g. "length" can be measure at the "growth_cone", "neurite",
+        or full "neuron" level, each higher level being the sum of its
+        sublevels).
+    restrict_to : string or list of strings, optional (default: None)
+        Restrict recording to a specific neurite, either "axon" or one of the
+        dendrites ("dendriteX", with X the dendrite number).
+    record_to : string or list of strings (default: "memory")
+        Where the recordings should be stored. Default is in memory, otherwise
+        a filename can be passed, to which the recording will be saved.
+    buffer_size : int or list of ints, optional (default: 100)
+        Number of measurements that will be kept in memory before the recorder
+        writes to the file. Only used if `record_to` contains a filename.
+
+    Returns
+    -------
+    recorders : tuple
+        Gids of the recorders created. `recorders` contains one entry per value
+        in `observables` since at least recorder in created for each observable.
+    '''
+    cdef:
+        statusMap status
+        vector[statusMap] obj_params
+        size_t num_obj, num_created, num_obs
+
+    # get initial number of objects
+    num_obj = get_num_objects()
+
+    # switch targets and observables to lists
+    targets     = list(targets) if nonstring_container(targets) else [targets]
+    observables = list(observables) if nonstring_container(observables) \
+                  else [observables]
+    num_obs = len(observables)
+
+    # check that the targets are neurons and that the observables are valid
+    _check_neurons_obs(targets, observables)
+
+    # make sure that all keywords have required length and switch to lists
+    # check the validity of all keyword arguments
+    (sampling_intervals, start_times, end_times, levels, restrict_to,
+     record_to, buffer_size) = \
+        _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
+                            restrict_to, record_to, buffer_size, observables)
+
+    # create the recorders
+    for i in range(num_obs):
+        _set_recorder_status(status, targets=targets,
+                             observable=observables[i],
+                             sampling_interval=sampling_intervals[i],
+                             start=start_times[i], end=end_times[i],
+                             level=levels[i], restrict_to=restrict_to[i],
+                             record_to=record_to[i],
+                             buffer_size=buffer_size[i])
+        obj_params.push_back(status)
+
+    num_created = create_objects(b"recorder", obj_params)
+
+    assert num_created >= num_obs, "Wrong number of recorders created, " +\
+                                  "this is an internal error, please file " +\
+                                  "a bug on our issue tracker."
+
+    return [num_obj + i for i in range(num_created)]
+
+
 def GenerateSimulationID(*args):
     '''
-    Generate the Hash from the elements passed and add date and time of the kernel initialization.
+    Generate the Hash from the elements passed and add date and time of the
+    kernel initialization.
     '''
     hash_ = HashID(*args)
     now_  = datetime.datetime.now()
@@ -279,7 +375,8 @@ def GetSimulationID():
 
     return _to_string(c_simulation_ID)
 
-def GetStatus(gids=None, property_name=None, neurite=None):
+
+def GetStatus(gids, property_name=None, neurite=None):
     '''
     Get the configuration properties.
 
@@ -312,21 +409,19 @@ def GetStatus(gids=None, property_name=None, neurite=None):
     '''
     cdef:
         statusMap c_status
-    neurons={}
-    if gids is None:
-        gids = get_neurons()
-    elif isinstance(gids, int):
+        string level, event_type
+    status = {}
+    if isinstance(gids, int):
         #creates a vector of size 1
         gids = vector[size_t](1, <size_t>gids)
-    gids = sorted(gids)
     for gid in gids:
-        if object_type(gid) == b"neuron":
+        if GetObjectType(gid) == "neuron":
             if neurite == "axon":
                 c_status = get_neurite_status(gid, "axon")
-                _temp_dict = _statusMap_to_dict(c_status)
+                status[gid] = _statusMap_to_dict(c_status)
             elif neurite == "dendrites":
                 c_status = get_neurite_status(gid, "dendrites")
-                _temp_dict = _statusMap_to_dict(c_status)
+                status[gid] = _statusMap_to_dict(c_status)
             elif neurite is None:
                 c_status = get_status(gid)
                 neuron_status = _statusMap_to_dict(c_status)
@@ -338,16 +433,29 @@ def GetStatus(gids=None, property_name=None, neurite=None):
                     get_neurite_status(gid, "axon"))
                 neuron_status["dendrites_params"] = _statusMap_to_dict(
                     get_neurite_status(gid, "dendrites"))
-                _temp_dict = neuron_status
+                status[gid] = neuron_status
+        elif GetObjectType(gid) == "recorder":
+            c_status = get_status(gid)
+            rec_status = _statusMap_to_dict(c_status)
+            _get_recorder_data(gid, rec_status)
+            status[gid] = rec_status
         else:
             raise NotImplementedError("Only neurons are implemented so far.")
-        neurons[gid]= _temp_dict
-    return neurons
+
+    # return the right part
+    if len(gids) == 1:
+        if property_name is not None:
+            return status[gids[0]][property_name]
+        return status[gids[0]]
+    else:
+        if property_name is not None:
+            return {k: v[property_name] for k, v in status.items()}
+        return status
 
 
 def GetObjectType(gid):
     ''' Return the type of the object. '''
-    return object_type(gid)
+    return _to_string(object_type(gid))
 
 
 def GetNeurons():
@@ -457,7 +565,7 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     dendrites_params :  dict or list of dicts, optional (default: None)
         New dendrites parameters.
     '''
-    gids             = list(gids) if isinstance(gids, Iterable) else [gids]
+    gids             = list(gids) if nonstring_container(gids) else [gids]
     params           = {} if params is None else params
     axon_params      = {} if axon_params is None else axon_params
     dendrites_params = {} if dendrites_params is None else dendrites_params
@@ -503,14 +611,15 @@ def Simulate(seconds=0., minutes=0, hours=0, days=0):
     '''
     s, m, h, d = format_time(seconds, minutes, hours, days)
     # initialize the Time instance
-    cdef Time simtime = Time(s, m, h, d)
+    cdef CTime simtime = CTime(s, m, h, d)
     # launch simulation
     simulate(simtime)
 
 
-def TestRandomGen(size=10000):
+def test_random_gen(size=10000):
     """
-    This function will test the random generator retrieving 'size' random generated numbers
+    This function will test the random generator retrieving 'size' randomly
+    generated numbers.
 
     Returns
     -------
@@ -524,6 +633,7 @@ def TestRandomGen(size=10000):
     test_random_generator(c_values, size_c)
 
     return c_values
+
 
 # ------------ #
 # Subfunctions #
@@ -552,7 +662,8 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     if _is_scalar(neurites):
         if not isinstance(neurites, int) or neurites < 0:
             raise ValueError("`num_neurites` must be a non-negative integer.")
-        base_neuron_status[b"num_neurites"] = _to_property("num_neurites", neurites)
+        base_neuron_status[b"num_neurites"] = _to_property(
+            "num_neurites", neurites)
     # fill neuron_params with default statusMap (base_param)
     cdef:
         vector[statusMap] neuron_params = \
@@ -655,7 +766,9 @@ cdef Property _to_property(key, value) except *:
     cdef:
         Property cprop
         string c_string
-        vector[long] c_vec
+        vector[long] c_lvec
+        vector[size_t] c_ulvec
+        vector[string] c_svec
 
     key = _to_string(key)
 
@@ -663,18 +776,34 @@ cdef Property _to_property(key, value) except *:
         cprop.data_type = BOOL
         cprop.b = value
     elif isinstance(value, int):
-        cprop.data_type = INT
-        cprop.i = value
+        if value < 0:
+            cprop.data_type = INT
+            cprop.i = value
+        else:
+            cprop.data_type = SIZE
+            cprop.ul = value
     elif isinstance(value, float):
         cprop.data_type = DOUBLE
         cprop.d = value
     elif isinstance(value, str) or isinstance(value, bytes):
         c_string = _to_bytes(value)
         cprop = Property(c_string)
-    elif isinstance(value, Iterable) and isinstance(value[0], int):
+    elif nonstring_container(value) and isinstance(value[0], int):
+        all_pos = False
         for val in value:
-            c_vec.push_back(val)
-        cprop = Property(c_vec)
+            all_pos *= val >= 0
+        if all_pos:
+            for val in value:
+                c_ulvec.push_back(val)
+            cprop = Property(c_ulvec)
+        else:
+            for val in value:
+                c_lvec.push_back(val)
+            cprop = Property(c_lvec)
+    elif isinstance(value, Iterable) and isinstance(value[0], str):
+        for val in value:
+            c_svec.push_back(_to_bytes(val))
+        cprop = Property(c_svec)
     else:
         try:
             c_string = _to_bytes(value)
@@ -689,20 +818,33 @@ cdef Property _to_property(key, value) except *:
 
 cdef _property_to_val(Property c_property):
     if c_property.data_type == BOOL:
-        return c_property.b
+        return False if c_property.b == 0 else True
     elif c_property.data_type == DOUBLE:
-        return c_property.d
+        return float(c_property.d)
     elif c_property.data_type == INT:
         return int(c_property.i)
+    elif c_property.data_type == SIZE:
+        return int(c_property.ul)
+    elif c_property.data_type == VEC_SIZE:
+        return list(c_property.uu)
     elif c_property.data_type == VEC_LONG:
-        return list(c_property.l)
+        return list(c_property.ll)
     elif c_property.data_type == STRING:
         return _to_string(c_property.s)
+    elif c_property.data_type == VEC_STRING:
+        return [_to_string(s) for s in c_property.ss]
+    else:
+        raise RuntimeError("Unknown property type", c_property.data_type)
 
 
-cdef dict _statusMap_to_dict(statusMap c_status, with_time=False):
+cdef dict _statusMap_to_dict(statusMap& c_status, with_time=False):
+    '''
+    Convert a statusMap object to a python dict.
+    '''
     cdef Property prop
+
     status = {}
+
     for item in c_status:
         key = _to_string(item.first)
         prop = item.second
@@ -710,7 +852,7 @@ cdef dict _statusMap_to_dict(statusMap c_status, with_time=False):
 
     if with_time:
         dict_time = {unit: status[unit] for unit in time_units}
-        status["time"] = PyTime(**dict_time)
+        status["time"] = Time(**dict_time)
         for unit in time_units:
             del status[unit]
     return status
@@ -751,7 +893,6 @@ cdef void _set_vector_status(vector[statusMap]& lst_statuses,
     for key, val in params.items():
         key = _to_bytes(key)
         if key == b"position":
-            print("setting positions")
             if not _is_scalar(val[0]):
                 # cast positions to floats (ints lead to undefined behavior)
                 val = np.array(val).astype(float, copy=False)
@@ -787,3 +928,242 @@ def _neuron_param_parser(param, culture, n, set_position=False):
         param["description"] = "generic_neuron"
 
     return param
+
+
+def _get_recorder_data(gid, rec_status):
+    '''
+    Fill the recorder status with the recorded data.
+    How this data is recorded depends on both level and event_type.
+    '''
+    cdef:
+        vector[Property] data_ids, time_ids
+        vector[double] data, times
+
+    level      = rec_status["level"]
+    ev_type    = rec_status["event_type"]
+    observable = rec_status["observable"]
+    recording  = {}
+    resolution = GetKernelStatus("resolution")
+
+    res_obs   = {}    # data for the observable
+    res_times = None  # times (only one if "continuous", else dict)
+    neuron = None     # sto get neuron gid
+    do_next = True    # loop over the results
+
+    # get the recording
+    if level == "neuron":
+        if ev_type == "continuous":
+            get_next_time(gid, time_ids, times)
+            res_times = np.linspace(
+                times[0]*resolution, times[1]*resolution, int(times[2]))
+        else:
+            res_times = {}
+        while do_next:
+            do_next = get_next_recording(gid, data_ids, data)
+            if data_ids.size() > 0:
+                neuron = data_ids[0].ul
+                res_obs[neuron] = data
+                if ev_type == "discrete":
+                    get_next_time(gid, time_ids, times)
+                    res_times[neuron] = times
+                    assert neuron == int(time_ids[0].ul), "Internal error!"
+            # clear data
+            data_ids.clear()
+            time_ids.clear()
+            data.clear()
+            times.clear()
+    elif level == "neurite":
+        if ev_type == "continuous":
+            get_next_time(gid, time_ids, times)
+            res_times = np.linspace(
+                times[0]*resolution, times[1]*resolution, int(times[2]))
+        else:
+            res_times = {}
+        while do_next:
+            do_next = get_next_recording(gid, data_ids, data)
+            if data_ids.size() > 0:
+                # get ids and initialize data
+                neuron  = int(data_ids[0].ul)
+                neurite = _to_string(data_ids[1].s)
+                if neuron not in res_obs:
+                    res_obs[neuron] = {}
+                    if ev_type == "discrete":
+                        res_times[neuron] = {}
+                # set data
+                res_obs[neuron][neurite] = data
+                if ev_type == "discrete":
+                    get_next_time(gid, time_ids, times)
+                    res_times[neuron][neurite] = times
+                    assert neuron  == int(time_ids[0].ul), "Internal error!"
+                    assert neurite == _to_string(time_ids[1].s), "Internal error!"
+            # clear data
+            data_ids.clear()
+            time_ids.clear()
+            data.clear()
+            times.clear()
+    elif level == "growth_cone":
+        while do_next:
+            do_next          = get_next_recording(gid, data_ids, data)
+            if data_ids.size() > 0:
+                # get ids and check them
+                neuron           = int(data_ids[0].ul)
+                neurite          = _to_string(data_ids[1].s)
+                gc               = int(data_ids[2].ul)
+                get_next_time(gid, time_ids, times)
+                assert neuron   == int(time_ids[0].ul), "Internal error!"
+                assert neurite  == _to_string(time_ids[1].s), "Internal error!"
+                assert gc       == int(time_ids[2].ul), "Internal error!"
+                # check if neurite initialized
+                if neuron not in res_obs:
+                    res_obs[neuron] = {}
+                    res_times[neuron] = {}
+                if neurite not in res_obs[neuron]:
+                    res_obs[neuron][neurite]   = {}
+                    res_times[neuron][neurite] = {}
+                # fill data
+                res_obs[neuron][neurite][gc] = data
+                if ev_type == "discrete":
+                    res_times[neuron][neurite][gc] = times
+                else:
+                    res_times[neuron][neurite] = np.linspace(
+                        times[0]*resolution, times[1]*resolution, int(times[2]))
+            # clear data
+            data_ids.clear()
+            time_ids.clear()
+            data.clear()
+            times.clear()
+    else:
+        raise RuntimeError("Unknown level '" + level + "', please file a bug "
+                           "on the git issue tracker.")
+    recording[observable] = res_obs
+    recording["times"] = res_times
+    rec_status["recording"] = recording
+
+
+def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
+                        restrict_to, record_to, buffer_size, observables):
+    '''
+    Make sure that all keywords have required length, switch them to lists,
+    and make sure that they are valid
+    '''
+    cdef CTime c_time
+    # convert to lists
+    sampling_intervals = list(sampling_intervals) \
+                         if nonstring_container(sampling_intervals) \
+                         else [sampling_intervals for _ in observables]
+    start_times        = (list(start_times) if nonstring_container(start_times)
+                          else [start_times for _ in observables])
+    end_times          = list(end_times) if nonstring_container(end_times) \
+                         else [end_times for _ in observables]
+    levels             = list(levels) if nonstring_container(levels) \
+                         else [levels for _ in observables]
+    restrict_to        = (list(restrict_to) if nonstring_container(restrict_to)
+                          else [restrict_to for _ in observables])
+    record_to          = (list(record_to) if nonstring_container(record_to)
+                          else [record_to for _ in observables])
+    buffer_size        = (list(buffer_size) if nonstring_container(buffer_size)
+                          else [buffer_size for _ in observables])
+
+    # check length
+    num_obs = len(observables)
+    err_str = "Wrong size for `{}`: expected {} but received {}"
+    assert len(sampling_intervals) == num_obs, err_str.format(
+        "sampling_intervals", num_obs, len(sampling_intervals))
+    assert len(start_times) == num_obs, err_str.format("start_times", num_obs,
+                                                       len(start_times))
+    assert len(end_times)   == num_obs, err_str.format("end_times", num_obs,
+                                                       len(end_times))
+    assert len(levels)      == num_obs, err_str.format("levels", num_obs,
+                                                       len(levels))
+    assert len(restrict_to) == num_obs, err_str.format("restrict_to", num_obs,
+                                                       len(restrict_to))
+    assert len(record_to)   == num_obs, err_str.format("record_to", num_obs,
+                                                       len(record_to))
+    assert len(buffer_size) == num_obs, err_str.format("buffer_size", num_obs,
+                                                       len(buffer_size))
+
+    # check validity of sampling intervals
+    resol = GetKernelStatus("resolution")
+    for interval in sampling_intervals:
+        if interval is not None:
+            c_time = CTime(interval.second, interval.minute, interval.hour,
+                           interval.day)
+            sec    = c_time.get_total_seconds()
+            divid  = sec / resol
+            assert np.abs(divid - int(divid)) < 1e-6, "Sampling intervals " +\
+                "must be multiples of the resolution, which is " + \
+                "{} s.".format(resol)
+
+    # check the validity of the levels
+    pos_auto = []
+    new_level = []
+    for i, (level, obs) in enumerate(zip(levels, observables)):
+        if level == "auto":
+            # we get the highest level to replace "auto"
+            for new_lvl in ("neuron", "neurite", "growth_cone"):
+                if obs in valid_levels[new_lvl]:
+                    pos_auto.append(i)
+                    new_level.append(new_lvl)
+                    break
+        elif obs not in valid_levels[level]:
+            valid_lvl = []
+            for k, v in valid_levels:
+                if obs in v:
+                    valid_lvl.append(k)
+            raise RuntimeError("Valid levels for observable "
+                               "'{}' are {}.".format(obs, valid_lvl))
+
+    # update the "auto" levels
+    for pos, lvl in zip(pos_auto, new_level):
+        levels[pos] = lvl
+
+    return (sampling_intervals, start_times, end_times, levels, restrict_to,
+            record_to, buffer_size)
+
+
+def _check_neurons_obs(targets, observables):
+    '''
+    Check that all targets are neurons and that all observables are valid for
+    these neurons.
+    '''
+    invalid_neurons = []
+    invalid_obs = {obs: [] for obs in observables}
+    invalid = False
+    for n in targets:
+        if GetObjectType(n) != "neuron":
+            invalid_neurons.append(n)
+        else:
+            n_obs = GetStatus(n, property_name="observables")
+            for obs in observables:
+                if obs not in n_obs:
+                    invalid_obs[obs].append(n)
+                    invalid = True
+    if invalid_neurons:
+        raise RuntimeError("Invalid targets: {}.".format(invalid_neurons))
+    if invalid:
+        raise RuntimeError("Some observables are invalid for the following "
+                           "neurons:\n{}".format(invalid_obs))
+
+
+cdef void _set_recorder_status(
+    statusMap& status, list targets, str observable, object sampling_interval,
+    object start, object end, str level, object restrict_to, str record_to,
+    int buffer_size) except *:
+    '''
+    Convert the arguments into the statusMap for the recorder.
+    '''
+    status[b"targets"]    = _to_property("targets", targets)
+    status[b"observable"] = _to_property("observable", observable)
+    status[b"level"]      = _to_property("level", level)
+    status[b"event_type"] = _to_property("event_type", ev_type[observable])
+    status[b"record_to"] = _to_property("record_to", record_to)
+    status[b"buffer_size"] = _to_property("buffer_size", buffer_size)
+    if sampling_interval is not None:
+        status[b"sampling_interval"] = _to_property(
+            "sampling_interval", sampling_interval)
+    if start is not None:
+        status[b"start_time"] = _to_property("start_time", start)
+    if end is not None:
+        status[b"end_time"] = _to_property("end_time", end)
+    if restrict_to is not None:
+        status[b"restrict_to"] = _to_property("restrict_to", restrict_to)

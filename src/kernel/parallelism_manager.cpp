@@ -80,6 +80,7 @@ void ParallelismManager::set_num_local_threads(int n_threads)
 #ifdef WITH_OMP
     omp_set_num_threads(num_omp_);
     kernel().neuron_manager.init_neurons_on_thread(num_omp_);
+    kernel().record_manager.num_threads_changed(num_omp_);
 #endif
 }
 
@@ -94,15 +95,20 @@ void ParallelismManager::set_status(const statusMap &status)
     {
         if (kernel().get_num_objects())
         {
-            throw InvalidParameter("ParallelismManager::set_status",
-                                   "Cannot change the number of threads after "
-                                   "objects have been created.");
+            throw InvalidParameter("Cannot change the number of threads after "
+                                   "objects have been created.", __FUNCTION__,
+                                   __FILE__, __LINE__);
         }
         else if (num_omp != 1 && force_singlethread_)
-            throw InvalidParameter("ParallelismManager::set_status",
-                                   "Multithreading not supported.");
+        {
+            throw InvalidParameter(
+                "Multithreading not supported.", __FUNCTION__, __FILE__,
+                __LINE__);
+        }
         else
+        {
             set_num_local_threads(num_omp);
+        }
     }
 
     // Updates in RNGManager MUST occur after set_num_local_threads
@@ -115,11 +121,11 @@ void ParallelismManager::set_status(const statusMap &status)
         if (seeds.size() != num_mpi_ * num_omp_)
         {
             throw InvalidParameter(
-                "ParallelismManager::set_status",
                 "Number of seeds must equal the number of virtual processes: "
                 "expected length " +
-                    std::to_string(num_mpi_ * num_omp_) + " but received " +
-                    std::to_string(seeds.size()) + ".");
+                std::to_string(num_mpi_ * num_omp_) + " but received " +
+                std::to_string(seeds.size()) + ".", __FUNCTION__, __FILE__,
+                __LINE__);
         }
         // check if seeds are unique
         std::set<long> seedset;
@@ -128,8 +134,8 @@ void ParallelismManager::set_status(const statusMap &status)
             long s = seeds[i];
             if (!seedset.insert(s).second)
             {
-                throw InvalidParameter("ParallelismManager::set_status",
-                                       "Seeds are not unique across threads!");
+                throw InvalidParameter("Seeds are not unique across threads!",
+                                       __FUNCTION__, __FILE__, __LINE__);
             }
         }
         // seed RNGs [mpi_id*num_omp_, (mpi_id+1)*num_omp_)

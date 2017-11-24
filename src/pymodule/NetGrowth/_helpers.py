@@ -1,10 +1,32 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-""" Helper functions """
+"""
+Helper functions and data.
+
+Contains functions to:
+* format time,
+* check for container,
+* make the hash ids for simulations.
+
+Also declares the dict specifying which levels are valid for each of the
+possible observables, to check `levels` at recorder creation.
+Same dict is declared to deduce the type of event.
+"""
 
 from math import modf
+from collections import defaultdict
+try:
+    from collections.abc import Container as _container
+except:
+    from collections import Container as _container
 
+import hashlib, json
+
+
+# ---- #
+# Time #
+# ---- #
 
 def format_time(seconds=0., minutes=0, hours=0, days=0):
     '''
@@ -53,3 +75,66 @@ def format_time(seconds=0., minutes=0, hours=0, days=0):
         days = int(days + add_days)
         hours -= 24 * add_days
     return (seconds, minutes, hours, days)
+
+
+# --------- #
+# Container #
+# --------- #
+
+def nonstring_container(obj):
+    '''
+    Returns true for any iterable which is not a string or byte sequence.
+    '''
+    if not isinstance(obj, _container):
+        return False
+    try:
+        if isinstance(obj, unicode):
+            return False
+    except NameError:
+        pass
+    if isinstance(obj, bytes):
+        return False
+    if isinstance(obj, str):
+        return False
+    return True
+
+
+# ---------- #
+# Hash tools #
+# ---------- #
+
+def HashID(*args):
+    '''
+    Return the hash ID of an experiment.
+    '''
+    experiment_dict = {}
+    for num, dict_ in enumerate(args):
+        experiment_dict[num] = dict_
+    return _hash_dict(experiment_dict)
+
+
+def _hash_dict(_dict):
+    sha=hashlib.sha1()
+    sha.update(str(json.dumps(_dict, sort_keys =True)).encode('utf-8'))
+    hash_name = sha.hexdigest()
+    return hash_name[:16]
+
+
+# --------------- #
+# Valid arguments #
+# --------------- #
+
+valid_levels = {
+    "neuron": ["length", "speed"],
+    "neurite": ["length", "speed", "A"],
+    "growth_cone": [
+        "length", "speed", "resource", "angle", "persistence_angle",
+    ],
+}
+
+# default dict for event types: set discrete events manually
+def default_continuous():
+    return "continuous"
+
+ev_type = defaultdict(default_continuous)
+ev_type["num_growth_cones"] = "discrete"

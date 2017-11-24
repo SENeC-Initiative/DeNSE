@@ -2,6 +2,7 @@
 
 namespace growth
 {
+
 namespace names
 {
 
@@ -71,5 +72,16 @@ const std::string use_critical_resource("use_critical_resource");
 const std::string use_van_pelt("use_van_pelt");
 
 const std::string filopodia_wall_affinity("filopodia_wall_affinity");
+
+const std::string event_type("event_type");
+const std::string interval("interval");
+const std::string level("level");
+const std::string observable("observable");
+const std::string observables("observables");
+const std::string record_to("record_to");
+const std::string restrict_to("restrict_to");
+const std::string targets("targets");
+
 }
+
 }

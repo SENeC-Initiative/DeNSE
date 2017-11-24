@@ -1,11 +1,13 @@
 #include "module.hpp"
 
+
+// C++ includes
 #include <algorithm>
 #include <cmath>
 #include <memory>
 #include <stdexcept>
 
-// IO includes
+// elements includes
 #include "GrowthCone.hpp"
 #include "Neuron.hpp"
 #include "Skeleton.hpp"
@@ -26,13 +28,37 @@ namespace growth
 size_t create_objects(const std::string &object_name,
                       const std::vector<statusMap> &obj_params)
 {
-    throw InvalidParameter("KernelManager::create_objects",
-                           "Creating something other than a neuron (`" +
-                               object_name + "`) is not implemented yet.");
+    size_t gid = 0;
 
-    return 0;
+    if (object_name == "recorder")
+    {
+        gid = kernel().record_manager.create_recorder(obj_params);
+    }
+    else
+    {
+        throw InvalidParameter("Creating something other than a neuron or a "
+                               " recorder (`" + object_name + "`) is not "
+                               "currently supported.", __FUNCTION__, __FILE__,
+                               __LINE__);
+    }
+
+    return gid;
 }
 
+
+/**
+ * @brief Create neurons and set status
+ *
+ * The number of created neurons depends on the size of the vector.
+ *
+ * @param neuron_params set the parameters for neuron and all neurites.
+ * @param axon_params overwrite the main parameters from `neuron_params` for
+ *                    the axon, empty vector is default.
+ * @param dendrites_params overwrite the main parameters from `neuron_params`
+ *                         for dendrites, empty vector is default.
+ *
+ * @return the gid of the neuron created.
+ */
 size_t create_neurons(const std::vector<statusMap> &neuron_params,
                       const std::vector<statusMap> &axon_params,
                       const std::vector<statusMap> &dendrites_params)
@@ -40,6 +66,7 @@ size_t create_neurons(const std::vector<statusMap> &neuron_params,
     return kernel().neuron_manager.create_neurons(neuron_params, axon_params,
                                                   dendrites_params);
 }
+
 
 /*
  * Getter functions
@@ -54,9 +81,18 @@ statusMap get_kernel_status() { return kernel().get_status(); }
 statusMap get_status(size_t gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
+    {
         return kernel().neuron_manager.get_neuron_status(gid);
+    }
+    else if (kernel().record_manager.is_recorder(gid))
+    {
+        return kernel().record_manager.get_recorder_status(gid);
+    }
     else
-        throw std::runtime_error("Only neurons are supprted so far.");
+    {
+        throw std::runtime_error("Only neurons an recorders are supprted so "
+                                 "far.");
+    }
 }
 
 
@@ -115,9 +151,17 @@ void finalize_growth()
 std::string object_type(size_t gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
+    {
         return "neuron";
+    }
+    else if (kernel().record_manager.is_recorder(gid))
+    {
+        return "recorder";
+    }
     else
+    {
         throw std::runtime_error("Object does not exist.");
+    }
 }
 
 
@@ -217,6 +261,7 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
 #endif
 }
 
+
 void get_swc(std::string output_file, std::vector<size_t> gids,
              unsigned int resolution)
 {
@@ -243,6 +288,32 @@ void simulate(const Time &simtime)
     kernel().simulation_manager.simulate(simtime);
 }
 
+
+std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
+
+
+bool get_next_recording(size_t gid, std::vector<Property>& ids,
+                        std::vector<double>& values)
+{
+    return kernel().record_manager.get_next_recording(gid, ids, values);
+}
+
+
+bool get_next_time(size_t gid, std::vector<Property>& ids,
+                   std::vector<double>& values)
+{
+    return kernel().record_manager.get_next_time(gid, ids, values);
+}
+
+
+void get_recorder_type(size_t gid, std::string& level,
+                       std::string& event_type)
+{
+    kernel().record_manager.get_recorder_type(gid, level, event_type);
+}
+
+
+/* tool functions */
 
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan)
@@ -277,8 +348,4 @@ void _fill_swc(const SkelNeurite &source_container,
     }
 }
 
-
-std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
-
-// tool function
-}
+} /* namespace */

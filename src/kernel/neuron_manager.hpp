@@ -11,12 +11,17 @@
 namespace growth
 {
 
-typedef std::unordered_map<size_t, NeuronPtr> NeuronMap;
-typedef std::unordered_map<std::string, GCPtr> ModelMap;
-typedef std::vector<std::vector<NeuronPtr>> ThreadNeurons;
+// typedefs
+typedef std::unordered_map<size_t, NeuronPtr> gidNeuronMap;
+typedef std::unordered_map<size_t, int> gidThreadMap;
+typedef std::unordered_map<std::string, GCPtr> modelMap;
+typedef std::vector<std::vector<NeuronPtr>> threadNeurons;
 
+
+// forward declarations
 class Neuron;
 class GrowthCone;
+
 
 class NeuronManager : public ManagerInterface
 {
@@ -37,6 +42,7 @@ class NeuronManager : public ManagerInterface
     void get_all_neurons(std::vector<NeuronPtr> &);
     std::vector<size_t> get_gids() const;
     std::vector<NeuronPtr> get_local_neurons(int local_thread_id);
+    int get_neuron_thread(size_t gid) const;
 
     void init_neurons_on_thread(unsigned int num_local_threads);
     void update_kernel_variables();
@@ -49,7 +55,7 @@ class NeuronManager : public ManagerInterface
 
     size_t num_neurons() const;
 
-    NeuronMap::const_iterator iter_neurons();
+    gidNeuronMap::const_iterator iter_neurons();
 
     GCPtr get_model(std::string model_name);
     void get_models(std::vector<std::string> &models);
@@ -57,14 +63,18 @@ class NeuronManager : public ManagerInterface
 
     //! here we call the models file and register each model in the map
     void register_model(std::string, GCPtr);
-    ModelMap model_map_;
+    modelMap model_map_;
 
   private:
-    NeuronMap neurons_;
-    ThreadNeurons neurons_on_thread_;
+    gidNeuronMap neurons_;             // get neuron from gid
+    threadNeurons neurons_on_thread_;  // group neurons by thread
+    gidThreadMap thread_of_neuron_;    // get thread from gid
 };
+
+
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan);
+
 }
 
 #endif // NEURON_M_H

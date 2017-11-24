@@ -1,7 +1,7 @@
 #ifndef KERNEL_M_H
 #define KERNEL_M_H
 
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -9,6 +9,7 @@
 #include "exceptions.hpp"
 #include "neuron_manager.hpp"
 #include "parallelism_manager.hpp"
+#include "record_manager.hpp"
 #include "rng_manager.hpp"
 #include "simulation_manager.hpp"
 #include "space_manager.hpp"
@@ -67,7 +68,7 @@ class KernelManager
     const statusMap get_status() const;
     void set_status(const statusMap &status);
     void set_simulation_ID(std::string simulation_ID);
-    std::string get_simulation_ID();
+    std::string get_simulation_ID() const;
 
     //! Get the number of objects in the simulator.
     size_t get_num_objects() const;
@@ -85,8 +86,8 @@ class KernelManager
     RNGManager rng_manager;
     SimulationManager simulation_manager;
     SpaceManager space_manager;
+    RecordManager record_manager;
     NeuronManager neuron_manager;
-    std::string get_simulation_ID() const;
 
   private:
     bool angles_in_radians_; //!< true if angles should be passed in rad

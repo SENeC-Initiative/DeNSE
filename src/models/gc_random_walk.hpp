@@ -1,8 +1,10 @@
 #ifndef GC_RW_H
-
 #define GC_RW_H
+
 #include "GrowthCone.hpp"
 #include "elements_types.hpp"
+
+
 namespace growth
 {
 
@@ -53,6 +55,9 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
+    virtual double get_state(const char* observable) const override;
 };
-}
-#endif
+
+} /* namespace */
+
+#endif /* GC_RW_H */

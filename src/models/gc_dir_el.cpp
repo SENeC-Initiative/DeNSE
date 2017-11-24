@@ -108,5 +108,18 @@ void GrowthCone_Elongation_Direction<
     ElongationModel::compute_speed(rnd_engine);
 }
 
+
+template <class ElongationModel, class DirectionModel>
+double GrowthCone_Elongation_Direction<
+    ElongationModel, DirectionModel>::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    value = ElongationModel::get_state(observable);
+    value = DirectionModel::get_state(observable);
+
+    return value;
+}
+
 // getter functions here
 }

@@ -3,6 +3,8 @@ set( kernel_sources
      manager_interface.hpp
      neuron_manager.hpp neuron_manager.cpp
      parallelism_manager.hpp parallelism_manager.cpp
+     recorders.hpp recorders.cpp
+     record_manager.hpp record_manager.cpp
      rng_manager.hpp rng_manager.cpp
      simulation_manager.hpp simulation_manager.cpp
      space_manager.hpp space_manager.cpp

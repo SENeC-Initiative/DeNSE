@@ -207,7 +207,7 @@ Time &Time::operator-=(const Time &rhs)
     }
     this->sec_ -= rhs.get_sec();
     if (this->sec_ < 0.)
-        throw InvalidTime();
+        throw InvalidTime(__FUNCTION__, __FILE__, __LINE__);
     return *this;
 }
 

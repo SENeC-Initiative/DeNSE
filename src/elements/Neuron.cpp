@@ -28,8 +28,8 @@ namespace growth
 
 //! Default constructor
 Neuron::Neuron()
-
     : details()
+    , observables_({"length", "speed"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
     , actin_content_(0)
@@ -96,7 +96,8 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     }
     else
     {
-        throw("ERROR: position was not set");
+        throw InvalidParameter(
+            "Position was not set.", __FUNCTION__, __FILE__, __LINE__);
     }
 
     // create neurites
@@ -263,21 +264,22 @@ std::string Neuron::new_neurite(const std::string &name,
     }
 
     // initialize the neurite firstNode, a copy of the soma with child!
+    // @todo: clean up this mess!!
 
     // eventually create the growth cone, cloning the default model.
-    neurites_[name]->growth_cones_.push_back(gc_model->clone(
-        neurites_[name]->get_first_node(), neurites_[name], details.soma_radius,
-        name + "0", cone_start_point, angle));
-    neurites_[name]->growth_cones_.back()->set_cone_ID();
-    neurites_[name]->growth_cones_.back()->set_diameter(
+    neurites_[name]->growth_cone_model_ = growth_cone_model_;
+    GCPtr first_gc = gc_model->clone(
+        neurites_[name]->get_first_node(), neurites_[name],
+        details.soma_radius, name + "0", cone_start_point, angle);
+    neurites_[name]->growth_cones_[0] = first_gc;
+    first_gc->set_cone_ID();
+    first_gc->set_diameter(
         neurites_[name]->get_first_node()->biology_.diameter);
 
     // then reset the branch with the right initial position
-    neurites_[name]->growth_cones_.back()->set_first_point(cone_start_point,
-                                                           details.soma_radius);
+    first_gc->set_first_point(cone_start_point, details.soma_radius);
     // and adjust the topology of the new growth cone
-    neurites_[name]->nodes_[0]->children_.push_back(
-        neurites_[name]->growth_cones_[0]);
+    neurites_[name]->nodes_[0]->children_.push_back(first_gc);
     neurites_[name]->update_tree_structure(neurites_[name]->get_first_node());
 
 #ifndef NDEBUG
@@ -354,12 +356,41 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
 }
 
 
+/**
+ * @brief Get the current value of one of the observables
+ */
+double Neuron::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    TRIE(observable)
+    CASE("length")
+        for (const auto& neurite : neurites_)
+        {
+            value += neurite.second->get_state(observable);
+        }
+    CASE("speed")
+        for (const auto& neurite : neurites_)
+        {
+            value += neurite.second->get_state(observable);
+        }
+    ENDTRIE;
+
+    return value;
+}
+
+
 void Neuron::get_status(statusMap &status) const
 {
     set_param(status, names::soma_radius, details.soma_radius);
     set_param(status, names::axon_diameter, details.axon_diameter);
     set_param(status, names::dendrite_diameter, details.dendrite_diameter);
-    set_param(status, names::growth_cone_model, growth_cone_model_);
+    set_param(status, names::observables, observables_);
+
+    // set position
+    Point pos = soma_->get_position();
+    set_param(status, "x", pos.at(0));
+    set_param(status, "y", pos.at(1));
 }
 
 

@@ -14,6 +14,7 @@ GrowthCone_Critical::GrowthCone_Critical()
     , demand_(CR_DEMAND_MEAN, CR_DEMAND_CORRELATION, 0, CR_DEMAND_STDDEV,
               CR_DEMAND_MEAN)
 {
+    observables_.push_back("resource");
 }
 
 
@@ -26,6 +27,8 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
 {
     neurite_dyn = biology_.own_neurite->get_branching_model();
     normal_     = std::normal_distribution<double>(0, 1);
+    observables_.insert(observables_.cend(),
+                        copy.observables_.cbegin(), copy.observables_.cend());
 }
 
 
@@ -226,6 +229,29 @@ void GrowthCone_Critical::get_status(statusMap &status) const
     set_param(status, names::CR_demand_mean, demand_.mean);
     set_param(status, names::CR_demand_stddev, demand_.std_dev);
 }
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double GrowthCone_Critical::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    value = GrowthCone::get_state(observable);
+
+    TRIE(observable)
+    CASE("resource")
+        value = critical_.left;
+    ENDTRIE;
+
+    return value;
+}
+
+
+//============================
+// Detailed
+//============================
 
 
 GrowthCone_Critical_Langevin::GrowthCone_Critical_Langevin()

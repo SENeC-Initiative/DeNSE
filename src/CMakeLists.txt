@@ -201,8 +201,8 @@ target_include_directories( growth PRIVATE
 target_link_libraries( growth cgrowth )
 install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-# this is implemented to prevent python to creat .pyc file
-# during developing of pymodule
+# this is implemented to prevent python from creating .pyc file
+# during development
 if (python-develop)
     set(PYTHON_DEVELOPER_MODE "lib64")
 endif()

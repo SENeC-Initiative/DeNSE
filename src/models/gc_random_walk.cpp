@@ -40,6 +40,7 @@ GrowthCone_RandomWalk::GrowthCone_RandomWalk()
     , corr_rw_{RW_DELTA_CORR, 0, 0, 0, 0}
     , memory_{RW_MEMORY_TAU, 1, 0, 0}
 {
+    observables_.push_back("persistence_angle");
 }
 
 
@@ -49,6 +50,8 @@ GrowthCone_RandomWalk::GrowthCone_RandomWalk(const GrowthCone_RandomWalk &copy)
     , corr_rw_(copy.corr_rw_)
     , memory_(copy.memory_)
 {
+    observables_.insert(observables_.cend(),
+                        copy.observables_.cbegin(), copy.observables_.cend());
     memory_.effective_angle = move_.angle;
 }
 
@@ -235,4 +238,23 @@ void GrowthCone_RandomWalk::get_status(statusMap &status) const
     set_param(status, names::rw_delta_corr, corr_rw_.tau);
     set_param(status, names::rw_memory_tau, memory_.tau);
 }
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double GrowthCone_RandomWalk::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    value = GrowthCone::get_state(observable);
+
+    TRIE(observable)
+    CASE("persistence_angle")
+        value = deterministic_angle_;
+    ENDTRIE;
+
+    return value;
 }
+
+} /* namespace */

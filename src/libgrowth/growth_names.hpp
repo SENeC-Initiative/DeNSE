@@ -6,9 +6,9 @@
 
 namespace growth
 {
+
 namespace names
 {
-
 
 //! growth con model for          'Rw'   [string]
 extern const std::string growth_cone_model;
@@ -140,6 +140,18 @@ extern const std::string diameter_variance;
 #define DIAMETER_VARIANCE 0.1
 extern const std::string diameter_eta_exp;
 #define DIAMETER_ETA_EXP 1.5
+
+// RECORDERS
+extern const std::string event_type;
+extern const std::string interval;
+extern const std::string level;
+extern const std::string observable;
+extern const std::string observables;
+extern const std::string record_to;
+extern const std::string restrict_to;
+extern const std::string targets;
+
 }
+
 }
 #endif

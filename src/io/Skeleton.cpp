@@ -86,12 +86,11 @@ Skeleton::Skeleton(const Neuron *neuron)
             }
         }
         // anyway get growthcones
-        for (auto it  = neurite.second->gc_cbegin(),
-                  ite = neurite.second->gc_cend();
-             it != ite; ++it)
+        auto ite = neurite.second->gc_cend();
+        for (auto it = neurite.second->gc_cbegin();  it != ite; it++)
         {
-            double x = (*it)->get_position().at(0);
-            double y = (*it)->get_position().at(1);
+            double x = it->second->get_position().at(0);
+            double y = it->second->get_position().at(1);
             growth_cones.first.push_back(x);
             growth_cones.second.push_back(y);
         }

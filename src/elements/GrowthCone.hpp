@@ -6,9 +6,11 @@
 #include "Neuron.hpp"
 #include "Node.hpp"
 
+// lib include
 #include "config_impl.hpp"
 #include "elements_types.hpp"
 #include "spatial_types.hpp"
+#include "cttrie.hpp"
 
 
 namespace growth
@@ -40,6 +42,7 @@ class GrowthCone : public TopologicalNode,
     double timestep_;        // the time resolution of a step in seconds
     size_t gc_ID_;           // unique number for growth cones
     bool stuck_;
+    std::vector<std::string> observables_;
 
     // motion-related data
     double delta_angle_;
@@ -98,6 +101,7 @@ class GrowthCone : public TopologicalNode,
 
     // get functions
     double get_module() const;
+    virtual double get_state(const char* observable) const;
     virtual double get_CR_received() const;
     virtual double get_CR_left() const;
     virtual double get_CR_used() const;

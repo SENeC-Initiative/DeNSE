@@ -59,6 +59,7 @@ typedef struct NodeGeometry
     }
 } NodeGeometry;
 
+
 typedef struct NodeBiology
 {
     bool dead;

@@ -24,6 +24,7 @@
 
 namespace growth
 {
+
 typedef struct NeuronDetails
 {
     double soma_radius;
@@ -37,8 +38,16 @@ typedef struct NeuronDetails
     }
 } NeuronDetails;
 
+
+/*
+ *  Friend classes forward declaration
+ */
+
+class GrowthConeContinuousRecorder;
+class NeuriteContinuousRecorder;
 class Skeleton;
 class Swc;
+
 
 /**
  * Implementation of the main container ``Neuron`` for the creation of
@@ -46,6 +55,9 @@ class Swc;
  */
 class Neuron : public std::enable_shared_from_this<Neuron>
 {
+
+    friend class GrowthConeContinuousRecorder;
+    friend class NeuriteContinuousRecorder;
     friend class Skeleton;
     friend class Swc;
 
@@ -55,6 +67,8 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     BaseNodePtr soma_;
     //! Center of mass of the neuron's soma
     NeuronDetails details;
+    // obserables for recorders
+    std::vector<std::string> observables_;
     // Actin waves
     bool use_actin_waves_;
     size_t aw_generation_step_;
@@ -97,6 +111,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     BaseNodePtr get_soma() const;
     Point get_position() const;
     std::string get_gc_model() const;
+    double get_state(const char* observable) const;
     void get_status(statusMap &status) const;
     int get_num_neurites() const;
     double get_soma_radius() const;
@@ -120,6 +135,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
         return neurites_.cend();
     }
 };
+
 }
 
 #endif // NEURON_H

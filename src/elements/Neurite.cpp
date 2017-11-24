@@ -31,8 +31,10 @@ namespace growth
 //! default constructor
 Neurite::Neurite()
     : branching_model_(Branching())
+    , observables_({"length", "speed"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
+    , growth_cone_model_("")
     // parameters for van Pelt branching
     , lateral_branching_angle_mean_(LATERAL_BRANCHING_ANGLE_MEAN)
     , lateral_branching_angle_std_(LATERAL_BRANCHING_ANGLE_STD)
@@ -74,6 +76,8 @@ Neurite::~Neurite()
     // it's important to clear actinwaves and growthcones
     // to use properly the SmartPointers
     growth_cones_.clear();
+    growth_cones_tmp_.clear();
+    dead_cones_.clear();
     actinDeck_.clear();
 }
 
@@ -96,7 +100,6 @@ Neurite::~Neurite()
 void Neurite::init_first_node(BaseWeakNodePtr soma, Point pos, std::string name,
                               double soma_radius, double neurite_diameter)
 {
-
     auto firstNode = std::make_shared<Node>(soma, 0, pos, name);
     firstNode->set_diameter(neurite_diameter);
     firstNode->topology_.has_child         = true;
@@ -118,9 +121,9 @@ void Neurite::init_first_node(BaseWeakNodePtr soma, Point pos, std::string name,
 void Neurite::update_kernel_variables()
 {
     timestep_ = kernel().simulation_manager.get_resolution();
-    for (auto &gc : growth_cones_)
+    for (auto& gc : growth_cones_)
     {
-        gc->update_kernel_variables();
+        gc.second->update_kernel_variables();
     }
 }
 
@@ -153,11 +156,12 @@ void Neurite::grow(mtPtr rnd_engine)
 
     // Does check wheter to branch or not.
     branching_model_.branching_event(
-        (long int)kernel().simulation_manager.get_current_step(), rnd_engine);
+        (long int) kernel().simulation_manager.get_current_step(),
+        rnd_engine);
 
     if (growth_cones_tmp_.size() > 0)
     {
-        growth_cones_.insert(growth_cones_.end(), growth_cones_tmp_.begin(),
+        growth_cones_.insert(growth_cones_tmp_.begin(),
                              growth_cones_tmp_.end());
     }
 
@@ -170,7 +174,7 @@ void Neurite::grow(mtPtr rnd_engine)
     {
         // if dead_cones_ is not ordered, then this will fail!
         assert(growth_cones_[cone_n].use_count() == 1);
-        growth_cones_.erase(growth_cones_.cbegin() + cone_n);
+        growth_cones_.erase(cone_n);
     }
     dead_cones_.clear();
 }
@@ -190,12 +194,12 @@ void Neurite::update_growth_cones(mtPtr rnd_engine)
 
     // grow all the growth cones
     size_t cone_n = 0;
-    for (auto &gc : growth_cones_)
+    for (auto& gc : growth_cones_)
     {
         // printf("how many %lu p* has %s \n",gc.use_count(),
         // gc->get_treeID().c_str());
-        assert(gc.use_count() == 2);
-        gc->grow(rnd_engine, cone_n);
+        assert(gc.second.use_count() == 2);
+        gc.second->grow(rnd_engine, cone_n);
         cone_n++;
     }
 }
@@ -393,30 +397,6 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
 }
 
 
-/*void Neurite::compute_next_event(mtPtr rnd_engine)*/
-//{
-// printf(" compute next event before : %lu , %lu  \n", next_lateral_event_,
-// next_vanpelt_event_);
-
-//// next uniform event is recomputed only after the previous one happened,
-//// i.e. if `next_lateral_event_` was resetted to 0 (different branching do
-//// not interact with one another).
-// if (use_lateral_branching_ && !next_lateral_event_)
-//{
-// compute_lateral_event(rnd_engine);
-//}
-//// next van Pelt event is recomputed only after the previous one happened,
-//// i.e. if `next_vanpelt_event_` was resetted to 0
-// if (use_van_pelt_ && !next_vanpelt_event_)
-//{
-// compute_vanpelt_event(rnd_engine);
-//}
-
-// printf(" compute next event after : %lu , %lu \n", next_lateral_event_,
-// next_vanpelt_event_);
-/*}*/
-
-
 void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
 {
     // neurites_[name]->growth_cones_.back()->set_first_point(pos,soma_radius);
@@ -449,7 +429,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                                      Point xy, double new_cone_angle)
 {
     // create a new growth cone
-    auto sibling = growth_cones_.back()->clone(
+    auto sibling = growth_cones_.begin()->second->clone(
         new_node, shared_from_this(), new_length,
         branching_node->get_treeID() + "1", xy, -3.14);
     statusMap status;
@@ -702,25 +682,35 @@ void Neurite::start_actin_wave(double actin_content)
 //#######################################################
 //              Utilities Functions
 //#######################################################
+
 int Neurite::num_growth_cones() const { return growth_cones_.size(); }
 
+
 /**
- * @brief Ad a GrowthCone to the neurite
+ * @brief Add a GrowthCone to the neurite
  *
  * @param GCPtr pointer to the GrowthCone
  */
-void Neurite::add_cone(GCPtr cone) { growth_cones_tmp_.push_back(cone); }
-std::vector<GCPtr>::const_iterator Neurite::gc_cbegin() const
+void Neurite::add_cone(GCPtr cone) {
+    growth_cones_tmp_[num_created_gcs_] = cone;
+    num_created_gcs_++;
+}
+
+
+std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cbegin() const
 {
     return growth_cones_.cbegin();
 }
 
-std::vector<GCPtr>::const_iterator Neurite::gc_cend() const
+
+std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cend() const
 {
     return growth_cones_.cend();
 }
 
+
 NodePtr Neurite::get_first_node() const { return nodes_.at(0); }
+
 
 size_t Neurite::get_and_increment_gc_ID()
 {
@@ -733,14 +723,6 @@ size_t Neurite::get_and_increment_gc_ID()
 //###################################################
 //
 
-// void Neurite::init_status(const statusMap &status)
-//{
-// set_status(status);
-// for (auto gc : growth_cones_)
-//{
-// gc->init_status(status);
-//}
-/*}*/
 void Neurite::set_status(const statusMap &status)
 {
 #ifndef NDEBUG
@@ -780,13 +762,26 @@ void Neurite::set_status(const statusMap &status)
     {
         branching_model_ = Branching(shared_from_this());
     }
+    bool use_cr;
+    if (get_param(status, names::use_critical_resource, use_cr))
+    {
+        if (use_cr)
+        {
+            observables_.push_back("A");  // add A as observable
+        }
+        else
+        {
+            observables_.pop_back();  // delete A as observable (last)
+        }
+    }
     branching_model_.set_status(status);
 
-    for (auto gc : growth_cones_)
+    for (auto& gc : growth_cones_)
     {
-        gc->set_status(status);
+        gc.second->set_status(status);
     }
 }
+
 
 //@TODO
 void Neurite::get_status(statusMap &status) const
@@ -799,7 +794,38 @@ void Neurite::get_status(statusMap &status) const
               _deg_from_rad(lateral_branching_angle_mean_));
     set_param(status, names::lateral_branching_angle_mean,
               _deg_from_rad(lateral_branching_angle_std_));
+    set_param(status, names::observables, observables_);
+    set_param(status, names::growth_cone_model, growth_cone_model_);
+
+    // branching and growth_cone properties
     branching_model_.get_status(status);
-    growth_cones_.back()->get_status(status);
+    growth_cones_.begin()->second->get_status(status);
 }
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double Neurite::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    TRIE(observable)
+    CASE("length")
+        for (const auto& gc : growth_cones_)
+        {
+            value += gc.second->get_state(observable);
+        }
+    CASE("speed")
+        for (const auto& gc : growth_cones_)
+        {
+            value += gc.second->get_state(observable);
+        }
+    CASE("A")
+        value = branching_model_.CR_amount_;
+    ENDTRIE;
+
+    return value;
+}
+
 } // namespace

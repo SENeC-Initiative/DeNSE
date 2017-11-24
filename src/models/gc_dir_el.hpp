@@ -33,6 +33,7 @@ class GrowthCone_Elongation_Direction : public DirectionModel,
 
     void set_status(const statusMap &) override;
     void get_status(statusMap &) const override;
+    double get_state(const char* observable) const override final;
 };
 
 // GrowthCone_Elongation_Direction<GrowthCone_Critical_Langevin>;

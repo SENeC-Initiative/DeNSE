@@ -24,6 +24,11 @@ void NeuronManager::finalize()
 }
 
 
+/**
+ * @brief Create new neurons with custom parameters.
+ *
+ * @return Number of objects created.
+ */
 size_t
 NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
                               const std::vector<statusMap> &axon_params,
@@ -54,6 +59,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         // @TODO change temporary round-robin for neuron assignement
         unsigned int omp_id = (first_id + i) % num_omp;
         thread_neurons[omp_id].push_back(first_id + i);
+        thread_of_neuron_[first_id + i] = omp_id;
     }
 
 // create the neurons on the respective threads
@@ -155,10 +161,10 @@ void NeuronManager::get_all_neurons(std::vector<NeuronPtr> &neuron_ptr_vec)
 const statusMap NeuronManager::get_neuron_status(size_t gid) const
 {
     NeuronPtr n = neurons_.at(gid);
-
     statusMap neuron_status;
-    set_param(neuron_status, "x", n->get_position().at(0));
-    set_param(neuron_status, "y", n->get_position().at(1));
+
+    n->get_status(neuron_status);
+
     return neuron_status;
 }
 
@@ -192,7 +198,7 @@ bool NeuronManager::is_neuron(size_t gid) const
 }
 
 
-NeuronMap::const_iterator NeuronManager::iter_neurons()
+gidNeuronMap::const_iterator NeuronManager::iter_neurons()
 {
     return neurons_.begin();
 }
@@ -208,6 +214,12 @@ GCPtr NeuronManager::get_default_model()
 // default model is passed by model manager
 {
     return model_map_["default"];
+}
+
+
+int NeuronManager::get_neuron_thread(size_t gid) const
+{
+    return thread_of_neuron_.at(gid);
 }
 
 

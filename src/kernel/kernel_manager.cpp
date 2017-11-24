@@ -44,10 +44,10 @@ KernelManager::KernelManager()
     , rng_manager()
     , simulation_manager()
     , space_manager()
+    , record_manager()
     , neuron_manager()
-    ,
     // status
-    initialized_(false)
+    , initialized_(false)
     // settings
     , simulation_ID_("Kernel_ID_00000000")
     , angles_in_radians_(false)
@@ -74,6 +74,7 @@ void KernelManager::initialize()
     // then the rest
     simulation_manager.initialize();
     space_manager.initialize();
+    record_manager.initialize();
     neuron_manager.initialize();
     num_objects_ = 0;
     initialized_ = true;
@@ -84,6 +85,7 @@ void KernelManager::finalize()
 {
     initialized_ = false;
     neuron_manager.finalize();
+    record_manager.finalize();
     space_manager.finalize();
     simulation_manager.finalize();
     rng_manager.finalize();
@@ -116,7 +118,7 @@ const statusMap KernelManager::get_status() const
 
     // set_param(status, "simulation_ID", simulation_ID_);
     /*
-     * delegate the rest; no set_status for "neuron_manager"
+     * delegate the rest; no set_status for "neuron_manager", "record_manager"
      */
     parallelism_manager.get_status(status);
     rng_manager.get_status(status);
@@ -126,13 +128,15 @@ const statusMap KernelManager::get_status() const
     return status;
 }
 
+
 void KernelManager::set_simulation_ID(std::string simulation_ID)
 {
     simulation_ID_ = simulation_ID;
 }
-std::string KernelManager::get_simulation_ID()
+
+
+std::string KernelManager::get_simulation_ID() const
 {
-    std::cout << simulation_ID_ << std::endl;
     return simulation_ID_;
 }
 
@@ -157,7 +161,8 @@ bool KernelManager::using_environment() const { return env_required_; }
 
 void KernelManager::update_num_objects()
 {
-    num_objects_ = neuron_manager.num_neurons();
+    num_objects_  = neuron_manager.num_neurons();
+    num_objects_ += record_manager.num_recorders();
 }
 
 
@@ -177,6 +182,7 @@ void KernelManager::set_status(const statusMap &status)
      * delegate the rest; no set_status for:
      * - rng_manager
      * - neuron_manager
+     * - record_manager
      */
     parallelism_manager.set_status(status);
     space_manager.set_status(status);
@@ -192,5 +198,5 @@ void KernelManager::set_status(const statusMap &status)
         neuron_manager.update_kernel_variables();
     }
 }
-std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
+
 }

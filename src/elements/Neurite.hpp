@@ -20,17 +20,19 @@
 namespace growth
 {
 
-
 // Neuron forward declaration
-class Neuron;
+class GrowthConeContinuousRecorder;
 class Branching;
+class Neuron;
+
 
 //! Neurite class,
 class Neurite : public std::enable_shared_from_this<Neurite>
 {
 
-    friend class Neuron;
+    friend class GrowthConeContinuousRecorder;
     friend class Branching;
+    friend class Neuron;
 
   private:
     //! Neuron parent
@@ -38,6 +40,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     Branching branching_model_;
     // keep track of how many nodes were created to set the ids
     size_t num_created_nodes_;
+    size_t num_created_gcs_;
+    // observables for recorders
+    std::vector<std::string> observables_;
 
     //! timestep and distributions for random number generation
     double timestep_;
@@ -46,9 +51,10 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::poisson_distribution<> poisson_;
     std::exponential_distribution<> exponential_;
 
-    std::vector<GCPtr> growth_cones_tmp_;
-    //! string list of currently GrowthCones
-    std::vector<GCPtr> growth_cones_;
+    //! growth cones
+    std::string growth_cone_model_;
+    std::unordered_map<size_t, GCPtr> growth_cones_;
+    std::unordered_map<size_t, GCPtr> growth_cones_tmp_;
     std::vector<size_t> dead_cones_;
     std::deque<ActinPtr> actinDeck_;
     std::unordered_map<size_t, NodePtr> nodes_;
@@ -108,13 +114,14 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     // void init_status(const statusMap &status);
     void set_status(const statusMap &);
     void get_status(statusMap &) const;
+    double get_state(const char* observable) const;
     int num_growth_cones() const;
     NodePtr get_first_node() const;
     void update_kernel_variables();
     size_t get_and_increment_gc_ID();
     void add_cone(GCPtr);
-    std::vector<GCPtr>::const_iterator gc_cbegin() const;
-    std::vector<GCPtr>::const_iterator gc_cend() const;
+    std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
+    std::unordered_map<size_t, GCPtr>::const_iterator gc_cend() const;
 
 }; // Neurite
 

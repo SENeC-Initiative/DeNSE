@@ -9,7 +9,7 @@ from .dataIO_swc import ImportSwc
 import numpy as np
 
 from . import _pygrowth as _pg
-from .utils import HashID
+from ._helpers import HashID
 
 
 __all__ = [
@@ -20,6 +20,8 @@ __all__ = [
     "SaveSwc",
     "SimulationsFromFolder"
 ]
+
+
 def SaveJson(filepath="default", gid=None):
     """
     Save the simulation data to "info.json" file into the folder 'filepath'.

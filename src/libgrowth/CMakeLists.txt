@@ -6,6 +6,7 @@ set( libgrowth_sources
      growth_space.hpp growth_space.cpp
      growth_time.hpp growth_time.cpp
      growth_names.hpp growth_names.cpp
+     cstr.hpp cttrie.hpp getindex.hpp stringview.hpp
 )
 
 configure_file(

@@ -16,18 +16,21 @@ namespace growth
 // Define whether OpenMP is available
 #cmakedefine WITH_OMP
 
-typedef enum { BOOL, DOUBLE, INT, VEC_LONG, STRING } dtype;
+typedef enum { BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING } dtype;
 
 class Property
 {
   public:
     Property();
     Property(int i_);
+    Property(size_t ul_);
     Property(bool b_);
     Property(char const arr[]);
     Property(double d_);
     Property(const std::vector<long> &v);
+    Property(const std::vector<size_t> &v);
     Property(std::string s_);
+    Property(const std::vector<std::string> &v);
 
     Property(const Property &prop);
 
@@ -41,8 +44,11 @@ class Property
         bool b;
         double d;
         int i;
-        std::vector<long> l;
+        size_t ul;
+        std::vector<long> ll;
+        std::vector<size_t> uu;
         std::string s;
+        std::vector<std::string> ss;
     };
 };
 
@@ -51,15 +57,23 @@ typedef std::unordered_map<std::string, Property> statusMap;
 // getting/setting parameters from a statusMap/statusMap
 
 inline bool get_param(const statusMap &map, const std::string &key,
-                      int &result);
+                      bool &result);
 inline bool get_param(const statusMap &map, const std::string &key,
                       double &result);
 inline bool get_param(const statusMap &map, const std::string &key,
-                      bool &result);
+                      int &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      size_t &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      std::vector<size_t> &result);
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::vector<long> &result);
 inline bool get_param(const statusMap &map, const std::string &key,
+                      char* &result);
+inline bool get_param(const statusMap &map, const std::string &key,
                       std::string &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      std::vector<std::string> &result);
 
 inline void set_param(statusMap &map, const std::string &key,
                       const bool &value);
@@ -67,9 +81,16 @@ inline void set_param(statusMap &map, const std::string &key,
                       const double &value);
 inline void set_param(statusMap &map, const std::string &key, const int &value);
 inline void set_param(statusMap &map, const std::string &key,
+                      const size_t &value);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::vector<size_t> &value);
+inline void set_param(statusMap &map, const std::string &key,
                       const std::vector<long> &value);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::string &value);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::vector<std::string> &value);
+
 }
 
 #endif // CONFIG_H

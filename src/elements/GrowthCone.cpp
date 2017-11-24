@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <cmath>
 #include <memory>
+#include <set>
 
 #include <fstream>
 #include <iostream>
@@ -39,6 +40,7 @@ bool allnan(const std::vector<double> &weights)
 
 GrowthCone::GrowthCone()
     : TopologicalNode()
+    , observables_({"length", "speed", "angle"})
     , delta_angle_(0)
     , stuck_(false)
     , filopodia_{{},
@@ -64,6 +66,7 @@ GrowthCone::GrowthCone()
 
 GrowthCone::GrowthCone(const GrowthCone &copy)
     : TopologicalNode(copy)
+    , observables_(copy.observables_)
     , delta_angle_(0)
     , stuck_(false)
     , filopodia_(copy.filopodia_)
@@ -569,6 +572,36 @@ void GrowthCone::get_status(statusMap &status) const
     set_param(status, names::filopodia_angular_resolution, filopodia_.size);
     set_param(status, names::speed_growth_cone, speed_growth_cone_);
     set_param(status, names::rw_sensing_angle, rw_sensing_angle_);
+
+    // update observables
+    std::vector<std::string> tmp;
+    get_param(status, names::observables, tmp);
+    // use set to keep only unique values
+    std::set<std::string> obs(tmp.cbegin(), tmp.cend());
+    obs.insert(observables_.cbegin(), observables_.cend());
+    // set the full vector and update status
+    tmp = std::vector<std::string>(obs.begin(), obs.end());
+    set_param(status, names::observables, tmp);
+}
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double GrowthCone::get_state(const char* observable) const
+{
+    double value = 0.;
+
+    TRIE(observable)
+    CASE("length")
+        value = biology_.branch->get_distance_to_soma();
+    CASE("speed")
+        value = move_.speed;
+    CASE("angle")
+        value = move_.angle;
+    ENDTRIE;
+
+    return value;
 }
 
 

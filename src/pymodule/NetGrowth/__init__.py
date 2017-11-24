@@ -8,7 +8,8 @@ import atexit as _atexit
 
 from . import _pygrowth
 from ._pygrowth import *
-from .dataIO import HashID, SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder
+from ._helpers import HashID
+from .dataIO import SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder
 from .dataIO_swc import *
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
 from .geometry import Shape, culture_from_file
@@ -25,15 +26,19 @@ try:
 except ImportError:
     _with_plot = False
 
+
 if _with_plot:
     from .plot import Animate, PlotNeuron, BtmorphVisualize
     __all__.extend(("Animate", "PlotNeuron"))
 
+
 # initialize the growth library
 _pygrowth.init(_sys.argv)
+
 
 # finalize the growth library
 def _exit_handler():
     _pygrowth.finalize()
+
 
 _atexit.register(_exit_handler)

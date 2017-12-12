@@ -112,6 +112,17 @@ void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
 
 
 /**
+ * @brief Take change in number of threads into account
+ */
+void SimulationManager::num_threads_changed(int num_omp)
+{
+    Time::timeStep old_step = (step_.size() > 0) ? step_.front() : 0L;
+    step_.clear();
+    step_ = std::vector<Time::timeStep>(num_omp, old_step);
+}
+
+
+/**
  * Simulate for the given time .
  * This function performs the following steps
  * 1. set the new simulation time

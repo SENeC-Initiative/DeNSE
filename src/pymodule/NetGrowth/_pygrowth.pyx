@@ -1002,6 +1002,7 @@ def _get_recorder_data(gid, rec_status):
             data.clear()
             times.clear()
     elif level == "growth_cone":
+        res_times = {}
         while do_next:
             do_next          = get_next_recording(gid, data_ids, data)
             if data_ids.size() > 0:
@@ -1025,7 +1026,7 @@ def _get_recorder_data(gid, rec_status):
                 if ev_type == "discrete":
                     res_times[neuron][neurite][gc] = times
                 else:
-                    res_times[neuron][neurite] = np.linspace(
+                    res_times[neuron][neurite][gc] = np.linspace(
                         times[0]*resolution, times[1]*resolution, int(times[2]))
             # clear data
             data_ids.clear()

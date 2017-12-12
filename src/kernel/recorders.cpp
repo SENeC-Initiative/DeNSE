@@ -801,7 +801,7 @@ void GrowthConeContinuousRecorder::final_timestep(size_t step)
     {
         for (auto& neurite_it : neuron_it.second)
         {
-            for (auto ttt : neurite_it.second)
+            for (auto& ttt : neurite_it.second)
             {
                 ttt[1] = step;
             }
@@ -831,7 +831,6 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
 {
     // call default parent set_status
     BaseRecorder::set_status(status);
-    printf("Set BaseRecorder status\n");
 
     size_t step = kernel().simulation_manager.get_current_step();
     double dstep = static_cast<double>(step);
@@ -848,18 +847,17 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
             recording_.clear();
             times_.clear();
         }
-        printf("Got targets and cleared\n");
 
         // initialize the recording container
         for (size_t gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
+            targets_.insert({gid, n});
 
             recording_[gid] = std::unordered_map<std::string, vVecDouble>();
             times_[gid]     = std::unordered_map<std::string, vArray3Double>();
             for (const auto& neurite : n->neurites_)
             {
-                printf("Creating neurite %s level containers\n", neurite.first.c_str());
                 size_t size = neurite.second->growth_cones_.size();
 
                 recording_[gid][neurite.first] = vVecDouble(size);

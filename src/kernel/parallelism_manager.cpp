@@ -79,6 +79,8 @@ void ParallelismManager::set_num_local_threads(int n_threads)
     num_omp_ = n_threads;
 #ifdef WITH_OMP
     omp_set_num_threads(num_omp_);
+    // call first simulation manager, then neuron_manager, then record_manager
+    kernel().simulation_manager.num_threads_changed(num_omp_);
     kernel().neuron_manager.init_neurons_on_thread(num_omp_);
     kernel().record_manager.num_threads_changed(num_omp_);
 #endif
@@ -143,11 +145,15 @@ void ParallelismManager::set_status(const statusMap &status)
         size_t stop  = (get_mpi_rank() + 1) * num_omp_;
         std::vector<long> local_seeds(stop - start);
         for (size_t i = start; i < stop; i++)
+        {
             local_seeds[i - start] = seeds[i];
+        }
         kernel().rng_manager.seed(local_seeds);
     }
     else if (num_omp_changed)
+    {
         kernel().rng_manager.create_rngs_();
+    }
 }
 
 void ParallelismManager::get_status(statusMap &status) const
@@ -156,4 +162,5 @@ void ParallelismManager::get_status(statusMap &status) const
     set_param(status, "num_local_threads", num_omp_);
     set_param(status, "num_virtual_processes", num_omp_ * num_mpi_);
 }
-}
+
+} /* namespace */

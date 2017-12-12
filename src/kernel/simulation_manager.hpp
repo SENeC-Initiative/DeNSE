@@ -30,6 +30,7 @@ class SimulationManager : public ManagerInterface
     // getter/setter functions
     virtual void set_status(const statusMap &);
     virtual void get_status(statusMap &) const;
+    void num_threads_changed(int num_omp);
 
     Time get_time() const;
     double get_resolution() const;

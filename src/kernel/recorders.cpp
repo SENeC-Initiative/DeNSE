@@ -71,6 +71,9 @@ void BaseRecorder::set_status(const statusMap &status)
 void BaseRecorder::record() {}
 
 
+void BaseRecorder::record(const branchingEvent& ev, float resolution) {}
+
+
 /**
  * @brief Set the final times for the continuous recorders
  */
@@ -311,8 +314,15 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
 }
 
 
-void NeuronDiscreteRecorder::record()
-{}
+void NeuronDiscreteRecorder::record(const branchingEvent& ev, float resolution)
+{
+    size_t step   = std::get<0>(ev);
+    float substep = std::get<1>(ev);
+    size_t neuron = std::get<2>(ev);
+
+    recording_[neuron].push_back(targets_[neuron]->get_state(cstr_obs_));
+    times_[neuron].push_back(step*resolution + substep);
+}
 
 
 unsigned int NeuronDiscreteRecorder::get_level() const
@@ -571,8 +581,17 @@ NeuriteDiscreteRecorder::NeuriteDiscreteRecorder()
 {}
 
 
-void NeuriteDiscreteRecorder::record()
-{}
+void NeuriteDiscreteRecorder::record(const branchingEvent& ev, float resolution)
+{
+    size_t step         = std::get<0>(ev);
+    float substep       = std::get<1>(ev);
+    size_t neuron       = std::get<2>(ev);
+    std::string neurite = std::get<3>(ev);
+
+    recording_[neuron][neurite].push_back(
+        targets_[neuron]->neurites_[neurite]->get_state(cstr_obs_));
+    times_[neuron][neurite].push_back(step*resolution + substep);
+}
 
 
 unsigned int NeuriteDiscreteRecorder::get_level() const

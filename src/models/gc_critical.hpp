@@ -27,6 +27,7 @@ typedef struct Demand
     }
 } Demand;
 
+
 typedef struct Critical_Resource
 {
     double left;
@@ -56,6 +57,7 @@ typedef struct Critical_Resource
     }
 } Critical_Resource;
 
+
 class GrowthCone_Critical : public virtual GrowthCone
 {
 
@@ -84,7 +86,7 @@ class GrowthCone_Critical : public virtual GrowthCone
     void after_split() override;
     void reset_CR_demand() override;
 
-    void compute_speed(mtPtr rnd_engine) override;
+    void compute_speed(mtPtr rnd_engine, double substep) override;
 
     double compute_CR_demand(mtPtr rnd_engine) override;
     void compute_CR_received();

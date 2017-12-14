@@ -27,7 +27,7 @@ class GrowthCone_Elongation_Direction : public DirectionModel,
                         double distanceToParent, std::string binaryID,
                         const Point &position, double angle) override;
 
-    void compute_speed(mtPtr rnd_engine) override final;
+    void compute_speed(mtPtr rnd_engine, double substep) override final;
     void prepare_for_split() override;
     void after_split() override;
 

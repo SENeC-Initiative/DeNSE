@@ -28,13 +28,24 @@
 namespace growth
 {
 
-//! default constructor
-Neurite::Neurite()
-    : branching_model_(Branching())
+/**
+ * Neurite constructor:
+ * \param neurite_type th etype of the neurite (either "axon" or "dendrite").
+ * \param p pointer to parent class (Neuron).
+ *
+ * The neurite has no points but branches, so the constructor will call a
+ * growthConebuild which will instanciate an branch with a random angle.
+ */
+Neurite::Neurite(std::string name, const std::string &neurite_type,
+                 NeuronWeakPtr p)
+    : parent_(p)
+    , branching_model_(Branching())
+    , name_(name)
     , observables_({"length", "speed"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
+    , neurite_type_(neurite_type)
     // parameters for van Pelt branching
     , lateral_branching_angle_mean_(LATERAL_BRANCHING_ANGLE_MEAN)
     , lateral_branching_angle_std_(LATERAL_BRANCHING_ANGLE_STD)
@@ -47,22 +58,6 @@ Neurite::Neurite()
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
     poisson_ = std::poisson_distribution<>(0);
     normal_  = std::normal_distribution<double>(0, 1);
-}
-
-
-/**
- * Neurite constructor:
- * \param neurite_type th etype of the neurite (either "axon" or "dendrite").
- * \param p pointer to parent class (Neuron).
- *
- * The neurite has no points but branches, so the constructor will call a
- * growthConebuild which will instanciate an branch with a random angle.
- */
-Neurite::Neurite(const std::string &neurite_type, NeuronWeakPtr p)
-    : Neurite()
-{
-    parent_       = p;
-    neurite_type_ = neurite_type;
 #ifndef NDEBUG
     printf(" the neurite %s model is %s \n", neurite_type_.c_str(),
            parent_.lock()->get_gc_model().c_str());
@@ -108,6 +103,12 @@ void Neurite::init_first_node(BaseWeakNodePtr soma, Point pos, std::string name,
     nodes_.insert({num_created_nodes_, firstNode});
     assert(firstNode->get_branch()->size() == 0);
     num_created_nodes_++;
+
+    // also initialize branching model
+    if (branching_model_.neurite_ == nullptr)
+    {
+        branching_model_ = Branching(shared_from_this());
+    }
 }
 
 
@@ -144,25 +145,24 @@ void Neurite::update_kernel_variables()
  *
  * @param rnd_engine
  */
-void Neurite::grow(mtPtr rnd_engine)
+void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
 {
-    /*   printf("###### nodes number:   %lu vs %lu \n", nodes_.size(),*/
-    /*num_created_nodes_);*/
-
-    if (growth_cones_.size() > 0)
-    {
-        update_growth_cones(rnd_engine);
-    }
-
-    // Does check wheter to branch or not.
-    branching_model_.branching_event(
-        (long int) kernel().simulation_manager.get_current_step(),
-        rnd_engine);
-
     if (growth_cones_tmp_.size() > 0)
     {
         growth_cones_.insert(growth_cones_tmp_.begin(),
                              growth_cones_tmp_.end());
+    }
+
+    // call the branching model specific update
+    branching_model_.update_growth_cones(rnd_engine);
+
+    // grow all the growth cones
+    size_t cone_n = 0;
+    for (auto& gc : growth_cones_)
+    {
+        assert(gc.second.use_count() == 2);
+        gc.second->grow(rnd_engine, cone_n, substep);
+        cone_n++;
     }
 
     growth_cones_tmp_.clear();
@@ -177,31 +177,6 @@ void Neurite::grow(mtPtr rnd_engine)
         growth_cones_.erase(cone_n);
     }
     dead_cones_.clear();
-}
-
-
-/**
- * @brief Call grow function for each GrowthCone in the neurite
- 2
- * @aram rnd_engine
- */
-void Neurite::update_growth_cones(mtPtr rnd_engine)
-{
-    assert(growth_cones_.size() > 0);
-
-    // call the branching model specific update
-    branching_model_.update_growth_cones(rnd_engine);
-
-    // grow all the growth cones
-    size_t cone_n = 0;
-    for (auto& gc : growth_cones_)
-    {
-        // printf("how many %lu p* has %s \n",gc.use_count(),
-        // gc->get_treeID().c_str());
-        assert(gc.second.use_count() == 2);
-        gc.second->grow(rnd_engine, cone_n);
-        cone_n++;
-    }
 }
 
 
@@ -302,6 +277,7 @@ void Neurite::delete_cone(size_t cone_n)
     // dead_cones_.push_back(cone_n);
     //}
     // void Neurite::remove_cone(size_t cone_n);
+    printf("entering delete_cone for cone %lu\n", cone_n);
     GCPtr dead_cone = growth_cones_[cone_n];
 #ifndef NDEBUG
     printf(" ############ Cone Deletion #########  \n");
@@ -312,6 +288,7 @@ void Neurite::delete_cone(size_t cone_n)
     size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
     auto parent_node = nodes_[parent_ID];
 
+    printf("pushing %lu to dead cones\n", cone_n);
     dead_cones_.push_back(cone_n);
 
     for (size_t i = 0; i < parent_node->children_.size(); i++)
@@ -482,15 +459,18 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
     }
     double angle = branching_side * (lateral_branching_angle_mean_) +
                    lateral_branching_angle_std_ * normal_(*(rnd_engine).get());
-    printf("angle is %f\n", angle * 180 / M_PI);
     // create a new node and update the node counter
     NodePtr new_node = std::make_shared<Node>(*branching_node);
     update_parent_nodes(new_node, branching_node);
     auto sibling = create_branching_cone(branching_node, new_node, new_length,
                                          xy, branch_direction + angle);
     sibling->move_.angle = branch_direction + angle;
+
+#ifndef NDEBUG
+    printf("angle is %f\n", angle * 180 / M_PI);
     printf("angle is %f\n", sibling->move_.angle * 180 / M_PI);
     printf("angle is %f\n", branch_direction * 180 / M_PI);
+#endif
 
     sibling->set_diameter(0.5 * branching_node->get_diameter());
     // lateral branching specific
@@ -656,7 +636,7 @@ const Branching *Neurite::get_branching_model() const
 void Neurite::add_actin(ActinPtr actin) { actinDeck_.push_front(actin); }
 
 
-void Neurite::update_actin_waves(mtPtr rnd_engine)
+void Neurite::update_actin_waves(mtPtr rnd_engine, double substep)
 {
     // count the number of actin elements because we only want to loop over
     // them once (they put themselves or new AW back in the deque in step.
@@ -666,7 +646,7 @@ void Neurite::update_actin_waves(mtPtr rnd_engine)
     {
         aw_count++;
         auto aw = actinDeck_.front();
-        aw->step(rnd_engine);
+        aw->step(rnd_engine, substep);
         actinDeck_.pop_front();
     }
 }
@@ -710,6 +690,18 @@ std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cend() const
 
 
 NodePtr Neurite::get_first_node() const { return nodes_.at(0); }
+
+
+NeuronWeakPtr Neurite::get_parent_neuron() const
+{
+    return parent_;
+}
+
+
+std::string Neurite::get_name() const
+{
+    return name_;
+}
 
 
 size_t Neurite::get_and_increment_gc_ID()

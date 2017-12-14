@@ -72,22 +72,22 @@ class GrowthCone : public TopologicalNode,
                         const Point &position, double angle);
 
     // growth
-    void grow(mtPtr rnd_engine, size_t cone_n);
+    void grow(mtPtr rnd_engine, size_t cone_n, double substep);
     void step(mtPtr rnd_engine);
     void retraction(double module);
     void prune(size_t cone_n);
 
     // compute direction
     void compute_pull_and_accessibility(std::vector<double> &directions_weights,
-                                        mtPtr rnd_engine);
+                                        mtPtr rnd_engine, double substep);
     void compute_intrinsic_direction(std::vector<double> &directions_weights);
     void choose_pull_direction(std::vector<double> &directions_weights,
                                mtPtr rnd_engine);
-    virtual void compute_new_direction(mtPtr rnd_engine);
+    virtual void compute_new_direction(mtPtr rnd_engine, double substep);
 
     // elongation
-    void compute_module();
-    virtual void compute_speed(mtPtr rnd_engine);
+    void compute_module(double substep);
+    virtual void compute_speed(mtPtr rnd_engine, double substep);
 
     double init_filopodia();
     void set_cone_ID();

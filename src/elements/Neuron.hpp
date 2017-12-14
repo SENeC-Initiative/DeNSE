@@ -45,6 +45,7 @@ typedef struct NeuronDetails
 
 class GrowthConeContinuousRecorder;
 class NeuriteContinuousRecorder;
+class NeuriteDiscreteRecorder;
 class Skeleton;
 class Swc;
 
@@ -58,10 +59,12 @@ class Neuron : public std::enable_shared_from_this<Neuron>
 
     friend class GrowthConeContinuousRecorder;
     friend class NeuriteContinuousRecorder;
+    friend class NeuriteDiscreteRecorder;
     friend class Skeleton;
     friend class Swc;
 
   private:
+    size_t gid_;
     //! Container for the ``NeuritePtr`` objects
     NeuriteMap neurites_;
     BaseNodePtr soma_;
@@ -89,7 +92,8 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     std::normal_distribution<double> normal_;
 
   public:
-    Neuron();
+    Neuron() = delete;
+    Neuron(size_t gid);
 
     // Init functions
     void init_status(const statusMap &status, const statusMap &astatus,
@@ -98,7 +102,8 @@ class Neuron : public std::enable_shared_from_this<Neuron>
                                size_t previous_step);
 
     // Growth functions
-    void grow(mtPtr rnd_engine);
+    void grow(mtPtr rnd_engine, size_t current_step, double substep);
+    void branch(mtPtr rnd_engine, const branchingEvent& ev);
     void next_actin_event(mtPtr rnd_engine);
 
     // New neurite function
@@ -110,6 +115,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     // Getter/setter functions
     BaseNodePtr get_soma() const;
     Point get_position() const;
+    size_t get_gid() const;
     std::string get_gc_model() const;
     double get_state(const char* observable) const;
     void get_status(statusMap &status) const;

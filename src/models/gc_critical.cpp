@@ -119,7 +119,7 @@ double GrowthCone_Critical::compute_CR_demand(mtPtr rnd_engine)
  *
  * @param rnd_engine
  */
-void GrowthCone_Critical::compute_speed(mtPtr rnd_engine)
+void GrowthCone_Critical::compute_speed(mtPtr rnd_engine, double substep)
 {
     compute_CR();
     move_.speed = 0;

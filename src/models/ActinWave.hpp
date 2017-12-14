@@ -47,7 +47,7 @@ class ActinWave : public std::enable_shared_from_this<ActinWave>
     ActinWave(const ActinWave &);
     //~ ~ActinWave();
 
-    void step(mtPtr);
+    void step(mtPtr rnd_engine, double substep);
     void initialize_AW_distributions();
     void actin_on_node();
     void actin_on_growth_cone();

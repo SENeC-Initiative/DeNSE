@@ -123,7 +123,7 @@ if __name__ =='__main__':
     #~ ng.plot.PlotNeuron(show=True)
 
     start = time.time()
-    step(5000, 0, False)
+    step(30000, 0, False)
     #~ for loop_n in range(5):
          #~ step(500, loop_n, True)
     duration = time.time() - start
@@ -149,6 +149,6 @@ if __name__ =='__main__':
     graph = ng.CreateGraph(population, intersection)
     # graph info
     nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    nngt.plot.draw_network(graph, show=True)
+    nngt.plot.draw_network(graph, esize=0.1, show=True)
 
     print("duration", duration)

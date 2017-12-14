@@ -45,7 +45,9 @@ void RecordManager::initialize()
 void RecordManager::finalize()
 {
     omp_id_rec_.clear();
-    recorders_.clear();
+    c_recorders_.clear();
+    d_recorders_.clear();
+    neuron_to_d_recorder_.clear();
 }
 
 
@@ -109,12 +111,12 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             {
                 if (event_type == "continuous")
                 {
-                    recorders_[gid] =
+                    c_recorders_[gid] =
                         std::make_shared<NeuronContinuousRecorder>();
                 }
                 else if (event_type == "discrete")
                 {
-                    recorders_[gid] =
+                    d_recorders_[gid] =
                         std::make_shared<NeuronDiscreteRecorder>();
                 }
                 else
@@ -128,12 +130,12 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             {
                 if (event_type == "continuous")
                 {
-                    recorders_[gid] =
+                    c_recorders_[gid] =
                         std::make_shared<NeuriteContinuousRecorder>();
                 }
                 else if (event_type == "discrete")
                 {
-                    recorders_[gid] =
+                    d_recorders_[gid] =
                         std::make_shared<NeuriteDiscreteRecorder>();
                 }
                 else
@@ -147,12 +149,12 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             {
                 if (event_type == "continuous")
                 {
-                    recorders_[gid] =
+                    c_recorders_[gid] =
                         std::make_shared<GrowthConeContinuousRecorder>();
                 }
                 else if (event_type == "discrete")
                 {
-                    recorders_[gid] =
+                    d_recorders_[gid] =
                         std::make_shared<GrowthConeDiscreteRecorder>();
                 }
                 else
@@ -169,20 +171,30 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                         __FUNCTION__, __FILE__, __LINE__);
             }
 
-            // set recorder status
-            recorders_[gid]->set_status(local_status);
-            printf("set GrowthConeContinuousRecorder status\n");
-
             // assign recorder to a specific thread
             omp_id_rec_[last_omp_id_].push_back(gid);
+
+            // set status and, if discrete, map targets to the recorder
+            if (event_type == "discrete")
+            {
+                // set recorder status
+                d_recorders_[gid]->set_status(local_status);
+
+                for (size_t n : local_targets)
+                {
+                    neuron_to_d_recorder_[n] = gid;
+                }
+            }
+            else
+            {
+                // set recorder status
+                c_recorders_[gid]->set_status(local_status);
+            }
 
             // update last_omp_id_
             last_omp_id_++;
 
-            size_t num_omp =
-                kernel().parallelism_manager.get_num_local_threads();
-
-            if (last_omp_id_ == num_omp)
+            if (last_omp_id_ == num_threads_)
             {
                 last_omp_id_ = 0;
             }
@@ -212,7 +224,7 @@ void RecordManager::record(int omp_id)
 {
     for (size_t gid : omp_id_rec_[omp_id])
     {
-        recorders_[gid]->record();
+        c_recorders_[gid]->record();
     }
 }
 
@@ -221,7 +233,7 @@ void RecordManager::finalize_simulation(size_t steps)
 {
     size_t final_step = (steps > 0) ? steps - 1 : 0;
 
-    for (auto& recorder : recorders_)
+    for (auto& recorder : c_recorders_)
     {
         recorder.second->final_timestep(final_step);
     }
@@ -230,12 +242,18 @@ void RecordManager::finalize_simulation(size_t steps)
 
 bool RecordManager::is_recorder(size_t gid) const
 {
-    auto it = recorders_.find(gid);
+    auto c_it = c_recorders_.find(gid);
+    auto d_it = d_recorders_.find(gid);
 
-    if (it != recorders_.end())
+    if (c_it != c_recorders_.end())
     {
         return true;
     }
+    else if (d_it != d_recorders_.end())
+    {
+        return true;
+    }
+    
     return false;
 }
 
@@ -246,7 +264,7 @@ void RecordManager::get_status(statusMap &status) const
 
 size_t RecordManager::num_recorders() const
 {
-    return recorders_.size();
+    return c_recorders_.size() + d_recorders_.size();
 }
 
 
@@ -262,14 +280,53 @@ void RecordManager::num_threads_changed(int num_omp)
 }
 
 
+void RecordManager::new_branching_event(const branchingEvent& ev,
+                                        float resolution)
+{
+    if (!d_recorders_.empty())
+    {
+        size_t neuron_gid = std::get<2>(ev);
+        auto it = neuron_to_d_recorder_.find(neuron_gid);
+
+        if (it != neuron_to_d_recorder_.end())
+        {
+            d_recorders_[it->second]->record(ev, resolution);
+        }
+    }
+}
+
+
 statusMap RecordManager::get_recorder_status(size_t gid) const
 {
     statusMap status;
-    const std::shared_ptr<BaseRecorder> rec = recorders_.at(gid);
+    std::shared_ptr<BaseRecorder> rec;
+    std::string event_type;
+    
+    auto c_it = c_recorders_.find(gid);
+    auto d_it = d_recorders_.find(gid);
+
+    if (c_it != c_recorders_.end())
+    {
+        rec = c_recorders_.at(gid);
+        event_type = "continuous";
+    }
+    else if (d_it != d_recorders_.end())
+    {
+        rec = d_recorders_.at(gid);
+        event_type = "discrete";
+    }
+    else
+    {
+        throw InvalidArg("Gid " + std::to_string(gid) + " is not a recorder.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
     rec->get_status(status);
 
+    // set status with level and event type
+    set_param(status, names::event_type, event_type);
+
     unsigned int level      = rec->get_level();
-    unsigned int event_type = rec->get_event_type();
     std::string s;
 
     switch (level)
@@ -293,22 +350,6 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
             break;
     }
 
-    switch (event_type)
-    {
-        case 0:
-            s = "continuous";
-            set_param(status, names::event_type, s);
-            break;
-        case 1:
-            s = "discrete";
-            set_param(status, names::event_type, s);
-            break;
-        default:
-            throw InvalidParameter(
-                "Invalid event type.", __FUNCTION__, __FILE__, __LINE__);
-            break;
-    }
-
     return status;
 }
 
@@ -322,8 +363,19 @@ void RecordManager::get_recorder_type(size_t gid, std::string& level,
 {
     if (is_recorder(gid))
     {
-        level      = recorders_.at(gid)->get_level();
-        event_type = recorders_.at(gid)->get_event_type();
+        auto c_it = c_recorders_.find(gid);
+        auto d_it = d_recorders_.find(gid);
+
+        if (c_it != c_recorders_.end())
+        {
+            level      = c_recorders_.at(gid)->get_level();
+            event_type = "continuous";
+        }
+        else if (d_it != d_recorders_.end())
+        {
+            level      = d_recorders_.at(gid)->get_level();
+            event_type = "discrete";
+        }
     }
     else
     {
@@ -335,14 +387,48 @@ void RecordManager::get_recorder_type(size_t gid, std::string& level,
 bool RecordManager::get_next_recording(size_t gid, std::vector<Property>& ids,
                                        std::vector<double>& values)
 {
-    return recorders_[gid]->get_next_recording(ids, values);
+    auto c_it = c_recorders_.find(gid);
+    auto d_it = d_recorders_.find(gid);
+
+    if (c_it != c_recorders_.end())
+    {
+        return c_recorders_[gid]->get_next_recording(ids, values);
+    }
+    else if (d_it != d_recorders_.end())
+    {
+        return d_recorders_[gid]->get_next_recording(ids, values);
+    }
+    else
+    {
+        throw InvalidArg("Gid " + std::to_string(gid) + " is not a recorder.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    return false;
 }
 
 
 bool RecordManager::get_next_time(size_t gid, std::vector<Property>& ids,
                                   std::vector<double>& values)
 {
-    return recorders_[gid]->get_next_time(ids, values);
+    auto c_it = c_recorders_.find(gid);
+    auto d_it = d_recorders_.find(gid);
+
+    if (c_it != c_recorders_.end())
+    {
+        return c_recorders_[gid]->get_next_time(ids, values);
+    }
+    else if (d_it != d_recorders_.end())
+    {
+        return d_recorders_[gid]->get_next_time(ids, values);
+    }
+    else
+    {
+        throw InvalidArg("Gid " + std::to_string(gid) + " is not a recorder.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    return false;
 }
 
 

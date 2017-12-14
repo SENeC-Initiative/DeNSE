@@ -41,7 +41,7 @@ class NeuronManager : public ManagerInterface
     NeuronPtr get_neuron(size_t gid);
     void get_all_neurons(std::vector<NeuronPtr> &);
     std::vector<size_t> get_gids() const;
-    std::vector<NeuronPtr> get_local_neurons(int local_thread_id);
+    gidNeuronMap get_local_neurons(int local_thread_id);
     int get_neuron_thread(size_t gid) const;
 
     void init_neurons_on_thread(unsigned int num_local_threads);

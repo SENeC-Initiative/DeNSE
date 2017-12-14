@@ -39,10 +39,9 @@ ActinWave::ActinWave(const ActinWave &copy)
 
 //~ ActinWave::~ActinWave() {}
 
-void ActinWave::step(mtPtr rnd_engine)
+void ActinWave::step(mtPtr rnd_engine, double substep)
 {
-    distanceToTarget_ -=
-        actin_wave_speed_ * kernel().simulation_manager.get_resolution();
+    distanceToTarget_ -= actin_wave_speed_ * substep;
     if (distanceToTarget_ < 0)
     {
         if (targetNode_->has_child())
@@ -60,7 +59,7 @@ void ActinWave::step(mtPtr rnd_engine)
     else
     {
         assert(0 < lateral_branching_proba_ < 1);
-        if (branch_distribution_(*(rnd_engine).get()) <
+        if (branch_distribution_(*(rnd_engine).get()) >
             lateral_branching_proba_)
         {
             actin_make_branch(rnd_engine);

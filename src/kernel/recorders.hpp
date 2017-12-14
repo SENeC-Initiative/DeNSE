@@ -47,6 +47,7 @@ class BaseRecorder
     BaseRecorder();
 
     virtual void record();
+    virtual void record(const branchingEvent& ev, float resolution);
 
     virtual unsigned int get_event_type() const;
     virtual unsigned int get_level() const;
@@ -107,7 +108,7 @@ class NeuronDiscreteRecorder : public BaseRecorder
   public:
     NeuronDiscreteRecorder();
 
-    virtual void record() override;
+    virtual void record(const branchingEvent& ev, float resolution) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -155,7 +156,7 @@ class NeuriteDiscreteRecorder : public BaseRecorder
   public:
     NeuriteDiscreteRecorder();
 
-    virtual void record() override;
+    virtual void record(const branchingEvent& ev, float resolution) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;

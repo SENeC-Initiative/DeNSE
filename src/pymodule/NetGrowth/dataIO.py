@@ -29,6 +29,8 @@ def SaveJson(filepath="default", gid=None):
     """
     if filepath=="default":
         filepath= _pg.GetSimulationID()
+    if gid is None:
+        gid = _pg.GetNeurons()
     kernel = _pg.GetKernelStatus()
     neurons = _pg.GetStatus(gid)
     experiment_dict ={}
@@ -43,6 +45,8 @@ def SaveSwc(filepath="default", gid=None, swc_resolution=10):
     '''
     if filepath=="default":
         filepath= _pg.GetSimulationID()
+    if gid is None:
+        gid = _pg.GetNeurons()
     _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)
 
 

@@ -103,9 +103,10 @@ void GrowthCone_Elongation_Direction<
 
 template <class ElongationModel, class DirectionModel>
 void GrowthCone_Elongation_Direction<
-    ElongationModel, DirectionModel>::compute_speed(mtPtr rnd_engine)
+    ElongationModel, DirectionModel>::compute_speed(mtPtr rnd_engine,
+                                                    double substep)
 {
-    ElongationModel::compute_speed(rnd_engine);
+    ElongationModel::compute_speed(rnd_engine, substep);
 }
 
 

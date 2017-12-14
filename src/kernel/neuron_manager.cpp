@@ -70,10 +70,10 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         std::vector<size_t> gids(thread_neurons[omp_id]);
         statusMap local_params;
-        for (auto gid : gids)
+        for (size_t gid : gids)
         {
             size_t idx       = gid - first_id;
-            NeuronPtr neuron = std::make_shared<Neuron>();
+            NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
             neuron->init_status(neuron_params[idx], axon_params[idx],
                                 dendrites_params[idx], rnd_engine);
@@ -128,11 +128,11 @@ void NeuronManager::update_kernel_variables()
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
-        std::vector<NeuronPtr> local_neurons = get_local_neurons(omp_id);
+        gidNeuronMap local_neurons = get_local_neurons(omp_id);
 
         for (auto &neuron : local_neurons)
         {
-            neuron->update_kernel_variables();
+            neuron.second->update_kernel_variables();
         }
     }
 }
@@ -143,9 +143,16 @@ void NeuronManager::update_kernel_variables()
 NeuronPtr NeuronManager::get_neuron(size_t gid) { return neurons_[gid]; }
 
 
-std::vector<NeuronPtr> NeuronManager::get_local_neurons(int local_thread_id)
+gidNeuronMap NeuronManager::get_local_neurons(int local_thread_id)
 {
-    return neurons_on_thread_[local_thread_id];
+    gidNeuronMap local_neurons;
+
+    for (auto& n : neurons_on_thread_[local_thread_id])
+    {
+        local_neurons[n->get_gid()] = n;
+    }
+
+    return local_neurons;
 }
 
 

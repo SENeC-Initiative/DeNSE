@@ -38,8 +38,10 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     //! Neuron parent
     NeuronWeakPtr parent_;
     Branching branching_model_;
+    std::string name_;
     // keep track of how many nodes were created to set the ids
     size_t num_created_nodes_;
+    size_t num_created_cones_;
     size_t num_created_gcs_;
     // observables for recorders
     std::vector<std::string> observables_;
@@ -71,9 +73,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     double gc_split_angle_std_;
 
   public:
-    size_t num_created_cones_;
-    Neurite();
-    Neurite(const std::string &neurite_type_, NeuronWeakPtr neuron);
+    Neurite() = delete;
+    Neurite(std::string name, const std::string &neurite_type_,
+            NeuronWeakPtr neuron);
     ~Neurite();
 
     // Init functions
@@ -82,8 +84,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
                          double neurite_diameter);
 
     // Growth functions
-    void grow(mtPtr rnd_engine);
-    void update_growth_cones(mtPtr rnd_engine);
+    void grow(mtPtr rnd_engine, size_t current_step, double substep);
     void delete_cone(size_t cone_n);
 
     // Branching functions
@@ -106,7 +107,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     const Branching *get_branching_model() const;
 
     //@TODO
-    void update_actin_waves(mtPtr rnd_engine);
+    void update_actin_waves(mtPtr rnd_engine, double substep);
     void start_actin_wave(double actin_content);
     void add_actin(ActinPtr);
 
@@ -117,6 +118,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     double get_state(const char* observable) const;
     int num_growth_cones() const;
     NodePtr get_first_node() const;
+    NeuronWeakPtr get_parent_neuron() const;
+    std::string get_name() const;
     void update_kernel_variables();
     size_t get_and_increment_gc_ID();
     void add_cone(GCPtr);
@@ -125,7 +128,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
 }; // Neurite
 
+
 inline bool reverse_sorting(int i, int j) { return (i > j); }
+
 } // namespace
 
 #endif // NEURITE_H

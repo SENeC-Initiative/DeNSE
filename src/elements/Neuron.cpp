@@ -27,8 +27,9 @@ namespace growth
 // Constructors and destructor
 
 //! Default constructor
-Neuron::Neuron()
-    : details()
+Neuron::Neuron(size_t gid)
+    : gid_(gid)
+    , details()
     , observables_({"length", "speed"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
@@ -164,14 +165,14 @@ void Neuron::initialize_next_event(mtPtr rnd_engine, double new_resolution,
 /**
  * Function that simulates the growth of the neuron.
  */
-void Neuron::grow(mtPtr rnd_engine)
+void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
 {
     // if we use actin waves, tell each neurite to update them
     if (use_actin_waves_)
     {
         // new actin wave generation
-        if (kernel().simulation_manager.get_current_step() ==
-            aw_generation_step_)
+        // @todo: update this to check substep
+        if (current_step == aw_generation_step_)
         {
             next_actin_event(rnd_engine);
             // pick random neurite
@@ -183,15 +184,25 @@ void Neuron::grow(mtPtr rnd_engine)
         // actin wave update
         for (const auto &neurite : neurites_)
         {
-            neurite.second->update_actin_waves(rnd_engine);
+            neurite.second->update_actin_waves(rnd_engine, substep);
         }
     }
 
     // For each neurite of the neuron, apply growth
     for (auto &neurite : neurites_)
     {
-        neurite.second->grow(rnd_engine);
+        neurite.second->grow(rnd_engine, current_step, substep);
     }
+}
+
+
+/**
+ * @brief branch according to the event
+ */
+void Neuron::branch(mtPtr rnd_engine, const branchingEvent& ev)
+{
+    std::string name_neurite = std::get<3>(ev);
+    neurites_[name_neurite]->branching_model_.branching_event(rnd_engine, ev);
 }
 
 
@@ -214,7 +225,7 @@ std::string Neuron::new_neurite(const std::string &name,
     NeuronWeakPtr my_weak_ptr =
         std::dynamic_pointer_cast<Neuron>(shared_from_this());
     neurites_.insert(
-        {name, std::make_shared<Neurite>(neurite_type, my_weak_ptr)});
+        {name, std::make_shared<Neurite>(name, neurite_type, my_weak_ptr)});
 
     //#####################################
     // add first growth cone to the neurite
@@ -417,18 +428,39 @@ void Neuron::update_kernel_variables()
 }
 
 
-double Neuron::get_soma_radius() const { return details.soma_radius; }
+double Neuron::get_soma_radius() const
+{
+    return details.soma_radius;
+}
 
 
-BaseNodePtr Neuron::get_soma() const { return soma_; }
+BaseNodePtr Neuron::get_soma() const
+{
+    return soma_;
+}
 
 
-int Neuron::get_num_neurites() const { return neurites_.size(); }
+int Neuron::get_num_neurites() const
+{
+    return neurites_.size();
+}
 
 
-std::string Neuron::get_gc_model() const { return growth_cone_model_; }
+std::string Neuron::get_gc_model() const
+{
+    return growth_cone_model_;
+}
 
 
-Point Neuron::get_position() const { return soma_->get_position(); }
+Point Neuron::get_position() const
+{
+    return soma_->get_position();
+}
+
+
+size_t Neuron::get_gid() const 
+{
+    return gid_;
+}
 
 } // namespace

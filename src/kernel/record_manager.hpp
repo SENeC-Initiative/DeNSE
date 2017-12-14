@@ -36,6 +36,7 @@ class RecordManager : public ManagerInterface
     size_t num_recorders() const;
     void set_status(const statusMap &status);
     void num_threads_changed(int num_omp);
+    void new_branching_event(const branchingEvent& ev, float resolution);
 
     statusMap get_recorder_status(size_t gid) const;
     void get_recorder_type(size_t gid, std::string& level,
@@ -46,10 +47,13 @@ class RecordManager : public ManagerInterface
                        std::vector<double>& values);
 
   private:
-    std::unordered_map< size_t, std::shared_ptr<BaseRecorder> > recorders_;
+    std::unordered_map< size_t, std::shared_ptr<BaseRecorder> > c_recorders_;
+    std::unordered_map< size_t, std::shared_ptr<BaseRecorder> > d_recorders_;
+    std::unordered_map<size_t, size_t> neuron_to_d_recorder_;
     std::vector< std::vector<size_t> > omp_id_rec_;
     size_t last_omp_id_;
     int num_threads_;
+    std::vector<branchingEvent> branching_ev_;
 };
 
 } /* namespace */

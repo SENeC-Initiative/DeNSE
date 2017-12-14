@@ -148,15 +148,17 @@ void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
  *
  * @param rnd_engine
  */
-void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n)
+void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 {
-    compute_speed(rnd_engine);
-    compute_module();
+    compute_speed(rnd_engine, substep);
+    compute_module(substep);
     if (move_.module > 0)
     {
         // check environment and mechanical interactions
         std::vector<double> directions_weights;
-        compute_pull_and_accessibility(directions_weights, rnd_engine);
+        compute_pull_and_accessibility(
+            directions_weights, rnd_engine, substep);
+
         if (not stuck_)
         {
             // weight the directions by the intrinsic preference of the growth
@@ -165,7 +167,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n)
             // set delta_angle_ as main pulling direction
             choose_pull_direction(directions_weights, rnd_engine);
             // compute new direction based on delta_angle_
-            compute_new_direction(rnd_engine);
+            compute_new_direction(rnd_engine, substep);
             // store new position
             geometry_.position = Point(
                 geometry_.position.at(0) + move_.module * cos(move_.angle),
@@ -177,6 +179,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n)
     }
     if (move_.module < 0)
     {
+        printf("retracting for cone %lu\n", cone_n);
         retraction(move_.module);
         if (biology_.branch->size() == 0)
         {
@@ -187,7 +190,9 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n)
 }
 
 
-void GrowthCone::compute_module() { move_.module = move_.speed * timestep_; }
+void GrowthCone::compute_module(double substep) {
+    move_.module = move_.speed * substep;
+}
 
 
 void GrowthCone::retraction(double module)
@@ -229,7 +234,7 @@ void GrowthCone::prune(size_t cone_n)
  * possible directions is possible, and, if so, how likely it is.
  */
 void GrowthCone::compute_pull_and_accessibility(
-    std::vector<double> &directions_weights, mtPtr rnd_engine)
+    std::vector<double> &directions_weights, mtPtr rnd_engine, double substep)
 {
     if (using_environment_)
     {
@@ -383,7 +388,7 @@ void GrowthCone::choose_pull_direction(std::vector<double> &directions_weights,
  * From the direction exerting the strongest pull (delta_angle_), we update
  * the angle describing the growth cone direction.
  */
-void GrowthCone::compute_new_direction(mtPtr rnd_engine)
+void GrowthCone::compute_new_direction(mtPtr rnd_engine, double substep)
 {
     move_.angle += move_.sigma_angle * delta_angle_;
 }
@@ -435,15 +440,19 @@ double GrowthCone::init_filopodia()
 // ###########################################################
 
 
-double GrowthCone::compute_CR_demand(mtPtr rnd_engine) { return 0; }
+double GrowthCone::compute_CR_demand(mtPtr rnd_engine)
+{
+    return 0;
+}
 
 
-void GrowthCone::compute_speed(mtPtr rnd_engine)
+void GrowthCone::compute_speed(mtPtr rnd_engine, double substep)
 {
     if (speed_variance_ > 0)
     {
-        move_.speed = speed_growth_cone_ + speed_variance_ * sqrt(timestep_) *
-                                            normal_(*(rnd_engine).get());
+        move_.speed = speed_growth_cone_
+                    + speed_variance_ * sqrt(substep)
+                                      * normal_(*(rnd_engine).get());
     }
 }
 

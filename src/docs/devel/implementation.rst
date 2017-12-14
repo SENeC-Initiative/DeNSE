@@ -99,6 +99,26 @@ the new growth cone branch length --> new_length
 the new and old cone new directions--> new_angle, old_angle
 the rnd_enginer
 
+Precise branching events
+------------------------
+Because branching events modify the structure, the simulation must stop at the
+point where the branching occurs, then resume with the additional growth_cone.
+* Sorted list of times at which branching events occur
+* Simulation manager does substeps when necessary
+* Check time difference inferior to eps in Branching::branching_event
+
+Additional substep_ variable to simulation_manager.
+
+
+Recording
+---------
+
+The data required to record a branching event is:
+* the GID of the branching neuron
+* the neurite on which the branching happen
+* the time at which it happened (timestep + substep)
+
+
 
 Set & Get Status
 ================

@@ -159,15 +159,20 @@ void GrowthCone_RandomWalk::initialize_RW()
  * whit alpha = 0 and f =0 it retrieves a diffusive process.
  *
  */
-void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine)
+void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine,
+                                                  double substep)
 {
+    double resol = kernel().simulation_manager.get_resolution();
+    double mem_coeff = (substep == resol)
+                       ? memory_.alpha_coeff
+                       : pow(memory_.alpha_coeff, substep / resol);
     // update the memory length algorithm
     memory_.effective_angle =
-        (move_.angle + memory_.alpha_temp_sum * memory_.alpha_coeff *
+        (move_.angle + memory_.alpha_temp_sum * mem_coeff *
                            memory_.effective_angle) /
-        (memory_.alpha_coeff * memory_.alpha_temp_sum + 1);
+        (mem_coeff * memory_.alpha_temp_sum + 1);
 
-    memory_.alpha_temp_sum = memory_.alpha_coeff * memory_.alpha_temp_sum + 1;
+    memory_.alpha_temp_sum = mem_coeff * memory_.alpha_temp_sum + 1;
 
     // compute the persistence length angle deviation based on the random angle
     // delta_angle of the current step and its previous value.

@@ -42,7 +42,6 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     // keep track of how many nodes were created to set the ids
     size_t num_created_nodes_;
     size_t num_created_cones_;
-    size_t num_created_gcs_;
     // observables for recorders
     std::vector<std::string> observables_;
 

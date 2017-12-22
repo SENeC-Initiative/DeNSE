@@ -23,7 +23,6 @@ typedef struct Demand
         , std_dev(std_dev)
         , mean(mean)
     {
-        printf("mean is %f, correlation is %f", mean, correlation);
     }
 } Demand;
 

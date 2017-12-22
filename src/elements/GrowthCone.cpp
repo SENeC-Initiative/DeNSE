@@ -544,14 +544,9 @@ void GrowthCone::set_status(const statusMap &status)
     init_filopodia();
 
     // other models can set the average speed
-    bool module_speed = false;
-    if (average_speed_ == 0)
-    {
-        get_param(status, names::speed_growth_cone, speed_growth_cone_);
-        average_speed_ = speed_growth_cone_;
-        module_speed   = true;
-        move_.speed    = speed_growth_cone_;
-    }
+    get_param(status, names::speed_growth_cone, speed_growth_cone_);
+    average_speed_ = speed_growth_cone_;
+    move_.speed    = speed_growth_cone_;
 
     assert(average_speed_ > 0);
 

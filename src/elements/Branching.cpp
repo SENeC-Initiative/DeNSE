@@ -259,15 +259,13 @@ void Branching::compute_lateral_event(mtPtr rnd_engine)
  */
 void Branching::uniform_new_branch(mtPtr rnd_engine)
 {
-
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching @@@@@@@@\n");
 #endif
-    // TODO choose the lateral branching lenght on the base of some biological
-    // quantity
-    double new_length = neurite_->growth_cones_[0]->get_module();
     TNodePtr branching_node;
     GCPtr branching_cone;
+    double new_length = 0.;  // cone created exactly on the branch to make sure
+                             // it is not created outside the environment.
 
     // select a random node of the tree, excluding the firstNode_
     // This is a reservoir sampling algorithm
@@ -277,8 +275,8 @@ void Branching::uniform_new_branch(mtPtr rnd_engine)
         // check if the elected cone is not dead and waiting for removal!
         if (not cone.second->is_dead() and cone.second->get_branch_size() > 3)
         {
-            auto key = powf(uniform_(*(rnd_engine).get()),
-                            1. / cone.second->get_branch_size());
+            double key = powf(uniform_(*(rnd_engine).get()),
+                              1. / cone.second->get_branch_size());
             if (key > max)
             {
                 max            = key;
@@ -293,8 +291,8 @@ void Branching::uniform_new_branch(mtPtr rnd_engine)
     {
         if (node.second->get_branch()->size() > 3)
         {
-            auto key = powf(uniform_(*(rnd_engine).get()),
-                            1. / node.second->get_branch()->size());
+            double key = powf(uniform_(*(rnd_engine).get()),
+                              1. / node.second->get_branch()->size());
             if (key > max)
             {
                 max            = key;
@@ -396,8 +394,8 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
         kernel().simulation_manager.new_branching_event(next_vanpelt_event_);
 
 #ifndef NDEBUG
-        printf("after vanpelt event, next vanpelt event in %lu \n",
-               std::get<0>(next_vanpelt_event_));
+        printf("after vanpelt event, next vanpelt event in %lu:%f \n",
+               ev_step, ev_substep);
 #endif
     }
 }
@@ -541,6 +539,10 @@ void Branching::set_status(const statusMap &status)
                neurite_->gc_split_angle_std_ * 180 / M_PI);
 #endif
     }
+    else
+    {
+        next_vanpelt_event_ = invalid_ev;
+    }
 
     //                 Uniform_branching Params
     //###################################################
@@ -569,6 +571,10 @@ void Branching::set_status(const statusMap &status)
                neurite_->lateral_branching_angle_std_ * 180 / M_PI);
 #endif
     }
+    else
+    {
+        next_lateral_event_ = invalid_ev;
+    }
 
     //                 Set Growth COnes Params
     //###################################################
@@ -576,10 +582,9 @@ void Branching::set_status(const statusMap &status)
 
 void Branching::get_status(statusMap &status) const
 {
-
+    set_param(status, names::use_critical_resource, use_critical_resource_);
     if (use_critical_resource_)
     {
-        set_param(status, names::use_critical_resource, use_critical_resource_);
         set_param(status, names::CR_amount, CR_amount_);
         set_param(status, names::CR_split_th, CR_split_th_);
     }

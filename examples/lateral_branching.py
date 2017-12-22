@@ -58,15 +58,17 @@ if __name__ =='__main__':
     Create neurons
     '''
 
+    num_neurons = 2
+
     if not neuron_params['use_critical_resource']:
         #~ neuron_params['growth_cone_model'] = 'random_walk'
         neuron_params['growth_cone_model'] = 'default'
     else:
         neuron_params['growth_cone_model'] = 'random_walk'
 
-    neuron_params['position'] = np.random.uniform(-1000, 1000, (5, 2))
+    neuron_params['position'] = np.random.uniform(-1000, 1000, (num_neurons, 2))
 
-    gids = ng.CreateNeurons(n= 5, growth_cone_model='random_walk',
+    gids = ng.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
@@ -77,8 +79,12 @@ if __name__ =='__main__':
 
     gids_rec = ng.CreateRecorders(gids, "length", levels="growth_cone")
 
-    for i in range(5):
+    #~ step(6000, 0, True)
+    #~ for i in range(10):
+        #~ print("\nNew step block")
+        #~ step(2000, 0, True)
+    for i in range(10):
         print("\nNew step block")
-        step(500, 0, True)
+        step(2000, 0, True)
 
     #~ pprint(ng.GetStatus(gids_rec))

@@ -672,8 +672,8 @@ int Neurite::num_growth_cones() const { return growth_cones_.size(); }
  * @param GCPtr pointer to the GrowthCone
  */
 void Neurite::add_cone(GCPtr cone) {
-    growth_cones_tmp_[num_created_gcs_] = cone;
-    num_created_gcs_++;
+    growth_cones_tmp_[num_created_cones_] = cone;
+    num_created_cones_++;
 }
 
 

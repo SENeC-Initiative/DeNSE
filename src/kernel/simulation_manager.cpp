@@ -149,6 +149,7 @@ void SimulationManager::finalize_simulation_()
 
     // finalize recorder times
     kernel().record_manager.finalize_simulation(final_step_);
+    printf("simulated untile step %lu\n", final_step_);
 }
 
 
@@ -228,6 +229,11 @@ void SimulationManager::simulate(const Time &t)
                 new_step = true;
             }
 
+            if (substep_[omp_id] < 0.)
+            {
+                printf("negative substep at step %lu, substep %f\n", current_step, substep_[omp_id]);
+            }
+
             // update neurons
             for (auto &neuron : local_neurons)
             {
@@ -254,6 +260,10 @@ void SimulationManager::simulate(const Time &t)
                                                             Time::RESOLUTION);
                 std::string nname = std::get<3>(ev);
                 branching_ev_.pop_back();
+                printf("Branching event ar step: %lu and substep %f\n"
+                       "Neurite %s of neuron %lu is branching at %lu:%f\n",
+                       current_step, substep_[omp_id], nname.c_str(),
+                       gid_branching, std::get<0>(ev), std::get<1>(ev));
             }
 
 #ifndef NDEBUG

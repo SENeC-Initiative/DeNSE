@@ -103,8 +103,8 @@ Create an ``init_neurite`` function that does PROPERLY `Neuron.cpp#L265-281`!!
 
 ### Branching
 
-Current implementation works only if `timestep == 1` because of
-`Branching:cppL157`
+Error (negative substep) if uniform lateral branching rate is too high
+Lateral branching far from previous branching points
 
 Clean up the ``Branching`` object.
 

@@ -18,8 +18,8 @@ const std::string branching_proba_default("branching_proba_default");
 
 const std::string E("E");
 
-extern const std::string diameter_eta_exp("diameter_eta_exp");
-extern const std::string diameter_variance("diameter_variance");
+const std::string diameter_eta_exp("diameter_eta_exp");
+const std::string diameter_variance("diameter_variance");
 
 const std::string filopodia_finger_length("filopodia_finger_length");
 const std::string filopodia_angular_resolution("filopodia_angular_resolution");
@@ -35,6 +35,7 @@ const std::string lateral_branching_angle_mean("lateral_branching_angle_mean");
 const std::string lateral_branching_angle_std("lateral_branching_angle_std");
 
 const std::string num_neurites("num_neurites");
+const std::string num_growth_cones("num_growth_cones");
 const std::string dendrite_diameter;
 const std::string axon_diameter;
 
@@ -54,16 +55,16 @@ const std::string T("T");
 const std::string CR_amount("CR_amount");
 const std::string CR_elongation_th("CR_elongation_th");
 // const std::string CR_geom_coeff("CR_geom_coeff");
-extern const std::string CR_demand_correlation("CR_demand_correlation");
-extern const std::string CR_demand_mean("CR_demand_mean");
-extern const std::string CR_demand_stddev("CR_demand_stddev");
+const std::string CR_demand_correlation("CR_demand_correlation");
+const std::string CR_demand_mean("CR_demand_mean");
+const std::string CR_demand_stddev("CR_demand_stddev");
 const std::string CR_initial_demand("CR_initial_demand");
 const std::string CR_leakage("CR_leakage");
 const std::string CR_speed_factor("CR_speed_factor");
 const std::string CR_retraction_th("CR_retraction_th");
 const std::string CR_split_th("CR_split_th");
 // const std::string CR_topo_coeff("CR_topo_coeff");
-extern const std::string CR_use_ratio("CR_use_ratio");
+const std::string CR_use_ratio("CR_use_ratio");
 
 const std::string uniform_branching_rate("uniform_branching_rate");
 const std::string use_actin_waves("use_actin_waves");
@@ -81,6 +82,10 @@ const std::string observables("observables");
 const std::string record_to("record_to");
 const std::string restrict_to("restrict_to");
 const std::string targets("targets");
+
+const signed char lateral_branching(0);
+const signed char gc_splitting(1);
+const signed char gc_deletion(2);
 
 }
 

@@ -43,7 +43,7 @@ class Branching
     // variables for van Pelt branching model
     bool use_van_pelt_;
     double van_pelt_norm_;
-    branchingEvent next_vanpelt_event_;
+    Event next_vanpelt_event_;
     double B_;
     double E_;
     double S_;
@@ -51,7 +51,7 @@ class Branching
 
     // variables for uniform branching
     bool use_lateral_branching_;
-    branchingEvent next_lateral_event_;
+    Event next_lateral_event_;
     double uniform_branching_rate_;
 
   public:
@@ -60,17 +60,17 @@ class Branching
     Branching(const Branching &cpy);
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
-    void branching_event(mtPtr rnd_engine, const branchingEvent& ev);
+    bool branching_event(mtPtr rnd_engine, const Event& ev);
 
     void update_growth_cones(mtPtr rnd_engine);
 
     // van Pelt branching functions
-    void vanpelt_new_branch(mtPtr rnd_engine);
+    bool vanpelt_new_branch(mtPtr rnd_engine);
     void compute_vanpelt_event(mtPtr rnd_engine);
 
     // uniform branching functions
     void compute_lateral_event(mtPtr rnd_engine);
-    void uniform_new_branch(mtPtr rnd_engine);
+    bool uniform_new_branch(mtPtr rnd_engine);
 
     // critical_resource functions
     double get_CR_quotient() const;

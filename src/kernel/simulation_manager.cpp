@@ -147,9 +147,22 @@ void SimulationManager::finalize_simulation_()
     //    final_time_.get_total_seconds());
     initial_time_.update(step_.front());
 
+    // finalize neurons#pragma omp parallel
+#pragma omp parallel
+    {
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+        gidNeuronMap local_neurons =
+            kernel().neuron_manager.get_local_neurons(omp_id);
+
+        for (auto &neuron : local_neurons)
+        {
+            neuron.second->finalize();
+        }
+    }
+
     // finalize recorder times
     kernel().record_manager.finalize_simulation(final_step_);
-    printf("simulated untile step %lu\n", final_step_);
 }
 
 
@@ -158,7 +171,7 @@ void SimulationManager::finalize_simulation_()
  *
  * Add an event into `branching_ev_` and sort the vector.
  */
-void SimulationManager::new_branching_event(const branchingEvent& ev)
+void SimulationManager::new_branching_event(const Event& ev)
 {
     branching_ev_tmp_.push_back(ev);
 }
@@ -182,6 +195,7 @@ void SimulationManager::simulate(const Time &t)
         size_t step_next_ev, current_step;
         double previous_substep = 0.;
         bool new_step = false;
+        bool branched = false;
 
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         gidNeuronMap local_neurons =
@@ -190,8 +204,9 @@ void SimulationManager::simulate(const Time &t)
         // then run the simulation
         while (step_[omp_id] < final_step_)
         {
-            current_step = step_[omp_id];
+            current_step     = step_[omp_id];
             previous_substep = substep_[omp_id];
+            branched         = false;
 
             #pragma omp barrier
 
@@ -221,7 +236,7 @@ void SimulationManager::simulate(const Time &t)
             if (step_next_ev == current_step)
             {
                 substep_[omp_id] = std::get<1>(branching_ev_.back());
-                new_step = false;
+                new_step = (substep_[omp_id] == Time::RESOLUTION);
             }
             else
             {
@@ -229,10 +244,7 @@ void SimulationManager::simulate(const Time &t)
                 new_step = true;
             }
 
-            if (substep_[omp_id] < 0.)
-            {
-                printf("negative substep at step %lu, substep %f\n", current_step, substep_[omp_id]);
-            }
+            assert(substep_[omp_id] >= 0.);
 
             // update neurons
             for (auto &neuron : local_neurons)
@@ -242,28 +254,31 @@ void SimulationManager::simulate(const Time &t)
                     substep_[omp_id] - previous_substep);
             }
 
+            if (step_next_ev == current_step)
+            {
+                // someone has to branch
+                Event& ev = branching_ev_.back();
+                size_t gid_branching = std::get<2>(ev);
+                branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
+                // tell recorder manager
+                if (branched)
+                {
+                    kernel().record_manager.new_branching_event(ev);
+                }
+                //~ std::string nname = std::get<3>(ev);
+                //~ printf("Branching event ar step: %lu and substep %f\n"
+                       //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
+                       //~ current_step, substep_[omp_id], nname.c_str(),
+                       //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
+                branching_ev_.pop_back();
+            }
+
             if (new_step)
             {
                 // full step is completed, record, reset substep_, incr. step_
                 kernel().record_manager.record(omp_id);
                 substep_[omp_id] = 0.;
                 step_[omp_id]++;
-            }
-            else
-            {
-                // someone has to branch
-                branchingEvent& ev = branching_ev_.back();
-                size_t gid_branching = std::get<2>(ev);
-                local_neurons[gid_branching]->branch(rnd_engine, ev);
-                // tell recorder manager
-                kernel().record_manager.new_branching_event(ev,
-                                                            Time::RESOLUTION);
-                std::string nname = std::get<3>(ev);
-                branching_ev_.pop_back();
-                printf("Branching event ar step: %lu and substep %f\n"
-                       "Neurite %s of neuron %lu is branching at %lu:%f\n",
-                       current_step, substep_[omp_id], nname.c_str(),
-                       gid_branching, std::get<0>(ev), std::get<1>(ev));
             }
 
 #ifndef NDEBUG
@@ -322,8 +337,11 @@ double SimulationManager::get_current_seconds() const
 
 Time SimulationManager::get_time() const
 {
-    assert(not simulating_);
-    return initial_time_;
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+    Time t0 = Time(initial_time_);
+    Time t = Time(substep_[omp_id], 0, 0, 0);
+    t0.update(step_[omp_id]);
+    return t0 + t;
 }
 
 

@@ -14,11 +14,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
+import matplotlib.gridspec as gridspec
 
 from . import _pygrowth as _pg
 
 
-__all__ = ["PlotNeuron", "PlotEnvironment"]
+__all__ = ["PlotEnvironment", "PlotNeuron", "PlotRecording"]
 
 
 # --------------- #
@@ -312,6 +313,77 @@ class Animate(_Animator, anim.FuncAnimation):
 #~                  self.line_second_, self.line_second_a, self.line_second_e]
 #~         for l in lines:
 #~         l.set_data([], [])
+
+
+# -------------- #
+# Plot recording #
+# -------------- #
+
+def PlotRecording(recorder, time_units="hours", show=True):
+    '''
+    Plot the result of a recording.
+
+    Parameters
+    ----------
+    recorder : int or tuple of ints
+        Gid of the recorder(s).
+    time_units : str, optional (default: hours)
+        Unit for the time, among "seconds", "minutes", "hours", and "days".
+    show : bool, optional (default: True)
+        Display the plot.
+    '''
+    data = _pg.GetStatus(recorder, time_units=time_units)
+    num_neurons = len(data["targets"])
+    rec_type    = data["observable"]
+    level       = data["level"]
+    ev_type     = data["event_type"]
+    data        = data["recording"]
+    
+    num_cols = int(np.sqrt(num_neurons))
+    num_rows = num_cols + 1
+    gs = gridspec.GridSpec(num_rows, num_cols)
+
+    i, j, k = 0, 0, 0
+    for neuron in range(num_neurons):
+        ax = plt.subplot(gs[i, j])
+        if level == "neuron":
+            if rec_type == "num_growth_cones":
+                # repeat the times and values to make sudden jumps
+                times  = np.repeat(data["times"][neuron], 2)
+                values = np.repeat(data[rec_type][neuron], 2)
+                ax.plot(times[1:], values[:-1])
+            else:
+                ax.plot(data["times"][neuron], data[rec_type][neuron])
+        else:
+            for neurite, values in data[rec_type][neuron].items():
+                if level == "neurite":
+                    if ev_type == "continuous":
+                        ax.plot(data["times"], values, label=neurite)
+                    else:
+                        if rec_type == "num_growth_cones":
+                            # repeat the times and values to make sudden jumps
+                            times  = np.repeat(
+                                data["times"][neuron][neurite], 2)
+                            values = np.repeat(values, 2)
+                            ax.plot(times[1:], values[:-1], label=neurite)
+                        else:
+                            ax.plot(
+                                data["times"][neuron][neurite], values[1:],
+                                label=neurite)
+                else:
+                    for gc_data, gc_time in zip(values.values(), times.values()):
+                        lbl = "{}: gc {}".format(neuron, neurite, k)
+                        ax.plot(gc_time, gc_data, label=lbl)
+                        k += 1
+                    k = 0
+        j += 1
+        if j == num_cols:
+            j  = 0
+            i += 1
+        ax.legend()
+
+    if show:
+        plt.show()
 
 
 # ---------- #

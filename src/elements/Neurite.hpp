@@ -77,10 +77,11 @@ class Neurite : public std::enable_shared_from_this<Neurite>
             NeuronWeakPtr neuron);
     ~Neurite();
 
-    // Init functions
+    // Init and finalize functions
     void init_first_node(BaseWeakNodePtr soma, Point pos,
                          std::string neurite_name, double soma_radius,
                          double neurite_diameter);
+    void finalize();
 
     // Growth functions
     void grow(mtPtr rnd_engine, size_t current_step, double substep);
@@ -89,7 +90,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     // Branching functions
     void lateral_branching(TNodePtr branching_node, size_t branch_point,
                            double new_length, mtPtr rnd_engine);
-    void growth_cone_split(GCPtr branching_cone, double new_length,
+    bool growth_cone_split(GCPtr branching_cone, double new_length,
                            double new_angle, double old_angle,
                            double new_diameter, double old_diameter);
     GCPtr create_branching_cone(const TNodePtr branching_node, NodePtr new_node,
@@ -115,7 +116,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void set_status(const statusMap &);
     void get_status(statusMap &) const;
     double get_state(const char* observable) const;
-    int num_growth_cones() const;
+    unsigned int num_growth_cones() const;
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;
     std::string get_name() const;

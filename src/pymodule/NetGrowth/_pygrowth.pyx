@@ -376,7 +376,7 @@ def GetSimulationID():
     return _to_string(c_simulation_ID)
 
 
-def GetStatus(gids, property_name=None, neurite=None):
+def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
     '''
     Get the configuration properties.
 
@@ -392,6 +392,8 @@ def GetStatus(gids, property_name=None, neurite=None):
         `dendrites`). By default, both dictionaries are returned inside the
         neuronal status dictionary. If `neurite` is specified, only the
         parameters of this neurite will be returned.
+    time_units : str, optional (default: hours)
+        Unit for the time, among "seconds", "minutes", "hours", and "days".
 
     Returns
     -------
@@ -409,7 +411,13 @@ def GetStatus(gids, property_name=None, neurite=None):
     '''
     cdef:
         statusMap c_status
-        string level, event_type
+        string level, event_type, ctime_units
+
+    valid_time_units = ("seconds", "minutes", "hours", "days")
+    assert time_units in valid_time_units, \
+        "`time_units` should be among: {}.".format(valid_time_units)
+    ctime_units = _to_bytes(time_units)
+
     status = {}
     if isinstance(gids, int):
         #creates a vector of size 1
@@ -437,7 +445,7 @@ def GetStatus(gids, property_name=None, neurite=None):
         elif GetObjectType(gid) == "recorder":
             c_status = get_status(gid)
             rec_status = _statusMap_to_dict(c_status)
-            _get_recorder_data(gid, rec_status)
+            _get_recorder_data(gid, rec_status, ctime_units)
             status[gid] = rec_status
         else:
             raise NotImplementedError("Only neurons are implemented so far.")
@@ -930,7 +938,7 @@ def _neuron_param_parser(param, culture, n, set_position=False):
     return param
 
 
-def _get_recorder_data(gid, rec_status):
+def _get_recorder_data(gid, rec_status, time_units):
     '''
     Fill the recorder status with the recorded data.
     How this data is recorded depends on both level and event_type.
@@ -953,7 +961,7 @@ def _get_recorder_data(gid, rec_status):
     # get the recording
     if level == "neuron":
         if ev_type == "continuous":
-            get_next_time(gid, time_ids, times)
+            get_next_time(gid, time_ids, times, time_units)
             res_times = np.linspace(
                 times[0]*resolution, times[1]*resolution, int(times[2]))
         else:
@@ -964,7 +972,7 @@ def _get_recorder_data(gid, rec_status):
                 neuron = data_ids[0].ul
                 res_obs[neuron] = data
                 if ev_type == "discrete":
-                    get_next_time(gid, time_ids, times)
+                    get_next_time(gid, time_ids, times, time_units)
                     res_times[neuron] = times
                     assert neuron == int(time_ids[0].ul), "Internal error!"
             # clear data
@@ -974,7 +982,7 @@ def _get_recorder_data(gid, rec_status):
             times.clear()
     elif level == "neurite":
         if ev_type == "continuous":
-            get_next_time(gid, time_ids, times)
+            get_next_time(gid, time_ids, times, time_units)
             res_times = np.linspace(
                 times[0]*resolution, times[1]*resolution, int(times[2]))
         else:
@@ -992,7 +1000,7 @@ def _get_recorder_data(gid, rec_status):
                 # set data
                 res_obs[neuron][neurite] = data
                 if ev_type == "discrete":
-                    get_next_time(gid, time_ids, times)
+                    get_next_time(gid, time_ids, times, time_units)
                     res_times[neuron][neurite] = times
                     assert neuron  == int(time_ids[0].ul), "Internal error!"
                     assert neurite == _to_string(time_ids[1].s), "Internal error!"
@@ -1010,7 +1018,7 @@ def _get_recorder_data(gid, rec_status):
                 neuron           = int(data_ids[0].ul)
                 neurite          = _to_string(data_ids[1].s)
                 gc               = int(data_ids[2].ul)
-                get_next_time(gid, time_ids, times)
+                get_next_time(gid, time_ids, times, time_units)
                 assert neuron   == int(time_ids[0].ul), "Internal error!"
                 assert neurite  == _to_string(time_ids[1].s), "Internal error!"
                 assert gc       == int(time_ids[2].ul), "Internal error!"
@@ -1096,7 +1104,8 @@ def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
                 "{} s.".format(resol)
 
     # check the validity of the levels
-    pos_auto = []
+    # valid_levels is defined in _helpers.py
+    pos_auto  = []
     new_level = []
     for i, (level, obs) in enumerate(zip(levels, observables)):
         if level == "auto":
@@ -1108,7 +1117,7 @@ def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
                     break
         elif obs not in valid_levels[level]:
             valid_lvl = []
-            for k, v in valid_levels:
+            for k, v in valid_levels.items():
                 if obs in v:
                     valid_lvl.append(k)
             raise RuntimeError("Valid levels for observable "
@@ -1128,8 +1137,9 @@ def _check_neurons_obs(targets, observables):
     these neurons.
     '''
     invalid_neurons = []
-    invalid_obs = {obs: [] for obs in observables}
-    invalid = False
+    invalid_obs     = {obs: [] for obs in observables}
+    invalid         = False
+
     for n in targets:
         if GetObjectType(n) != "neuron":
             invalid_neurons.append(n)
@@ -1139,6 +1149,7 @@ def _check_neurons_obs(targets, observables):
                 if obs not in n_obs:
                     invalid_obs[obs].append(n)
                     invalid = True
+
     if invalid_neurons:
         raise RuntimeError("Invalid targets: {}.".format(invalid_neurons))
     if invalid:

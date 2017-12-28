@@ -41,7 +41,7 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     : parent_(p)
     , branching_model_(Branching())
     , name_(name)
-    , observables_({"length", "speed"})
+    , observables_({"length", "speed", "num_growth_cones"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
@@ -112,6 +112,19 @@ void Neurite::init_first_node(BaseWeakNodePtr soma, Point pos, std::string name,
 }
 
 
+void Neurite::finalize()
+{
+    // include the growth cones that were created during the previous substep
+    if (growth_cones_tmp_.size() > 0)
+    {
+        growth_cones_.insert(growth_cones_tmp_.begin(),
+                             growth_cones_tmp_.end());
+    }
+
+    growth_cones_tmp_.clear();
+}
+
+
 /**
  * @brief store kernel parameters locally to avoid repeated calls
  *
@@ -147,25 +160,24 @@ void Neurite::update_kernel_variables()
  */
 void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
 {
+    // include the growth cones that were created during the previous substep
     if (growth_cones_tmp_.size() > 0)
     {
         growth_cones_.insert(growth_cones_tmp_.begin(),
                              growth_cones_tmp_.end());
     }
 
+    growth_cones_tmp_.clear();
+
     // call the branching model specific update
     branching_model_.update_growth_cones(rnd_engine);
 
     // grow all the growth cones
-    size_t cone_n = 0;
     for (auto& gc : growth_cones_)
     {
         assert(gc.second.use_count() == 2);
-        gc.second->grow(rnd_engine, cone_n, substep);
-        cone_n++;
+        gc.second->grow(rnd_engine, gc.first, substep);
     }
-
-    growth_cones_tmp_.clear();
 
     // We remove the growth cones afterwards because death occurs while looping
     // on growth_cones_, hence we cannot modify it.
@@ -277,7 +289,6 @@ void Neurite::delete_cone(size_t cone_n)
     // dead_cones_.push_back(cone_n);
     //}
     // void Neurite::remove_cone(size_t cone_n);
-    printf("entering delete_cone for cone %lu\n", cone_n);
     GCPtr dead_cone = growth_cones_[cone_n];
 #ifndef NDEBUG
     printf(" ############ Cone Deletion #########  \n");
@@ -527,7 +538,7 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
  * where the split occured. This new node becomes the new parent of the
  * existing GrowthCone and of the new GrowthCone that is created.
  */
-void Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
+bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
                                 double new_angle, double old_angle,
                                 double new_diameter, double old_diameter)
 {
@@ -588,7 +599,9 @@ void Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
                branching_cone->get_centrifugal_order());
         assert(new_node->get_child(0) == branching_cone);
         assert(nodes_[new_node->get_nodeID()]->has_child() == true);
+        return true;
     }
+    return false;
 }
 
 
@@ -663,7 +676,10 @@ void Neurite::start_actin_wave(double actin_content)
 //              Utilities Functions
 //#######################################################
 
-int Neurite::num_growth_cones() const { return growth_cones_.size(); }
+unsigned int Neurite::num_growth_cones() const
+{
+    return growth_cones_.size() + growth_cones_tmp_.size();
+}
 
 
 /**

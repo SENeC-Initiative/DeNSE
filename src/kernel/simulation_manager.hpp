@@ -31,7 +31,7 @@ class SimulationManager : public ManagerInterface
     virtual void set_status(const statusMap &);
     virtual void get_status(statusMap &) const;
     void num_threads_changed(int num_omp);
-    void new_branching_event(const branchingEvent& ev);
+    void new_branching_event(const Event& ev);
 
     Time get_time() const;
     double get_resolution() const;
@@ -48,8 +48,8 @@ class SimulationManager : public ManagerInterface
     double previous_resolution_;
     std::vector<Time::timeStep> step_;
     std::vector<double> substep_;
-    std::vector<branchingEvent> branching_ev_;
-    std::vector<branchingEvent> branching_ev_tmp_;
+    std::vector<Event> branching_ev_;
+    std::vector<Event> branching_ev_tmp_;
     Time::timeStep final_step_;
     Time initial_time_;
     Time final_time_;
@@ -60,9 +60,9 @@ class SimulationManager : public ManagerInterface
 
 
 /**
- * @brief compare the times of branchingEvents
+ * @brief compare the times of Events
  */
-auto ev_greater = [](const branchingEvent& lhs, const branchingEvent& rhs)
+auto ev_greater = [](const Event& lhs, const Event& rhs)
 {
     return std::tie(std::get<0>(lhs), std::get<1>(lhs))
            > std::tie(std::get<0>(rhs), std::get<1>(rhs));

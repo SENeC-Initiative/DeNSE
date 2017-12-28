@@ -151,6 +151,12 @@ extern const std::string record_to;
 extern const std::string restrict_to;
 extern const std::string targets;
 
+extern const signed char lateral_branching;
+extern const signed char gc_splitting;
+extern const signed char gc_deletion;
+
+extern const std::string num_growth_cones;
+
 }
 
 }

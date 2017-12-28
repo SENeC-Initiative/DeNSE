@@ -23,13 +23,11 @@ __all__.extend("SaveToJson")
 try:
     import matplotlib.pyplot as _plt
     _with_plot = True
+    from . import plot
+    from .plot import *
+    __all__.extend(plot.__all__)
 except ImportError:
     _with_plot = False
-
-
-if _with_plot:
-    from .plot import Animate, PlotNeuron, BtmorphVisualize
-    __all__.extend(("Animate", "PlotNeuron"))
 
 
 # initialize the growth library

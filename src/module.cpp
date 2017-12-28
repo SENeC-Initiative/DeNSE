@@ -300,9 +300,9 @@ bool get_next_recording(size_t gid, std::vector<Property>& ids,
 
 
 bool get_next_time(size_t gid, std::vector<Property>& ids,
-                   std::vector<double>& values)
+                   std::vector<double>& values, const std::string& time_units)
 {
-    return kernel().record_manager.get_next_time(gid, ids, values);
+    return kernel().record_manager.get_next_time(gid, ids, values, time_units);
 }
 
 

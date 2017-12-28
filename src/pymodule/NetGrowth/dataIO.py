@@ -112,17 +112,22 @@ def NeuronsFromSimulation(simulation_path, population_to_singles=False):
     A list of netgrowth_format = {"gid":gid,"data":file_,"info":json.load(open(simulation_path+".json"))}
     """
 
-    neurons={}
-    print( "importing population from {}".format(simulation_path))
-    simulation_path=simulation_path
+    neurons         = {}
+    simulation_path = simulation_path
+
     try:
-        imported_list, gids = ImportSwc(os.path.join(simulation_path,"morphology.swc"))
+        imported_list, gids = ImportSwc(os.path.join(
+            simulation_path,"morphology.swc"))
     except:
-        print ("WARNING: {} not found: Neurons have already been splitted".format(os.path.join(simulation_path,"morphology.swc")))
-        imported_list = [os.path.join(simulation_path, f) for f in listdir(simulation_path) if f.endswith(".swc") and f != "morphology.swc"]
+        print("WARNING: {} not found: Neurons have already been "
+              "split".format(os.path.join(simulation_path,"morphology.swc")))
+        imported_list = [
+            os.path.join(simulation_path, f) for f in listdir(simulation_path)
+            if f.endswith(".swc") and f != "morphology.swc"
+        ]
+
     gids= len(imported_list)
 
-    print( "This population has {} neurons".format(gids))
     def parse_gid(_file):
         with open(file_,'r') as fp:
             line = fp.readline()
@@ -131,15 +136,18 @@ def NeuronsFromSimulation(simulation_path, population_to_singles=False):
             return line[1].rstrip()
 
     for file_ in imported_list:
-        gid = parse_gid(file_)
-        netgrowth_format = {"gid":gid,"data":file_}
-        neurons[gid]=netgrowth_format
+        gid              = parse_gid(file_)
+        netgrowth_format = {"gid": gid, "data":file_}
+        neurons[gid]     = netgrowth_format
     try:
-        info=json.load(open(os.path.join(simulation_path,"info.json")))
+        info = json.load(open(os.path.join(simulation_path,"info.json")))
     except:
-        raise ValueError("ERROR: {} not found".format(os.path.join(simulation_path,"info.json")))
-    info["gids"]=gids
-    neurons = {"neurons":neurons,"info":info}
+        raise ValueError("ERROR: {} not found".format(
+            os.path.join(simulation_path,"info.json")))
+
+    info["gids"] = gids
+    neurons      = {"neurons": neurons, "info": info}
+
     return neurons
 
 

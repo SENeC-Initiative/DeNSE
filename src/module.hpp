@@ -118,7 +118,7 @@ bool get_next_recording(size_t gid, std::vector<Property>& ids,
 
 
 bool get_next_time(size_t gid, std::vector<Property>& ids,
-                   std::vector<double>& values);
+                   std::vector<double>& values, const std::string& time_units);
 
 
 /* tools */

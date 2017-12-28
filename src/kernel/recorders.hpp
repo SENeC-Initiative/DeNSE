@@ -12,6 +12,7 @@
 // includes from libgrowth
 #include "config.hpp"
 #include "elements_types.hpp"
+#include "growth_time.hpp"
 
 
 namespace growth
@@ -23,17 +24,26 @@ namespace growth
 typedef void (*ptRecorder)(GCPtr, std::ofstream &);
 
 typedef std::unordered_map< std::string, std::vector<double> > mapNameVecDouble;
+typedef std::unordered_map< std::string, std::vector<Time> > mapNameVecTime;
 typedef std::vector< std::vector<double> > vVecDouble;
-typedef std::vector<std::array<double, 3>> vArray3Double;
+typedef std::vector<std::array<Time, 2>> vArrayTime;
 
 typedef std::unordered_map< size_t, std::vector<double> > neuronRec;
+typedef std::unordered_map< size_t, std::vector<Time> > neuronTimeRec;
 
 typedef std::unordered_map<size_t, mapNameVecDouble> neuriteRec;
+typedef std::unordered_map<size_t, mapNameVecTime> neuriteTimeRec;
 
 typedef std::unordered_map<
     size_t, std::unordered_map<std::string, vVecDouble> > gcRec;
 typedef std::unordered_map<
-    size_t, std::unordered_map<std::string, vArray3Double> > gcContinuousTimes;
+    size_t, std::unordered_map<std::string, vArrayTime> > gcContinuousTimes;
+typedef std::unordered_map<
+    size_t, std::unordered_map<
+        std::string, std::vector< std::vector<Time> > > > gcDiscreteTimes;
+typedef std::unordered_map<
+    size_t, std::unordered_map<
+        std::string, std::vector<size_t> > > gcNumTimes;
 
 
 /*
@@ -47,14 +57,15 @@ class BaseRecorder
     BaseRecorder();
 
     virtual void record();
-    virtual void record(const branchingEvent& ev, float resolution);
+    virtual void record(const Event& ev);
 
     virtual unsigned int get_event_type() const;
     virtual unsigned int get_level() const;
     virtual bool get_next_recording(std::vector<Property>& ids,
                                     std::vector<double>& values);
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values);
+                               std::vector<double>& values,
+                               const std::string& time_units);
     void reset_iterations();
     virtual void final_timestep(size_t step);
 
@@ -93,12 +104,14 @@ class NeuronContinuousRecorder : public BaseRecorder
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     neuronRec recording_;
-    std::array<double, 3> times_;
+    std::array<Time, 2> times_;
+    size_t num_times_;
     neuronRec::const_iterator neuron_it_;
 };
 
@@ -108,21 +121,22 @@ class NeuronDiscreteRecorder : public BaseRecorder
   public:
     NeuronDiscreteRecorder();
 
-    virtual void record(const branchingEvent& ev, float resolution) override;
+    virtual void record(const Event& ev) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     neuronRec recording_;
-    neuronRec times_;
+    neuronTimeRec times_;
     neuronRec::const_iterator neuron_it_;
-    neuronRec::const_iterator time_it_;
+    neuronTimeRec::const_iterator time_it_;
 };
 
 
@@ -139,12 +153,14 @@ class NeuriteContinuousRecorder : public BaseRecorder
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     neuriteRec recording_;
-    std::array<double, 3> times_;
+    std::array<Time, 2> times_;
+    size_t num_times_;
     neuriteRec::const_iterator neuron_it_;
     mapNameVecDouble::const_iterator neurite_it_;
     mapNameVecDouble::const_iterator neurite_endit_;
@@ -156,25 +172,26 @@ class NeuriteDiscreteRecorder : public BaseRecorder
   public:
     NeuriteDiscreteRecorder();
 
-    virtual void record(const branchingEvent& ev, float resolution) override;
+    virtual void record(const Event& ev) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     neuriteRec recording_;
-    neuriteRec times_;
+    neuriteTimeRec times_;
     neuriteRec::const_iterator v_neuron_it_;
     mapNameVecDouble::const_iterator v_neurite_it_;
     mapNameVecDouble::const_iterator v_neurite_endit_;
-    neuriteRec::const_iterator t_neuron_it_;
-    mapNameVecDouble::const_iterator t_neurite_it_;
-    mapNameVecDouble::const_iterator t_neurite_endit_;
+    neuriteTimeRec::const_iterator t_neuron_it_;
+    mapNameVecTime::const_iterator t_neurite_it_;
+    mapNameVecTime::const_iterator t_neurite_endit_;
 };
 
 
@@ -191,12 +208,14 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     gcRec recording_;
     gcContinuousTimes times_;
+    gcNumTimes num_times_;
     // value iterators
     gcRec::const_iterator v_neuron_it_;
     std::unordered_map<std::string, vVecDouble>::const_iterator v_neurite_it_;
@@ -206,9 +225,9 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     // time iterators
     gcContinuousTimes::const_iterator t_neuron_it_;
     std::unordered_map<
-        std::string, vArray3Double>::const_iterator t_neurite_it_;
+        std::string, vArrayTime>::const_iterator t_neurite_it_;
     std::unordered_map<
-        std::string, vArray3Double>::const_iterator t_neurite_endit_;
+        std::string, vArrayTime>::const_iterator t_neurite_endit_;
     size_t t_gc_pos_;
     size_t t_gc_endpos_;
 };
@@ -219,19 +238,20 @@ class GrowthConeDiscreteRecorder : public BaseRecorder
   public:
     GrowthConeDiscreteRecorder();
 
-    virtual void record() override;
+    virtual void record(const Event& ev) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
     virtual bool get_next_recording(std::vector<Property>& ids,
                             std::vector<double>& values) override;
     virtual bool get_next_time(std::vector<Property>& ids,
-                               std::vector<double>& values) override;
+                               std::vector<double>& values,
+                               const std::string& time_units) override;
     virtual void set_status(const statusMap &status) override;
 
   private:
     gcRec recording_;
-    gcRec times_;
+    gcDiscreteTimes times_;
     // value iterators
     gcRec::const_iterator v_neuron_it_;
     std::unordered_map<std::string, vVecDouble>::const_iterator v_neurite_it_;
@@ -239,9 +259,13 @@ class GrowthConeDiscreteRecorder : public BaseRecorder
     size_t v_gc_pos_;
     size_t v_gc_endpos_;
     // time iterators
-    gcRec::const_iterator t_neuron_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator t_neurite_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator t_neurite_endit_;
+    gcDiscreteTimes::const_iterator t_neuron_it_;
+    std::unordered_map<
+        std::string, std::vector<
+            std::vector<Time> > >::const_iterator t_neurite_it_;
+    std::unordered_map<
+        std::string, std::vector<
+            std::vector<Time> > >::const_iterator t_neurite_endit_;
     size_t t_gc_pos_;
     size_t t_gc_endpos_;
 };

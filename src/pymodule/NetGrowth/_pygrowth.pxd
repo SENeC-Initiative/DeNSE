@@ -122,9 +122,11 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef vector[size_t] get_neurons() except +
 
     cdef void get_defaults(const string& object_name,
-                           const string& object_type, statusMap &status) except +
+                           const string& object_type,
+                           statusMap &status) except +
 
-    cdef void get_models(vector[string]& models, const string& object_type) except +
+    cdef void get_models(vector[string]& models,
+                         const string& object_type) except +
 
     cdef void get_recorder_type(size_t gid, string& level,
                                 string& event_type) except +
@@ -133,13 +135,15 @@ cdef extern from "../module.hpp" namespace "growth":
                                  vector[double]& values) except +
 
     cdef bool get_next_time(size_t gid, vector[Property]& ids,
-                            vector[double]& values) except +
+                            vector[double]& values,
+                            const string& time_units) except +
 
     cdef string object_type(size_t gid) except +
 
     cdef void reset_kernel() except +
 
-    cdef void set_kernel_status(statusMap status_dict, string c_simulation_ID) except +
+    cdef void set_kernel_status(statusMap status_dict,
+                                string c_simulation_ID) except +
 
     cdef string get_simulation_ID() except +
 
@@ -149,7 +153,8 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void simulate(const CTime& simtime) except +
 
-    cdef void test_random_generator(vector[vector[double]]& values, size_t size) except+
+    cdef void test_random_generator(vector[vector[double]]& values,
+                                    size_t size) except+
 
 
 # ---------------------- #

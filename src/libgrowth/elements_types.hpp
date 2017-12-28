@@ -10,6 +10,7 @@
 
 #include "config.hpp"
 #include "spatial_types.hpp"
+#include "growth_time.hpp"
 
 namespace growth
 {
@@ -36,7 +37,7 @@ typedef std::vector<std::vector<double>> Random_vecs;
 typedef std::unordered_map<std::string, double> Param;
 typedef std::array<std::vector<double>, 3> PointsArray;
 typedef std::array<double, 3> PointArray;
-typedef std::tuple<size_t, double, size_t, std::string> branchingEvent;
+typedef std::tuple<size_t, double, size_t, std::string, signed char> Event;
 
 
 /*

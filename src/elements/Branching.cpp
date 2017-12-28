@@ -2,6 +2,7 @@
 
 // C++ includes
 #include <functional>
+#include <cmath>
 
 // kernel includes
 #include "kernel_manager.hpp"
@@ -15,8 +16,8 @@
 namespace growth
 {
 
-const branchingEvent invalid_ev(
-    std::make_tuple(0, std::nan(""), 0, std::string("")));
+const Event invalid_ev(
+    std::make_tuple(0, std::nan(""), 0, std::string(""), -1));
 
 
 Branching::Branching()
@@ -80,10 +81,12 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
             double new_substep = old_steps*resol
                                + old_substep - new_steps*resol;
 
-            next_lateral_event_ =
-                std::make_tuple(
-                    new_steps, new_substep, std::get<2>(next_lateral_event_),
-                    std::get<3>(next_lateral_event_));
+            next_lateral_event_ = std::make_tuple(
+                new_steps, new_substep,
+                std::get<2>(next_lateral_event_),
+                std::get<3>(next_lateral_event_),
+                std::get<4>(next_lateral_event_)
+            );
 
             // send it to the simulation and recorder managers
             kernel().simulation_manager.new_branching_event(
@@ -105,10 +108,12 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
             double new_substep = old_steps*resol
                                + old_substep - new_steps*resol;
 
-            next_vanpelt_event_ =
-                std::make_tuple(
-                    new_steps, new_substep, std::get<2>(next_vanpelt_event_),
-                    std::get<3>(next_vanpelt_event_));
+            next_vanpelt_event_ = std::make_tuple(
+                new_steps, new_substep,
+                std::get<2>(next_vanpelt_event_),
+                std::get<3>(next_vanpelt_event_),
+                std::get<4>(next_vanpelt_event_)
+            );
 
             // send it to the simulation and recorder managers
             kernel().simulation_manager.new_branching_event(
@@ -154,25 +159,31 @@ void Branching::update_growth_cones(mtPtr rnd_engine)
  *
  * @param step present step of the simulator
  * @param rnd_engine
+ *
+ * @return whether the branching event was successful or not.
  */
-void Branching::branching_event(mtPtr rnd_engine, const branchingEvent& ev)
+bool Branching::branching_event(mtPtr rnd_engine, const Event& ev)
 {
     // uniform_branching_event
     bool uniform_occurence =
-        (std::get<0>(next_lateral_event_) == std::get<0>(ev))
-        && ((std::get<1>(next_lateral_event_) - std::get<1>(ev)) < 1e-8);
+        (std::get<0>(next_lateral_event_) ==
+         std::get<0>(ev)) &&
+         (std::abs(std::get<1>(next_lateral_event_)
+                   - std::get<1>(ev)) < 1e-8);
     bool van_pelt_occurence =
-        (std::get<0>(next_vanpelt_event_) == std::get<0>(ev))
-        && ((std::get<1>(next_vanpelt_event_) - std::get<1>(ev)) < 1e-8);
+        (std::get<0>(next_vanpelt_event_) ==
+         std::get<0>(ev)) &&
+        (std::abs(std::get<1>(next_vanpelt_event_)
+                  - std::get<1>(ev)) < 1e-8);
     
     if (use_lateral_branching_ and uniform_occurence)
     {
-        uniform_new_branch(rnd_engine);
+        return uniform_new_branch(rnd_engine);
     }
     // verify vanpelt event
     if (use_van_pelt_ and van_pelt_occurence)
     {
-        vanpelt_new_branch(rnd_engine);
+        return vanpelt_new_branch(rnd_engine);
     }
     // verify CR for each growth cone
     if (use_critical_resource_)
@@ -183,7 +194,11 @@ void Branching::branching_event(mtPtr rnd_engine, const branchingEvent& ev)
             {
                 gc.second->reset_CR_demand();
                 CR_new_branch(rnd_engine, gc.second);
+                return true;
             }
+
+            // no new growth cone was created
+            return false;
         }
     }
 }
@@ -236,7 +251,8 @@ void Branching::compute_lateral_event(mtPtr rnd_engine)
     size_t neuron_gid = n->get_gid();
     std::string neurite_name = neurite_->get_name();
     next_lateral_event_ = std::make_tuple(
-        ev_step, ev_substep, neuron_gid, neurite_name);
+        ev_step, ev_substep, neuron_gid, neurite_name,
+        names::lateral_branching);
 
     // send it to the simulation and recorder managers
     kernel().simulation_manager.new_branching_event(next_lateral_event_);
@@ -257,7 +273,7 @@ void Branching::compute_lateral_event(mtPtr rnd_engine)
  *
  * @param rnd_engine
  */
-void Branching::uniform_new_branch(mtPtr rnd_engine)
+bool Branching::uniform_new_branch(mtPtr rnd_engine)
 {
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching @@@@@@@@\n");
@@ -317,6 +333,12 @@ void Branching::uniform_new_branch(mtPtr rnd_engine)
     }
 
     compute_lateral_event(rnd_engine);
+
+    if (max == 0)
+    {
+        return false;
+    }
+    return true;
 }
 
 //###################################################
@@ -388,7 +410,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
         size_t neuron_gid = n->get_gid();
         std::string neurite_name = neurite_->get_name();
         next_vanpelt_event_ = std::make_tuple(
-            ev_step, ev_substep, neuron_gid, neurite_name);
+            ev_step, ev_substep, neuron_gid, neurite_name, names::gc_splitting);
 
         // send it to the simulation and recorder managers
         kernel().simulation_manager.new_branching_event(next_vanpelt_event_);
@@ -409,7 +431,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
  * @function growth_cone_split(...)
  *
  */
-void Branching::vanpelt_new_branch(mtPtr rnd_engine)
+bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
 {
     // simple implementation of a reservoir sampling algorithm for weigthed
     // choice
@@ -440,12 +462,13 @@ void Branching::vanpelt_new_branch(mtPtr rnd_engine)
     double new_diameter = old_diameter;
     neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
                                        new_diameter, old_diameter);
-    neurite_->growth_cone_split(next_vanpelt_cone_, new_length, new_angle,
-                                old_angle, new_diameter, old_diameter);
+    bool success = neurite_->growth_cone_split(
+        next_vanpelt_cone_, new_length, new_angle, old_angle, new_diameter,
+        old_diameter);
 
     next_vanpelt_event_ = invalid_ev;
     compute_vanpelt_event(rnd_engine);
-    // compute_next_event(rnd_engine);
+    return success;
 }
 
 

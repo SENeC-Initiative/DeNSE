@@ -84,7 +84,8 @@ if __name__ =='__main__':
 
     neuron_params['position'] = np.random.uniform(-1000, 1000, (5, 2))
 
-    gids = ng.CreateNeurons(n= 5, growth_cone_model='random_walk',
+    num_neurons = 5
+    gids = ng.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
@@ -96,7 +97,7 @@ if __name__ =='__main__':
     Create recorders
     '''
 
-    gids_rec = ng.CreateRecorders(gids, "length", levels="growth_cone")
+    gids_rec = ng.CreateRecorders(gids, "length", levels="neurite")
 
     print(gids_rec, ng.GetStatus(gids_rec))
 
@@ -104,4 +105,6 @@ if __name__ =='__main__':
 
     step(100, 0, False)
 
-    pprint(ng.GetStatus(gids_rec))
+    data = ng.GetStatus(gids_rec)["recording"]
+
+    ng.PlotRecording(gids_rec, show=True)

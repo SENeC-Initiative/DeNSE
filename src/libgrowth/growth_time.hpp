@@ -1,6 +1,7 @@
 #ifndef TIME_H
 #define TIME_H
 
+#include <cstdlib>
 #include <limits>
 
 namespace growth
@@ -27,6 +28,7 @@ class Time
     static void reset_resolution();
     static void set_resolution(double resolution);
 
+    static Time from_steps(size_t step, double substep);
     static timeStep to_steps(const Time &t);
 
   private:
@@ -53,11 +55,20 @@ class Time
     unsigned char get_hour() const;
     unsigned char get_day() const;
 
+    void get_sec(double sec) const;
+    void get_min(double min) const;
+    void get_hour(double hour) const;
+    void get_day(double day) const;
+
+    double get_total_seconds() const;
+    double get_total_minutes() const;
+    double get_total_hours() const;
+    double get_total_days() const;
+
     void set_sec(float seconds);
     void set_min(unsigned char minutes);
     void set_hour(unsigned char hours);
     void set_day(unsigned char days);
-    double get_total_seconds() const;
 };
 
 /*

@@ -15,7 +15,19 @@ const unsigned int Time::MAX_SEC_HMS(86399); // 23 h 59 min 59 s (in seconds)
 
 void Time::reset_resolution() { RESOLUTION = DEFAULT_RESOLUTION; }
 
+
 void Time::set_resolution(double resolution) { RESOLUTION = resolution; }
+
+
+Time Time::from_steps(size_t step, double substep)
+{
+    Time t = Time();
+    t.update(step);
+    t.set_sec(substep / RESOLUTION);
+
+    return t;
+}
+
 
 // Time
 
@@ -26,6 +38,7 @@ Time::Time()
     , day_(0)
 {
 }
+
 
 Time::Time(float seconds, unsigned char minutes, unsigned char hours,
            unsigned char days)
@@ -40,6 +53,7 @@ Time::Time(float seconds, unsigned char minutes, unsigned char hours,
     set_sec(seconds);
 }
 
+
 Time::Time(const Time &initial_time, Time::timeStep steps = 0L)
     : sec_(initial_time.get_sec())
     , min_(initial_time.get_min())
@@ -48,6 +62,7 @@ Time::Time(const Time &initial_time, Time::timeStep steps = 0L)
 {
     update(steps);
 }
+
 
 void Time::update(Time::timeStep steps)
 {
@@ -82,13 +97,35 @@ double Time::get_total_seconds() const
 }
 
 
+double Time::get_total_minutes() const
+{
+    return sec_ / 60. + min_ + hour_ * 60 + day_ * 1440;
+}
+
+
+double Time::get_total_hours() const
+{
+    return sec_ / 3600. + min_ / 60. + hour_ + day_ * 24;
+}
+
+
+double Time::get_total_days() const
+{
+    return sec_ / 86400. + min_ / 1440. + hour_ / 24. + day_;
+}
+
+
 float Time::get_sec() const { return sec_; }
+
 
 unsigned char Time::get_min() const { return min_; }
 
+
 unsigned char Time::get_hour() const { return hour_; }
 
+
 unsigned char Time::get_day() const { return day_; }
+
 
 // setters
 
@@ -103,6 +140,7 @@ void Time::set_sec(float seconds)
     }
 }
 
+
 void Time::set_min(unsigned char minutes)
 {
     min_ = minutes;
@@ -113,6 +151,7 @@ void Time::set_min(unsigned char minutes)
         hour_ += minutes;
     }
 }
+
 
 void Time::set_hour(unsigned char hours)
 {
@@ -125,7 +164,9 @@ void Time::set_hour(unsigned char hours)
     }
 }
 
+
 void Time::set_day(unsigned char days) { day_ = days; }
+
 
 // convert time to steps
 
@@ -149,6 +190,7 @@ Time::timeStep Time::to_steps(const Time &t)
     return steps;
 }
 
+
 // operators
 
 Time &Time::operator+=(const Time &rhs)
@@ -160,11 +202,13 @@ Time &Time::operator+=(const Time &rhs)
     return *this;
 }
 
+
 Time operator+(Time lhs, const Time &rhs)
 {
     lhs += rhs;
     return lhs;
 }
+
 
 Time &Time::operator-=(const Time &rhs)
 {

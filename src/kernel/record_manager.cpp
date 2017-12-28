@@ -33,7 +33,7 @@ void RecordManager::initialize()
 
     for (size_t i=0; i<num_omp; i++)
     {
-        omp_id_rec_.push_back(std::vector<size_t>());
+        omp_id_crec_.push_back(std::vector<size_t>());
     }
 }
 
@@ -44,7 +44,7 @@ void RecordManager::initialize()
  */
 void RecordManager::finalize()
 {
-    omp_id_rec_.clear();
+    omp_id_crec_.clear();
     c_recorders_.clear();
     d_recorders_.clear();
     neuron_to_d_recorder_.clear();
@@ -171,9 +171,6 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                         __FUNCTION__, __FILE__, __LINE__);
             }
 
-            // assign recorder to a specific thread
-            omp_id_rec_[last_omp_id_].push_back(gid);
-
             // set status and, if discrete, map targets to the recorder
             if (event_type == "discrete")
             {
@@ -182,13 +179,23 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
 
                 for (size_t n : local_targets)
                 {
-                    neuron_to_d_recorder_[n] = gid;
+                    auto it = neuron_to_d_recorder_.find(n);
+                    if (it == neuron_to_d_recorder_.end())
+                    {
+                        neuron_to_d_recorder_[n] = std::vector<size_t>();
+                    }
+                    neuron_to_d_recorder_[n].push_back(gid);
                 }
+                
+                // assign recorder to a specific thread
+                omp_id_drec_[last_omp_id_].push_back(gid);
             }
             else
             {
                 // set recorder status
                 c_recorders_[gid]->set_status(local_status);
+                // assign recorder to a specific thread
+                omp_id_crec_[last_omp_id_].push_back(gid);
             }
 
             // update last_omp_id_
@@ -222,9 +229,20 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
  */
 void RecordManager::record(int omp_id)
 {
-    for (size_t gid : omp_id_rec_[omp_id])
+    for (size_t gid : omp_id_crec_[omp_id])
     {
         c_recorders_[gid]->record();
+    }
+
+    for (auto event : events_)
+    {
+        double resol = kernel().simulation_manager.get_resolution();
+        
+        size_t neuron = std::get<2>(event);
+        for (size_t rec : omp_id_drec_[omp_id])
+        {
+            d_recorders_[rec]->record(event);
+        }
     }
 }
 
@@ -270,18 +288,19 @@ size_t RecordManager::num_recorders() const
 
 void RecordManager::num_threads_changed(int num_omp)
 {
-    omp_id_rec_.clear();
+    omp_id_crec_.clear();
+    omp_id_drec_.clear();
     num_threads_ = num_omp;
 
     for (size_t i=0; i<num_omp; i++)
     {
-        omp_id_rec_.push_back(std::vector<size_t>());
+        omp_id_crec_.push_back(std::vector<size_t>());
+        omp_id_drec_.push_back(std::vector<size_t>());
     }
 }
 
 
-void RecordManager::new_branching_event(const branchingEvent& ev,
-                                        float resolution)
+void RecordManager::new_branching_event(const Event& ev)
 {
     if (!d_recorders_.empty())
     {
@@ -290,7 +309,10 @@ void RecordManager::new_branching_event(const branchingEvent& ev,
 
         if (it != neuron_to_d_recorder_.end())
         {
-            d_recorders_[it->second]->record(ev, resolution);
+            for (auto rec_gid : it->second)
+            {
+                d_recorders_[rec_gid]->record(ev);
+            }
         }
     }
 }
@@ -409,18 +431,19 @@ bool RecordManager::get_next_recording(size_t gid, std::vector<Property>& ids,
 
 
 bool RecordManager::get_next_time(size_t gid, std::vector<Property>& ids,
-                                  std::vector<double>& values)
+                                  std::vector<double>& values,
+                                  const std::string& time_units)
 {
     auto c_it = c_recorders_.find(gid);
     auto d_it = d_recorders_.find(gid);
 
     if (c_it != c_recorders_.end())
     {
-        return c_recorders_[gid]->get_next_time(ids, values);
+        return c_recorders_[gid]->get_next_time(ids, values, time_units);
     }
     else if (d_it != d_recorders_.end())
     {
-        return d_recorders_[gid]->get_next_time(ids, values);
+        return d_recorders_[gid]->get_next_time(ids, values, time_units);
     }
     else
     {

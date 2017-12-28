@@ -83,9 +83,6 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
             {
                 local_params[param.first] = param.second;
             }
-#ifndef NDEBUG
-            printf("\nAXON PARAMETERS \n");
-#endif
             neuron->set_neurite_status("axon", local_params);
 
             local_params = neuron_params[idx];
@@ -93,9 +90,6 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
             {
                 local_params[param.first] = param.second;
             }
-#ifndef NDEBUG
-            printf("\nDENDRITE PARAMETERS \n");
-#endif
             neuron->set_neurite_status("dendrites", local_params);
 
             local_neurons.push_back(neuron);

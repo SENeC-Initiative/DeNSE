@@ -40,7 +40,7 @@ dendrite_params = {
 def step(n, loop_n, plot=True):
     ng.Simulate(n)
     if plot:
-        ng.PlotNeuron(show_nodes=True, show=True)
+        ng.PlotNeuron(show_nodes=True, show=False)
 
 
 if __name__ =='__main__':
@@ -78,6 +78,8 @@ if __name__ =='__main__':
     '''
 
     gids_rec = ng.CreateRecorders(gids, "length", levels="growth_cone")
+    rec_ngc  = ng.CreateRecorders(
+        gids, "num_growth_cones", levels="neuron")
 
     #~ step(6000, 0, True)
     #~ for i in range(10):
@@ -85,6 +87,9 @@ if __name__ =='__main__':
         #~ step(2000, 0, True)
     for i in range(10):
         print("\nNew step block")
-        step(2000, 0, True)
+        step(2000, 0, False)
+
+    ng.PlotNeuron(show_nodes=True, show=True)
 
     #~ pprint(ng.GetStatus(gids_rec))
+    ng.PlotRecording(rec_ngc, time_units="minutes")

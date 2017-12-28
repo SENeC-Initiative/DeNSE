@@ -162,30 +162,33 @@ def SplitSwcFile(input_file):
     """
 
     f = open(input_file, 'r')
+
     if not input_file.endswith("morphology.swc"):
-        raise ValueError("SwcFile: morphology.swc expected  instead {} got".format(input_file))
-    filename=input_file[:-14]
+        raise ValueError("SwcFile: morphology.swc expected  instead "
+                         "{} got".format(input_file))
+    filename = input_file[:-14]
 
     if not os.path.exists(filename):
         raise ValueError("NetGrowth simulation folder not found")
         os.makedirs(filename)
 
-    neuron=[]
-    gid = None
-    stored_data=False
+    neuron      = []
+    gid         = None
+    stored_data = False
+
     for line in f:
         if line.startswith('#start_neuron'):
-            line = line.split(" ")
-            gid = line[2].rstrip()
-            neuron =["#gid "+gid+"\n"]
+            line   = line.split(" ")
+            gid    = line[2].rstrip()
+            neuron = ["#gid "+gid+"\n"]
         elif not line.startswith('#') and line.strip():
-            stored_data=True
-            # print (line)
+            stored_data = True
             neuron.append(line)
         elif stored_data and line.startswith('#end_neuron'):
-            # print( "write", neuron)
-            _lines_to_file(neuron,os.path.join(filename,"neuron_"+gid.zfill(6)+".swc"))
-            stored_data=False
+            _lines_to_file(neuron,os.path.join(
+                filename,"neuron_"+gid.zfill(6)+".swc"))
+            stored_data = False
+
     return gid
 
 
@@ -200,16 +203,18 @@ def SwcToSegments(input_file, angle_thresh, length_thresh, element_type=[3]):
 
 
     segments = segment_from_swc(input_file, element_type)
-    # print(segments)
-    # plt.plot(segments)
-    paths=[]
+    paths    = []
+
     for seg in segments:
         if len(seg)>2:
             segment = SegmentToPath(seg)
             paths.extend(SegmentFromAngularThresh(segment,angle_thresh))
-    paths =np.array(omologate(paths, length_thresh))
-    if paths.shape[0] ==0:
+
+    paths = np.array(omologate(paths, length_thresh))
+
+    if paths.shape[0] == 0:
         raise ValueError("Segments list is empty")
+
     return paths
 
 
@@ -226,12 +231,16 @@ def SegmentsToNetgrowth(paths, name, info):
         }
     , "info":simulation_parameters}
     """
-    NetGrowth_data ={}
-    NetGrowth_data["info"]={"name":name,"description":info}
-    neurons = {}
+    neurons        = {}
+    NetGrowth_data = {
+        "info": {"name": name, "description": info}
+    }
+
     for n, path in enumerate(paths):
-        neurons[n]={"gid":n, "data":path.transpose()}
-    NetGrowth_data["neurons"]=neurons
+        neurons[n] = {"gid":n, "data": path.transpose()}
+
+    NetGrowth_data["neurons"] = neurons
+
     return NetGrowth_data
 
 
@@ -253,15 +262,14 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
         elif neuron.shape[1]==6:
             xy= neuron[:,2:4].transpose()
         else:
-            raise ValueError("Data type not understood, number neuron parameters: {}".format(neuron.shape[1]))
+            raise ValueError("Data type not understood, number neuron "
+                             "parameters: {}".format(neuron.shape[1]))
         try:
             angles=_angles_from_xy(xy)
         except:
             raise ValueError("xy neuron data ar ill formed. xy is {}", xy.shape)
         modules=_module_from_xy(xy)
         return (xy,modules,angles,None),None
-
-
     elif isfile(neuron) and neuron.endswith(".swc"):
         neuron = np.loadtxt(neuron)
         axon = np.where(neuron[:,1] == axon_ID)[0]
@@ -273,15 +281,19 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
         try:
             angles_axon=_angles_from_xy(axon_xy)
         except:
-            raise ValueError("xy neuron data ar ill formed. neuron[axon] is {}, while axon_xy is {}".format(neuron[axon].shape, axon_xy.shape))
+            raise ValueError(
+                "xy neuron data ar ill formed. neuron[axon] is "
+                "{}, while axon_xy is {}".format(neuron[axon].shape,
+                                                 axon_xy.shape))
         try:
             angles_dendrite=_angles_from_xy(dendrite_xy)
         except:
             warnings.warn("no dendrites in this run")
             return (axon_xy, angles_axon, _module_from_xy(axon_xy), axon_diam), None
 
-        return (axon_xy,_module_from_xy(axon_xy),angles_axon, axon_diam), (dendrite_xy, _module_from_xy(dendrite_xy),angles_dendrite, dendrite_diam)
-
+        return ((axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam),
+                (dendrite_xy, _module_from_xy(dendrite_xy), angles_dendrite,
+                 dendrite_diam))
     else:
         import btmorph2
         if isinstance(neuron, btmorph2.NeuronMorphology):
@@ -292,7 +304,9 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
             angles=_angles_from_xy(xy)
         except:
             raise ValueError("xy neuron data ar ill formed. xy is {}", xy.shape)
+
         modules=_module_from_xy(xy)
+
         return xy, np.array([modules,angles])
 
 
@@ -346,9 +360,9 @@ def _lines_to_file(neuron, _file):
 
 def  segment_from_swc(input_file, element_type):
     """
-    From a single neuron swc file select one element type and cut the tree in a set of
-    segments without branching.
-    Return them in a list
+    From a single neuron swc file select one element type and cut the tree in a
+    set of segments without branching.
+    Returns them in a list
     """
 
     f = open(input_file, 'r')
@@ -368,7 +382,9 @@ def  segment_from_swc(input_file, element_type):
 def SegmentToPath(segment):
     """
     Convert the segment from SWC file into path,
-    The enriched information will contain the angle difference between two consecutive pieces, the angle is required to clean the path from sudden curves.
+    The enriched information will contain the angle difference between two
+    consecutive pieces, the angle is required to clean the path from sudden
+    curves.
     """
     matrix = np.ndarray((3,len(segment)))
     x_0 = float(segment[0].split()[2])
@@ -387,11 +403,6 @@ def SegmentToPath(segment):
         y_0 = y
         theta_0 = theta
     plt.plot(matrix[0,:],matrix[1,:])
-    # print(matrix[2,matrix[2,:]>1])
-    # print(matrix[2,:])
-    # plt.scatter(matrix[0,matrix[2,:]>1],matrix[1,matrix[2,:]>1], c='g')
-        # if matrix[2][n] > 0.5:
-            # return matrix, segment[n:]
     return matrix
 
 def SegmentFromAngularThresh(segment,thresh):
@@ -401,12 +412,12 @@ def SegmentFromAngularThresh(segment,thresh):
     """
     if np.any(np.abs(segment[2,:])>thresh):
         breakpoints = np.where(np.abs(segment[2,:])>thresh)[0][1:]
-        broken=[]
-        start=0
-        stop=0
+        broken      = []
+        start       = 0
+        stop        = 0
         for stop in breakpoints:
             broken.append(segment[:,start:stop-1])
-            start=stop
+            start = stop
         broken.append(segment[:,stop:])
         return broken
     else:
@@ -417,9 +428,11 @@ def omologate(segments, thresh):
     cut all the segments to 'thresh' length and move each one to start in (0,0)
     remove angle information too
     """
-    paths=[]
+    paths = []
+
     for n, segment in enumerate(segments):
         if segment.shape[1]> thresh:
-            paths.append((np.subtract(segment.transpose() , segment[:,0]).transpose())[:2,:thresh])
+            paths.append((np.subtract(segment.transpose(),
+                                      segment[:,0]).transpose())[:2,:thresh])
     return paths
 

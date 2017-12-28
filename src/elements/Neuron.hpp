@@ -100,10 +100,11 @@ class Neuron : public std::enable_shared_from_this<Neuron>
                      const statusMap &dstatus, mtPtr rnd_engine);
     void initialize_next_event(mtPtr rnd_engine, double new_resolution,
                                size_t previous_step);
+    void finalize();
 
     // Growth functions
     void grow(mtPtr rnd_engine, size_t current_step, double substep);
-    void branch(mtPtr rnd_engine, const branchingEvent& ev);
+    bool branch(mtPtr rnd_engine, const Event& ev);
     void next_actin_event(mtPtr rnd_engine);
 
     // New neurite function

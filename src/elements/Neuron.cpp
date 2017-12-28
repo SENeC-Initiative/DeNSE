@@ -30,7 +30,7 @@ namespace growth
 Neuron::Neuron(size_t gid)
     : gid_(gid)
     , details()
-    , observables_({"length", "speed"})
+    , observables_({"length", "speed", "num_growth_cones"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
     , actin_content_(0)
@@ -158,6 +158,15 @@ void Neuron::initialize_next_event(mtPtr rnd_engine, double new_resolution,
 }
 
 
+void Neuron::finalize()
+{
+    for (auto& neurite : neurites_)
+    {
+        neurite.second->finalize();
+    }
+}
+
+
 //###################################################
 //                  Growth
 //###################################################
@@ -198,11 +207,15 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
 
 /**
  * @brief branch according to the event
+ *
+ * Try to create a new growth cone, either through splitting or lateral
+ * branching and return whether the branching was sucessful.
  */
-void Neuron::branch(mtPtr rnd_engine, const branchingEvent& ev)
+bool Neuron::branch(mtPtr rnd_engine, const Event& ev)
 {
     std::string name_neurite = std::get<3>(ev);
-    neurites_[name_neurite]->branching_model_.branching_event(rnd_engine, ev);
+    return neurites_[name_neurite]->branching_model_.branching_event(
+        rnd_engine, ev);
 }
 
 

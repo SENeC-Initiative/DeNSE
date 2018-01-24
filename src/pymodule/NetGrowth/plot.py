@@ -494,11 +494,16 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
 # PlotEnvironment #
 # --------------- #
 
-def BtmorphVisualize(netgrowth_hash):
+def BtmorphVisualize(Simulation_folder):
     import btmorph2
-    neurons = btmorph2.neuron_from_file(netgrowth_hash)
-    for neuron in neurons['swc'][0]:
+    from .dataIO import SimulationsFromFolder
+    neurons = SimulationsFromFolder(Simulation_folder)
+    for gid in neurons['neurons']:
+        neuron = btmorph2.NeuronMorphology(neurons['neurons'][gid]['data'])
+        plt.figure()
         neuron.plot_2D()
+        plt.figure()
+        neuron.plot_dendrogram()
 
 
 def PlotEnvironment(culture=None, title='Shape', ax=None):

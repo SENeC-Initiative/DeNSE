@@ -115,9 +115,17 @@ if __name__ =='__main__':
         neuron_params['growth_cone_model']='random_walk'
         neuron_params["use_critical_resource"] =  False
     else:
+<<<<<<< Updated upstream
         neuron_params['growth_cone_model']='random_walk_'+args.critical_resource_model
         neuron_params["use_critical_resource"] =  True
         dendrite_params["use_critical_resource"] =  True
+=======
+        print(args.critical_resource_model)
+        neuron_params['growth_cone_model'] = \
+            neuron_params['growth_cone_model'] + args.critical_resource_model
+        neuron_params["use_critical_resource"] = True
+        dendrite_params["use_critical_resource"] = True
+>>>>>>> Stashed changes
 
     if args.vanpelt_on:
         neuron_params["use_van_pelt"] = True
@@ -188,7 +196,7 @@ if __name__ =='__main__':
             swc_file = NetGrowth.SaveSwc(filepath = save_path, swc_resolution = args.swc_resolution)
             json_file =NetGrowth.SaveJson(filepath = save_path)
         if args.bt_visualize:
-            NetGrowth.BtmorphVisualize(swc_file)
+            NetGrowth.BtmorphVisualize(simulation_ID)
         if args.dyn_analyze:
             NetGrowth.GrowthConeDynamicsAnalyzer()
 

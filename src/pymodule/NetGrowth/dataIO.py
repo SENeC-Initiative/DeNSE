@@ -86,7 +86,7 @@ def ImportRecordFile(file_):
 
 def SimulationsFromFolder(simulation_folder):
     '''
-    Import different simulation from a folder, each simulation
+    Import different NetGrowth simulations from folder.
     '''
     simulation_folder =os.path.join(os.getcwd(),simulation_folder)
     morph = os.path.join(simulation_folder,"morphology.swc")

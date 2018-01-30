@@ -53,6 +53,13 @@ Skeleton::Skeleton(const Neuron *neuron)
                     nodes.push_front(mynode->get_child(1));
                 }
             }
+
+            // if no dendrites, still mark it with NaNs
+            if (neuron->neurites_.size() == 1)
+            {
+                dendrites.first.push_back(NAN);
+                dendrites.second.push_back(NAN);
+            }
         }
         else
         {
@@ -84,8 +91,15 @@ Skeleton::Skeleton(const Neuron *neuron)
                     nodes.push_front(mynode->get_child(1));
                 }
             }
+
+            // if no axon, still mark it with NaNs
+            if (neuron->neurites_.size() == 1)
+            {
+                axon.first.push_back(NAN);
+                axon.second.push_back(NAN);
+            }
         }
-        // anyway get growthcones
+        // anyway get growth cones
         auto ite = neurite.second->gc_cend();
         for (auto it = neurite.second->gc_cbegin(); it != ite; it++)
         {
@@ -94,6 +108,11 @@ Skeleton::Skeleton(const Neuron *neuron)
             growth_cones.first.push_back(x);
             growth_cones.second.push_back(y);
         }
+        // add NaNs to help separate data from different neurons afterwards
+        branching_points.first.push_back(NAN);
+        branching_points.second.push_back(NAN);
+        growth_cones.first.push_back(NAN);
+        growth_cones.second.push_back(NAN);
     }
 }
 }

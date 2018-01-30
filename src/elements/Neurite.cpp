@@ -499,9 +499,9 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
            "the centrifugal order of old node is %i \n",
            sibling->get_branch()->size(), sibling->get_treeID().c_str(),
            new_node->get_branch()->size(), branching_node->get_branch()->size(),
-           angle * 180 / M_PI, new_node->get_treeID().c_str(),
-           branch_direction * 180 / M_PI, branching_node->get_treeID().c_str(),
-           angle * 180 / M_PI + branch_direction * 180 / M_PI,
+           angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI, 
+           new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
+           branching_node->get_treeID().c_str(),
            new_node->get_centrifugal_order(), sibling->get_centrifugal_order(),
            branching_node->get_centrifugal_order());
 #endif /* NDEBUG */

@@ -51,10 +51,11 @@ void log_and_exit(const char *fmt, ...)
 
 
 SpaceManager::SpaceManager()
+  : environment_initialized_(false)
+  , environment_manager_(nullptr)
+  , context_handler_(nullptr)
+  , wall_area_width_(5.)
 {
-    environment_initialized_ = false;
-    environment_manager_     = nullptr;
-    context_handler_         = nullptr;
 }
 
 
@@ -155,9 +156,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                             directions_weigths[n_angle] *=
                                 new_substrate_affinity;
                         }
-                        else
-                        {
-                        }
                     }
                     else if (old_height > new_height)
                     {
@@ -181,7 +179,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                         else
                         {
                             directions_weigths[n_angle] *=
-                                proba_down_move + delta_proba;
+                                substep * (proba_down_move + delta_proba);
                         }
                     }
                     else
@@ -192,7 +190,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                         //   new_substrate_affinity]
                         // - if step is higher, move is impossible
                         directions_weigths[n_angle] *=
-                            new_substrate_affinity *
+                            substep * new_substrate_affinity *
                             std::exp(-delta_h / max_height_up_move);
                     }
                 }
@@ -470,6 +468,7 @@ AreaPtr SpaceManager::get_area(const std::string &name) const
 
 void SpaceManager::set_status(const statusMap &config)
 {
+    get_param(config, "wall_area_width", wall_area_width_);
     /*    int dim = Space::DEFAULT_DIM;*/
     // get_param(config, "dimension", dim);
     /*Space::set_dimension_(dim);*/
@@ -479,6 +478,7 @@ void SpaceManager::set_status(const statusMap &config)
 void SpaceManager::get_status(statusMap &status) const
 {
     set_param(status, "environment_initialized", environment_initialized_);
+    set_param(status, "wall_area_width", wall_area_width_);
     // set_param(status, "dimension", Space::get_dimension());
 }
 

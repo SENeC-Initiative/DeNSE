@@ -166,7 +166,7 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
 
     # seed neurons on random positions or get position from `params`?
     rnd_pos = kwargs.get("rnd_pos", False)
-    if on_area is not None and "position" not in params:
+    if "position" not in params:
         rnd_pos = True
 
     if not params:
@@ -616,7 +616,7 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
         vector[unordered_map[string, double]] properties
 
     # create the environment "wall" buffer (1 mum around all higher limits)
-    width = 3.
+    width = GetKernelStatus("wall_area_width")
     env_buffer = culture.intersection(culture.exterior.buffer(width))
     for hole in culture.interiors:
         env_buffer = env_buffer.union(culture.intersection(hole.buffer(width)))
@@ -1060,7 +1060,6 @@ def _neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
                                    "no `culture` is provided.")
     elif rnd_pos:
         container = culture
-        from .geometry import plot_shape
         if on_area is not None:
             if _is_scalar(on_area):
                 container = culture.areas[on_area]
@@ -1071,7 +1070,7 @@ def _neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
                     container = container.union(culture.areas[name])
         sradius = 0.
         if "soma_radius" in param:
-            if isinstance(param["soma_radius"], Iterable):
+            if nonstring_container(param["soma_radius"]):
                 sradius = np.max(param["soma_radius"])
             else:
                 sradius = param["soma_radius"]

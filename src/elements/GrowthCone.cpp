@@ -335,16 +335,6 @@ void GrowthCone::compute_pull_and_accessibility(
     {
         // unstuck neuron
         stuck_ = false;
-        //~ if (stuck_)
-        //~ {
-        //~ if (abs(move_.sigma_angle - 0.75*M_PI) > 1e-6)
-        //~ {
-        //~ // increase sensing angle and reset weights
-        //~ move_.sigma_angle = std::min(
-        //~ 1.5 * move_.sigma_angle, 0.75*M_PI);
-        //~ }
-        //~ stuck_ = false;
-        //~ }
 
         // initialize direction test variables
         bool all_nan = true;
@@ -391,7 +381,8 @@ void GrowthCone::compute_pull_and_accessibility(
                 kernel().space_manager.sense_walls(
                     directions_weights, filopodia_, geometry_.position, move_,
                     filopodia_.finger_length, substep,
-                    filopodia_.wall_affinity * substep, current_area_);
+                    filopodia_.wall_affinity * substep,
+                    current_area_);
 
                 // check stronger interaction if filopodia is long enough
                 if (0.5 * filopodia_.finger_length > move_.module)
@@ -399,7 +390,8 @@ void GrowthCone::compute_pull_and_accessibility(
                     kernel().space_manager.sense_walls(
                         directions_weights, filopodia_, geometry_.position,
                         move_, filopodia_.finger_length * 0.5, substep,
-                        filopodia_.wall_affinity * 2 * substep, current_area_);
+                        filopodia_.wall_affinity * 2 * substep,
+                        current_area_);
                 }
             }
         }

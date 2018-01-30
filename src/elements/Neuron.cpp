@@ -250,11 +250,15 @@ std::string Neuron::new_neurite(const std::string &name,
     {
         do
         {
-            if (not axon_angle_set_)
+            if (axon_angle_set_)
+            {
+                angle = fmod(axon_angle_, 2 * M_PI);
+            }
+            else
             {
                 angle       = uniform_(*(rnd_engine).get()) * 2 * M_PI;
-                axon_angle_ = angle;
             }
+            axon_angle_ = angle;
             Point position = get_position();
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
@@ -338,7 +342,7 @@ void Neuron::set_status(const statusMap &status)
     if (get_param(status, names::axon_angle, axon_angle_))
     {
         axon_angle_set_ = true;
-    };
+    }
 
     //@TODO implement actin waves
     // auto use_actin_waves_old = use_actin_waves_;

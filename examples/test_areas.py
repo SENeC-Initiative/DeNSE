@@ -30,11 +30,11 @@ for i, m in enumerate(masks):
 Set the environment in NetGrowth, then create the neurons
 '''
 
-num_omp = 12
+num_omp = 6
 
 ng.SetKernelStatus({
-    "resolution": 50., "num_local_threads": num_omp,
-    "seeds": [i for i in range(num_omp)],
+    "resolution": 5., "num_local_threads": num_omp,
+    "seeds": [2*i for i in range(num_omp)],
     # ~ "seeds": [11, 6, 7, 9],
 })
 
@@ -56,17 +56,18 @@ params = {
     "filopodia_wall_affinity": 2.5,
     "proba_down_move": 0.05,
     "scale_up_move": 5.,
+    "wall_area_width": 2.,
 }
 
 # ~ ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=2)
-ng.CreateNeurons(n=2000, on_area=top_areas, num_neurites=1, params=params)
+gids = ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=1, params=params)
 # ~ ng.CreateNeurons(n=1, on_area="default_area", num_neurites=1, params=params)
 
-ng.Simulate(2500)
-# ~ for i in range(50):
-    # ~ ng.Simulate(500)
-    # ~ ng.PlotNeuron(show=True)
+ng.Simulate(25000)
+#~ for i in range(50):
+    #~ ng.Simulate(500)
+    #~ ng.PlotNeuron(show=True)
 
 from NetGrowth.tools import fraction_neurites_near_walls
-print(fraction_neurites_near_walls(0, culture=shape))
+print(fraction_neurites_near_walls(gids, culture=shape))
 ng.PlotNeuron(show=True)

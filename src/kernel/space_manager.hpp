@@ -84,6 +84,7 @@ class SpaceManager : public ManagerInterface
   private:
     // std::vector<Space::Shape> spatial_grid;
     bool environment_initialized_;
+    double wall_area_width_;
     GEOSContextHandle_t context_handler_;
     std::unique_ptr<Environment> environment_manager_;
     std::unordered_map<std::string, AreaPtr> areas_;

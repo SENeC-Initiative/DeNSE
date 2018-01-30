@@ -50,8 +50,8 @@ GrowthCone_RandomWalk::GrowthCone_RandomWalk(const GrowthCone_RandomWalk &copy)
     , corr_rw_(copy.corr_rw_)
     , memory_(copy.memory_)
 {
-    observables_.insert(observables_.cend(),
-                        copy.observables_.cbegin(), copy.observables_.cend());
+    observables_.insert(observables_.cend(), copy.observables_.cbegin(),
+                        copy.observables_.cend());
     memory_.effective_angle = move_.angle;
 }
 
@@ -84,7 +84,8 @@ GCPtr GrowthCone_RandomWalk::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
  */
 void GrowthCone_RandomWalk::initialize_RW()
 {
-    double average_step = timestep_ * average_speed_;
+    double average_step =
+        kernel().simulation_manager.get_resolution() * avg_speed_;
     // set the memory parameter.
 
     { // initializing memory random walk
@@ -116,7 +117,7 @@ void GrowthCone_RandomWalk::initialize_RW()
     printf("diffusive_sigma: %f\n"
            "correlation f coefficient: %f\n"
            "memory alpha coefficient: %f\n",
-           rw_sensing_angle_, corr_rw_.f_coeff, memory_.alpha_coeff);
+           sensing_angle_, corr_rw_.f_coeff, memory_.alpha_coeff);
 #endif
 }
 
@@ -162,14 +163,14 @@ void GrowthCone_RandomWalk::initialize_RW()
 void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine,
                                                   double substep)
 {
-    double resol = kernel().simulation_manager.get_resolution();
+    double resol     = kernel().simulation_manager.get_resolution();
     double mem_coeff = (substep == resol)
-                       ? memory_.alpha_coeff
-                       : pow(memory_.alpha_coeff, substep / resol);
+                           ? memory_.alpha_coeff
+                           : pow(memory_.alpha_coeff, substep / resol);
     // update the memory length algorithm
     memory_.effective_angle =
-        (move_.angle + memory_.alpha_temp_sum * mem_coeff *
-                           memory_.effective_angle) /
+        (move_.angle +
+         memory_.alpha_temp_sum * mem_coeff * memory_.effective_angle) /
         (mem_coeff * memory_.alpha_temp_sum + 1);
 
     memory_.alpha_temp_sum = mem_coeff * memory_.alpha_temp_sum + 1;
@@ -189,7 +190,9 @@ void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine,
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
 
-    while (not kernel().space_manager.env_contains(target_pos))
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+    while (not kernel().space_manager.env_contains(target_pos, omp_id))
     {
         new_angle = 0.5 * (new_angle + default_angle);
         target_pos =
@@ -248,7 +251,7 @@ void GrowthCone_RandomWalk::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double GrowthCone_RandomWalk::get_state(const char* observable) const
+double GrowthCone_RandomWalk::get_state(const char *observable) const
 {
     double value = 0.;
 
@@ -256,7 +259,7 @@ double GrowthCone_RandomWalk::get_state(const char* observable) const
 
     TRIE(observable)
     CASE("persistence_angle")
-        value = deterministic_angle_;
+    value = deterministic_angle_;
     ENDTRIE;
 
     return value;

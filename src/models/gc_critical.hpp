@@ -102,7 +102,7 @@ class GrowthCone_Critical : public virtual GrowthCone
     // status
     void set_status(const statusMap &) override;
     void get_status(statusMap &) const override;
-    virtual double get_state(const char* observable) const override;
+    virtual double get_state(const char *observable) const override;
 };
 
 

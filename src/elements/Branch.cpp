@@ -9,6 +9,7 @@ namespace growth
 {
 
 Branch::Branch()
+    : initial_point(0, 0)
 {
     std::vector<double> x, y, l;
     points = {{x, y, l}};
@@ -16,6 +17,7 @@ Branch::Branch()
 
 
 Branch::Branch(const Branch &copy)
+    : initial_point(copy.initial_point)
 {
     points[0].insert(points[0].end(), copy.points[0].begin(),
                      copy.points[0].end());
@@ -29,10 +31,11 @@ Branch::Branch(const Branch &copy)
 Branch::Branch(const Point &initial_position, double initial_length)
     : Branch()
 {
+    initial_point = initial_point;
     points[0].push_back(initial_position.at(0));
     points[1].push_back(initial_position.at(1));
-    assert(!points.empty());
     points[2].push_back(initial_length);
+    assert(!points.empty());
 }
 
 
@@ -54,13 +57,22 @@ double Branch::module_from_points(const Point &p)
 }
 
 
-void Branch::set_first_point(const Point p, double length)
+void Branch::set_first_point(const Point &p, double length)
 {
+    initial_point = p;
 
-    assert(!points.empty());
-    points[0][0] = p.at(0);
-    points[1][0] = p.at(1);
-    points[2][0] = length;
+    if (points[0].size() == 0)
+    {
+        points[0].push_back(p.at(0));
+        points[1].push_back(p.at(1));
+        points[2].push_back(length);
+    }
+    else
+    {
+        points[0][0] = p.at(0);
+        points[1][0] = p.at(1);
+        points[2][0] = length;
+    }
 }
 
 
@@ -127,7 +139,14 @@ PointArray Branch::get_last_point() const
 
 Point Branch::get_last_xy() const
 {
-    return Point(points[0].back(), points[1].back());
+    if (points[0].size() == 0)
+    {
+        return initial_point;
+    }
+    else
+    {
+        return Point(points[0].back(), points[1].back());
+    }
 }
 
 

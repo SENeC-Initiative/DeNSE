@@ -22,7 +22,7 @@ neuron_params = {
 
     "rw_persistence_length": 2.,
     "rw_memory_tau": 90.,
-    "rw_sensing_angle":0.1433,
+    "sensing_angle":0.1433,
 
     "speed_growth_cone": 0.05,
 
@@ -66,7 +66,7 @@ if __name__ =='__main__':
     else:
         neuron_params['growth_cone_model'] = 'random_walk'
 
-    neuron_params['position'] = np.random.uniform(-1000, 1000, (num_neurons, 2))
+    neuron_params['position'] = np.random.uniform(-10000, 10000, (num_neurons, 2))
 
     gids = ng.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,

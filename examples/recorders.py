@@ -39,7 +39,7 @@ neuron_params = {
 
     "rw_persistence_length": 2.,
     "rw_memory_tau": 90.,
-    "rw_sensing_angle":0.1433,
+    "sensing_angle":0.1433,
 
     "speed_growth_cone": 0.05,
 

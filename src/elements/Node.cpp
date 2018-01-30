@@ -123,8 +123,8 @@ Growth cone constructor:
 \param BranchParentID is the relative name respect to the parent,
 necessary for build the Id
 */
-Node::Node(BaseWeakNodePtr parent,
-           float distance, Point position, std::string binaryID)
+Node::Node(BaseWeakNodePtr parent, float distance, Point position,
+           std::string binaryID)
     : TopologicalNode(parent, distance, position, binaryID)
 {
     topology_.has_child = true;
@@ -149,9 +149,6 @@ Node::Node(const Node &copyNode)
 }
 
 
-TNodePtr Node::get_child(int index) const
-{
-    return children_.at(index);
-}
+TNodePtr Node::get_child(int index) const { return children_.at(index); }
 
 } /* namespace */

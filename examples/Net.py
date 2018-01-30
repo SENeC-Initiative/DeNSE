@@ -114,7 +114,7 @@ if __name__ =="__main__":
         "use_tubulin": False,
         "rw_delta_corr": 0.1,
         "rw_memory_tau": 0.7,
-        "rw_sensing_angle":0.15,
+        "sensing_angle":0.15,
         "speed_growth_cone": 1.05,
         }
     ensemble=Test(neuron_params)

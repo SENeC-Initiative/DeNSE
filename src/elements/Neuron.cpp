@@ -63,28 +63,22 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     if (growth_cone_model_ != "")
     {
         gc_model = kernel().neuron_manager.get_model(growth_cone_model_);
-#ifndef NDEBUG
-        printf("model is %s :", growth_cone_model_.c_str());
-#endif
     }
     else
     {
-#ifndef NDEBUG
-        printf("WARNING: DEFAULT MODEL IN USE--> DEFINE A MODEL! <-- \n");
-#endif
         gc_model = kernel().neuron_manager.get_default_model();
     }
-#ifndef NDEBUG
 
-    // this neuron will be initialized with this property and nothing else
-    printf("\n#########################\n"
-           "Neuron initialization: \n"
-           "soma radius: %f  \n",
-           "growth cone model:  %s\n"
-           "use actin waves: %d \n",
-           "num_neurites: %d \n", "#########################\n",
-           details.soma_radius, growth_cone_model_.c_str(), use_actin_waves_);
-#endif
+    //~ #ifndef NDEBUG
+    //~ // this neuron will be initialized with this property and nothing else
+    //~ printf("\n#########################\n"
+    //~ "Neuron initialization: \n"
+    //~ "soma radius: %f  \n",
+    //~ "growth cone model:  %s\n"
+    //~ "use actin waves: %d \n",
+    //~ "num_neurites: %d \n", "#########################\n",
+    //~ details.soma_radius, growth_cone_model_.c_str(), use_actin_waves_);
+    //~ #endif
     // initialize the soma giving the position of neuron
     //@TODO move the neuron in a new position with all the branches
     auto pos_x = status.find("x");
@@ -97,8 +91,8 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     }
     else
     {
-        throw InvalidParameter(
-            "Position was not set.", __FUNCTION__, __FILE__, __LINE__);
+        throw InvalidParameter("Position was not set.", __FUNCTION__, __FILE__,
+                               __LINE__);
     }
 
     // create neurites
@@ -160,7 +154,7 @@ void Neuron::initialize_next_event(mtPtr rnd_engine, double new_resolution,
 
 void Neuron::finalize()
 {
-    for (auto& neurite : neurites_)
+    for (auto &neurite : neurites_)
     {
         neurite.second->finalize();
     }
@@ -211,11 +205,11 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
  * Try to create a new growth cone, either through splitting or lateral
  * branching and return whether the branching was sucessful.
  */
-bool Neuron::branch(mtPtr rnd_engine, const Event& ev)
+bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
 {
     std::string name_neurite = std::get<3>(ev);
-    return neurites_[name_neurite]->branching_model_.branching_event(
-        rnd_engine, ev);
+    return neurites_[name_neurite]->branching_model_.branching_event(rnd_engine,
+                                                                     ev);
 }
 
 
@@ -234,6 +228,8 @@ std::string Neuron::new_neurite(const std::string &name,
                                 const std::string &neurite_type,
                                 const GCPtr gc_model, mtPtr rnd_engine)
 {
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
     // update the neurite in the neuron vector
     NeuronWeakPtr my_weak_ptr =
         std::dynamic_pointer_cast<Neuron>(shared_from_this());
@@ -263,7 +259,9 @@ std::string Neuron::new_neurite(const std::string &name,
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
-        } while (not kernel().space_manager.env_contains(cone_start_point));
+        } while (
+            not kernel().space_manager.env_contains(cone_start_point, omp_id));
+
         neurites_[name]->init_first_node(soma_, get_position(), name,
                                          details.soma_radius,
                                          details.axon_diameter);
@@ -281,7 +279,8 @@ std::string Neuron::new_neurite(const std::string &name,
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
 
-        } while (not kernel().space_manager.env_contains(cone_start_point));
+        } while (
+            not kernel().space_manager.env_contains(cone_start_point, omp_id));
         neurites_[name]->init_first_node(soma_, get_position(), name,
                                          details.soma_radius,
                                          details.dendrite_diameter);
@@ -292,9 +291,9 @@ std::string Neuron::new_neurite(const std::string &name,
 
     // eventually create the growth cone, cloning the default model.
     neurites_[name]->growth_cone_model_ = growth_cone_model_;
-    GCPtr first_gc = gc_model->clone(
-        neurites_[name]->get_first_node(), neurites_[name],
-        details.soma_radius, name + "0", cone_start_point, angle);
+    GCPtr first_gc = gc_model->clone(neurites_[name]->get_first_node(),
+                                     neurites_[name], details.soma_radius,
+                                     name + "0", cone_start_point, angle);
     neurites_[name]->growth_cones_[0] = first_gc;
     first_gc->set_cone_ID();
     first_gc->set_diameter(
@@ -306,22 +305,14 @@ std::string Neuron::new_neurite(const std::string &name,
     neurites_[name]->nodes_[0]->children_.push_back(first_gc);
     neurites_[name]->update_tree_structure(neurites_[name]->get_first_node());
 
-#ifndef NDEBUG
-    printf("neurite %s is generated with angle %f\n"
-           "soma position is %f, %f\n"
-           "first growth cone has name: %s \n",
-           name.c_str(), angle, get_position().at(0), get_position().at(1),
-           neurites_[name]->growth_cones_[0]->get_treeID().c_str());
-// and then add the first cone to soma-ghost node
-// printf(
-//"with parent I get: %s, %lu\n", neurites_[name]
-//->growth_cones_[0]
-//->get_parent()
-//.lock()
-//->get_treeID()
-//.c_str(),
-// neurites_[name]->growth_cones_[0]->get_parent().lock()->get_nodeID());
-#endif
+    //~ #ifndef NDEBUG
+    //~ printf("neurite %s is generated with angle %f\n"
+    //~ "soma position is %f, %f\n"
+    //~ "first growth cone has name: %s \n",
+    //~ name.c_str(), angle, get_position().at(0), get_position().at(1),
+    //~ neurites_[name]->growth_cones_[0]->get_treeID().c_str());
+    //~ #endif
+
     return name;
 }
 
@@ -365,13 +356,17 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
 {
     if (neurite_type == "axon")
     {
-        neurites_["axon"]->set_status(status);
+        auto it = neurites_.find("axon");
+        if (it != neurites_.end())
+        {
+            neurites_["axon"]->set_status(status);
+        }
     }
     else
     {
         for (auto &neurite : neurites_)
         {
-            if (neurite.first != "axon")
+            if (neurite.first == neurite_type)
             {
                 neurite.second->set_status(status);
             }
@@ -383,21 +378,21 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
 /**
  * @brief Get the current value of one of the observables
  */
-double Neuron::get_state(const char* observable) const
+double Neuron::get_state(const char *observable) const
 {
     double value = 0.;
 
     TRIE(observable)
     CASE("length")
-        for (const auto& neurite : neurites_)
-        {
-            value += neurite.second->get_state(observable);
-        }
+    for (const auto &neurite : neurites_)
+    {
+        value += neurite.second->get_state(observable);
+    }
     CASE("speed")
-        for (const auto& neurite : neurites_)
-        {
-            value += neurite.second->get_state(observable);
-        }
+    for (const auto &neurite : neurites_)
+    {
+        value += neurite.second->get_state(observable);
+    }
     ENDTRIE;
 
     return value;
@@ -420,7 +415,6 @@ void Neuron::get_status(statusMap &status) const
 
 void Neuron::get_neurite_status(statusMap &status, std::string neurite_type)
 {
-
     for (const auto &neurite : neurites_)
     {
         if (neurite.second->neurite_type_ == neurite_type)
@@ -441,39 +435,21 @@ void Neuron::update_kernel_variables()
 }
 
 
-double Neuron::get_soma_radius() const
-{
-    return details.soma_radius;
-}
+double Neuron::get_soma_radius() const { return details.soma_radius; }
 
 
-BaseNodePtr Neuron::get_soma() const
-{
-    return soma_;
-}
+BaseNodePtr Neuron::get_soma() const { return soma_; }
 
 
-int Neuron::get_num_neurites() const
-{
-    return neurites_.size();
-}
+int Neuron::get_num_neurites() const { return neurites_.size(); }
 
 
-std::string Neuron::get_gc_model() const
-{
-    return growth_cone_model_;
-}
+std::string Neuron::get_gc_model() const { return growth_cone_model_; }
 
 
-Point Neuron::get_position() const
-{
-    return soma_->get_position();
-}
+Point Neuron::get_position() const { return soma_->get_position(); }
 
 
-size_t Neuron::get_gid() const 
-{
-    return gid_;
-}
+size_t Neuron::get_gid() const { return gid_; }
 
 } // namespace

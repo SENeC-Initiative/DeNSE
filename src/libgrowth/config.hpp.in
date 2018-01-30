@@ -16,7 +16,16 @@ namespace growth
 // Define whether OpenMP is available
 #cmakedefine WITH_OMP
 
-typedef enum { BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING } dtype;
+typedef enum {
+    BOOL,
+    DOUBLE,
+    INT,
+    SIZE,
+    VEC_SIZE,
+    VEC_LONG,
+    STRING,
+    VEC_STRING
+} dtype;
 
 class Property
 {
@@ -69,7 +78,7 @@ inline bool get_param(const statusMap &map, const std::string &key,
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::vector<long> &result);
 inline bool get_param(const statusMap &map, const std::string &key,
-                      char* &result);
+                      char *&result);
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::string &result);
 inline bool get_param(const statusMap &map, const std::string &key,
@@ -90,7 +99,6 @@ inline void set_param(statusMap &map, const std::string &key,
                       const std::string &value);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::vector<std::string> &value);
-
 }
 
 #endif // CONFIG_H

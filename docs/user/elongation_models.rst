@@ -47,7 +47,7 @@ Correlated random walk
 
 The coloured noise results in an exponentially correlated random walk with parameter `f`.
 the correlation coefficient 'f' of the noise is defined by means of the persistence length and the average step:
-`growth::GrowthCone_RandomWalk::average_speed_`   :math:`\bar v`
+`growth::GrowthCone_RandomWalk::avg_speed_`   :math:`\bar v`
 `growth::GrowthCone_RandomWalk::corr_rw_.persistence_length` :math:`\rho`
 
 .. math::

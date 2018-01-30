@@ -96,9 +96,17 @@ cdef extern from "../module.hpp" namespace "growth":
                                const vector[statusMap]& dendrites_params
                                ) except +
 
-    cdef void get_environment ( GEOSGeometry* &environment ) except +
+    cdef void get_environment(GEOSGeometry* &environment,
+                              vector[GEOSGeometry*]& areas,
+                              vector[double] heights, vector[string]& names,
+                              vector[unordered_map[string, double]]& properties
+                              ) except +
 
-    cdef void set_environment ( GEOSGeometry* environment ) except +
+    cdef void set_environment(
+        GEOSGeometry* environment, const vector[GEOSGeometry*]& walls,
+        const vector[GEOSGeometry*]& areas,
+        const vector[double]& heights, vector[string]& names,
+        const vector[unordered_map[string, double]]& properties) except +
 
     cdef const CTime get_current_time() except +
 
@@ -169,5 +177,9 @@ cdef inline GEOSGeometry *geos_from_shapely(shapely_geom) except *:
     '''
     Get the GEOS geometry pointer from the given shapely geometry.
     '''
+    # [IMPORTANT] tell Shapely to NOT delete the C++ object when the python
+    # wrapper goes out of scope!
+    shapely_geom._other_owned = True
+    # [/IMPORTANT]
     cdef uintptr_t geos_geom = shapely_geom._geom
     return <GEOSGeometry *>geos_geom

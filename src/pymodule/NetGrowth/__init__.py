@@ -7,6 +7,9 @@ import sys as _sys
 import atexit as _atexit
 
 from . import _pygrowth
+from . import structure
+from . import tools
+
 from ._pygrowth import *
 from ._helpers import HashID
 from .dataIO import SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder

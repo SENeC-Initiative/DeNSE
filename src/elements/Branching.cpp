@@ -1,8 +1,8 @@
 #include "Branching.hpp"
 
 // C++ includes
-#include <functional>
 #include <cmath>
+#include <functional>
 
 // kernel includes
 #include "kernel_manager.hpp"
@@ -16,13 +16,14 @@
 namespace growth
 {
 
-const Event invalid_ev(
-    std::make_tuple(0, std::nan(""), 0, std::string(""), -1));
+const Event invalid_ev(std::make_tuple(0, std::nan(""), 0, std::string(""),
+                                       -1));
 
 
 Branching::Branching()
     : Branching(nullptr)
-{}
+{
+}
 
 
 Branching::Branching(NeuritePtr neurite)
@@ -76,17 +77,15 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
         {
             size_t old_steps   = std::get<0>(next_lateral_event_);
             double old_substep = std::get<1>(next_lateral_event_);
-            size_t new_steps   =
-                old_steps*new_resolution_ratio + old_substep/resol;
-            double new_substep = old_steps*resol
-                               + old_substep - new_steps*resol;
+            size_t new_steps =
+                old_steps * new_resolution_ratio + old_substep / resol;
+            double new_substep =
+                old_steps * resol + old_substep - new_steps * resol;
 
             next_lateral_event_ = std::make_tuple(
-                new_steps, new_substep,
-                std::get<2>(next_lateral_event_),
+                new_steps, new_substep, std::get<2>(next_lateral_event_),
                 std::get<3>(next_lateral_event_),
-                std::get<4>(next_lateral_event_)
-            );
+                std::get<4>(next_lateral_event_));
 
             // send it to the simulation and recorder managers
             kernel().simulation_manager.new_branching_event(
@@ -103,17 +102,15 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
         {
             size_t old_steps   = std::get<0>(next_vanpelt_event_);
             double old_substep = std::get<1>(next_vanpelt_event_);
-            size_t new_steps   =
-                old_steps*new_resolution_ratio + old_substep/resol;
-            double new_substep = old_steps*resol
-                               + old_substep - new_steps*resol;
+            size_t new_steps =
+                old_steps * new_resolution_ratio + old_substep / resol;
+            double new_substep =
+                old_steps * resol + old_substep - new_steps * resol;
 
             next_vanpelt_event_ = std::make_tuple(
-                new_steps, new_substep,
-                std::get<2>(next_vanpelt_event_),
+                new_steps, new_substep, std::get<2>(next_vanpelt_event_),
                 std::get<3>(next_vanpelt_event_),
-                std::get<4>(next_vanpelt_event_)
-            );
+                std::get<4>(next_vanpelt_event_));
 
             // send it to the simulation and recorder managers
             kernel().simulation_manager.new_branching_event(
@@ -162,20 +159,16 @@ void Branching::update_growth_cones(mtPtr rnd_engine)
  *
  * @return whether the branching event was successful or not.
  */
-bool Branching::branching_event(mtPtr rnd_engine, const Event& ev)
+bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
 {
     // uniform_branching_event
     bool uniform_occurence =
-        (std::get<0>(next_lateral_event_) ==
-         std::get<0>(ev)) &&
-         (std::abs(std::get<1>(next_lateral_event_)
-                   - std::get<1>(ev)) < 1e-8);
+        (std::get<0>(next_lateral_event_) == std::get<0>(ev)) &&
+        (std::abs(std::get<1>(next_lateral_event_) - std::get<1>(ev)) < 1e-8);
     bool van_pelt_occurence =
-        (std::get<0>(next_vanpelt_event_) ==
-         std::get<0>(ev)) &&
-        (std::abs(std::get<1>(next_vanpelt_event_)
-                  - std::get<1>(ev)) < 1e-8);
-    
+        (std::get<0>(next_vanpelt_event_) == std::get<0>(ev)) &&
+        (std::abs(std::get<1>(next_vanpelt_event_) - std::get<1>(ev)) < 1e-8);
+
     if (use_lateral_branching_ and uniform_occurence)
     {
         return uniform_new_branch(rnd_engine);
@@ -225,9 +218,9 @@ void Branching::compute_lateral_event(mtPtr rnd_engine)
     // here we compute next event with exponential distribution
     // we add one to save the case in which the distance between
     // two branching event is so short to appear zero.
-    double duration = exponential_uniform_(*(rnd_engine).get());
+    double duration        = exponential_uniform_(*(rnd_engine).get());
     double current_substep = kernel().simulation_manager.get_current_substep();
-    size_t current_step = kernel().simulation_manager.get_current_step();
+    size_t current_step    = kernel().simulation_manager.get_current_step();
 
     size_t ev_step;
     double ev_substep;
@@ -235,31 +228,32 @@ void Branching::compute_lateral_event(mtPtr rnd_engine)
 
     if (duration < resol - current_substep)
     {
-        ev_step = current_step;
+        ev_step    = current_step;
         ev_substep = current_substep + duration;
     }
     else
     {
         // remove what's left until next step
         duration -= current_substep;
-        ev_step = duration / resol;
-        ev_substep = duration - ev_step*resol;
+        ev_step    = duration / resol;
+        ev_substep = duration - ev_step * resol;
         ev_step += current_step + 1;
     }
 
-    auto n = neurite_->get_parent_neuron().lock();
-    size_t neuron_gid = n->get_gid();
+    auto n                   = neurite_->get_parent_neuron().lock();
+    size_t neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
-    next_lateral_event_ = std::make_tuple(
-        ev_step, ev_substep, neuron_gid, neurite_name,
-        names::lateral_branching);
+    next_lateral_event_ =
+        std::make_tuple(ev_step, ev_substep, neuron_gid, neurite_name,
+                        names::lateral_branching);
 
     // send it to the simulation and recorder managers
     kernel().simulation_manager.new_branching_event(next_lateral_event_);
 
 #ifndef NDEBUG
     printf("after lateral event, next lateral event in %lu, I m in %lu \n",
-           std::get<0>(next_lateral_event_), kernel().simulation_manager.get_current_step());
+           std::get<0>(next_lateral_event_),
+           kernel().simulation_manager.get_current_step());
 #endif
 }
 
@@ -280,13 +274,13 @@ bool Branching::uniform_new_branch(mtPtr rnd_engine)
 #endif
     TNodePtr branching_node;
     GCPtr branching_cone;
-    double new_length = 0.;  // cone created exactly on the branch to make sure
-                             // it is not created outside the environment.
+    double new_length = 0.; // cone created exactly on the branch to make sure
+                            // it is not created outside the environment.
 
     // select a random node of the tree, excluding the firstNode_
     // This is a reservoir sampling algorithm
     double max = 0;
-    for (auto& cone : neurite_->growth_cones_)
+    for (auto &cone : neurite_->growth_cones_)
     {
         // check if the elected cone is not dead and waiting for removal!
         if (not cone.second->is_dead() and cone.second->get_branch_size() > 3)
@@ -303,7 +297,7 @@ bool Branching::uniform_new_branch(mtPtr rnd_engine)
 
     branching_node = branching_cone;
 
-    for (auto& node : neurite_->nodes_)
+    for (auto &node : neurite_->nodes_)
     {
         if (node.second->get_branch()->size() > 3)
         {
@@ -395,29 +389,29 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
 
         if (duration < resol - current_substep)
         {
-            ev_step = current_step;
+            ev_step    = current_step;
             ev_substep = current_substep + duration;
         }
         else
         {
-            duration -= current_substep;  // remove what's left until next step
-            ev_step = duration / resol;
-            ev_substep = duration - ev_step*resol;
+            duration -= current_substep; // remove what's left until next step
+            ev_step    = duration / resol;
+            ev_substep = duration - ev_step * resol;
             ev_step += current_step + 1;
         }
 
-        auto n = neurite_->get_parent_neuron().lock();
-        size_t neuron_gid = n->get_gid();
+        auto n                   = neurite_->get_parent_neuron().lock();
+        size_t neuron_gid        = n->get_gid();
         std::string neurite_name = neurite_->get_name();
-        next_vanpelt_event_ = std::make_tuple(
+        next_vanpelt_event_      = std::make_tuple(
             ev_step, ev_substep, neuron_gid, neurite_name, names::gc_splitting);
 
         // send it to the simulation and recorder managers
         kernel().simulation_manager.new_branching_event(next_vanpelt_event_);
 
 #ifndef NDEBUG
-        printf("after vanpelt event, next vanpelt event in %lu:%f \n",
-               ev_step, ev_substep);
+        printf("after vanpelt event, next vanpelt event in %lu:%f \n", ev_step,
+               ev_substep);
 #endif
     }
 }
@@ -437,12 +431,12 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
     // choice
     GCPtr next_vanpelt_cone_;
     double max = 0;
-    for (auto& cone : neurite_->growth_cones_)
+    for (auto &cone : neurite_->growth_cones_)
     {
         // printf("this cone %s \n", cone->get_treeID().c_str());
 
         auto key = powf(uniform_(*(rnd_engine).get()),
-                                 cone.second->get_centrifugal_order());
+                        cone.second->get_centrifugal_order());
         // printf("this key %f\n", key);
         if (key > max)
         {
@@ -462,9 +456,9 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
     double new_diameter = old_diameter;
     neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
                                        new_diameter, old_diameter);
-    bool success = neurite_->growth_cone_split(
-        next_vanpelt_cone_, new_length, new_angle, old_angle, new_diameter,
-        old_diameter);
+    bool success =
+        neurite_->growth_cone_split(next_vanpelt_cone_, new_length, new_angle,
+                                    old_angle, new_diameter, old_diameter);
 
     next_vanpelt_event_ = invalid_ev;
     compute_vanpelt_event(rnd_engine);

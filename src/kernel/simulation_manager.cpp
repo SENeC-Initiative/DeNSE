@@ -19,14 +19,14 @@ namespace growth
 {
 
 SimulationManager::SimulationManager()
-    : simulating_(false)          //!< true if simulation in progress
-    , step_()                     //!< Current step of the simulation
-    , substep_()                  //!< Precise time inside current step
-    , final_step_(0L)             //!< Last step, updated once per slice
-    , initial_time_(Time())       //!< Initial time (day, hour, min, sec)
-    , final_time_(Time())         //!< Final time (day, hour, min, sec)
-    , maximal_time_(Time())       //!< Maximal time (day, hour, min, sec)
-    , terminate_(false)           //!< Terminate on signal or error
+    : simulating_(false)    //!< true if simulation in progress
+    , step_()               //!< Current step of the simulation
+    , substep_()            //!< Precise time inside current step
+    , final_step_(0L)       //!< Last step, updated once per slice
+    , initial_time_(Time()) //!< Initial time (day, hour, min, sec)
+    , final_time_(Time())   //!< Final time (day, hour, min, sec)
+    , maximal_time_(Time()) //!< Maximal time (day, hour, min, sec)
+    , terminate_(false)     //!< Terminate on signal or error
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
 {
@@ -86,7 +86,7 @@ void SimulationManager::num_threads_changed(int num_omp)
     Time::timeStep old_step = (step_.size() > 0) ? step_.front() : 0L;
     step_.clear();
     substep_.clear();
-    step_ = std::vector<Time::timeStep>(num_omp, old_step);
+    step_    = std::vector<Time::timeStep>(num_omp, old_step);
     substep_ = std::vector<double>(num_omp, 0.);
 }
 
@@ -102,7 +102,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
 
     // @todo: remove final_step and reset step_ to zero everytime, use Time
     // objects for discrete events
-    final_time_  = initial_time_ + t;
+    final_time_         = initial_time_ + t;
     size_t initial_step = final_step_;
     final_step_ += Time::to_steps(t);
 
@@ -171,7 +171,7 @@ void SimulationManager::finalize_simulation_()
  *
  * Add an event into `branching_ev_` and sort the vector.
  */
-void SimulationManager::new_branching_event(const Event& ev)
+void SimulationManager::new_branching_event(const Event &ev)
 {
     branching_ev_tmp_.push_back(ev);
 }
@@ -194,8 +194,8 @@ void SimulationManager::simulate(const Time &t)
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
         size_t step_next_ev, current_step;
         double previous_substep = 0.;
-        bool new_step = false;
-        bool branched = false;
+        bool new_step           = false;
+        bool branched           = false;
 
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         gidNeuronMap local_neurons =
@@ -208,11 +208,11 @@ void SimulationManager::simulate(const Time &t)
             previous_substep = substep_[omp_id];
             branched         = false;
 
-            #pragma omp barrier
+#pragma omp barrier
 
-            #pragma omp single
+#pragma omp single
             {
-                if (! branching_ev_tmp_.empty())
+                if (!branching_ev_tmp_.empty())
                 {
                     branching_ev_.insert(branching_ev_.end(),
                                          branching_ev_tmp_.begin(),
@@ -225,23 +225,23 @@ void SimulationManager::simulate(const Time &t)
                 }
             }
 
-            #pragma omp barrier
+#pragma omp barrier
 
             // check when the next event will occur
             step_next_ev = branching_ev_.empty()
-                           ? current_step + 1
-                           : std::get<0>(branching_ev_.back());
+                               ? current_step + 1
+                               : std::get<0>(branching_ev_.back());
 
             // compute substep accordingly
             if (step_next_ev == current_step)
             {
                 substep_[omp_id] = std::get<1>(branching_ev_.back());
-                new_step = (substep_[omp_id] == Time::RESOLUTION);
+                new_step         = (substep_[omp_id] == Time::RESOLUTION);
             }
             else
             {
                 substep_[omp_id] = Time::RESOLUTION;
-                new_step = true;
+                new_step         = true;
             }
 
             assert(substep_[omp_id] >= 0.);
@@ -249,15 +249,14 @@ void SimulationManager::simulate(const Time &t)
             // update neurons
             for (auto &neuron : local_neurons)
             {
-                neuron.second->grow(
-                    rnd_engine, current_step,
-                    substep_[omp_id] - previous_substep);
+                neuron.second->grow(rnd_engine, current_step,
+                                    substep_[omp_id] - previous_substep);
             }
 
             if (step_next_ev == current_step)
             {
                 // someone has to branch
-                Event& ev = branching_ev_.back();
+                Event &ev            = branching_ev_.back();
                 size_t gid_branching = std::get<2>(ev);
                 branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
                 // tell recorder manager
@@ -267,9 +266,9 @@ void SimulationManager::simulate(const Time &t)
                 }
                 //~ std::string nname = std::get<3>(ev);
                 //~ printf("Branching event ar step: %lu and substep %f\n"
-                       //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
-                       //~ current_step, substep_[omp_id], nname.c_str(),
-                       //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
+                //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
+                //~ current_step, substep_[omp_id], nname.c_str(),
+                //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
                 branching_ev_.pop_back();
             }
 
@@ -305,10 +304,13 @@ void SimulationManager::set_status(const statusMap &status)
     {
         double resolution;
         get_param(status, "resolution", resolution);
+
         if (initial_time_ == Time(0., 0, 0, 0))
         {
             previous_resolution_ = resolution;
+            // why did we decide to do that?
         }
+
         Time::set_resolution(resolution);
     }
 }
@@ -338,8 +340,8 @@ double SimulationManager::get_current_seconds() const
 Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
-    Time t0 = Time(initial_time_);
-    Time t = Time(substep_[omp_id], 0, 0, 0);
+    Time t0    = Time(initial_time_);
+    Time t     = Time(substep_[omp_id], 0, 0, 0);
     t0.update(step_[omp_id]);
     return t0 + t;
 }

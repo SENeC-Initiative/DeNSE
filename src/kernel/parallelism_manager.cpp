@@ -27,7 +27,7 @@ ParallelismManager::ParallelismManager()
 {
 }
 
-void ParallelismManager::init_mpi(int *argc, char **argv[])
+void ParallelismManager::mpi_init(int *argc, char **argv[])
 {
 #ifdef WITH_MPI
     int init;
@@ -76,14 +76,15 @@ void ParallelismManager::finalize() {}
 
 void ParallelismManager::set_num_local_threads(int n_threads)
 {
-    num_omp_ = n_threads;
 #ifdef WITH_OMP
-    omp_set_num_threads(num_omp_);
     // call first simulation manager, then neuron_manager, then record_manager
-    kernel().simulation_manager.num_threads_changed(num_omp_);
-    kernel().neuron_manager.init_neurons_on_thread(num_omp_);
-    kernel().record_manager.num_threads_changed(num_omp_);
+    //~ kernel().space_manager.num_threads_changed(n_threads);
+    kernel().simulation_manager.num_threads_changed(n_threads);
+    kernel().neuron_manager.init_neurons_on_thread(n_threads);
+    kernel().record_manager.num_threads_changed(n_threads);
+    omp_set_num_threads(n_threads);
 #endif
+    num_omp_ = n_threads;
 }
 
 void ParallelismManager::set_status(const statusMap &status)
@@ -98,14 +99,13 @@ void ParallelismManager::set_status(const statusMap &status)
         if (kernel().get_num_objects())
         {
             throw InvalidParameter("Cannot change the number of threads after "
-                                   "objects have been created.", __FUNCTION__,
-                                   __FILE__, __LINE__);
+                                   "objects have been created.",
+                                   __FUNCTION__, __FILE__, __LINE__);
         }
         else if (num_omp != 1 && force_singlethread_)
         {
-            throw InvalidParameter(
-                "Multithreading not supported.", __FUNCTION__, __FILE__,
-                __LINE__);
+            throw InvalidParameter("Multithreading not supported.",
+                                   __FUNCTION__, __FILE__, __LINE__);
         }
         else
         {
@@ -125,9 +125,9 @@ void ParallelismManager::set_status(const statusMap &status)
             throw InvalidParameter(
                 "Number of seeds must equal the number of virtual processes: "
                 "expected length " +
-                std::to_string(num_mpi_ * num_omp_) + " but received " +
-                std::to_string(seeds.size()) + ".", __FUNCTION__, __FILE__,
-                __LINE__);
+                    std::to_string(num_mpi_ * num_omp_) + " but received " +
+                    std::to_string(seeds.size()) + ".",
+                __FUNCTION__, __FILE__, __LINE__);
         }
         // check if seeds are unique
         std::set<long> seedset;

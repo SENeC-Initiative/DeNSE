@@ -21,7 +21,7 @@ neuron_params = {
     #~ "axon_angle":0.,
 
     "axon_angle":0.,
-    "use_critical_resource": True,
+    "use_critical_resource": False,
     # #critical_resource model
     # "critical_resource_amount":100.,
     # "critical_resource_initial_demand":1.,
@@ -42,9 +42,9 @@ neuron_params = {
     # "rw_persistence_length": 2.,
     "rw_memory_tau": 25.,
     "rw_corr_delta": 2,
-    "rw_sensing_angle":0.3433,
+    "sensing_angle": 0.3433,
 
-    "speed_growth_cone": 5.,
+    "speed_growth_cone": 0.001,
 
     "filopodia_wall_affinity": 5.,
     "filopodia_finger_length": 20.,
@@ -68,12 +68,12 @@ if __name__ =='__main__':
     #~ kernel={"seeds":[33, 64, 84, 65, 68, 23],
             #~ "num_local_threads": 6,
             #~ "resolution": 30.}
-    #~ kernel={"seeds":[33],
-            #~ "num_local_threads": 1,
-            #~ "resolution": 200.}
-    kernel={"seeds":[23, 68, 19, 37, 29],
-            "num_local_threads": 5,
-            "resolution": 1.}
+    kernel={"seeds":[33],
+            "num_local_threads": 1,
+            "resolution": 200.}
+    # ~ kernel={"seeds":[23, 68, 19, 37, 29],
+            # ~ "num_local_threads": 5,
+            # ~ "resolution": 1.}
 
     culture_file = main_dir + "/culture/angle20.svg"
 
@@ -86,7 +86,7 @@ if __name__ =='__main__':
         neuron_params['growth_cone_model'] = 'random_walk'
 
     gids = None
-    culture = ng.CreateEnvironment(culture_file, min_x=0, max_x=1000)
+    culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1000)
 
     #~ ng.geometry.plot.plot_shape(culture)
     #~ plt.show()

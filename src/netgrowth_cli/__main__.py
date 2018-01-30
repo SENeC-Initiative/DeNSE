@@ -14,7 +14,7 @@ neuron_params={
     "rw_delta_corr": 8.,
     "angular_resolution": 30.0,
     "speed_growth_cone": 10.,
-    "rw_sensing_angle": 0.1195,
+    "sensing_angle": 0.1195,
 
     "filopodia_wall_affinity": 0.02,
     "filopodia_finger_length": 50.0,
@@ -48,7 +48,7 @@ dendrite_params={
     "rw_memory_tau": 200.,
     "angular_resolution": 30.0,
     "speed_growth_cone": 5.,
-    "rw_sensing_angle": 0.1195,
+    "sensing_angle": 0.1195,
 
     "filopodia_wall_affinity": 2.0,
     "filopodia_finger_length": 50.0,

@@ -16,6 +16,7 @@
 #include <geos/geom/prep/PreparedGeometry.h>
 #include <geos/index/strtree/STRtree.h>
 #include <geos/operation/buffer/BufferParameters.h>
+
 // define the proper types to use in shared_ptr (avoid memory leak)
 #define GEOSGeometry geos::geom::Geometry
 #define GEOSPreparedGeometry geos::geom::prep::PreparedGeometry
@@ -24,8 +25,10 @@
 #define GEOSBufferParams geos::operation::buffer::BufferParameters
 #define GEOSSTRtree_t GEOSSTRtree
 #define GEOSBufParams_t GEOSBufferParams
+
 // include C-API
 #include <geos_c.h>
+
 // define missing types
 typedef GEOSPreparedGeometry GEOSPrepGeom_t;
 typedef GEOSGeometry GEOSGeometry_t;
@@ -40,6 +43,16 @@ namespace growth
 
 typedef std::shared_ptr<GEOSGeometry_t> GeomPtr;
 typedef std::shared_ptr<GEOSPrepGeom_t> PrepGeomPtr;
+
+
+/*
+ * Smart pointers
+ */
+
+class Area;
+class Wall;
+typedef std::shared_ptr<Area> AreaPtr;
+typedef std::shared_ptr<Wall> WallPtr;
 
 
 /*
@@ -74,8 +87,9 @@ typedef struct Filopodia
     std::vector<double> directions;
     std::vector<double> normal_weights;
     int size;
-    double wall_affinity;
     double finger_length;
+    double substrate_affinity;
+    double wall_affinity;
 } Filopodia;
 
 

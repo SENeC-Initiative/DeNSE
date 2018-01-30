@@ -53,15 +53,14 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , gc_split_angle_std_(GC_SPLIT_ANGLE_STD)
     , diameter_eta_exp_(DIAMETER_ETA_EXP)
     , diameter_variance_(DIAMETER_VARIANCE)
-    , timestep_(kernel().simulation_manager.get_resolution())
 {
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
     poisson_ = std::poisson_distribution<>(0);
     normal_  = std::normal_distribution<double>(0, 1);
-#ifndef NDEBUG
-    printf(" the neurite %s model is %s \n", neurite_type_.c_str(),
-           parent_.lock()->get_gc_model().c_str());
-#endif
+    //~ #ifndef NDEBUG
+    //~ printf(" the neurite %s model is %s \n", neurite_type_.c_str(),
+    //~ parent_.lock()->get_gc_model().c_str());
+    //~ #endif
 }
 
 
@@ -134,8 +133,7 @@ void Neurite::finalize()
  */
 void Neurite::update_kernel_variables()
 {
-    timestep_ = kernel().simulation_manager.get_resolution();
-    for (auto& gc : growth_cones_)
+    for (auto &gc : growth_cones_)
     {
         gc.second->update_kernel_variables();
     }
@@ -173,7 +171,7 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     branching_model_.update_growth_cones(rnd_engine);
 
     // grow all the growth cones
-    for (auto& gc : growth_cones_)
+    for (auto &gc : growth_cones_)
     {
         assert(gc.second.use_count() == 2);
         gc.second->grow(rnd_engine, gc.first, substep);
@@ -188,6 +186,7 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
         assert(growth_cones_[cone_n].use_count() == 1);
         growth_cones_.erase(cone_n);
     }
+
     dead_cones_.clear();
 }
 
@@ -201,22 +200,6 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
  */
 void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
 {
-
-    // retrieve info on the elements
-
-    //~ TNodePtr child = parent->children_[living_child_id];
-    //~ std::vector<TNodePtr> others;
-    //~ for (auto& gc : parent->children_)
-    //~ {
-    //~ if (gc->get_nodeID() != child->get_nodeID())
-    //~ {
-    //~ others.push_back(gc);
-    //~ }
-    //~ }
-
-    //~ size_t grand_parent_ID = parent->get_parent().lock()->get_nodeID();
-    //~ TNodePtr grand_parent  = nodes_[grand_parent_ID];
-
     auto child = parent->children_[living_child_id];
     TNodePtr other;
     if (living_child_id == 1)
@@ -286,31 +269,32 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
  */
 void Neurite::delete_cone(size_t cone_n)
 {
-    // dead_cones_.push_back(cone_n);
-    //}
-    // void Neurite::remove_cone(size_t cone_n);
-    GCPtr dead_cone = growth_cones_[cone_n];
-#ifndef NDEBUG
-    printf(" ############ Cone Deletion #########  \n");
-    printf(" dead cone is %s \n", dead_cone->topology_.binaryID.c_str());
-#endif
-    dead_cone->biology_.dead = true;
-    assert(dead_cone->get_branch()->size() == 0);
-    size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
-    auto parent_node = nodes_[parent_ID];
-
-    printf("pushing %lu to dead cones\n", cone_n);
-    dead_cones_.push_back(cone_n);
-
-    for (size_t i = 0; i < parent_node->children_.size(); i++)
+    // delete only if not last growth cone (neurites cannot die)
+    if (growth_cones_.size() - dead_cones_.size() > 1)
     {
-        if (parent_node->get_child(i)->is_dead() == false)
+        GCPtr dead_cone = growth_cones_[cone_n];
+#ifndef NDEBUG
+        printf(" ############ Cone Deletion #########  \n");
+        printf(" dead cone is %s \n", dead_cone->topology_.binaryID.c_str());
+#endif
+        dead_cone->biology_.dead = true;
+        assert(dead_cone->get_branch()->size() == 0);
+        size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
+        auto parent_node = nodes_[parent_ID];
+
+        printf("pushing %lu to dead cones\n", cone_n);
+        dead_cones_.push_back(cone_n);
+
+        for (size_t i = 0; i < parent_node->children_.size(); i++)
         {
-            delete_parent_node(parent_node, i);
+            if (parent_node->get_child(i)->is_dead() == false)
+            {
+                delete_parent_node(parent_node, i);
+            }
         }
+        printf("how many %lu \n", parent_node.use_count());
+        assert(parent_node.use_count() == 1);
     }
-    // printf("how many %lu \n",parent_node.use_count());
-    assert(parent_node.use_count() == 1);
 }
 
 
@@ -687,7 +671,8 @@ unsigned int Neurite::num_growth_cones() const
  *
  * @param GCPtr pointer to the GrowthCone
  */
-void Neurite::add_cone(GCPtr cone) {
+void Neurite::add_cone(GCPtr cone)
+{
     growth_cones_tmp_[num_created_cones_] = cone;
     num_created_cones_++;
 }
@@ -708,16 +693,10 @@ std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cend() const
 NodePtr Neurite::get_first_node() const { return nodes_.at(0); }
 
 
-NeuronWeakPtr Neurite::get_parent_neuron() const
-{
-    return parent_;
-}
+NeuronWeakPtr Neurite::get_parent_neuron() const { return parent_; }
 
 
-std::string Neurite::get_name() const
-{
-    return name_;
-}
+std::string Neurite::get_name() const { return name_; }
 
 
 size_t Neurite::get_and_increment_gc_ID()
@@ -733,9 +712,9 @@ size_t Neurite::get_and_increment_gc_ID()
 
 void Neurite::set_status(const statusMap &status)
 {
-#ifndef NDEBUG
-    printf("\nNEURITE SET STATUS\n");
-#endif
+    //~ #ifndef NDEBUG
+    //~ printf("\nNEURITE SET STATUS\n");
+    //~ #endif
     get_param(status, names::diameter_eta_exp, diameter_eta_exp_);
     get_param(status, names::diameter_variance, diameter_variance_);
     if (not kernel().angles_in_radians() and
@@ -775,16 +754,16 @@ void Neurite::set_status(const statusMap &status)
     {
         if (use_cr)
         {
-            observables_.push_back("A");  // add A as observable
+            observables_.push_back("A"); // add A as observable
         }
         else
         {
-            observables_.pop_back();  // delete A as observable (last)
+            observables_.pop_back(); // delete A as observable (last)
         }
     }
     branching_model_.set_status(status);
 
-    for (auto& gc : growth_cones_)
+    for (auto &gc : growth_cones_)
     {
         gc.second->set_status(status);
     }
@@ -814,23 +793,23 @@ void Neurite::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double Neurite::get_state(const char* observable) const
+double Neurite::get_state(const char *observable) const
 {
     double value = 0.;
 
     TRIE(observable)
     CASE("length")
-        for (const auto& gc : growth_cones_)
-        {
-            value += gc.second->get_state(observable);
-        }
+    for (const auto &gc : growth_cones_)
+    {
+        value += gc.second->get_state(observable);
+    }
     CASE("speed")
-        for (const auto& gc : growth_cones_)
-        {
-            value += gc.second->get_state(observable);
-        }
+    for (const auto &gc : growth_cones_)
+    {
+        value += gc.second->get_state(observable);
+    }
     CASE("A")
-        value = branching_model_.CR_amount_;
+    value = branching_model_.CR_amount_;
     ENDTRIE;
 
     return value;

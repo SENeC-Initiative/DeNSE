@@ -138,3 +138,11 @@ def default_continuous():
 
 ev_type = defaultdict(default_continuous)
 ev_type["num_growth_cones"] = "discrete"
+
+# unsettable variables used for GetDefaults
+
+unsettables = {
+    "growth_cone": ["observables"],
+    "neuron": ["observables"],
+    "neurite": ["observables"],
+}

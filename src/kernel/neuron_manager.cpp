@@ -1,12 +1,13 @@
 #include "neuron_manager.hpp"
 
+#include <cmath>
+#include <cstring>
+
 #include "config_impl.hpp"
 #include "kernel_manager.hpp"
-#include <cmath>
 
 #include "Neuron.hpp"
 
-#include <string.h> // cstrings
 
 namespace growth
 {
@@ -14,7 +15,19 @@ namespace growth
 NeuronManager::NeuronManager() {}
 
 
-void NeuronManager::initialize() {}
+void NeuronManager::initialize()
+{
+    // create default neuron with two neurites (axon + dendrite)
+    statusMap empty_params;
+    statusMap params({{names::num_neurites, Property(2)},
+                      {names::growth_cone_model, ""},
+                      {"x", Property(0.)},
+                      {"y", Property(0.)}});
+    mtPtr rnd_ptr = kernel().rng_manager.get_rng(0);
+
+    model_neuron_ = std::make_shared<Neuron>(0);
+    model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
+}
 
 
 void NeuronManager::finalize()
@@ -39,6 +52,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
     size_t previous_num_neurons = neurons_.size();
     // put the neurons on the thread list they belong to
     size_t num_omp = kernel().parallelism_manager.get_num_local_threads();
+    int omp_id     = kernel().parallelism_manager.get_thread_local_id();
     std::vector<std::vector<size_t>> thread_neurons(num_omp);
     for (size_t i = 0; i < neuron_params.size(); i++)
     {
@@ -49,7 +63,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         if (kernel().space_manager.has_environment())
         {
             // printf("check point %f, %f in the environment \n",x,y);
-            if (not kernel().space_manager.env_contains(Point(x, y)))
+            if (not kernel().space_manager.env_contains(Point(x, y), omp_id))
             {
                 throw std::runtime_error(
                     " a Neuron was positioned outside the environment \n");
@@ -141,7 +155,7 @@ gidNeuronMap NeuronManager::get_local_neurons(int local_thread_id)
 {
     gidNeuronMap local_neurons;
 
-    for (auto& n : neurons_on_thread_[local_thread_id])
+    for (auto &n : neurons_on_thread_[local_thread_id])
     {
         local_neurons[n->get_gid()] = n;
     }
@@ -155,6 +169,24 @@ void NeuronManager::get_all_neurons(std::vector<NeuronPtr> &neuron_ptr_vec)
     for (const auto &neuron : neurons_)
     {
         neuron_ptr_vec.push_back(neuron.second);
+    }
+}
+
+
+void NeuronManager::get_defaults(statusMap &status,
+                                 const std::string &object) const
+{
+    if (object == "neuron")
+    {
+        model_neuron_->get_status(status);
+    }
+    else if (object == "axon")
+    {
+        model_neuron_->get_neurite_status(status, "axon");
+    }
+    else if (object == "dendrite" || object == "neurite")
+    {
+        model_neuron_->get_neurite_status(status, "dendrite");
     }
 }
 

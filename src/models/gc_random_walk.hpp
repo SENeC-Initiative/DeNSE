@@ -51,12 +51,12 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
     void after_split() override;
     void initialize_RW();
 
-    virtual void compute_new_direction(
-        mtPtr rnd_engine, double substep) override;
+    virtual void compute_new_direction(mtPtr rnd_engine,
+                                       double substep) override;
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
-    virtual double get_state(const char* observable) const override;
+    virtual double get_state(const char *observable) const override;
 };
 
 } /* namespace */

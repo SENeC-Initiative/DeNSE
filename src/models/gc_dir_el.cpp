@@ -69,7 +69,7 @@ void GrowthCone_Elongation_Direction<
     ElongationModel, DirectionModel>::set_status(const statusMap &status)
 {
     ElongationModel::set_status(status);
-    DirectionModel::average_speed_ = ElongationModel::critical_.speed_factor;
+    DirectionModel::avg_speed_ = ElongationModel::critical_.speed_factor;
     DirectionModel::set_status(status);
 }
 
@@ -111,8 +111,9 @@ void GrowthCone_Elongation_Direction<
 
 
 template <class ElongationModel, class DirectionModel>
-double GrowthCone_Elongation_Direction<
-    ElongationModel, DirectionModel>::get_state(const char* observable) const
+double
+GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::get_state(
+    const char *observable) const
 {
     double value = 0.;
 

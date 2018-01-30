@@ -31,7 +31,7 @@ class SimulationManager : public ManagerInterface
     virtual void set_status(const statusMap &);
     virtual void get_status(statusMap &) const;
     void num_threads_changed(int num_omp);
-    void new_branching_event(const Event& ev);
+    void new_branching_event(const Event &ev);
 
     Time get_time() const;
     double get_resolution() const;
@@ -62,10 +62,9 @@ class SimulationManager : public ManagerInterface
 /**
  * @brief compare the times of Events
  */
-auto ev_greater = [](const Event& lhs, const Event& rhs)
-{
-    return std::tie(std::get<0>(lhs), std::get<1>(lhs))
-           > std::tie(std::get<0>(rhs), std::get<1>(rhs));
+auto ev_greater = [](const Event &lhs, const Event &rhs) {
+    return std::tie(std::get<0>(lhs), std::get<1>(lhs)) >
+           std::tie(std::get<0>(rhs), std::get<1>(rhs));
 };
 
 

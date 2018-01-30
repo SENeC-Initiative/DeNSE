@@ -52,7 +52,7 @@ if ( HAVE_PYTHON )
       endif()
   else()
     # just move the files
-    
+
   endif()
 else ()
   message( FATAL_ERROR "Python required")

@@ -79,30 +79,30 @@ Property::Property(const Property &prop)
 
     switch (data_type)
     {
-        case VEC_LONG:
-            new (&ll) std::vector<long>(prop.ll);
-            break;
-        case VEC_SIZE:
-            new (&uu) std::vector<size_t>(prop.uu);
-            break;
-        case VEC_STRING:
-            new (&ss) std::vector<std::string>(prop.ss);
-            break;
-        case INT:
-            i = prop.i;
-            break;
-        case SIZE:
-            ul = prop.ul;
-            break;
-        case DOUBLE:
-            d = prop.d;
-            break;
-        case BOOL:
-            b = prop.b;
-            break;
-        case STRING:
-            new (&s) std::string(prop.s);
-            break;
+    case VEC_LONG:
+        new (&ll) std::vector<long>(prop.ll);
+        break;
+    case VEC_SIZE:
+        new (&uu) std::vector<size_t>(prop.uu);
+        break;
+    case VEC_STRING:
+        new (&ss) std::vector<std::string>(prop.ss);
+        break;
+    case INT:
+        i = prop.i;
+        break;
+    case SIZE:
+        ul = prop.ul;
+        break;
+    case DOUBLE:
+        d = prop.d;
+        break;
+    case BOOL:
+        b = prop.b;
+        break;
+    case STRING:
+        new (&s) std::string(prop.s);
+        break;
     }
 }
 
@@ -110,20 +110,20 @@ Property::Property(const Property &prop)
 Property &Property::operator=(const Property &prop)
 {
     // call destructor on old content if required
-    switch(data_type)
+    switch (data_type)
     {
-        case VEC_SIZE:
-            uu.~vector<size_t>();
-            break;
-        case VEC_LONG:
-            ll.~vector<long>();
-            break;
-        case VEC_STRING:
-            ss.~vector<std::string>();
-            break;
-        case STRING:
-            s.~basic_string();
-            break;
+    case VEC_SIZE:
+        uu.~vector<size_t>();
+        break;
+    case VEC_LONG:
+        ll.~vector<long>();
+        break;
+    case VEC_STRING:
+        ss.~vector<std::string>();
+        break;
+    case STRING:
+        s.~basic_string();
+        break;
     }
 
     // switch data_type
@@ -132,30 +132,30 @@ Property &Property::operator=(const Property &prop)
     // init new content
     switch (prop.data_type)
     {
-        case VEC_SIZE:
-            new (&uu) std::vector<size_t>(prop.uu);
-            break;
-        case VEC_LONG:
-            new (&ll) std::vector<long>(prop.ll);
-            break;
-        case VEC_STRING:
-            new (&ss) std::vector<std::string>(prop.ss);
-            break;
-        case INT:
-            i = prop.i;
-            break;
-        case SIZE:
-            ul = prop.ul;
-            break;
-        case DOUBLE:
-            d = prop.d;
-            break;
-        case BOOL:
-            b = prop.b;
-            break;
-        case STRING:
-            new (&s) std::string(prop.s);
-            break;
+    case VEC_SIZE:
+        new (&uu) std::vector<size_t>(prop.uu);
+        break;
+    case VEC_LONG:
+        new (&ll) std::vector<long>(prop.ll);
+        break;
+    case VEC_STRING:
+        new (&ss) std::vector<std::string>(prop.ss);
+        break;
+    case INT:
+        i = prop.i;
+        break;
+    case SIZE:
+        ul = prop.ul;
+        break;
+    case DOUBLE:
+        d = prop.d;
+        break;
+    case BOOL:
+        b = prop.b;
+        break;
+    case STRING:
+        new (&s) std::string(prop.s);
+        break;
     }
 
     return *this;
@@ -164,21 +164,20 @@ Property &Property::operator=(const Property &prop)
 
 Property::~Property()
 {
-    switch(data_type)
+    switch (data_type)
     {
-        case VEC_SIZE:
-            uu.~vector<size_t>();
-            break;
-        case VEC_LONG:
-            ll.~vector<long>();
-            break;
-        case VEC_STRING:
-            ss.~vector<std::string>();
-            break;
-        case STRING:
-            s.~basic_string();
-            break;
+    case VEC_SIZE:
+        uu.~vector<size_t>();
+        break;
+    case VEC_LONG:
+        ll.~vector<long>();
+        break;
+    case VEC_STRING:
+        ss.~vector<std::string>();
+        break;
+    case STRING:
+        s.~basic_string();
+        break;
     }
 }
-
 }

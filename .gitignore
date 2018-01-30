@@ -15,6 +15,7 @@ Makefile
 src/pymodule/setup.py
 src/libgrowth/config.hpp
 local_install
+install_test
 src/pymodule/NetGrowth/_*.cpp
 
 
@@ -29,9 +30,8 @@ src/pymodule/NetGrowth/_*.cpp
 
 # Docs related
 
-src/docs/_build
-src/docs/doxyfiles/html
-src/docs/doxyfiles/latex
+docs/_build
+docs/doxyfiles/
 
 # Netgrowth run files
 *.pdf

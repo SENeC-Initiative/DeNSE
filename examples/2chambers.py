@@ -14,9 +14,6 @@ import nngt
 import NetGrowth as ng
 
 
-nngt.use_library("networkx")
-
-
 def CleanFolder(tmp_dir, make=True):
     if os.path.isdir(tmp_dir):
         shutil.rmtree(tmp_dir)
@@ -37,7 +34,7 @@ neuron_params = {
     # "T" : 0.01,
     #~ "axon_angle":0.,
 
-    "use_critical_resource": True,
+    "use_critical_resource": False,
     # #critical_resource model
     # "critical_resource_amount":100.,
     # "critical_resource_initial_demand":1.,
@@ -57,7 +54,7 @@ neuron_params = {
 
     "rw_persistence_length": 2.,
     "rw_memory_tau": 90.,
-    "rw_sensing_angle":0.1433,
+    "sensing_angle":0.1433,
 
     "speed_growth_cone": 0.05,
 
@@ -85,9 +82,9 @@ if __name__ =='__main__':
     kernel={"seeds":[33, 64, 84, 65, 68, 23],
             "num_local_threads": 6,
             "resolution": 30.}
-    #~ kernel={"seeds":[33],
-            #~ "num_local_threads": 1,
-            #~ "resolution": 30.}
+    # ~ kernel={"seeds":[33],
+            # ~ "num_local_threads": 1,
+            # ~ "resolution": 30.}
     #~ kernel={"seeds":[23, 68],
             #~ "num_local_threads": 2,
             #~ "resolution": 30.}
@@ -106,7 +103,7 @@ if __name__ =='__main__':
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ng.CreateEnvironment(culture_file, min_x=0, max_x=1800)
+        culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(neurons=100, xmax=540, soma_radius=10.)
         pos_right = culture.seed_neurons(neurons=100, xmin=1260, soma_radius=10.)
@@ -114,6 +111,7 @@ if __name__ =='__main__':
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
 
+    print("Creating neurons")
     gids = ng.CreateNeurons(n= 200, growth_cone_model='random_walk',
                             culture=culture,
                             params = neuron_params,
@@ -123,9 +121,9 @@ if __name__ =='__main__':
     #~ ng.plot.PlotNeuron(show=True)
 
     start = time.time()
-    step(30000, 0, False)
-    #~ for loop_n in range(5):
-         #~ step(500, loop_n, True)
+    step(30000, 0, True)
+    # ~ for loop_n in range(5):
+         # ~ step(500, loop_n, True)
     duration = time.time() - start
 
     # prepare the plot
@@ -136,19 +134,19 @@ if __name__ =='__main__':
                        soma_color='k', axon_color='darkorange',
                        show=True)
 
-    # save
-    save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
-    ng.SaveJson(filepath=save_path)
-    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
+    # ~ # save
+    # ~ save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
+    # ~ ng.SaveJson(filepath=save_path)
+    # ~ ng.SaveSwc(filepath=save_path,swc_resolution = 10)
 
-    #### Import population for network analysis
-    ng_population = ng.SimulationsFromFolder(save_path)
-    population = ng.SwcEnsemble.from_population(ng_population)
-    intersection = ng.IntersectionsFromEnsemble(population)
-    num_connections = np.sum([len(a) for a in intersection.values()])
-    graph = ng.CreateGraph(population, intersection)
-    # graph info
-    nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    nngt.plot.draw_network(graph, esize=0.1, show=True)
+    # ~ #### Import population for network analysis
+    # ~ ng_population = ng.SimulationsFromFolder(save_path)
+    # ~ population = ng.SwcEnsemble.from_population(ng_population)
+    # ~ intersection = ng.IntersectionsFromEnsemble(population)
+    # ~ num_connections = np.sum([len(a) for a in intersection.values()])
+    # ~ graph = ng.CreateGraph(population, intersection)
+    # ~ # graph info
+    # ~ nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
+    # ~ nngt.plot.draw_network(graph, esize=0.1, show=True)
 
     print("duration", duration)

@@ -49,7 +49,11 @@ size_t create_neurons(const std::vector<statusMap> &neuron_params,
 void set_kernel_status(const statusMap &status_dict, std::string simulation_ID);
 
 
-void set_environment(GEOSGeom environment);
+void set_environment(
+    GEOSGeom environment, const std::vector<GEOSGeom> &walls,
+    const std::vector<GEOSGeom> &areas, std::vector<double> heights,
+    const std::vector<std::string> &names,
+    const std::vector<std::unordered_map<std::string, double>> &properties);
 
 
 void set_status(size_t gid, statusMap status, statusMap axon_status,
@@ -63,9 +67,13 @@ void simulate(const Time &simtime);
 
 void test_random_generator(Random_vecs &values, size_t size);
 
+
 /* Getters functions */
 
-void get_environment(GEOSGeom &environment);
+void get_environment(
+    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
+    std::vector<double> &heights, std::vector<std::string> &names,
+    std::vector<std::unordered_map<std::string, double>> &properties);
 
 
 const Time get_current_time();
@@ -109,16 +117,15 @@ void get_models(std::vector<std::string> &models,
                 const std::string &object_type);
 
 
-void get_recorder_type(size_t gid, std::string& level,
-                       std::string& event_type);
+void get_recorder_type(size_t gid, std::string &level, std::string &event_type);
 
 
-bool get_next_recording(size_t gid, std::vector<Property>& ids,
-                        std::vector<double>& values);
+bool get_next_recording(size_t gid, std::vector<Property> &ids,
+                        std::vector<double> &values);
 
 
-bool get_next_time(size_t gid, std::vector<Property>& ids,
-                   std::vector<double>& values, const std::string& time_units);
+bool get_next_time(size_t gid, std::vector<Property> &ids,
+                   std::vector<double> &values, const std::string &time_units);
 
 
 /* tools */

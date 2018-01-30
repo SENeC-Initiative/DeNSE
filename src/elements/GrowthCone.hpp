@@ -8,9 +8,9 @@
 
 // lib include
 #include "config_impl.hpp"
+#include "cttrie.hpp"
 #include "elements_types.hpp"
 #include "spatial_types.hpp"
-#include "cttrie.hpp"
 
 
 namespace growth
@@ -37,19 +37,24 @@ class GrowthCone : public TopologicalNode,
     friend class Branching;
 
   protected:
-    // store the state of the kernel to avoid repeted calls to kernel_manager
-    bool using_environment_; // whether we're embedded in space
-    double timestep_;        // the time resolution of a step in seconds
-    size_t gc_ID_;           // unique number for growth cones
+    bool using_environment_;   // whether we're embedded in space
+    size_t gc_ID_;             // unique number for growth cones
+    std::string current_area_; // name of the area where the GC is
     bool stuck_;
     std::vector<std::string> observables_;
 
     // motion-related data
     double delta_angle_;
-    double rw_sensing_angle_;
-    double speed_growth_cone_;
+    double sensing_angle_;
+    double avg_speed_;
     double speed_variance_;
-    double average_speed_;
+    double duration_retraction_; // duration of a retraction period (seconds)
+    double max_sensing_angle_;
+    double proba_retraction_; // proba of retracting when stuck
+    double retracting_todo_;  // duration left to retract
+    double speed_ratio_retraction_;
+    double proba_down_move_; // proba of going down if bottom out of reach
+    double scale_up_move_;   // maximal height that GC can cross upwards
 
     Filopodia filopodia_;
     Move move_;
@@ -65,7 +70,7 @@ class GrowthCone : public TopologicalNode,
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
                          float distanceToParent, const std::string &binaryID,
-                         Point position, double angle);
+                         const Point &position, double angle);
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
@@ -78,12 +83,17 @@ class GrowthCone : public TopologicalNode,
     void prune(size_t cone_n);
 
     // compute direction
-    void compute_pull_and_accessibility(std::vector<double> &directions_weights,
-                                        mtPtr rnd_engine, double substep);
+    void
+    compute_pull_and_accessibility(std::vector<double> &directions_weights,
+                                   std::vector<std::string> &change_to_new_area,
+                                   mtPtr rnd_engine, double substep);
     void compute_intrinsic_direction(std::vector<double> &directions_weights);
-    void choose_pull_direction(std::vector<double> &directions_weights,
-                               mtPtr rnd_engine);
+    int choose_pull_direction(const std::vector<double> &directions_weights,
+                              const std::vector<std::string> &new_pos_area,
+                              mtPtr rnd_engine);
     virtual void compute_new_direction(mtPtr rnd_engine, double substep);
+    void widen_sensing_angle();
+    bool nonmax_sensing_angle();
 
     // elongation
     void compute_module(double substep);
@@ -101,7 +111,7 @@ class GrowthCone : public TopologicalNode,
 
     // get functions
     double get_module() const;
-    virtual double get_state(const char* observable) const;
+    virtual double get_state(const char *observable) const;
     virtual double get_CR_received() const;
     virtual double get_CR_left() const;
     virtual double get_CR_used() const;
@@ -113,7 +123,19 @@ class GrowthCone : public TopologicalNode,
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();
+    void update_growth_properties(const std::string &area_name);
 };
+
+
+inline bool GrowthCone::nonmax_sensing_angle()
+{
+    return abs(move_.sigma_angle - max_sensing_angle_) < 1e-6;
+}
+
+inline void GrowthCone::widen_sensing_angle()
+{
+    move_.sigma_angle = std::min(1.5 * move_.sigma_angle, max_sensing_angle_);
+}
 }
 
 #endif

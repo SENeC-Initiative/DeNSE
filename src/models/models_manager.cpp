@@ -24,6 +24,10 @@ void init_models()
         std::dynamic_pointer_cast<GrowthCone>(std::make_shared<GrowthCone>()));
 
     kernel().neuron_manager.register_model(
+        "random_walk", std::dynamic_pointer_cast<GrowthCone>(
+                           std::make_shared<GrowthCone_RandomWalk>()));
+
+    kernel().neuron_manager.register_model(
         "random_walk_Langevin",
         std::dynamic_pointer_cast<GrowthCone>(
             std::make_shared<GrowthCone_Elongation_Direction<
@@ -40,10 +44,6 @@ void init_models()
         std::dynamic_pointer_cast<GrowthCone>(
             std::make_shared<GrowthCone_Elongation_Direction<
                 GrowthCone_Critical_Lurd, GrowthCone_RandomWalk>>()));
-
-    kernel().neuron_manager.register_model(
-        "random_walk", std::dynamic_pointer_cast<GrowthCone>(
-                           std::make_shared<GrowthCone_RandomWalk>()));
 
 #ifndef NDEBUG
     for (auto member : kernel().neuron_manager.model_map_)

@@ -1,8 +1,8 @@
 #include "record_manager.hpp"
 
 // include from elements
-#include "elements_types.hpp"
 #include "GrowthCone.hpp"
+#include "elements_types.hpp"
 
 // include from kernel
 #include "kernel_manager.hpp"
@@ -13,13 +13,15 @@ namespace growth
 
 /**
  * @brief RecordManager class
- * The RecordManager saves relevant information on the dynamics of the simulation.
- * The information are stored during the execution, it's called from the SimulationManager, or from
- * the Neurite during branch events.
- * The desired information can be set throw the Kernel_set_status method.
+ * The RecordManager saves relevant information on the dynamics of the
+ * simulation. The information are stored during the execution, it's called from
+ * the SimulationManager, or from the Neurite during branch events. The desired
+ * information can be set throw the Kernel_set_status method.
  */
-RecordManager::RecordManager() : last_omp_id_(0)
-{}
+RecordManager::RecordManager()
+    : last_omp_id_(0)
+{
+}
 
 
 /**
@@ -29,9 +31,9 @@ RecordManager::RecordManager() : last_omp_id_(0)
 void RecordManager::initialize()
 {
     size_t num_omp = kernel().parallelism_manager.get_num_local_threads();
-    num_threads_ = num_omp;
+    num_threads_   = num_omp;
 
-    for (size_t i=0; i<num_omp; i++)
+    for (size_t i = 0; i < num_omp; i++)
     {
         omp_id_crec_.push_back(std::vector<size_t>());
     }
@@ -74,7 +76,7 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
         // one recorder only takes care of neurons that are in the same OpenMP
         // thread as him, so we loop on the threads and create one recorder per
         // thread where there are target neurons
-        for (int i=0; i<num_threads_; i++)
+        for (int i = 0; i < num_threads_; i++)
         {
             gid = first_gid + num_created;
 
@@ -93,7 +95,7 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
 
             // create a local statusMap
             statusMap local_status;
-            for (auto& status_it : status)
+            for (auto &status_it : status)
             {
                 if (status_it.first != names::targets)
                 {
@@ -166,9 +168,9 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             }
             else
             {
-                    throw BadPropertyType(
-                        "level", "neuron', 'neurite' or 'growth_cone", level,
-                        __FUNCTION__, __FILE__, __LINE__);
+                throw BadPropertyType("level",
+                                      "neuron', 'neurite' or 'growth_cone",
+                                      level, __FUNCTION__, __FILE__, __LINE__);
             }
 
             // set status and, if discrete, map targets to the recorder
@@ -186,7 +188,7 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                     }
                     neuron_to_d_recorder_[n].push_back(gid);
                 }
-                
+
                 // assign recorder to a specific thread
                 omp_id_drec_[last_omp_id_].push_back(gid);
             }
@@ -218,7 +220,6 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
 }
 
 
-
 /**
  * @brief Make all records for the current step
  *
@@ -237,7 +238,7 @@ void RecordManager::record(int omp_id)
     for (auto event : events_)
     {
         double resol = kernel().simulation_manager.get_resolution();
-        
+
         size_t neuron = std::get<2>(event);
         for (size_t rec : omp_id_drec_[omp_id])
         {
@@ -251,7 +252,7 @@ void RecordManager::finalize_simulation(size_t steps)
 {
     size_t final_step = (steps > 0) ? steps - 1 : 0;
 
-    for (auto& recorder : c_recorders_)
+    for (auto &recorder : c_recorders_)
     {
         recorder.second->final_timestep(final_step);
     }
@@ -271,13 +272,19 @@ bool RecordManager::is_recorder(size_t gid) const
     {
         return true;
     }
-    
+
     return false;
 }
 
 
-void RecordManager::get_status(statusMap &status) const
-{}
+void RecordManager::get_status(statusMap &status) const {}
+
+
+void RecordManager::get_defaults(statusMap &status) const
+{
+    auto rec = std::make_shared<NeuronContinuousRecorder>();
+    rec->get_status(status);
+}
 
 
 size_t RecordManager::num_recorders() const
@@ -292,7 +299,7 @@ void RecordManager::num_threads_changed(int num_omp)
     omp_id_drec_.clear();
     num_threads_ = num_omp;
 
-    for (size_t i=0; i<num_omp; i++)
+    for (size_t i = 0; i < num_omp; i++)
     {
         omp_id_crec_.push_back(std::vector<size_t>());
         omp_id_drec_.push_back(std::vector<size_t>());
@@ -300,12 +307,12 @@ void RecordManager::num_threads_changed(int num_omp)
 }
 
 
-void RecordManager::new_branching_event(const Event& ev)
+void RecordManager::new_branching_event(const Event &ev)
 {
     if (!d_recorders_.empty())
     {
         size_t neuron_gid = std::get<2>(ev);
-        auto it = neuron_to_d_recorder_.find(neuron_gid);
+        auto it           = neuron_to_d_recorder_.find(neuron_gid);
 
         if (it != neuron_to_d_recorder_.end())
         {
@@ -323,18 +330,18 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
     statusMap status;
     std::shared_ptr<BaseRecorder> rec;
     std::string event_type;
-    
+
     auto c_it = c_recorders_.find(gid);
     auto d_it = d_recorders_.find(gid);
 
     if (c_it != c_recorders_.end())
     {
-        rec = c_recorders_.at(gid);
+        rec        = c_recorders_.at(gid);
         event_type = "continuous";
     }
     else if (d_it != d_recorders_.end())
     {
-        rec = d_recorders_.at(gid);
+        rec        = d_recorders_.at(gid);
         event_type = "discrete";
     }
     else
@@ -348,40 +355,38 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
     // set status with level and event type
     set_param(status, names::event_type, event_type);
 
-    unsigned int level      = rec->get_level();
+    unsigned int level = rec->get_level();
     std::string s;
 
     switch (level)
     {
-        case 0:
-            s = "neuron";
-            set_param(status, names::level, s);
-            break;
-        case 1:
-            s = "neurite";
-            set_param(status, names::level, s);
-            break;
-        case 2:
-            s = "growth_cone";
-            set_param(status, names::level, s);
-            break;
-        default:
-            throw InvalidParameter(
-                "Invalid level '" + std::to_string(level) + "'.",
-                __FUNCTION__, __FILE__, __LINE__);
-            break;
+    case 0:
+        s = "neuron";
+        set_param(status, names::level, s);
+        break;
+    case 1:
+        s = "neurite";
+        set_param(status, names::level, s);
+        break;
+    case 2:
+        s = "growth_cone";
+        set_param(status, names::level, s);
+        break;
+    default:
+        throw InvalidParameter("Invalid level '" + std::to_string(level) + "'.",
+                               __FUNCTION__, __FILE__, __LINE__);
+        break;
     }
 
     return status;
 }
 
 
-void RecordManager::set_status(const statusMap & status)
-{}
+void RecordManager::set_status(const statusMap &status) {}
 
 
-void RecordManager::get_recorder_type(size_t gid, std::string& level,
-                                      std::string& event_type) const
+void RecordManager::get_recorder_type(size_t gid, std::string &level,
+                                      std::string &event_type) const
 {
     if (is_recorder(gid))
     {
@@ -406,8 +411,8 @@ void RecordManager::get_recorder_type(size_t gid, std::string& level,
 }
 
 
-bool RecordManager::get_next_recording(size_t gid, std::vector<Property>& ids,
-                                       std::vector<double>& values)
+bool RecordManager::get_next_recording(size_t gid, std::vector<Property> &ids,
+                                       std::vector<double> &values)
 {
     auto c_it = c_recorders_.find(gid);
     auto d_it = d_recorders_.find(gid);
@@ -430,9 +435,9 @@ bool RecordManager::get_next_recording(size_t gid, std::vector<Property>& ids,
 }
 
 
-bool RecordManager::get_next_time(size_t gid, std::vector<Property>& ids,
-                                  std::vector<double>& values,
-                                  const std::string& time_units)
+bool RecordManager::get_next_time(size_t gid, std::vector<Property> &ids,
+                                  std::vector<double> &values,
+                                  const std::string &time_units)
 {
     auto c_it = c_recorders_.find(gid);
     auto d_it = d_recorders_.find(gid);

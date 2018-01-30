@@ -19,10 +19,10 @@ Skeleton::Skeleton(const Neuron *neuron)
     branching_points     = SkelNeurite();
     growth_cones         = SkelNeurite();
     SkelNeurite branches = SkelNeurite();
-#ifndef NDEBUG
-    printf(" %lu neurites inside the neuron skeleton \n",
-           neuron->get_num_neurites());
-#endif
+    //~ #ifndef NDEBUG
+    //~ printf(" %lu neurites inside the neuron skeleton \n",
+    //~ neuron->get_num_neurites());
+    //~ #endif
     for (const auto &neurite : neuron->neurites_)
     {
         if (neurite.first == "axon")
@@ -87,7 +87,7 @@ Skeleton::Skeleton(const Neuron *neuron)
         }
         // anyway get growthcones
         auto ite = neurite.second->gc_cend();
-        for (auto it = neurite.second->gc_cbegin();  it != ite; it++)
+        for (auto it = neurite.second->gc_cbegin(); it != ite; it++)
         {
             double x = it->second->get_position().at(0);
             double y = it->second->get_position().at(1);

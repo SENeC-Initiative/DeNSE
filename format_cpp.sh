@@ -63,4 +63,4 @@ else
 fi
 
 # Start formatting the $startdir and all subdirectories
-process_dir $startdir
+process_dir "$startdir/src"

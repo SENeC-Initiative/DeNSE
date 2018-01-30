@@ -20,7 +20,7 @@ class ParallelismManager : public ManagerInterface
   public:
     ParallelismManager();
 
-    void init_mpi(int *argc, char **argv[]);
+    void mpi_init(int *argc, char **argv[]);
     void mpi_finalize();
 
     virtual void initialize();

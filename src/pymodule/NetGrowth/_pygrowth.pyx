@@ -15,11 +15,11 @@ cimport numpy as np
 
 from .geometry import Shape
 from ._helpers import *
+from ._helpers_geom import _get_wall_area
 from ._pygrowth cimport *
 
 
 __all__ = [
-    "CreateEnvironment",
     "CreateNeurons",
     "CreateRecorders",
     "GenerateSimulationID",
@@ -33,6 +33,7 @@ __all__ = [
     "GetStatus",
     "NeuronToSWC",
     "ResetKernel",
+    "SetEnvironment",
     "SetKernelStatus",
     "SetStatus",
     "Simulate",
@@ -93,43 +94,9 @@ def finalize():
 # Main functions #
 # -------------- #
 
-def CreateEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
-                      parent=None, interpolate_curve=50):
-    """
-    Create the culture environment
-
-    Parameters
-    ----------
-    culture : str or :class:`~NetGrowth.geometry.Shape`
-        Path to an SVG or DXF file containing the culture model, or directly
-        a :class:`~NetGrowth.geometry.Shape` object.
-    unit : str, optional (default: 'um')
-        Set the unit of the culture's dimensions.
-        Default is micrometers ('um').
-    min_x : float, optional (default: 5000.)
-        Horizontal position of the leftmost point in `unit`.
-    max_x : float, optional (default: 5000.)
-        Horizontal position of the leftmost point in `unit`.
-    interpolate_curve :
-
-    Returns
-    -------
-    culture
-    """
-    if not isinstance(culture, Shape):
-        from .geometry import culture_from_file
-        culture = culture_from_file(culture, min_x=min_x, max_x=max_x,
-                                    unit=unit, interpolate_curve=interpolate_curve)
-    cdef:
-        GEOSGeometry * geos_geom
-    geos_geom = geos_from_shapely(culture)
-    set_environment(geos_geom)
-    return culture
-
-
 def CreateNeurons(n=1, growth_cone_model="default", params=None,
                   axon_params=None, dendrites_params=None, num_neurites=0,
-                  culture=None, **kwargs):
+                  culture=None, on_area=None, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -141,11 +108,20 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
         or `dendrites_params`.
     params : dict, optional (default: None)
         Parameters of the object (or shape object for obstacle).
-    **kwargs : additional parameters
-        For neurons, the user can provide additional parameters characterizing
-        neuron and the axo-dendritic growth. These are `num_neurites` (int or
-        array of ints) and `axon_params` and `dendrites_params`, which are
-        ``dict`` objects.
+    axon_params : dict, optional (default: same as `params`)
+        Specific parameters for the axonal growth. Entries of the dict can
+        be lists to give different parameters for the axon of each neuron.
+    dendrites_params : dict, optional (default: same as `params`)
+        Specific parameters for the dendritic growth. Entries of the dict can
+        be lists to give different parameters for the dendrites of each neuron.
+        Note that for a given neuron, all dendrites have the same parameters.
+    num_neurites : int or list, optional (default: 0)
+        Number of neurites for each neuron.
+    culture : :class:`Shape`, optional (default: existing environment if any)
+        Spatial environment where the neurons will grow.
+    on_area : str or list, optional (default: everywhere in `culture`)
+        Restrict the space where neurons while be randomly seeded to an
+        area or a set of areas.
 
     Example
     Creating one neuron: ::
@@ -169,13 +145,9 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
     gids : tuple
         GIDs of the objects created.
     '''
-    cdef:
-        statusMap c_default_status
-        string c_default = _to_bytes("default")
-        string c_type = _to_bytes("growth_cones")
-
-    ax_params = {} if axon_params is None else axon_params
-    dend_params = {} if dendrites_params is None else dendrites_params
+    params       = {} if params is None else params
+    ax_params    = {} if axon_params is None else axon_params
+    dend_params  = {} if dendrites_params is None else dendrites_params
     env_required = GetKernelStatus("environment_required")
     # num_neurites must go in kwargs because it can be a list or an int
     kwargs['num_neurites'] = num_neurites
@@ -192,16 +164,24 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
             "Provided culture but no environment is required. " + \
             "To use one, call `SetKernelStatus('environment_required', True)`."
 
-    set_position = kwargs.get("set_position", False)
-    if params is None:
-        get_defaults(c_default, c_type, c_default_status)
-        params = _statusMap_to_dict(c_default_status)
+    # seed neurons on random positions or get position from `params`?
+    rnd_pos = kwargs.get("rnd_pos", False)
+    if on_area is not None and "position" not in params:
+        rnd_pos = True
+
+    if not params:
+        params = GetDefaults("neuron", settables=True)
+        params.update(GetDefaults(growth_cone_model, settables=True))
         params['growth_cone_model'] = growth_cone_model
-        params['position'] = (0., 0.)
+        if culture is None:
+            if n == 1:
+                params['position'] = (0., 0.)
+            else:
+                raise ArgumentError("'position' entry in `params` required.")
 
     if isinstance(params, dict):
         params = _neuron_param_parser(
-            params, culture, n, set_position=set_position)
+            params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
         return _create_neurons(params, ax_params, dend_params, kwargs, n)
     else:
         if len(params) != n:
@@ -209,8 +189,9 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
         gids = []
         for param in params:
             param = _neuron_param_parser(
-                param, culture, n=1, set_position=set_position)
-            gids.append(_create_neurons(param, ax_params, dend_params, kwargs, 1))
+                param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
+            gids.append(
+                _create_neurons(param, ax_params, dend_params, kwargs, 1))
         return gids
 
 
@@ -316,7 +297,7 @@ def GenerateSimulationID(*args):
     '''
     hash_ = HashID(*args)
     now_  = datetime.datetime.now()
-    return now_.strftime("%Y%h%d_%H:%M_")+hash_+"_NetGrowthSim"
+    return now_.strftime("%Y%h%d_%H:%M_") + hash_ + "_NetGrowthSim"
 
 
 def GetEnvironment():
@@ -324,19 +305,56 @@ def GetEnvironment():
     Return the environment as a :class:`~NetGrowth.geometry.Shape` object.
     '''
     from shapely.geometry.base import geom_factory
+
     cdef:
         GEOSGeometry* geos_geom = NULL
         uintptr_t pygeos_geom = 0
-    get_environment(geos_geom)
+        vector[GEOSGeometry*] c_areas
+        vector[double] heights
+        vector[string] names
+        vector[unordered_map[string, double]] properties
+
+    get_environment(geos_geom, c_areas, heights, names, properties)
+
     if geos_geom == NULL:
         return None
+
+    # build the Areas
+    py_areas = []
+    default_properties = {}
+    if heights.size():
+        try:
+            from .geometry import Area
+            for i in range(c_areas.size()):
+                pygeos_geom = <uintptr_t>c_areas[i]
+                shapely_object = geom_factory(pygeos_geom)
+                # [IMPORTANT]
+                shapely_object._other_owned = True
+                # [/IMPORTANT]
+                str_name = _to_string(names[i])
+                # separate default area from others
+                if str_name.find("default_area") == 0:
+                    default_properties = properties[i]
+                else:
+                    py_areas.append(Area.from_shape(
+                        shapely_object, heights[i], str_name, properties[i]))
+        except ImportError:
+            pass
+
+    # build the environment
     pygeos_geom = <uintptr_t>geos_geom
     shapely_object = geom_factory(pygeos_geom)
     # [IMPORTANT] tell Shapely to NOT delete the C++ object when the python
     # wrapper goes out of scope!
     shapely_object._other_owned = True
     # [/IMPORTANT]
-    env = Shape.from_polygon(shapely_object, min_x=None)
+    env = Shape.from_polygon(shapely_object, min_x=None,
+                             default_properties=default_properties)
+
+    # add the areas to the Shape
+    for area in py_areas:
+        env.add_area(area)
+
     return env
 
 
@@ -467,23 +485,65 @@ def GetObjectType(gid):
 
 
 def GetNeurons():
+    ''' Return the neuron ids. '''
     return get_neurons()
 
 
-def GetDefaults(object_name):
+def GetDefaults(object_name, settables=False):
+    '''
+    Returns the default status of an object.
+
+    Parameters
+    ----------
+    object_name : str
+        Name of the object, e.g. "recorder", or "random_walk".
+    settables : bool, optional (default: False)
+        Return only settable values; read-only values are hidden.
+
+    Returns
+    -------
+    status : dict
+        Default status of the object.
+    '''
     cdef:
         string ctype
         string cname = _to_bytes(object_name)
         statusMap default_params
     if object_name in GetModels("growth_cones"):
-        ctype = _to_bytes("growth_cones")
-        get_defaults(cname, ctype, default_params)
+        ctype = _to_bytes("growth_cone")
+    elif object_name == "neuron":
+        ctype = _to_bytes("neuron")
+    elif object_name in ["axon", "dendrite", "neurite"]:
+        ctype = _to_bytes("neurite")
+    elif object_name == "recorder":
+        ctype = _to_bytes("recorder")
     else:
-        raise RuntimeError("Unknown object : " + object_name)
-    return _statusMap_to_dict(default_params)
+        raise RuntimeError("Unknown object : '" + object_name + "'. "
+                           "Candidates are 'recorder' and all entries in "
+                           "GetModels.")
+
+    get_defaults(cname, ctype, default_params)
+    status = _statusMap_to_dict(default_params)
+
+    py_type = _to_string(ctype)
+
+    if settables:
+        for unset in unsettables.get(py_type, []):
+            if unset in status:
+                del status[unset]
+
+    if py_type == "neuron":
+        status["position"] = (0., 0.)
+        del status["x"]
+        del status["y"]
+
+    return status
 
 
 def GetModels(object_type="all"):
+    '''
+    Get available models for an object type.
+    '''
     if object_type not in ("all", "growth_cones"):
         raise RuntimeError("Invalid `object_type`: " + object_type)
     cdef:
@@ -495,6 +555,9 @@ def GetModels(object_type="all"):
 
 
 def NeuronToSWC(output_file, gid=None, resolution=10):
+    '''
+    Save neurons to SWC file.
+    '''
     cdef:
         string _output_file = _to_bytes(output_file)
         vector[size_t] gids
@@ -511,6 +574,69 @@ def NeuronToSWC(output_file, gid=None, resolution=10):
 def ResetKernel():
     ''' Reset the whole simulator. '''
     reset_kernel()
+
+
+def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
+                   parent=None, interpolate_curve=50):
+    """
+    Create the culture environment
+
+    Parameters
+    ----------
+    culture : str or :class:`~NetGrowth.geometry.Shape`
+        Path to an SVG or DXF file containing the culture model, or directly
+        a :class:`~NetGrowth.geometry.Shape` object.
+    unit : str, optional (default: 'um')
+        Set the unit of the culture's dimensions.
+        Default is micrometers ('um').
+    min_x : float, optional (default: 5000.)
+        Horizontal position of the leftmost point in `unit`. Used only when
+        loading the culture from a file.
+    max_x : float, optional (default: 5000.)
+        Horizontal position of the leftmost point in `unit`. Used only when
+        loading the culture from a file.
+    interpolate_curve : int, optional (default: 50)
+        Number of points used to approximate a curve. Used only when
+        loading the culture from a file.
+
+    Returns
+    -------
+    culture
+    """
+    if _is_string(culture):
+        from .geometry import culture_from_file
+        culture = culture_from_file(
+            culture, min_x=min_x, max_x=max_x, unit=unit,
+            interpolate_curve=interpolate_curve)
+    cdef:
+        GEOSGeometry* geos_geom
+        vector[GEOSGeometry*] c_areas, c_walls
+        vector[double] heights
+        vector[string] names
+        vector[unordered_map[string, double]] properties
+
+    # create the environment "wall" buffer (1 mum around all higher limits)
+    width = 3.
+    env_buffer = culture.intersection(culture.exterior.buffer(width))
+    for hole in culture.interiors:
+        env_buffer = env_buffer.union(culture.intersection(hole.buffer(width)))
+
+    # fill the containers
+    for name, area in culture.areas.items():
+        # create the area-related walls and fill wall container
+        wall_buffer = _get_wall_area(area, name, culture, env_buffer, width)
+        c_walls.push_back(geos_from_shapely(wall_buffer))
+        # fill area containers
+        c_areas.push_back(geos_from_shapely(area))
+        names.push_back(_to_bytes(name))
+        heights.push_back(area.height)
+        properties.push_back(area.properties.todict())
+
+    geos_geom = geos_from_shapely(culture)
+
+    set_environment(geos_geom, c_walls, c_areas, heights, names, properties)
+
+    return culture
 
 
 def SetKernelStatus(status, simulation_ID=None):
@@ -688,6 +814,8 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     if not _is_scalar(neurites):
         len_val = len(neurites)
         assert len_val == n, "`num_neurites` vector must be of size " + n + "."
+        assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
+            "be composed only of non-negative integers."
         for i, v in enumerate(neurites):
             neuron_params[i][b"num_neurites"] = _to_property("num_neurites", v)
     i = create_neurons(neuron_params, axon_params, dendrites_params)
@@ -727,12 +855,14 @@ def _get_pyskeleton(gid):
         vector[size_t] gids
     if gid is None:
         gids = get_neurons()
-    elif isinstance(gid, int):
+    elif isinstance(gid, (int, np.integer)):
         #creates a vector of size 1
         gids =  vector[size_t](1, <size_t>gid)
-    else:
+    elif nonstring_container(gid):
         for n in gid:
             gids.push_back(<size_t>n)
+    else:
+        raise ArgumentError("`gid` should be an int, a list, or None.")
     get_skeleton(axons, dendrites, nodes, growth_cones, somas, gids)
     py_axons = (axons.first, axons.second)
     py_dendrites = (dendrites.first, dendrites.second)
@@ -760,13 +890,15 @@ cdef str _to_string(byte_string):
     return byte_string
 
 
-def _is_scalar(value):
+def _is_string(value):
     try:
-        return (isinstance(value, (str, bytes, unicode))
-                or not isinstance(value, Iterable))
+        return isinstance(value, (str, bytes, unicode))
     except:
-        return (isinstance(value, (str, bytes))
-                or not isinstance(value, Iterable))
+        return isinstance(value, (str, bytes))
+
+
+def _is_scalar(value):
+    return _is_string(value) or not isinstance(value, Iterable)
 
 
 cdef Property _to_property(key, value) except *:
@@ -918,18 +1050,33 @@ cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                     lst_statuses[i][key] = _to_property(key, v)
 
 
-def _neuron_param_parser(param, culture, n, set_position=False):
-    if culture is None or set_position or "position" in param:
+def _neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
+    if culture is None:
+        if rnd_pos:
+            raise RuntimeError("Cannot seed neurons randomly in space when "
+                               "no spatial environment exists.")
         if "position" not in param:
-                raise RuntimeError("`position` entry required.")
-    elif culture:
+                raise RuntimeError("`position` entry required in `params` if "
+                                   "no `culture` is provided.")
+    elif rnd_pos:
+        container = culture
+        from .geometry import plot_shape
+        if on_area is not None:
+            if _is_scalar(on_area):
+                container = culture.areas[on_area]
+            else:
+                from shapely.geometry import Point
+                container = Point()
+                for name in on_area:
+                    container = container.union(culture.areas[name])
         sradius = 0.
         if "soma_radius" in param:
             if isinstance(param["soma_radius"], Iterable):
                 sradius = np.max(param["soma_radius"])
             else:
                 sradius = param["soma_radius"]
-        xy = culture.seed_neurons(neurons=n, soma_radius=sradius)
+        xy = culture.seed_neurons(
+            container=container, neurons=n, soma_radius=sradius)
         param["position"] = xy
 
     if "description" not in param:

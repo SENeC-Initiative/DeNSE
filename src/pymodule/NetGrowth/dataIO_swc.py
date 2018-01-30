@@ -345,8 +345,6 @@ def _demodularize(angles):
     return demodule
 
 
-# def remove_modulus(angle, previous):
-    # if angle
 def _module_from_xy(path):
     modules = []
     for n in range(1, len(path[0])):

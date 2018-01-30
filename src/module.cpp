@@ -18,9 +18,6 @@
 #include "neuron_manager.hpp"
 #include "space_manager.hpp"
 
-// models include
-#include "models_manager.hpp"
-
 
 namespace growth
 {
@@ -37,9 +34,11 @@ size_t create_objects(const std::string &object_name,
     else
     {
         throw InvalidParameter("Creating something other than a neuron or a "
-                               " recorder (`" + object_name + "`) is not "
-                               "currently supported.", __FUNCTION__, __FILE__,
-                               __LINE__);
+                               " recorder (`" +
+                                   object_name +
+                                   "`) is not "
+                                   "currently supported.",
+                               __FUNCTION__, __FILE__, __LINE__);
     }
 
     return gid;
@@ -110,10 +109,20 @@ void get_defaults(const std::string &object_name,
 {
     GCPtr gc = nullptr;
 
-    if (object_type == "growth_cones")
+    if (object_type == "growth_cone")
     {
         gc = kernel().neuron_manager.get_model(object_name);
         gc->get_status(status);
+        gc->get_status(status);
+    }
+    else if (object_type == "neuron" || object_type == "neurite")
+    {
+        kernel().neuron_manager.get_defaults(status, object_name);
+    }
+    else if (object_type == "recorder")
+    {
+        // return default NeuronContinuousRecorder
+        kernel().record_manager.get_defaults(status);
     }
 }
 
@@ -135,9 +144,9 @@ void get_models(std::vector<std::string> &models,
 void init_growth(int *argc, char **argv[])
 {
     KernelManager::create_kernel_manager();
-    kernel().parallelism_manager.init_mpi(argc, argv);
+    kernel().parallelism_manager.mpi_init(argc, argv);
     kernel().initialize();
-    init_models();
+    printf("models initialized\n");
 }
 
 
@@ -178,15 +187,24 @@ void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
 std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
 
 
-void set_environment(GEOSGeom environment)
+void set_environment(
+    GEOSGeom environment, const std::vector<GEOSGeom> &walls,
+    const std::vector<GEOSGeom> &areas, std::vector<double> heights,
+    const std::vector<std::string> &names,
+    const std::vector<std::unordered_map<std::string, double>> &properties)
 {
-    kernel().space_manager.set_environment(environment);
+    kernel().space_manager.set_environment(environment, walls, areas, heights,
+                                           names, properties);
 }
 
 
-void get_environment(GEOSGeom &environment)
+void get_environment(
+    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
+    std::vector<double> &heights, std::vector<std::string> &names,
+    std::vector<std::unordered_map<std::string, double>> &properties)
 {
-    kernel().space_manager.get_environment(environment);
+    kernel().space_manager.get_environment(environment, areas, heights, names,
+                                           properties);
 }
 
 
@@ -292,22 +310,21 @@ void simulate(const Time &simtime)
 std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
 
 
-bool get_next_recording(size_t gid, std::vector<Property>& ids,
-                        std::vector<double>& values)
+bool get_next_recording(size_t gid, std::vector<Property> &ids,
+                        std::vector<double> &values)
 {
     return kernel().record_manager.get_next_recording(gid, ids, values);
 }
 
 
-bool get_next_time(size_t gid, std::vector<Property>& ids,
-                   std::vector<double>& values, const std::string& time_units)
+bool get_next_time(size_t gid, std::vector<Property> &ids,
+                   std::vector<double> &values, const std::string &time_units)
 {
     return kernel().record_manager.get_next_time(gid, ids, values, time_units);
 }
 
 
-void get_recorder_type(size_t gid, std::string& level,
-                       std::string& event_type)
+void get_recorder_type(size_t gid, std::string &level, std::string &event_type)
 {
     kernel().record_manager.get_recorder_type(gid, level, event_type);
 }

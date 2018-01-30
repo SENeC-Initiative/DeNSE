@@ -12,14 +12,18 @@ const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
 const std::string angle_in_degrees("angle_in_degrees");
 const std::string axon_angle("axon_angle");
+const std::string axon_diameter("axon_diameter");
 
 const std::string B("B");
 const std::string branching_proba_default("branching_proba_default");
 
 const std::string E("E");
 
+const std::string dendrite_angles("dendrite_angles");
+const std::string dendrite_diameter("dendrite_diameter");
 const std::string diameter_eta_exp("diameter_eta_exp");
 const std::string diameter_variance("diameter_variance");
+const std::string duration_retraction("duration_of_retraction");
 
 const std::string filopodia_finger_length("filopodia_finger_length");
 const std::string filopodia_angular_resolution("filopodia_angular_resolution");
@@ -34,22 +38,27 @@ const std::string initial_branch_lenght("initial_branch_lenght");
 const std::string lateral_branching_angle_mean("lateral_branching_angle_mean");
 const std::string lateral_branching_angle_std("lateral_branching_angle_std");
 
+const std::string max_sensing_angle("max_sensing_angle");
+
 const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");
-const std::string dendrite_diameter;
-const std::string axon_diameter;
 
+const std::string proba_down_move("proba_down_move");
+const std::string proba_retraction("retraction_probability");
 
 const std::string random_walk_submodel("random_walk_submodel");
 const std::string rw_memory_tau("rw_memory_tau");
 const std::string rw_persistence_length("rw_persistence_length");
 const std::string rw_delta_corr("rw_delta_corr");
-const std::string rw_sensing_angle("rw_sensing_angle");
 
 const std::string S("S");
+const std::string scale_up_move("scale_up_move");
+const std::string sensing_angle("sensing_angle");
 const std::string soma_radius("soma_radius");
 const std::string speed_growth_cone("speed_growth_cone");
+const std::string speed_ratio_retraction("speed_ratio_retraction");
 const std::string speed_variance("speed_variance");
+const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
 const std::string CR_amount("CR_amount");
@@ -86,7 +95,5 @@ const std::string targets("targets");
 const signed char lateral_branching(0);
 const signed char gc_splitting(1);
 const signed char gc_deletion(2);
-
 }
-
 }

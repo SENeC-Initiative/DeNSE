@@ -60,7 +60,7 @@ class Branching
     Branching(const Branching &cpy);
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
-    bool branching_event(mtPtr rnd_engine, const Event& ev);
+    bool branching_event(mtPtr rnd_engine, const Event &ev);
 
     void update_growth_cones(mtPtr rnd_engine);
 
@@ -84,6 +84,5 @@ class Branching
     //~ void get_status(statusMap &) const;
     void get_status(statusMap &) const;
 };
-
 }
 #endif /* BRANCHING_H */

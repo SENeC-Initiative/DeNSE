@@ -118,14 +118,13 @@ bool get_param(const statusMap &map, const std::string &key,
 }
 
 
-bool get_param(const statusMap &map, const std::string &key,
-               char*& result)
+bool get_param(const statusMap &map, const std::string &key, char *&result)
 {
     auto res = map.find(key);
     if (res != map.end())
     {
         std::string s(res->second.s);
-        result = const_cast<char *>(s.c_str());  // problem here
+        result = const_cast<char *>(s.c_str()); // problem here
         return true;
     }
     else
@@ -202,7 +201,6 @@ void set_param(statusMap &map, const std::string &key,
 {
     map[key] = Property(value);
 }
-
 }
 
 #endif /* CONFIG_H_IMPL */

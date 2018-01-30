@@ -27,8 +27,8 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
 {
     neurite_dyn = biology_.own_neurite->get_branching_model();
     normal_     = std::normal_distribution<double>(0, 1);
-    observables_.insert(observables_.cend(),
-                        copy.observables_.cbegin(), copy.observables_.cend());
+    observables_.insert(observables_.cend(), copy.observables_.cbegin(),
+                        copy.observables_.cend());
 }
 
 
@@ -234,7 +234,7 @@ void GrowthCone_Critical::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double GrowthCone_Critical::get_state(const char* observable) const
+double GrowthCone_Critical::get_state(const char *observable) const
 {
     double value = 0.;
 
@@ -242,7 +242,7 @@ double GrowthCone_Critical::get_state(const char* observable) const
 
     TRIE(observable)
     CASE("resource")
-        value = critical_.left;
+    value = critical_.left;
     ENDTRIE;
 
     return value;

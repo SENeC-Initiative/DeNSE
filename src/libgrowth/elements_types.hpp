@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "config.hpp"
-#include "spatial_types.hpp"
 #include "growth_time.hpp"
+#include "spatial_types.hpp"
 
 namespace growth
 {

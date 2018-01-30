@@ -17,6 +17,7 @@ from matplotlib.path import Path
 import matplotlib.gridspec as gridspec
 
 from . import _pygrowth as _pg
+from .geometry import plot_shape
 
 
 __all__ = ["PlotEnvironment", "PlotNeuron", "PlotRecording"]
@@ -338,7 +339,7 @@ def PlotRecording(recorder, time_units="hours", show=True):
     level       = data["level"]
     ev_type     = data["event_type"]
     data        = data["recording"]
-    
+
     num_cols = int(np.sqrt(num_neurons))
     num_rows = num_cols + 1
     gs = gridspec.GridSpec(num_rows, num_cols)
@@ -394,14 +395,14 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
                show_culture=True, aspect=1., soma="o", soma_radius=None,
                active_gc="d", inactiv_gc="x", gc_size=2., soma_color='k',
                axon_color="r", dendrite_color="b", save_path=None, title=None,
-               axis=None, show=True):
+               axis=None, show=True, **kwargs):
     '''
     Plot neurons in the network.
 
     Parameters
     ----------
-    gid : int, optional (default: all neurons)
-        Id of the neuron(s) to plot.
+    gid : int or list, optional (default: all neurons)
+        Id(s) of the neuron(s) to plot.
     culture :  :class:`~NetGrowth.geometry.Shape`, optional (default: None)
         Shape of the environment; if the environment was already set using
         :func:`~NetGrowth.CreateEnvironment`.
@@ -435,6 +436,8 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         created.
     show : bool, optional (default: True)
         Whether the plot should be displayed immediately or not.
+    **kwargs : optional arguments
+        Details on how to plot the environment, see :func:`PlotEnvironment`.
     '''
     # plot
     fig, ax = None, None
@@ -451,7 +454,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     if show_culture and env_required:
         if culture is None:
             culture = _pg.GetEnvironment()
-        PlotEnvironment(culture, ax=ax)
+        PlotEnvironment(culture, ax=ax, show=False, **kwargs)
         new_lines += 1
     # plot the axons
     ax.plot(axons[0], axons[1], ls="-", c=axon_color)
@@ -506,7 +509,9 @@ def BtmorphVisualize(Simulation_folder):
         neuron.plot_dendrogram()
 
 
-def PlotEnvironment(culture=None, title='Shape', ax=None):
+def PlotEnvironment(culture=None, title='Environment', ax=None, m='',
+                    mc="#999999", fc="#8888ff", ec="#444444", alpha=0.5,
+                    brightness="height", show=True, **kwargs):
     '''
     Plot the environment in which the neurons grow.
 
@@ -519,18 +524,28 @@ def PlotEnvironment(culture=None, title='Shape', ax=None):
         Title of the plot.
     ax : :class:`matplotlib.axes.Axes`, optional (default: new axis)
         Optional existing axis on which the environment should be added.
+    m : str, optional (default: invisible)
+        Marker to plot the shape's vertices, matplotlib syntax.
+    mc : str, optional (default: "#999999")
+        Color of the markers.
+    fc : str, optional (default: "#8888ff")
+        Color of the shape's interior.
+    ec : str, optional (default: "#444444")
+        Color of the shape's edges.
+    alpha : float, optional (default: 0.5)
+        Opacity of the shape's interior.
+    brightness : str, optional (default: height)
+        Show how different other areas are from the 'default_area' (lower
+        values are darker, higher values are lighter).
+        Difference can concern the 'height', or any of the `properties` of the
+        :class:`Area` objects.
+    show : bool, optional (default: False)
+        If True, the plot will be displayed immediately.
     '''
-    ax_ = ax
-    if ax_ is None:
-        fig, ax_ = plt.subplots()
-        ax_not_none = True
-    plt.title(title)
-    _plot_coords(ax_, culture.exterior)
-    patch = _make_patch(culture, alpha=0.5, zorder=0)
-    ax_.add_patch(patch)
-    ax_.set_aspect(1)
-    if ax_ is None:
-        plt.show()
+    if culture is None:
+        culture = _pg.GetEnvironment()
+    plot_shape(culture, axis=ax,  m=m, mc=mc, fc=fc, ec=ec, alpha=alpha,
+               brightness=brightness, show=show)
 
 
 # ----- #

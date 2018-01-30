@@ -104,7 +104,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
 
     // Growth functions
     void grow(mtPtr rnd_engine, size_t current_step, double substep);
-    bool branch(mtPtr rnd_engine, const Event& ev);
+    bool branch(mtPtr rnd_engine, const Event &ev);
     void next_actin_event(mtPtr rnd_engine);
 
     // New neurite function
@@ -118,7 +118,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     Point get_position() const;
     size_t get_gid() const;
     std::string get_gc_model() const;
-    double get_state(const char* observable) const;
+    double get_state(const char *observable) const;
     void get_status(statusMap &status) const;
     int get_num_neurites() const;
     double get_soma_radius() const;
@@ -142,7 +142,6 @@ class Neuron : public std::enable_shared_from_this<Neuron>
         return neurites_.cend();
     }
 };
-
 }
 
 #endif // NEURON_H

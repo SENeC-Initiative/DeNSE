@@ -19,6 +19,9 @@ the continuous set of points that defines its trajectory over time.
  */
 class Branch
 {
+  private:
+    Point initial_point;
+
   public:
     PointsArray points;
     Branch(const Branch &copy);
@@ -51,7 +54,7 @@ class Branch
      * @param xy the points where the branch starts
      * @param distanceToSoma the distance from soma at branch start.
      */
-    void set_first_point(const Point xy, double distanceToSoma);
+    void set_first_point(const Point &xy, double distanceToSoma);
 
 
     /**

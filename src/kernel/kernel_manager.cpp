@@ -1,5 +1,13 @@
 #include "kernel_manager.hpp"
+
 #include <stdio.h>
+
+// models include
+#include "models_manager.hpp"
+
+// spatial include
+#include "Environment.hpp"
+
 
 namespace growth
 {
@@ -75,6 +83,8 @@ void KernelManager::initialize()
     simulation_manager.initialize();
     space_manager.initialize();
     record_manager.initialize();
+    // models_manager init_models() must come before neuron_manager
+    init_models();
     neuron_manager.initialize();
     num_objects_ = 0;
     initialized_ = true;
@@ -135,10 +145,7 @@ void KernelManager::set_simulation_ID(std::string simulation_ID)
 }
 
 
-std::string KernelManager::get_simulation_ID() const
-{
-    return simulation_ID_;
-}
+std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
 
 
 /*
@@ -161,7 +168,7 @@ bool KernelManager::using_environment() const { return env_required_; }
 
 void KernelManager::update_num_objects()
 {
-    num_objects_  = neuron_manager.num_neurons();
+    num_objects_ = neuron_manager.num_neurons();
     num_objects_ += record_manager.num_recorders();
 }
 
@@ -191,12 +198,10 @@ void KernelManager::set_status(const statusMap &status)
 
     // update the objects
     env_updated *= (env_required_old != env_required_);
-    bool resol_updated = (old_resol != simulation_manager.get_resolution());
 
-    if (env_updated || resol_updated)
+    if (env_updated)
     {
         neuron_manager.update_kernel_variables();
     }
 }
-
 }

@@ -1,9 +1,9 @@
 #include "recorders.hpp"
 
 // element include
-#include "Neuron.hpp"
-#include "Neurite.hpp"
 #include "GrowthCone.hpp"
+#include "Neurite.hpp"
+#include "Neuron.hpp"
 
 // libgrowth include
 #include "config_impl.hpp"
@@ -20,13 +20,13 @@ namespace growth
  * Constructor for BaseRecorder
  */
 BaseRecorder::BaseRecorder()
-  : record_to_("memory")
-  , record_file_()
-  , interval_(-1)
-  , restrict_to_("")
-  , v_iterating_(false)
-  , t_iterating_(false)
-  , cstr_obs_("")
+    : record_to_("memory")
+    , record_file_()
+    , interval_(-1)
+    , restrict_to_("")
+    , v_iterating_(false)
+    , t_iterating_(false)
+    , cstr_obs_("")
 {
 }
 
@@ -40,7 +40,7 @@ void BaseRecorder::get_status(statusMap &status) const
 
     // get the neuron ids
     std::vector<size_t> gids;
-    for (auto const& neuron : targets_)
+    for (auto const &neuron : targets_)
     {
         gids.push_back(neuron.first);
     }
@@ -71,7 +71,7 @@ void BaseRecorder::set_status(const statusMap &status)
 void BaseRecorder::record() {}
 
 
-void BaseRecorder::record(const Event& ev) {}
+void BaseRecorder::record(const Event &ev) {}
 
 
 /**
@@ -80,26 +80,22 @@ void BaseRecorder::record(const Event& ev) {}
 void BaseRecorder::final_timestep(size_t step) {}
 
 
-unsigned int BaseRecorder::get_level() const {
-    return 3;
-}
+unsigned int BaseRecorder::get_level() const { return 3; }
 
 
-unsigned int BaseRecorder::get_event_type() const {
-    return 2;
-}
+unsigned int BaseRecorder::get_event_type() const { return 2; }
 
 
-bool BaseRecorder::get_next_recording(std::vector<Property>& ids,
-                                      std::vector<double>& values)
+bool BaseRecorder::get_next_recording(std::vector<Property> &ids,
+                                      std::vector<double> &values)
 {
     return false;
 }
 
 
-bool BaseRecorder::get_next_time(std::vector<Property>& ids,
-                                 std::vector<double>& values,
-                                 const std::string& time_units)
+bool BaseRecorder::get_next_time(std::vector<Property> &ids,
+                                 std::vector<double> &values,
+                                 const std::string &time_units)
 {
     return false;
 }
@@ -115,10 +111,11 @@ void BaseRecorder::reset_iterations()
 /**
  * Constructor for NeuronContinuousRecorder
  */
-NeuronContinuousRecorder::NeuronContinuousRecorder() : num_times_(0)
+NeuronContinuousRecorder::NeuronContinuousRecorder()
+    : num_times_(0)
 {
     Time t0 = kernel().simulation_manager.get_time();
-    times_ = std::array<Time, 2>({t0, t0});
+    times_  = std::array<Time, 2>({t0, t0});
 }
 
 
@@ -143,7 +140,7 @@ void NeuronContinuousRecorder::set_status(const statusMap &status)
         {
             recording_.clear();
             Time t0 = kernel().simulation_manager.get_time();
-            times_ = std::array<Time, 2>({t0, t0});
+            times_  = std::array<Time, 2>({t0, t0});
         }
 
         // initialize the recording container
@@ -162,7 +159,7 @@ void NeuronContinuousRecorder::record()
 {
     if (record_to_ == "memory")
     {
-        for (const auto& neuron : targets_)
+        for (const auto &neuron : targets_)
         {
             recording_[neuron.first].push_back(
                 neuron.second->get_state(cstr_obs_));
@@ -192,10 +189,7 @@ void NeuronContinuousRecorder::final_timestep(size_t step)
  * 2 for growth cone level.
  * This function returns 0.
  */
-unsigned int NeuronContinuousRecorder::get_level() const
-{
-    return 0;
-}
+unsigned int NeuronContinuousRecorder::get_level() const { return 0; }
 
 
 /**
@@ -204,10 +198,7 @@ unsigned int NeuronContinuousRecorder::get_level() const
  * Returns 0/1 if continuous/discrete events are recorded.
  * This function returns 0.
  */
-unsigned int NeuronContinuousRecorder::get_event_type() const
-{
-    return 0;
-}
+unsigned int NeuronContinuousRecorder::get_event_type() const { return 0; }
 
 
 /**
@@ -219,13 +210,13 @@ unsigned int NeuronContinuousRecorder::get_event_type() const
  * false. Once all data has been looped on, the iterators are reset to their
  * initial values.
  */
-bool NeuronContinuousRecorder::get_next_recording(std::vector<Property>& ids,
-                                                  std::vector<double>& values)
+bool NeuronContinuousRecorder::get_next_recording(std::vector<Property> &ids,
+                                                  std::vector<double> &values)
 {
     if (!v_iterating_)
     {
         v_iterating_ = true;
-        neuron_it_ = recording_.cbegin();
+        neuron_it_   = recording_.cbegin();
     }
 
     if (neuron_it_ != recording_.cend())
@@ -233,9 +224,8 @@ bool NeuronContinuousRecorder::get_next_recording(std::vector<Property>& ids,
         Property p = Property(neuron_it_->first);
         ids.push_back(p);
         values.reserve(values.size() + neuron_it_->second.size());
-        values.insert(
-            values.end(), neuron_it_->second.cbegin(),
-            neuron_it_->second.cend());
+        values.insert(values.end(), neuron_it_->second.cbegin(),
+                      neuron_it_->second.cend());
 
         neuron_it_++;
 
@@ -266,26 +256,26 @@ bool NeuronContinuousRecorder::get_next_recording(std::vector<Property>& ids,
  * false. Once all data has been looped on, the iterators are reset to their
  * initial values.
  */
-bool NeuronContinuousRecorder::get_next_time(std::vector<Property>& ids,
-                                             std::vector<double>& values,
-                                             const std::string& time_units)
+bool NeuronContinuousRecorder::get_next_time(std::vector<Property> &ids,
+                                             std::vector<double> &values,
+                                             const std::string &time_units)
 {
     double t0, tf;
-    const char* ctu = time_units.c_str();
-    
+    const char *ctu = time_units.c_str();
+
     TRIE(ctu)
     CASE("seconds")
-        t0 = times_[0].get_total_seconds();
-        tf = times_[1].get_total_seconds();
+    t0 = times_[0].get_total_seconds();
+    tf = times_[1].get_total_seconds();
     CASE("minutes")
-        t0 = times_[0].get_total_minutes();
-        tf = times_[1].get_total_minutes();
+    t0 = times_[0].get_total_minutes();
+    tf = times_[1].get_total_minutes();
     CASE("hours")
-        t0 = times_[0].get_total_hours();
-        tf = times_[1].get_total_hours();
+    t0 = times_[0].get_total_hours();
+    tf = times_[1].get_total_hours();
     CASE("days")
-        t0 = times_[0].get_total_days();
-        tf = times_[1].get_total_days();
+    t0 = times_[0].get_total_days();
+    tf = times_[1].get_total_days();
     ENDTRIE;
 
     values.push_back(t0);
@@ -299,8 +289,7 @@ bool NeuronContinuousRecorder::get_next_time(std::vector<Property>& ids,
 /**
  * Constructor for NeuronDiscreteRecorder
  */
-NeuronDiscreteRecorder::NeuronDiscreteRecorder()
-{}
+NeuronDiscreteRecorder::NeuronDiscreteRecorder() {}
 
 
 /**
@@ -332,67 +321,60 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
 
-            Time t0 = kernel().simulation_manager.get_time();
+            Time t0      = kernel().simulation_manager.get_time();
             double n_gc0 = n->get_num_neurites();
 
-            recording_.insert(
-                {gid, std::vector<double>({n_gc0})});
+            recording_.insert({gid, std::vector<double>({n_gc0})});
             times_.insert({gid, std::vector<Time>({t0})});
         }
     }
 }
 
 
-void NeuronDiscreteRecorder::record(const Event& ev)
+void NeuronDiscreteRecorder::record(const Event &ev)
 {
-    size_t step   = std::get<0>(ev);
-    float substep = std::get<1>(ev);
-    size_t neuron = std::get<2>(ev);
+    size_t step         = std::get<0>(ev);
+    float substep       = std::get<1>(ev);
+    size_t neuron       = std::get<2>(ev);
     signed char ev_type = std::get<4>(ev);
 
     Time event_time = Time::from_steps(step, substep);
 
     // test which data is recorded
 
-    bool branching_event = (ev_type == names::lateral_branching
-                            || ev_type == names::gc_splitting);
+    bool branching_event =
+        (ev_type == names::lateral_branching || ev_type == names::gc_splitting);
 
     // test which data is recorded
-    
+
     TRIE(cstr_obs_)
     CASE("num_growth_cones")
-        if (branching_event)
-        {
-            recording_[neuron].push_back(recording_[neuron].back() + 1);
-        }
-        else if (ev_type == names::gc_deletion)
-        {
-            recording_[neuron].push_back(recording_[neuron].back() - 1);
-        }
-        times_[neuron].push_back(event_time);
+    if (branching_event)
+    {
+        recording_[neuron].push_back(recording_[neuron].back() + 1);
+    }
+    else if (ev_type == names::gc_deletion)
+    {
+        recording_[neuron].push_back(recording_[neuron].back() - 1);
+    }
+    times_[neuron].push_back(event_time);
     ENDTRIE;
 }
 
 
-unsigned int NeuronDiscreteRecorder::get_level() const
-{
-    return 0;
-}
+unsigned int NeuronDiscreteRecorder::get_level() const { return 0; }
 
 
-unsigned int NeuronDiscreteRecorder::get_event_type() const
-{
-    return 1;
-}
+unsigned int NeuronDiscreteRecorder::get_event_type() const { return 1; }
 
 
-bool NeuronDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
-                                                  std::vector<double>& values)
+bool NeuronDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
+                                                std::vector<double> &values)
 {
     if (!v_iterating_)
     {
         v_iterating_ = true;
-        neuron_it_ = recording_.cbegin();
+        neuron_it_   = recording_.cbegin();
     }
 
     if (neuron_it_ != recording_.cend())
@@ -403,9 +385,8 @@ bool NeuronDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
 
         // set the values
         values.reserve(values.size() + neuron_it_->second.size());
-        values.insert(
-            values.end(), neuron_it_->second.cbegin(),
-            neuron_it_->second.cend());
+        values.insert(values.end(), neuron_it_->second.cbegin(),
+                      neuron_it_->second.cend());
 
         neuron_it_++;
 
@@ -427,16 +408,16 @@ bool NeuronDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
 }
 
 
-bool NeuronDiscreteRecorder::get_next_time(std::vector<Property>& ids,
-                                           std::vector<double>& values,
-                                           const std::string& time_units)
+bool NeuronDiscreteRecorder::get_next_time(std::vector<Property> &ids,
+                                           std::vector<double> &values,
+                                           const std::string &time_units)
 {
-    const char* ctu = time_units.c_str();
+    const char *ctu = time_units.c_str();
 
     if (!t_iterating_)
     {
         t_iterating_ = true;
-        time_it_ = times_.cbegin();
+        time_it_     = times_.cbegin();
     }
 
     if (time_it_ != times_.cend())
@@ -450,25 +431,25 @@ bool NeuronDiscreteRecorder::get_next_time(std::vector<Property>& ids,
 
         TRIE(ctu)
         CASE("seconds")
-            for (auto t : time_it_->second)
-            {
-                values.push_back(t.get_total_seconds());
-            }
+        for (auto t : time_it_->second)
+        {
+            values.push_back(t.get_total_seconds());
+        }
         CASE("minutes")
-            for (auto t : time_it_->second)
-            {
-                values.push_back(t.get_total_minutes());
-            }
+        for (auto t : time_it_->second)
+        {
+            values.push_back(t.get_total_minutes());
+        }
         CASE("hours")
-            for (auto t : time_it_->second)
-            {
-                values.push_back(t.get_total_hours());
-            }
+        for (auto t : time_it_->second)
+        {
+            values.push_back(t.get_total_hours());
+        }
         CASE("days")
-            for (auto t : time_it_->second)
-            {
-                values.push_back(t.get_total_days());
-            }
+        for (auto t : time_it_->second)
+        {
+            values.push_back(t.get_total_days());
+        }
         ENDTRIE;
 
         time_it_++;
@@ -494,10 +475,11 @@ bool NeuronDiscreteRecorder::get_next_time(std::vector<Property>& ids,
 /**
  * Constructor for NeuriteContinuousRecorder
  */
-NeuriteContinuousRecorder::NeuriteContinuousRecorder() : num_times_(0)
+NeuriteContinuousRecorder::NeuriteContinuousRecorder()
+    : num_times_(0)
 {
     Time t0 = kernel().simulation_manager.get_time();
-    times_ = std::array<Time, 2>({t0, t0});
+    times_  = std::array<Time, 2>({t0, t0});
 }
 
 
@@ -522,7 +504,7 @@ void NeuriteContinuousRecorder::set_status(const statusMap &status)
         {
             recording_.clear();
             Time t0 = kernel().simulation_manager.get_time();
-            times_ = std::array<Time, 2>({t0, t0});
+            times_  = std::array<Time, 2>({t0, t0});
         }
 
         // initialize the recording container
@@ -543,9 +525,9 @@ void NeuriteContinuousRecorder::record()
 {
     if (record_to_ == "memory")
     {
-        for (const auto& neuron : targets_)
+        for (const auto &neuron : targets_)
         {
-            for (const auto& neurite : neuron.second->neurites_)
+            for (const auto &neurite : neuron.second->neurites_)
             {
                 recording_[neuron.first][neurite.first].push_back(
                     neurite.second->get_state(cstr_obs_));
@@ -569,28 +551,22 @@ void NeuriteContinuousRecorder::final_timestep(size_t step)
 }
 
 
-unsigned int NeuriteContinuousRecorder::get_level() const
-{
-    return 1;
-}
+unsigned int NeuriteContinuousRecorder::get_level() const { return 1; }
 
 
-unsigned int NeuriteContinuousRecorder::get_event_type() const
-{
-    return 0;
-}
+unsigned int NeuriteContinuousRecorder::get_event_type() const { return 0; }
 
 
-bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property>& ids,
-                                                   std::vector<double>& values)
+bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property> &ids,
+                                                   std::vector<double> &values)
 {
     if (!v_iterating_)
     {
         v_iterating_ = true;
-        neuron_it_ = recording_.cbegin();
+        neuron_it_   = recording_.cbegin();
         if (neuron_it_ != recording_.cend())
         {
-            neurite_it_ = neuron_it_->second.cbegin();
+            neurite_it_    = neuron_it_->second.cbegin();
             neurite_endit_ = neuron_it_->second.cend();
         }
     }
@@ -608,9 +584,8 @@ bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property>& ids,
 
             // set the values
             values.reserve(values.size() + neurite_it_->second.size());
-            values.insert(
-                values.end(), neurite_it_->second.cbegin(),
-                neurite_it_->second.cend());
+            values.insert(values.end(), neurite_it_->second.cbegin(),
+                          neurite_it_->second.cend());
 
             // increment iterators
             neurite_it_++;
@@ -621,7 +596,7 @@ bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property>& ids,
             neuron_it_++;
             if (neuron_it_ != recording_.cend())
             {
-                neurite_it_ = neuron_it_->second.cbegin();
+                neurite_it_    = neuron_it_->second.cbegin();
                 neurite_endit_ = neuron_it_->second.cend();
             }
             else
@@ -641,26 +616,26 @@ bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property>& ids,
 }
 
 
-bool NeuriteContinuousRecorder::get_next_time(std::vector<Property>& ids,
-                                              std::vector<double>& values,
-                                              const std::string& time_units)
+bool NeuriteContinuousRecorder::get_next_time(std::vector<Property> &ids,
+                                              std::vector<double> &values,
+                                              const std::string &time_units)
 {
     double t0, tf;
-    const char* ctu = time_units.c_str();
+    const char *ctu = time_units.c_str();
 
     TRIE(ctu)
     CASE("seconds")
-        t0 = times_[0].get_total_seconds();
-        tf = times_[1].get_total_seconds();
+    t0 = times_[0].get_total_seconds();
+    tf = times_[1].get_total_seconds();
     CASE("minutes")
-        t0 = times_[0].get_total_minutes();
-        tf = times_[1].get_total_minutes();
+    t0 = times_[0].get_total_minutes();
+    tf = times_[1].get_total_minutes();
     CASE("hours")
-        t0 = times_[0].get_total_hours();
-        tf = times_[1].get_total_hours();
+    t0 = times_[0].get_total_hours();
+    tf = times_[1].get_total_hours();
     CASE("days")
-        t0 = times_[0].get_total_days();
-        tf = times_[1].get_total_days();
+    t0 = times_[0].get_total_days();
+    tf = times_[1].get_total_days();
     ENDTRIE;
 
     values.push_back(t0);
@@ -674,11 +649,10 @@ bool NeuriteContinuousRecorder::get_next_time(std::vector<Property>& ids,
 /**
  * Constructor for NeuriteContinuousRecorder
  */
-NeuriteDiscreteRecorder::NeuriteDiscreteRecorder()
-{}
+NeuriteDiscreteRecorder::NeuriteDiscreteRecorder() {}
 
 
-void NeuriteDiscreteRecorder::record(const Event& ev)
+void NeuriteDiscreteRecorder::record(const Event &ev)
 {
     size_t step         = std::get<0>(ev);
     float substep       = std::get<1>(ev);
@@ -690,8 +664,8 @@ void NeuriteDiscreteRecorder::record(const Event& ev)
 
     // test which data is recorded
 
-    bool branching_event = (ev_type == names::lateral_branching
-                            || ev_type == names::gc_splitting);
+    bool branching_event =
+        (ev_type == names::lateral_branching || ev_type == names::gc_splitting);
 
 #ifndef NDEBUG
     printf("got branching event at %f\n", event_time.get_total_minutes());
@@ -699,32 +673,26 @@ void NeuriteDiscreteRecorder::record(const Event& ev)
 
     TRIE(cstr_obs_)
     CASE("num_growth_cones")
-        double old_val = recording_[neuron][neurite].back();
+    double old_val = recording_[neuron][neurite].back();
 
-        if (branching_event)
-        {
-            recording_[neuron][neurite].push_back(old_val + 1);
-        }
-        else if (ev_type == names::gc_deletion)
-        {
-            recording_[neuron][neurite].push_back(old_val - 1);
-        }
+    if (branching_event)
+    {
+        recording_[neuron][neurite].push_back(old_val + 1);
+    }
+    else if (ev_type == names::gc_deletion)
+    {
+        recording_[neuron][neurite].push_back(old_val - 1);
+    }
 
-        times_[neuron][neurite].push_back(event_time);
+    times_[neuron][neurite].push_back(event_time);
     ENDTRIE;
 }
 
 
-unsigned int NeuriteDiscreteRecorder::get_level() const
-{
-    return 1;
-}
+unsigned int NeuriteDiscreteRecorder::get_level() const { return 1; }
 
 
-unsigned int NeuriteDiscreteRecorder::get_event_type() const
-{
-    return 1;
-}
+unsigned int NeuriteDiscreteRecorder::get_event_type() const { return 1; }
 
 
 /**
@@ -768,8 +736,7 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
                     Time t0 = kernel().simulation_manager.get_time();
                     recording_[gid][it_neurite->first] =
                         std::vector<double>({1});
-                    times_[gid][it_neurite->first] =
-                        std::vector<Time>({t0});
+                    times_[gid][it_neurite->first] = std::vector<Time>({t0});
                     it_neurite++;
                 }
             }
@@ -778,8 +745,8 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
 }
 
 
-bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
-                                                 std::vector<double>& values)
+bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
+                                                 std::vector<double> &values)
 {
     if (!v_iterating_)
     {
@@ -787,7 +754,7 @@ bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
         v_neuron_it_ = recording_.cbegin();
         if (v_neuron_it_ != recording_.cend())
         {
-            v_neurite_it_ = v_neuron_it_->second.cbegin();
+            v_neurite_it_    = v_neuron_it_->second.cbegin();
             v_neurite_endit_ = v_neuron_it_->second.cend();
         }
     }
@@ -805,9 +772,8 @@ bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
 
             // set the values
             values.reserve(values.size() + v_neurite_it_->second.size());
-            values.insert(
-                values.end(), v_neurite_it_->second.cbegin(),
-                v_neurite_it_->second.cend());
+            values.insert(values.end(), v_neurite_it_->second.cbegin(),
+                          v_neurite_it_->second.cend());
 
             // increment iterator
             v_neurite_it_++;
@@ -818,7 +784,7 @@ bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
             v_neuron_it_++;
             if (v_neuron_it_ != recording_.cend())
             {
-                v_neurite_it_ = v_neuron_it_->second.cbegin();
+                v_neurite_it_    = v_neuron_it_->second.cbegin();
                 v_neurite_endit_ = v_neuron_it_->second.cend();
             }
             else
@@ -838,11 +804,11 @@ bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property>& ids,
 }
 
 
-bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
-                                            std::vector<double>& values,
-                                            const std::string& time_units)
+bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
+                                            std::vector<double> &values,
+                                            const std::string &time_units)
 {
-    const char* ctu = time_units.c_str();
+    const char *ctu = time_units.c_str();
 
     if (!t_iterating_)
     {
@@ -850,7 +816,7 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
         t_neuron_it_ = times_.cbegin();
         if (t_neuron_it_ != times_.cend())
         {
-            t_neurite_it_ = t_neuron_it_->second.cbegin();
+            t_neurite_it_    = t_neuron_it_->second.cbegin();
             t_neurite_endit_ = t_neuron_it_->second.cend();
         }
     }
@@ -859,7 +825,7 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
     if (t_neuron_it_ != times_.cend())
     {
         // check for neurons without neurites
-        if (t_neurite_it_!= t_neurite_endit_)
+        if (t_neurite_it_ != t_neurite_endit_)
         {
             // make the Property vector
             Property p_neuron = Property(t_neuron_it_->first);
@@ -872,25 +838,25 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
 
             TRIE(ctu)
             CASE("seconds")
-                for (auto t : t_neurite_it_->second)
-                {
-                    values.push_back(t.get_total_seconds());
-                }
+            for (auto t : t_neurite_it_->second)
+            {
+                values.push_back(t.get_total_seconds());
+            }
             CASE("minutes")
-                for (auto t : t_neurite_it_->second)
-                {
-                    values.push_back(t.get_total_minutes());
-                }
+            for (auto t : t_neurite_it_->second)
+            {
+                values.push_back(t.get_total_minutes());
+            }
             CASE("hours")
-                for (auto t : t_neurite_it_->second)
-                {
-                    values.push_back(t.get_total_hours());
-                }
+            for (auto t : t_neurite_it_->second)
+            {
+                values.push_back(t.get_total_hours());
+            }
             CASE("days")
-                for (auto t : t_neurite_it_->second)
-                {
-                    values.push_back(t.get_total_days());
-                }
+            for (auto t : t_neurite_it_->second)
+            {
+                values.push_back(t.get_total_days());
+            }
             ENDTRIE;
 
             // increment iterator
@@ -902,7 +868,7 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
             t_neuron_it_++;
             if (t_neuron_it_ != times_.cend())
             {
-                t_neurite_it_ = t_neuron_it_->second.cbegin();
+                t_neurite_it_    = t_neuron_it_->second.cbegin();
                 t_neurite_endit_ = t_neuron_it_->second.cend();
             }
             else
@@ -926,11 +892,12 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property>& ids,
  * Constructor for GrowthConeContinuousRecorder
  */
 GrowthConeContinuousRecorder::GrowthConeContinuousRecorder()
-  : v_gc_pos_(0)
-  , v_gc_endpos_(0)
-  , t_gc_pos_(0)
-  , t_gc_endpos_(0)
-{}
+    : v_gc_pos_(0)
+    , v_gc_endpos_(0)
+    , t_gc_pos_(0)
+    , t_gc_endpos_(0)
+{
+}
 
 
 void GrowthConeContinuousRecorder::record()
@@ -939,25 +906,24 @@ void GrowthConeContinuousRecorder::record()
 
     if (record_to_ == "memory")
     {
-        for (const auto& neuron : targets_)
+        for (const auto &neuron : targets_)
         {
-            for (const auto& neurite : neuron.second->neurites_)
+            for (const auto &neurite : neuron.second->neurites_)
             {
-                std::vector< std::vector<double> >& gc_values =
+                std::vector<std::vector<double>> &gc_values =
                     recording_[neuron.first][neurite.first];
-                std::vector< std::array<Time, 2> >& gc_times =
+                std::vector<std::array<Time, 2>> &gc_times =
                     times_[neuron.first][neurite.first];
-                std::vector<size_t>& gc_num_times =
+                std::vector<size_t> &gc_num_times =
                     num_times_[neuron.first][neurite.first];
 
-                for (const auto& gc : neurite.second->growth_cones_)
+                for (const auto &gc : neurite.second->growth_cones_)
                 {
                     if (gc_values.size() <= gc.first)
                     {
                         gc_values.push_back(std::vector<double>(
                             {gc.second->get_state(cstr_obs_)}));
-                        gc_times.push_back(
-                            std::array<Time, 2>({t0, t0}));
+                        gc_times.push_back(std::array<Time, 2>({t0, t0}));
                         gc_num_times.push_back(1);
                     }
                     else
@@ -982,11 +948,11 @@ void GrowthConeContinuousRecorder::record()
  */
 void GrowthConeContinuousRecorder::final_timestep(size_t step)
 {
-    for (auto& neuron_it : times_)
+    for (auto &neuron_it : times_)
     {
-        for (auto& neurite_it : neuron_it.second)
+        for (auto &neurite_it : neuron_it.second)
         {
-            for (auto& ttt : neurite_it.second)
+            for (auto &ttt : neurite_it.second)
             {
                 ttt[1] = kernel().simulation_manager.get_time();
             }
@@ -995,16 +961,10 @@ void GrowthConeContinuousRecorder::final_timestep(size_t step)
 }
 
 
-unsigned int GrowthConeContinuousRecorder::get_level() const
-{
-    return 2;
-}
+unsigned int GrowthConeContinuousRecorder::get_level() const { return 2; }
 
 
-unsigned int GrowthConeContinuousRecorder::get_event_type() const
-{
-    return 0;
-}
+unsigned int GrowthConeContinuousRecorder::get_event_type() const { return 0; }
 
 
 /**
@@ -1040,9 +1000,9 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
 
             recording_[gid] = std::unordered_map<std::string, vVecDouble>();
             times_[gid]     = std::unordered_map<std::string, vArrayTime>();
-            num_times_[gid] = std::unordered_map<
-                std::string, std::vector<size_t>>();
-            for (const auto& neurite : n->neurites_)
+            num_times_[gid] =
+                std::unordered_map<std::string, std::vector<size_t>>();
+            for (const auto &neurite : n->neurites_)
             {
                 size_t size = neurite.second->growth_cones_.size();
 
@@ -1056,7 +1016,7 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
 
 
 bool GrowthConeContinuousRecorder::get_next_recording(
-    std::vector<Property>& ids, std::vector<double>& values)
+    std::vector<Property> &ids, std::vector<double> &values)
 {
     if (!v_iterating_)
     {
@@ -1064,11 +1024,11 @@ bool GrowthConeContinuousRecorder::get_next_recording(
         v_neuron_it_ = recording_.cbegin();
         if (v_neuron_it_ != recording_.cend())
         {
-            v_neurite_it_ = v_neuron_it_->second.cbegin();
+            v_neurite_it_    = v_neuron_it_->second.cbegin();
             v_neurite_endit_ = v_neuron_it_->second.cend();
             if (v_neurite_it_ != v_neurite_endit_)
             {
-                v_gc_pos_ = 0;
+                v_gc_pos_    = 0;
                 v_gc_endpos_ = v_neurite_it_->second.size();
             }
         }
@@ -1091,11 +1051,11 @@ bool GrowthConeContinuousRecorder::get_next_recording(
                 ids.push_back(p_gc);
 
                 // set the values
-                values.reserve(
-                    values.size() + v_neurite_it_->second[v_gc_pos_].size());
-                values.insert(
-                    values.end(), v_neurite_it_->second[v_gc_pos_].cbegin(),
-                    v_neurite_it_->second[v_gc_pos_].cend());
+                values.reserve(values.size() +
+                               v_neurite_it_->second[v_gc_pos_].size());
+                values.insert(values.end(),
+                              v_neurite_it_->second[v_gc_pos_].cbegin(),
+                              v_neurite_it_->second[v_gc_pos_].cend());
 
                 // increment gc
                 v_gc_pos_++;
@@ -1107,7 +1067,7 @@ bool GrowthConeContinuousRecorder::get_next_recording(
                 v_neurite_it_++;
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_ = 0;
+                    v_gc_pos_    = 0;
                     v_gc_endpos_ = v_neurite_it_->second.size();
                 }
             }
@@ -1119,11 +1079,11 @@ bool GrowthConeContinuousRecorder::get_next_recording(
             v_neuron_it_++;
             if (v_neuron_it_ != recording_.cend())
             {
-                v_neurite_it_ = v_neuron_it_->second.cbegin();
+                v_neurite_it_    = v_neuron_it_->second.cbegin();
                 v_neurite_endit_ = v_neuron_it_->second.cend();
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_ = 0;
+                    v_gc_pos_    = 0;
                     v_gc_endpos_ = v_neurite_it_->second.size();
                 }
             }
@@ -1144,23 +1104,23 @@ bool GrowthConeContinuousRecorder::get_next_recording(
 }
 
 
-bool GrowthConeContinuousRecorder::get_next_time(
-    std::vector<Property>& ids, std::vector<double>& values,
-    const std::string& time_units)
+bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
+                                                 std::vector<double> &values,
+                                                 const std::string &time_units)
 {
-    const char* ctu = time_units.c_str();
-    
+    const char *ctu = time_units.c_str();
+
     if (!t_iterating_)
     {
         t_iterating_ = true;
         t_neuron_it_ = times_.cbegin();
         if (t_neuron_it_ != times_.cend())
         {
-            t_neurite_it_ = t_neuron_it_->second.cbegin();
+            t_neurite_it_    = t_neuron_it_->second.cbegin();
             t_neurite_endit_ = t_neuron_it_->second.cend();
             if (t_neurite_it_ != t_neurite_endit_)
             {
-                t_gc_pos_ = 0;
+                t_gc_pos_    = 0;
                 t_gc_endpos_ = t_neurite_it_->second.size();
             }
         }
@@ -1185,25 +1145,25 @@ bool GrowthConeContinuousRecorder::get_next_time(
                 // set the values
                 TRIE(ctu)
                 CASE("seconds")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_seconds());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_seconds());
+                }
                 CASE("minutes")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_minutes());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_minutes());
+                }
                 CASE("hours")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_hours());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_hours());
+                }
                 CASE("days")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_days());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_days());
+                }
                 ENDTRIE;
 
                 // increment gc
@@ -1216,7 +1176,7 @@ bool GrowthConeContinuousRecorder::get_next_time(
                 t_neurite_it_++;
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_ = 0;
+                    t_gc_pos_    = 0;
                     t_gc_endpos_ = t_neurite_it_->second.size();
                 }
             }
@@ -1228,11 +1188,11 @@ bool GrowthConeContinuousRecorder::get_next_time(
             t_neuron_it_++;
             if (t_neuron_it_ != times_.cend())
             {
-                t_neurite_it_ = t_neuron_it_->second.cbegin();
+                t_neurite_it_    = t_neuron_it_->second.cbegin();
                 t_neurite_endit_ = t_neuron_it_->second.cend();
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_ = 0;
+                    t_gc_pos_    = 0;
                     t_gc_endpos_ = t_neurite_it_->second.size();
                 }
             }
@@ -1257,14 +1217,15 @@ bool GrowthConeContinuousRecorder::get_next_time(
  * Constructor for GrowthConeDiscreteRecorder
  */
 GrowthConeDiscreteRecorder::GrowthConeDiscreteRecorder()
-  : v_gc_pos_(0)
-  , v_gc_endpos_(0)
-  , t_gc_pos_(0)
-  , t_gc_endpos_(0)
-{}
+    : v_gc_pos_(0)
+    , v_gc_endpos_(0)
+    , t_gc_pos_(0)
+    , t_gc_endpos_(0)
+{
+}
 
 
-void GrowthConeDiscreteRecorder::record(const Event& event)
+void GrowthConeDiscreteRecorder::record(const Event &event)
 {
     //~ size_t step         = std::get<0>(event);
     //~ double substep      = std::get<1>(event);
@@ -1274,35 +1235,29 @@ void GrowthConeDiscreteRecorder::record(const Event& event)
     //~ Time event_time = Time::from_steps(step, substep);
 
     //~ bool branching_event = (ev_type == names::lateral_branching
-                            //~ || ev_type == names::gc_splitting)
+    //~ || ev_type == names::gc_splitting)
 
     //~ // test which data is recorded
-    
+
     //~ TRIE(observable_)
     //~ CASE(names::num_growth_cones)
-        //~ if (branching_event)
-        //~ {
-            //~ recording_.push_back();
-        //~ }
-        //~ else if (ev_type == names::gc_deletion)
-        //~ {
-            //~ recording_.push_back();
-        //~ }
-        //~ times_.push_back();
+    //~ if (branching_event)
+    //~ {
+    //~ recording_.push_back();
+    //~ }
+    //~ else if (ev_type == names::gc_deletion)
+    //~ {
+    //~ recording_.push_back();
+    //~ }
+    //~ times_.push_back();
     //~ ENDTRIE;
 }
 
 
-unsigned int GrowthConeDiscreteRecorder::get_level() const
-{
-    return 2;
-}
+unsigned int GrowthConeDiscreteRecorder::get_level() const { return 2; }
 
 
-unsigned int GrowthConeDiscreteRecorder::get_event_type() const
-{
-    return 1;
-}
+unsigned int GrowthConeDiscreteRecorder::get_event_type() const { return 1; }
 
 
 /**
@@ -1338,8 +1293,8 @@ void GrowthConeDiscreteRecorder::set_status(const statusMap &status)
 }
 
 
-bool GrowthConeDiscreteRecorder::get_next_recording(
-    std::vector<Property>& ids, std::vector<double>& values)
+bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
+                                                    std::vector<double> &values)
 {
     if (!v_iterating_)
     {
@@ -1347,11 +1302,11 @@ bool GrowthConeDiscreteRecorder::get_next_recording(
         v_neuron_it_ = recording_.cbegin();
         if (v_neuron_it_ != recording_.cend())
         {
-            v_neurite_it_ = v_neuron_it_->second.cbegin();
+            v_neurite_it_    = v_neuron_it_->second.cbegin();
             v_neurite_endit_ = v_neuron_it_->second.cend();
             if (v_neurite_it_ != v_neurite_endit_)
             {
-                v_gc_pos_ = 0;
+                v_gc_pos_    = 0;
                 v_gc_endpos_ = v_neurite_it_->second.size();
             }
         }
@@ -1374,11 +1329,11 @@ bool GrowthConeDiscreteRecorder::get_next_recording(
                 ids.push_back(p_gc);
 
                 // set the values
-                values.reserve(
-                    values.size() + v_neurite_it_->second[v_gc_pos_].size());
-                values.insert(
-                    values.end(), v_neurite_it_->second[v_gc_pos_].cbegin(),
-                    v_neurite_it_->second[v_gc_pos_].cend());
+                values.reserve(values.size() +
+                               v_neurite_it_->second[v_gc_pos_].size());
+                values.insert(values.end(),
+                              v_neurite_it_->second[v_gc_pos_].cbegin(),
+                              v_neurite_it_->second[v_gc_pos_].cend());
 
                 // increment gc
                 v_gc_pos_++;
@@ -1390,7 +1345,7 @@ bool GrowthConeDiscreteRecorder::get_next_recording(
                 v_neurite_it_++;
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_ = 0;
+                    v_gc_pos_    = 0;
                     v_gc_endpos_ = v_neurite_it_->second.size();
                 }
             }
@@ -1402,11 +1357,11 @@ bool GrowthConeDiscreteRecorder::get_next_recording(
             v_neuron_it_++;
             if (v_neuron_it_ != recording_.cend())
             {
-                v_neurite_it_ = v_neuron_it_->second.cbegin();
+                v_neurite_it_    = v_neuron_it_->second.cbegin();
                 v_neurite_endit_ = v_neuron_it_->second.cend();
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_ = 0;
+                    v_gc_pos_    = 0;
                     v_gc_endpos_ = v_neurite_it_->second.size();
                 }
             }
@@ -1427,11 +1382,11 @@ bool GrowthConeDiscreteRecorder::get_next_recording(
 }
 
 
-bool GrowthConeDiscreteRecorder::get_next_time(
-    std::vector<Property>& ids, std::vector<double>& values,
-    const std::string& time_units)
+bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
+                                               std::vector<double> &values,
+                                               const std::string &time_units)
 {
-    const char* ctu = time_units.c_str();
+    const char *ctu = time_units.c_str();
 
     if (!t_iterating_)
     {
@@ -1439,11 +1394,11 @@ bool GrowthConeDiscreteRecorder::get_next_time(
         t_neuron_it_ = times_.cbegin();
         if (t_neuron_it_ != times_.cend())
         {
-            t_neurite_it_ = t_neuron_it_->second.cbegin();
+            t_neurite_it_    = t_neuron_it_->second.cbegin();
             t_neurite_endit_ = t_neuron_it_->second.cend();
             if (t_neurite_it_ != t_neurite_endit_)
             {
-                t_gc_pos_ = 0;
+                t_gc_pos_    = 0;
                 t_gc_endpos_ = t_neurite_it_->second.size();
             }
         }
@@ -1466,30 +1421,30 @@ bool GrowthConeDiscreteRecorder::get_next_time(
                 ids.push_back(p_gc);
 
                 // set the values
-                values.reserve(
-                    values.size() + t_neurite_it_->second[t_gc_pos_].size());
+                values.reserve(values.size() +
+                               t_neurite_it_->second[t_gc_pos_].size());
 
                 TRIE(ctu)
                 CASE("seconds")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_seconds());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_seconds());
+                }
                 CASE("minutes")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_minutes());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_minutes());
+                }
                 CASE("hours")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_hours());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_hours());
+                }
                 CASE("days")
-                    for (auto t : t_neurite_it_->second[t_gc_pos_])
-                    {
-                        values.push_back(t.get_total_days());
-                    }
+                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                {
+                    values.push_back(t.get_total_days());
+                }
                 ENDTRIE;
 
                 // increment gc
@@ -1502,7 +1457,7 @@ bool GrowthConeDiscreteRecorder::get_next_time(
                 t_neurite_it_++;
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_ = 0;
+                    t_gc_pos_    = 0;
                     t_gc_endpos_ = t_neurite_it_->second.size();
                 }
             }
@@ -1514,11 +1469,11 @@ bool GrowthConeDiscreteRecorder::get_next_time(
             t_neuron_it_++;
             if (t_neuron_it_ != times_.cend())
             {
-                t_neurite_it_ = t_neuron_it_->second.cbegin();
+                t_neurite_it_    = t_neuron_it_->second.cbegin();
                 t_neurite_endit_ = t_neuron_it_->second.cend();
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_ = 0;
+                    t_gc_pos_    = 0;
                     t_gc_endpos_ = t_neurite_it_->second.size();
                 }
             }

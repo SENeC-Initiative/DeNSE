@@ -9,10 +9,65 @@ from shapely.geometry import LineString
 
 from ..geometry import Shape
 from ..structure import NeuronStructure
+from .._helpers import nonstring_container
 from .._helpers_geom import _get_wall_area
 
 
-def fraction_neurites_near_walls(neurons, culture):
+def neurite_length(neurons, neurite="all", percentiles=None):
+    '''
+    Return the length of neurons' neurites.
+
+    Parameters
+    ----------
+    neurons : int or list
+        Ids of the neurons.
+    neurite : str, optional (default: all)
+        Neurite to consider, among ("all", "axon", or "dendrite"). To get a
+        specific dendrite, use "dendrite_X" where X is the dendrite number,
+        starting from 0.
+    '''
+    shapes       = NeuronStructure(neurons)
+    num_neurons  = len(shapes["gid"])
+
+    lengths      = np.zeros(num_neurons)
+
+    if neurite in ("axon", "all"):
+        for i in range(num_neurons):
+            if len(shapes["axon"][i][0]) > 1:
+                axon_ls     = LineString(shapes["axon"][i].T)
+                lengths[i] += axon_ls.length
+
+    if neurite == "all" or "dendrite" in neurite:
+        idx = neurite.find("_")
+        if idx != -1:
+            idx = int(neurite[idx+1])
+        else:
+            idx = None
+        for i in range(num_neurons):
+            if idx is None:
+                if len(shapes["dendrites"][i][0]) > 1:
+                    dend_ls     = LineString(shapes["dendrites"][i].T)
+                    lengths[i] += dend_ls.length
+            else:
+                nans       = np.where(np.isnan(shapes["dendrites"][i][0]))
+                start, end = 0, 0
+                if idx == 0:
+                    end = nans[0]
+                elif idx == len(nans) - 1:
+                    start = nans[-1] + 1
+                    end   = len(nans)
+                else:
+                    start = nans[idx] + 1
+                    end   = nans[idx + 1]
+                if end > start + 1:
+                    dend_ls     = LineString(
+                        shapes["dendrites"][i][:, start:end].T)
+                    lengths[i] += dend_ls.length
+
+    return lengths
+
+
+def fraction_neurites_near_walls(neurons, culture, percentiles=None):
     '''
     Test what is the fraction of the total neurite length located near walls.
 
@@ -22,6 +77,8 @@ def fraction_neurites_near_walls(neurons, culture):
         Ids of the neurons.
     culture : :class:`Shape`
         Culture containing the neurons.
+    percentiles : float or list, optional (default: average)
+        Return the percentiles describing the distribution.
 
     Returns
     -------
@@ -30,8 +87,7 @@ def fraction_neurites_near_walls(neurons, culture):
         neurite length.
     '''
     shapes       = NeuronStructure(neurons)
-    total_length = 0.
-    wall_length  = 0.
+    num_neurons  = len(shapes["gid"])
 
     # get wall areas
     width = 3.
@@ -46,12 +102,16 @@ def fraction_neurites_near_walls(neurons, culture):
         wall_buffer = _get_wall_area(area, name, culture, env_buffer, width)
         wall_area = wall_area.union(wall_buffer)
 
+    fractions  = np.zeros(num_neurons)
+
     # get length inside wall_area
-    for i in range(len(shapes["gid"])):
+    for i in range(num_neurons):
+        total_length = 0.
+        wall_length  = 0.
         axon_ls, dend_ls = None, None
-        if np.any(shapes["axon"][i]):
+        if len(shapes["axon"][i][0]) > 1:
             axon_ls = LineString(shapes["axon"][i].T)
-        if np.any(shapes["dendrites"][i]):
+        if len(shapes["dendrites"][i][0]) > 1:
             dend_ls = LineString(shapes["dendrites"][i].T)
         if axon_ls is not None:
             total_length += axon_ls.length
@@ -60,6 +120,12 @@ def fraction_neurites_near_walls(neurons, culture):
             total_length += dend_ls.length
             wall_length  += wall_area.intersection(dend_ls).length
 
-    if total_length:
-        return wall_length / total_length
-    return 0.
+        if total_length:
+            fractions[i] = wall_length / total_length
+        else:
+            fractions[i] =  0.
+
+    if percentiles is None:
+        return np.average(fractions)
+    else:
+        return np.percentile(fractions, percentiles)

@@ -3,4 +3,4 @@
 
 """ Various tools """
 
-from .tests import fraction_neurites_near_walls
+from .tests import *

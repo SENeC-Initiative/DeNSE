@@ -3,12 +3,29 @@
 
 """ Testing the areas to reproduce Jordi's experiments """
 
+import matplotlib
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
 import nngt
 import nngt.geometry as geom
 import NetGrowth as ng
+
+
+'''
+Setting the parameters
+'''
+
+num_neurons = 1000
+simtime       = 5000.
+num_omp       = 12
+resolutions   = (1., 5., 20., 50.)
+
+sensing_angle = 0.04
+
+cmap          = plt.get_cmap('plasma')
+colors        = np.linspace(0.2, 0.8, len(resolutions))
 
 
 '''
@@ -61,28 +78,40 @@ def tortuosity(points, step_size=None):
     return np.average(path_length / eucl_length)
 
 
-'''
-Creating the environment and setting the parameters
-'''
-
-fname = "mask_high.svg"
-
-shape = geom.Shape.disk(radius=30000)
-
-simtime = 5000.
-
-num_omp = 6
-
-#~ resolutions = (1., 5., 20., 50.)
-resolutions = (20., 50.)
-colors = ("r", "orange", "b", "grey")
-
-
-'''
-Prepare the figure, set NetGrowth, and simulate
-'''
-
 fig, ax = plt.subplots()
+
+'''
+Gaussian random-walk for reference
+'''
+
+resol        = 10.
+num_steps    = int(simtime / resol)
+num_trials   = 10
+min_steps    = int(200/resol)
+max_steps    = int(simtime/resol)
+step_size  = np.linspace(min_steps, max_steps, num_trials).astype(int)
+
+tort_evol  = np.zeros((num_neurons, num_trials))
+
+for i in range(num_neurons):
+    angles    = np.cumsum(np.random.normal(
+        0., sensing_angle*np.sqrt(resol), num_steps))
+    vectors   = np.array([resol*np.cos(angles), resol*np.sin(angles)])
+    points    = np.cumsum(vectors, axis=1)
+    for j, s in enumerate(step_size):
+        tort_evol[i][j] = tortuosity(points, step_size=s)
+
+up, median, low = np.percentile(tort_evol, [90, 50, 10], axis=0)
+
+ax.plot(step_size*resol, median, color="grey", lw=3, alpha=0.8,
+        label="Ref.".format(resol))
+ax.plot(step_size*resol, low, ls="--", color="grey", lw=3, alpha=0.4)
+ax.plot(step_size*resol, up, ls="--", color="grey", lw=3, alpha=0.4)
+
+
+'''
+Simulations with NetGrowth
+'''
 
 for k, resol in enumerate(resolutions[::-1]):
     np.random.seed(1)
@@ -91,14 +120,11 @@ for k, resol in enumerate(resolutions[::-1]):
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
+        "environment_required": False,
     })
 
-    ng.SetEnvironment(shape)
-
-    num_neurons = 1000
-
     params = {
-        "sensing_angle": 0.04,
+        "sensing_angle": sensing_angle,
         "filopodia_wall_affinity": 2.5,
         "proba_down_move": 0.05,
         "scale_up_move": 5.,
@@ -109,15 +135,11 @@ for k, resol in enumerate(resolutions[::-1]):
 
     ng.Simulate(simtime)
 
-
     ''' Analyze the resulting neurons '''
 
-    neurons = ng.structure.NeuronStructure(gids)
-
-    # evolution of local tortuosity
-
-    min_steps = int(200/resol)
-    max_steps = int(simtime/resol)
+    neurons    = ng.structure.NeuronStructure(gids)
+    min_steps  = int(200/resol)
+    max_steps  = int(simtime/resol)
 
     num_trials = 10
     step_size  = np.linspace(min_steps, max_steps, num_trials).astype(int)
@@ -129,11 +151,22 @@ for k, resol in enumerate(resolutions[::-1]):
 
     up, median, low = np.percentile(tort_evol, [90, 50, 10], axis=0)
 
-    ax.plot(step_size*resol, median, color=colors[k], alpha=0.5,
+    ax.plot(step_size*resol, median, color=cmap(colors[k]), alpha=1,
             label="resol: {}".format(resol))
-    ax.fill_between(step_size*resol, low, up, color=colors[k], alpha=0.2)
+    ax.plot(step_size*resol, low, ls="--", color=cmap(colors[k]), alpha=0.5)
+    ax.plot(step_size*resol, up, ls="--", color=cmap(colors[k]), alpha=0.5)
 
-    ng.PlotNeuron(show=False)
-    
-ax.legend(loc=2)
+
+'''
+Make, save and show the figure
+'''
+
+ax.legend(loc=2, fancybox=True, frameon=True)
+
+fig.suptitle("Evolution of tortuosity")
+fig.patch.set_alpha(0.)
+fig.savefig("tortuosity.pdf")
+
 plt.show()
+
+ng.PlotNeuron(show=True)

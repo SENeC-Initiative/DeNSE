@@ -231,20 +231,25 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     geometry_.position.at(1) + move_.module * sin(move_.angle));
                 biology_.branch->add_point(geometry_.position, move_.module);
                 // check if we switched to a new area
-                if (new_pos_area.at(n_direction) != current_area_)
+
+                if (using_environment_)
                 {
-                    current_area_ = kernel().space_manager.get_containing_area(
-                        geometry_.position, omp_id);
-                    update_growth_properties(current_area_);
-                }
-                else
-                {
-                    // reset move_.sigma_angle to its default value
-                    AreaPtr area =
-                        kernel().space_manager.get_area(current_area_);
-                    move_.sigma_angle =
-                        sensing_angle_ *
-                        area->get_property(names::sensing_angle);
+                    if (new_pos_area.at(n_direction) != current_area_)
+                    {
+                        current_area_ =
+                            kernel().space_manager.get_containing_area(
+                                geometry_.position, omp_id);
+                        update_growth_properties(current_area_);
+                    }
+                    else
+                    {
+                        // reset move_.sigma_angle to its default value
+                        AreaPtr area =
+                            kernel().space_manager.get_area(current_area_);
+                        move_.sigma_angle =
+                            sensing_angle_ *
+                            area->get_property(names::sensing_angle);
+                    }
                 }
             }
         }
@@ -257,6 +262,18 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             prune(cone_n);
         }
         geometry_.position = biology_.branch->get_last_xy();
+
+        if (using_environment_)
+        {
+            // check if we changed area
+            current_area_ = kernel().space_manager.get_containing_area(
+                        geometry_.position, omp_id);
+            update_growth_properties(current_area_);
+            // reset move_.sigma_angle to its default value
+            AreaPtr area = kernel().space_manager.get_area(current_area_);
+            move_.sigma_angle = sensing_angle_ *
+                                area->get_property(names::sensing_angle);
+        }
     }
 }
 
@@ -381,7 +398,7 @@ void GrowthCone::compute_pull_and_accessibility(
                 kernel().space_manager.sense_walls(
                     directions_weights, filopodia_, geometry_.position, move_,
                     filopodia_.finger_length, substep,
-                    filopodia_.wall_affinity * substep,
+                    filopodia_.wall_affinity,
                     current_area_);
 
                 // check stronger interaction if filopodia is long enough
@@ -390,7 +407,7 @@ void GrowthCone::compute_pull_and_accessibility(
                     kernel().space_manager.sense_walls(
                         directions_weights, filopodia_, geometry_.position,
                         move_, filopodia_.finger_length * 0.5, substep,
-                        filopodia_.wall_affinity * 2 * substep,
+                        filopodia_.wall_affinity * 2,
                         current_area_);
                 }
             }
@@ -621,7 +638,10 @@ GCPtr GrowthCone::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
             ? kernel().space_manager.get_containing_area(position, omp_id)
             : "";
 
-    newCone->update_growth_properties(current_area_);
+    if (using_environment_)
+    {
+        newCone->update_growth_properties(current_area_);
+    }
 
     return newCone;
 }
@@ -712,7 +732,10 @@ void GrowthCone::set_status(const statusMap &status)
     //~ #endif
 
     // set growth properties
-    update_growth_properties(current_area_);
+    if (using_environment_)
+    {
+        update_growth_properties(current_area_);
+    }
 }
 
 

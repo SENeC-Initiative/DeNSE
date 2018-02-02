@@ -4,6 +4,7 @@
 #include <cmath>
 #include <functional>
 #include <stdexcept>
+#include <limits>
 
 // elements includes
 #include "GrowthCone.hpp"
@@ -113,17 +114,32 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         get_param(astatus, names::growth_cone_model, model_name);
         dendrite_gc = kernel().neuron_manager.get_model(model_name);
     }
-    // create the neurites with default param
+
+    // create the neurites and set their parameters
+    statusMap local_axon_params(status), local_dendrites_params(status);
+
+    for (auto &param : astatus)
+    {
+        local_axon_params[param.first] = param.second;
+    }
+
+    for (auto &param : dstatus)
+    {
+        local_dendrites_params[param.first] = param.second;
+    }
+
     for (int i = 0; i < num_neurites; i++)
     {
         if (i + neurites_.size() == 0)
         {
             new_neurite("axon", "axon", axon_gc, rnd_engine);
+            set_neurite_status("axon", local_axon_params);
         }
         else
         {
             std::string name = "dendrite_" + std::to_string(neurites_.size());
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
+            set_neurite_status("dendrite", local_dendrites_params);
         }
     }
 }
@@ -361,6 +377,7 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
     if (neurite_type == "axon")
     {
         auto it = neurites_.find("axon");
+
         if (it != neurites_.end())
         {
             neurites_["axon"]->set_status(status);
@@ -376,6 +393,16 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
             }
         }
     }
+
+    // update max_resol
+    double max_resol = std::numeric_limits<double>::max();
+
+    for (auto &neurite : neurites_)
+    {
+        max_resol = std::min(max_resol, neurite.second->get_max_resol());
+    }
+
+    kernel().neuron_manager.set_max_resol(gid_, max_resol);
 }
 
 

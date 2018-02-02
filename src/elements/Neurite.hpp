@@ -119,6 +119,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;
     std::string get_name() const;
+    double get_max_resol() const;
     void update_kernel_variables();
     size_t get_and_increment_gc_ID();
     void add_cone(GCPtr);

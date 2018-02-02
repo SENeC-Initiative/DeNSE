@@ -9,6 +9,7 @@
 #include "growth_time.hpp"
 #include "manager_interface.hpp"
 
+
 namespace growth
 {
 class Neuron;
@@ -38,6 +39,11 @@ class SimulationManager : public ManagerInterface
     double get_current_seconds() const;
     size_t get_current_step() const;
     double get_current_substep() const;
+
+    void set_max_resolution();
+    void push_max_resolution(int omp_id, double max_resol,
+                             double old_max_resol);
+
     void test_random_generator(Random_vecs &values, size_t size);
 
   private:
@@ -56,6 +62,7 @@ class SimulationManager : public ManagerInterface
     Time maximal_time_;
     bool terminate_;
     double resolution_scale_factor_;
+    double max_resol_;  // maximum allowed resolution
 };
 
 

@@ -62,15 +62,19 @@ class NeuronManager : public ManagerInterface
     void get_models(std::vector<std::string> &models);
     GCPtr get_default_model();
 
+    void set_max_resol(size_t neuron, double max_resol);
+    double get_max_resol() const;
+
     //! here we call the models file and register each model in the map
     void register_model(std::string, GCPtr);
     modelMap model_map_;
 
   private:
-    NeuronPtr model_neuron_;          // unused model neuron for get_defaults
-    gidNeuronMap neurons_;            // get neuron from gid
-    threadNeurons neurons_on_thread_; // group neurons by thread
-    gidThreadMap thread_of_neuron_;   // get thread from gid
+    NeuronPtr model_neuron_;           // unused model neuron for get_defaults
+    gidNeuronMap neurons_;             // get neuron from gid
+    threadNeurons neurons_on_thread_;  // group neurons by thread
+    gidThreadMap thread_of_neuron_;    // get thread from gid
+    std::vector<std::unordered_map<size_t, double>> max_resolutions_;  // max allowed resol
 };
 
 

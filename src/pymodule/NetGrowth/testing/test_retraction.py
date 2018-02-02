@@ -60,10 +60,12 @@ for k, resol in enumerate(resolutions):
         "sensing_angle": 0.04,
         # ~ "filopodia_wall_affinity": 2.5/np.sqrt(resol),
         # ~ "filopodia_wall_affinity": 2.5*np.sqrt(resol),
-        "filopodia_wall_affinity": 2.5,
+        "filopodia_wall_affinity": 10./resol,
     }
 
-    gids = ng.CreateNeurons(n=1000, num_neurites=1, params=params)
+    gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+
+    print(ng.GetKernelStatus())
 
     ng.Simulate(3000)
     ng.PlotNeuron(show=False, title="Resolution: {}".format(resol))

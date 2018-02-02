@@ -98,151 +98,230 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                          std::vector<std::string> &new_pos_area,
                          const Filopodia &filopodia, const Point &position,
                          const Move &move, double distance, double substep,
-                         double in_value, double out_value,
                          const std::string &area, double proba_down_move,
                          double max_height_up_move)
 {
-    int omp_id = kernel().parallelism_manager.get_thread_local_id();
-
     assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
 
-    for (int n_angle = 0; n_angle < filopodia.size; n_angle++)
+    // Useful values
+    int omp_id        = kernel().parallelism_manager.get_thread_local_id();
+    double subs_afty  = filopodia.substrate_affinity;
+    double wall_afty  = filopodia.wall_affinity;
+    double len_filo   = filopodia.finger_length;
+    size_t n_max      = filopodia.size;
+    AreaPtr old_area  = areas_[area];
+    double old_height = old_area->get_height();
+
+    // values used locally inside loop
+    bool intersect, before, after, before_same_area, after_same_area;
+    double angle, new_height, new_substrate_affinity, delta_h;
+    GeomPtr geosline, filo_line, lamel_line;
+    Point target_pos, filo_pos, lamel_pos;
+    std::vector<Point> middle_points;
+    std::string name_new_area;
+    size_t n_intersect;
+    AreaPtr new_area;
+    unsigned int i;
+
+    // test the environment for each of the filopodia's angles
+    for (int n_angle = 0; n_angle < n_max; n_angle++)
     {
-        if (not std::isnan(directions_weigths[n_angle]))
+        angle = move.angle + move.sigma_angle * sqrt(substep) *
+                             filopodia.directions[n_angle];
+
+        // ===================== //
+        // test authorized moves //
+        // ===================== //
+
+        target_pos = Point(position.at(0) + cos(angle) * distance,
+                           position.at(1) + sin(angle) * distance);
+
+        geosline = geosline_from_points(position, target_pos);
+
+        if (env_intersect(geosline, omp_id))
         {
-            double angle = move.angle + move.sigma_angle * sqrt(substep) *
-                                            filopodia.directions[n_angle];
+            intersect = true;
+            directions_weigths[n_angle] *= nan("");  // cannot escape env
+        }
+        else if (area_intersect(area, geosline, omp_id))
+        {
+            intersect = true;
+            // check the number of intersections
+            n_intersect = area_num_intersections(
+                area, geosline, target_pos, middle_points, omp_id);
 
-            Point target_pos = Point(position.at(0) + cos(angle) * distance,
-                                     position.at(1) + sin(angle) * distance);
-            GeomPtr geosline = geosline_from_points(position, target_pos);
-
-
-            if (env_intersect(geosline, omp_id))
+            for (i = 0; i < n_intersect; i++)
             {
-                // intersection with environment border?
-                directions_weigths[n_angle] *= out_value;
-            }
-            else if (area_intersect(area, geosline, omp_id))
-            {
-                // check the number of intersections
-                AreaPtr new_area;
-                AreaPtr old_area = areas_[area];
-                std::vector<Point> middle_points;
-                double old_height, new_height, new_substrate_affinity, delta_h;
+                name_new_area = get_containing_area(middle_points[i], omp_id);
+                new_pos_area[n_angle] = name_new_area;
+                new_area              = areas_[name_new_area];
+                new_height            = new_area->get_height();
+                new_substrate_affinity =
+                    new_area->get_property(names::substrate_affinity);
+                delta_h = abs(new_height - old_height);
 
-                size_t n_intersect = area_num_intersections(
-                    area, geosline, target_pos, middle_points, omp_id);
-
-                // intersection with area?
-                old_height = old_area->get_height();
-
-                for (unsigned int i = 0; i < n_intersect; i++)
+                if (old_height == new_height)
                 {
-                    std::string name_new_area =
-                        get_containing_area(middle_points[i], omp_id);
-                    new_pos_area[n_angle] = name_new_area;
-                    new_area              = areas_[name_new_area];
-                    new_height            = new_area->get_height();
-                    new_substrate_affinity =
-                        new_area->get_property(names::substrate_affinity);
-                    delta_h = abs(new_height - old_height);
-
-                    if (old_height == new_height)
+                    // same height => proba from substrate affinity
+                    if (n_intersect == 1)
                     {
-                        // same height => proba from substrate affinity
-                        if (n_intersect == 1)
-                        {
-                            directions_weigths[n_angle] *=
-                                new_substrate_affinity;
-                        }
+                        directions_weigths[n_angle] *=
+                            new_substrate_affinity;
                     }
-                    else if (old_height > new_height)
-                    {
-                        // growth cone may go down:
-                        // - if filopodia can touch the bottom, the probability
-                        // of
-                        //   making a down move is increased or decreased
-                        //   depending on the substrate affinity
-                        // - if the bottom is too far, only take the probability
-                        //   of making a down move
-                        double h = filopodia.finger_length - delta_h;
-                        double delta_proba =
-                            h > 0 ? (new_substrate_affinity - 1) * h /
-                                        filopodia.finger_length
-                                  : 0;
+                }
+                else if (old_height > new_height)
+                {
+                    // growth cone may go down:
+                    // - if filopodia can touch the bottom, the probability
+                    // of
+                    //   making a down move is increased or decreased
+                    //   depending on the substrate affinity
+                    // - if the bottom is too far, only take the probability
+                    //   of making a down move
+                    double h = filopodia.finger_length - delta_h;
+                    double delta_proba =
+                        h > 0 ? (new_substrate_affinity - 1) * h /
+                                    filopodia.finger_length
+                              : 0;
 
-                        if ((proba_down_move + delta_proba) <= 0)
-                        {
-                            directions_weigths[n_angle] = nan("");
-                        }
-                        else
-                        {
-                            directions_weigths[n_angle] *=
-                                substep * (proba_down_move + delta_proba);
-                        }
+                    if ((proba_down_move + delta_proba) <= 0)
+                    {
+                        directions_weigths[n_angle] = nan("");
                     }
                     else
                     {
-                        // growth cone may go upwards:
-                        // - move is possible if the step is smaller than
-                        //   `max_height_up_move`, in [0,
-                        //   new_substrate_affinity]
-                        // - if step is higher, move is impossible
                         directions_weigths[n_angle] *=
-                            substep * new_substrate_affinity *
-                            std::exp(-delta_h / max_height_up_move);
+                            substep * (proba_down_move + delta_proba);
+                    }
+                }
+                else
+                {
+                    // growth cone may go upwards:
+                    // - move is possible if the step is smaller than
+                    //   `max_height_up_move`, in [0,
+                    //   new_substrate_affinity]
+                    // - if step is higher, move is impossible
+                    directions_weigths[n_angle] *=
+                        substep * new_substrate_affinity *
+                        std::exp(-delta_h / max_height_up_move);
+                }
+            }
+        }
+        else
+        {
+            intersect = false;
+            //~ #ifndef NDEBUG
+            //~ printf("on regular substrate\n");
+            //~ #endif
+            directions_weigths[n_angle] *= subs_afty;
+        }
+
+        // ====================== //
+        // test wall interactions //
+        // ====================== //
+
+        if (intersect)
+        {
+            // test which interactions are possible
+            before = (n_angle > 0);
+            after  = (n_angle < n_max - 1);
+
+            if (before)
+            {
+                before_same_area = (new_pos_area[n_angle - 1] == area);
+            }
+            if (after)
+            {
+                after_same_area  = (new_pos_area[n_angle + 1] == area);
+            }
+
+            // set position/line
+            filo_pos  = Point(position.at(0) + cos(angle) * len_filo,
+                              position.at(1) + sin(angle) * len_filo);
+            filo_line = geosline_from_points(position, filo_pos);
+
+            // weak interaction (filopodia)
+            if (env_intersect(filo_line, omp_id))
+            {
+                intersect = true;
+                // wall affinity
+                if (before)
+                {
+                    directions_weigths[n_angle - 1] *= wall_afty;
+                }
+                if (after)
+                {
+                    directions_weigths[n_angle + 1] *= wall_afty;
+                }
+            }
+            else if (area_intersect(area, filo_line, omp_id))
+            {
+                // intersections already computed before, get first
+                std::string name_new_area =
+                    get_containing_area(middle_points[0], omp_id);
+                new_area                  = areas_[name_new_area];
+                new_height                = new_area->get_height();
+
+                if (old_height < new_height)
+                {
+                    if (before && before_same_area)
+                    {
+                        directions_weigths[n_angle - 1] *= wall_afty;
+                    }
+                    if (after &&after_same_area)
+                    {
+                        directions_weigths[n_angle + 1] *= wall_afty;
                     }
                 }
             }
             else
             {
-                //~ #ifndef NDEBUG
-                //~ printf("on regular substrate\n");
-                //~ #endif
-                directions_weigths[n_angle] *= in_value;
+                intersect = false;
             }
+
+            // strong interaction (lamelipodia) -> twice stronger
+            if (intersect)
+            {
+                lamel_pos  = Point(position.at(0) + 0.5*cos(angle)*len_filo,
+                                   position.at(1) + 0.5*sin(angle)*len_filo);
+                lamel_line = geosline_from_points(position, lamel_pos);
+
+                if (env_intersect(lamel_line, omp_id))
+                {
+                    // wall affinity
+                    if (before)
+                    {
+                        directions_weigths[n_angle - 1] *= 2.;
+                    }
+                    if (after)
+                    {
+                        directions_weigths[n_angle + 1] *= 2.;
+                    }
+                }
+                else if (area_intersect(area, lamel_line, omp_id))
+                {
+                    // everything was already computed for filopodia
+                    if (old_height < new_height)
+                    {
+                        if (before && before_same_area)
+                        {
+                            directions_weigths[n_angle - 1] *= 2.;
+                        }
+                        if (after && after_same_area)
+                        {
+                            directions_weigths[n_angle + 1] *= 2.;
+                        }
+                    }
+                }
+            }
+        }
 
 #ifndef NDEBUG
-            if (directions_weigths[n_angle] < 0)
-            {
-                printf("negative value: %f\n", directions_weigths[n_angle]);
-            }
-#endif
-        }
-    }
-    //~ #ifndef NDEBUG
-    //~ printf("out\n");
-    //~ #endif
-}
-
-
-bool SpaceManager::sense_walls(std::vector<double> &directions_weigths,
-                               const Filopodia &filopodia,
-                               const Point &position, const Move &move,
-                               double distance, double substep,
-                               double wall_affinity, const std::string &area)
-{
-    int omp = kernel().parallelism_manager.get_thread_local_id();
-
-    assert(env_contains(Point(position.at(0), position.at(1)), omp));
-
-    for (int n_angle = 0; n_angle < filopodia.size; n_angle++)
-    {
-        if (not std::isnan(directions_weigths[n_angle]))
+        if (directions_weigths[n_angle] < 0)
         {
-            double angle = move.angle + move.sigma_angle * sqrt(substep) *
-                                            filopodia.directions[n_angle];
-
-            Point target_pos = Point(position.at(0) + cos(angle) * distance,
-                                     position.at(1) + sin(angle) * distance);
-            GeomPtr geosline = geosline_from_points(position, target_pos);
-
-            if (wall_area_contains(area, target_pos, omp))
-            {
-                directions_weigths[n_angle] *= wall_affinity;
-            }
+            printf("negative value: %f\n", directions_weigths[n_angle]);
         }
+#endif
     }
 }
 
@@ -463,6 +542,27 @@ AreaPtr SpaceManager::get_area(const std::string &name) const
     }
 
     return areas_.at(name);
+}
+
+
+std::vector<std::string> SpaceManager::get_area_names() const
+{
+    std::vector<std::string> names;
+
+    for (const auto a : areas_)
+    {
+        names.push_back(a.first);
+    }
+
+    return names;
+}
+
+
+void SpaceManager::get_area_properties(
+    const std::string &area,
+    std::unordered_map<std::string, double>& prop) const
+{
+    areas_.at(area)->get_properties(prop);
 }
 
 

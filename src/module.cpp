@@ -62,8 +62,13 @@ size_t create_neurons(const std::vector<statusMap> &neuron_params,
                       const std::vector<statusMap> &axon_params,
                       const std::vector<statusMap> &dendrites_params)
 {
-    return kernel().neuron_manager.create_neurons(neuron_params, axon_params,
-                                                  dendrites_params);
+    size_t num_created = kernel().neuron_manager.create_neurons(
+        neuron_params, axon_params, dendrites_params);
+
+    // update max_resolution
+    kernel().simulation_manager.set_max_resolution();
+
+    return num_created;
 }
 
 
@@ -211,6 +216,7 @@ void get_environment(
 void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
                 statusMap dendrites_status)
 {
+    // @todo: do this in parallel
     auto neuron = kernel().neuron_manager.get_neuron(gid);
     neuron->set_status(neuron_status);
 
@@ -227,6 +233,9 @@ void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
         local_params[param.first] = param.second;
     }
     neuron->set_neurite_status("dendrites", local_params);
+
+    // update max_resolution for simulation
+    kernel().simulation_manager.set_max_resolution();
 }
 
 

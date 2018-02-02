@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <limits>
 
 #include "config_impl.hpp"
 #include "kernel_manager.hpp"
@@ -83,7 +84,6 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         std::vector<size_t> gids(thread_neurons[omp_id]);
-        statusMap local_params;
         for (size_t gid : gids)
         {
             size_t idx       = gid - first_id;
@@ -91,20 +91,6 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
 
             neuron->init_status(neuron_params[idx], axon_params[idx],
                                 dendrites_params[idx], rnd_engine);
-
-            local_params = neuron_params[idx];
-            for (auto &param : axon_params[idx])
-            {
-                local_params[param.first] = param.second;
-            }
-            neuron->set_neurite_status("axon", local_params);
-
-            local_params = neuron_params[idx];
-            for (auto &param : dendrites_params[idx])
-            {
-                local_params[param.first] = param.second;
-            }
-            neuron->set_neurite_status("dendrites", local_params);
 
             local_neurons.push_back(neuron);
         }
@@ -127,6 +113,8 @@ void NeuronManager::init_neurons_on_thread(unsigned int num_local_threads)
 {
     assert(neurons_.size() == 0); // no changes once neurons exist
     neurons_on_thread_ = std::vector<std::vector<NeuronPtr>>(num_local_threads);
+    max_resolutions_   = std::vector<std::unordered_map<size_t, double>>(
+        num_local_threads, std::unordered_map<size_t, double>());
 }
 
 
@@ -269,4 +257,27 @@ void NeuronManager::get_models(std::vector<std::string> &models)
         models.push_back(it.first);
     }
 }
+
+
+void NeuronManager::set_max_resol(size_t neuron, double max_resol)
+{
+    max_resolutions_[thread_of_neuron_[neuron]][neuron] = max_resol;
+}
+
+
+double NeuronManager::get_max_resol() const
+{
+    double max_resol = std::numeric_limits<double>::max();
+
+    for (const auto& map : max_resolutions_)
+    {
+        for (const auto& pair : map)
+        {
+            max_resol = std::min(max_resol, pair.second);
+        }
+    }
+
+    return max_resol;
+}
+
 }

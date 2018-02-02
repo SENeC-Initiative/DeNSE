@@ -168,7 +168,7 @@ bool KernelManager::using_environment() const { return env_required_; }
 
 void KernelManager::update_num_objects()
 {
-    num_objects_ = neuron_manager.num_neurons();
+    num_objects_  = neuron_manager.num_neurons();
     num_objects_ += record_manager.num_recorders();
 }
 

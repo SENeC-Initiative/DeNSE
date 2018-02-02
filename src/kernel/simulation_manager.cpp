@@ -3,6 +3,8 @@
 // C includes:
 #include <cmath>
 #include <sys/time.h>
+#include <limits>
+#include <algorithm>
 
 // Includes from kernel
 #include "GrowthCone.hpp"
@@ -29,6 +31,7 @@ SimulationManager::SimulationManager()
     , terminate_(false)     //!< Terminate on signal or error
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
+    , max_resol_(std::numeric_limits<double>::max())
 {
 }
 
@@ -46,9 +49,11 @@ void SimulationManager::finalize()
 
     step_.clear();
     substep_.clear();
+
     final_step_   = 0L;
     initial_time_ = Time();
     final_time_   = Time();
+    max_resol_    = std::numeric_limits<double>::max();
 }
 
 
@@ -84,10 +89,12 @@ void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
 void SimulationManager::num_threads_changed(int num_omp)
 {
     Time::timeStep old_step = (step_.size() > 0) ? step_.front() : 0L;
+
     step_.clear();
     substep_.clear();
-    step_    = std::vector<Time::timeStep>(num_omp, old_step);
-    substep_ = std::vector<double>(num_omp, 0.);
+
+    step_              = std::vector<Time::timeStep>(num_omp, old_step);
+    substep_           = std::vector<double>(num_omp, 0.);
 }
 
 
@@ -319,6 +326,7 @@ void SimulationManager::set_status(const statusMap &status)
 void SimulationManager::get_status(statusMap &status) const
 {
     set_param(status, "resolution", Time::RESOLUTION);
+    set_param(status, "max_allowed_resolution", max_resol_);
 
     Time time = Time(initial_time_, final_step_);
 
@@ -362,6 +370,41 @@ double SimulationManager::get_current_substep() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     return substep_.at(omp_id);
+}
+
+
+void SimulationManager::set_max_resolution()
+{
+    max_resol_          = std::numeric_limits<double>::max();
+    double max_modifier = std::numeric_limits<double>::max();
+
+    // get max speed modifier from areas
+    if (kernel().using_environment())
+    {
+        std::unordered_map<std::string, double> prop;
+        for (auto name : kernel().space_manager.get_area_names())
+        {
+            kernel().space_manager.get_area_properties(name, prop);
+            auto it = prop.find(names::speed_growth_cone);
+            if (it != prop.end())
+            {
+                max_modifier = std::min(max_modifier, it->second);
+            }
+            else
+            {
+                max_modifier = std::min(max_modifier, 1.);
+            }
+        }
+    }
+    else
+    {
+        max_modifier = 1.;
+    }
+
+    // inverse to get max resolution from neuron properties
+    max_modifier = 1. / max_modifier;
+
+    max_resol_ = kernel().neuron_manager.get_max_resol() * max_modifier;
 }
 
 } // namespace

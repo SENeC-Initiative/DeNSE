@@ -19,7 +19,7 @@ from NetGrowth.tools import fraction_neurites_near_walls
 Setting the parameters
 '''
 
-num_neurons = 1000
+num_neurons = 100
 simtime       = 5000.
 num_omp       = 12
 resolutions   = (1., 2., 5., 10., 20., 50.)[::-1]
@@ -44,11 +44,13 @@ fractions = []
 for k, resol in enumerate(resolutions):
     np.random.seed(1)
     ng.ResetKernel()
+    # ~ width = 5. + np.sqrt(resol)
+    width = 5.
     ng.SetKernelStatus({
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i+1 for i in range(num_omp)],
-        "wall_area_width": 5.,
+        "wall_area_width": width,
     })
 
     ng.SetEnvironment(shape)
@@ -57,19 +59,20 @@ for k, resol in enumerate(resolutions):
         "sensing_angle": 0.04,
         # ~ "filopodia_wall_affinity": 2.5/np.sqrt(resol),
         # ~ "filopodia_wall_affinity": 2.5*np.sqrt(resol),
-        "filopodia_wall_affinity": 2.5*resol,
+        "filopodia_wall_affinity": 200./np.sqrt(resol),
+        # ~ "filopodia_wall_affinity": 200./resol,
         # ~ "filopodia_wall_affinity": 2.5,
-        "position": [(7500, 0) for _ in range(num_neurons)],
+        "position": [(7900, 0) for _ in range(num_neurons)],
         "axon_angle": 0.,
     }
 
-    gids = ng.CreateNeurons(n=1000, num_neurites=1, params=params)
+    gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 
     ng.Simulate(3000)
     ng.PlotNeuron(show=False, title="Resolution: {}".format(resol))
 
     fractions.append(fraction_neurites_near_walls(
-        gids, culture=shape, percentiles=(90, 50, 10)))
+        gids, shape, width, percentiles=(90, 50, 10)))
 
 
 '''

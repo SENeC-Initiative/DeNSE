@@ -723,7 +723,7 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
         set_status(i, status, status, status)
 
 
-def Simulate(seconds=0., minutes=0, hours=0, days=0):
+def Simulate(seconds=0., minutes=0, hours=0, days=0, force_resol=False):
     '''
     Simulate the growth of a culture.
 
@@ -743,6 +743,14 @@ def Simulate(seconds=0., minutes=0, hours=0, days=0):
     All parameters are added, i.e. ``NetGrowth.Simulate(25.4, 2)`` will lead
     to a 145.4-second long simulation.
     '''
+    kernel_status = GetKernelStatus()
+    max_resol     = kernel_status["max_allowed_resolution"]
+    if kernel_status["resolution"] > max_resol and not force_resol:
+        raise RuntimeError(
+            "Current `resolution` is too coarse and will lead to physically "
+            "meaningless behaviors, please set a resolution lower than "
+            "{} s or change the speed/filopodia of your neurons.".format(
+                max_resol))
     s, m, h, d = format_time(seconds, minutes, hours, days)
     # initialize the Time instance
     cdef CTime simtime = CTime(s, m, h, d)

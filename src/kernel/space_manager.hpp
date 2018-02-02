@@ -52,23 +52,12 @@ class SpaceManager : public ManagerInterface
                                   const Point &tgt, std::vector<Point> &p,
                                   int omp_id) const;
 
-    int get_region_thread(const Point &position) const;
-    int get_region_thread(double x, double y) const;
-
-    std::string get_containing_area(const Point &position, int omp_id) const;
-    AreaPtr get_area(const std::string &name) const;
-
     bool sense(std::vector<double> &directions_weigths,
                std::vector<std::string> &new_pos_area,
                const Filopodia &filopodia, const Point &position,
                const Move &move, double distance, double substep,
-               double in_value, double out_value, const std::string &area,
-               double down_move_proba, double max_height_up_move);
-
-    bool sense_walls(std::vector<double> &directions_weigths,
-                     const Filopodia &filopodia, const Point &position,
-                     const Move &move, double distance, double substep,
-                     double wall_affinity, const std::string &area);
+               const std::string &area, double down_move_proba,
+               double max_height_up_move);
 
     void set_environment(
         GEOSGeom environment, const std::vector<GEOSGeom> &walls,
@@ -79,6 +68,17 @@ class SpaceManager : public ManagerInterface
         GEOSGeom &environment, std::vector<GEOSGeom> &areas,
         std::vector<double> &heights, std::vector<std::string> &names,
         std::vector<std::unordered_map<std::string, double>> &properties) const;
+
+    int get_region_thread(const Point &position) const;
+    int get_region_thread(double x, double y) const;
+
+    std::vector<std::string> get_area_names() const;
+    std::string get_containing_area(const Point &position, int omp_id) const;
+    AreaPtr get_area(const std::string &name) const;
+    void get_area_properties(
+        const std::string &area,
+        std::unordered_map<std::string, double>& prop) const;
+
     bool has_environment() const;
 
   private:

@@ -67,7 +67,7 @@ def neurite_length(neurons, neurite="all", percentiles=None):
     return lengths
 
 
-def fraction_neurites_near_walls(neurons, culture, percentiles=None):
+def fraction_neurites_near_walls(neurons, culture, distance, percentiles=None):
     '''
     Test what is the fraction of the total neurite length located near walls.
 
@@ -90,7 +90,7 @@ def fraction_neurites_near_walls(neurons, culture, percentiles=None):
     num_neurons  = len(shapes["gid"])
 
     # get wall areas
-    width = 3.
+    width = distance
     env_buffer = culture.intersection(culture.exterior.buffer(width))
     for hole in culture.interiors:
         env_buffer = env_buffer.union(culture.intersection(hole.buffer(width)))

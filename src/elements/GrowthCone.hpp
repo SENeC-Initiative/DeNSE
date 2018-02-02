@@ -47,7 +47,9 @@ class GrowthCone : public TopologicalNode,
     double delta_angle_;
     double sensing_angle_;
     double avg_speed_;
+    double local_avg_speed_;
     double speed_variance_;
+    double local_speed_variance_;
     double duration_retraction_; // duration of a retraction period (seconds)
     double max_sensing_angle_;
     double proba_retraction_; // proba of retracting when stuck

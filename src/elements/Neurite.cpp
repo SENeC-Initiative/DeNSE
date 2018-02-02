@@ -499,7 +499,7 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
            "the centrifugal order of old node is %i \n",
            sibling->get_branch()->size(), sibling->get_treeID().c_str(),
            new_node->get_branch()->size(), branching_node->get_branch()->size(),
-           angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI, 
+           angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI,
            new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
            branching_node->get_treeID().c_str(),
            new_node->get_centrifugal_order(), sibling->get_centrifugal_order(),
@@ -813,6 +813,14 @@ double Neurite::get_state(const char *observable) const
     ENDTRIE;
 
     return value;
+}
+
+double Neurite::get_max_resol() const
+{
+    double max_speed = growth_cones_.begin()->second->avg_speed_ +
+                       5*growth_cones_.begin()->second->speed_variance_;
+    double length    = growth_cones_.begin()->second->filopodia_.finger_length;
+    return length / max_speed;
 }
 
 } // namespace

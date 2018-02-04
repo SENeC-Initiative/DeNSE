@@ -20,20 +20,22 @@ neuron_params = {
     "use_lateral_branching": True,
     "use_van_pelt": False,
 
-    "rw_persistence_length": 2.,
-    "rw_memory_tau": 90.,
-    "sensing_angle":0.1433,
+    "rw_persistence_length": 50.,
+    "rw_memory_tau": 2000.,
+    "sensing_angle":0.01433,
 
     "speed_growth_cone": 0.05,
 
     "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.,
     "filopodia_angular_resolution": 30
-    }
+}
 
 dendrite_params = {
     "speed_growth_cone": 0.02,
-    "critical_resource_speed_factor": 0.05,
+    "critical_resource_speed_factor": 0.005,
+    "uniform_branching_rate": 0.0005,
+    "sensing_angle":0.02433,
 }
 
 
@@ -46,10 +48,10 @@ def step(n, loop_n, plot=True):
 if __name__ =='__main__':
     # ~ kernel={"seeds":[33, 64, 84, 65, 68, 23],
             # ~ "num_local_threads": 6,
-            # ~ "resolution": 30.}
-    kernel={"seeds":[33],
+            # ~ "resolution": 10.}
+    kernel={"seeds":[31],
             "num_local_threads": 1,
-            "resolution": 240.}
+            "resolution": 10.}
     kernel["environment_required"] = False
 
     ng.SetKernelStatus(kernel)
@@ -58,7 +60,7 @@ if __name__ =='__main__':
     Create neurons
     '''
 
-    num_neurons = 2
+    num_neurons = 1
 
     if not neuron_params['use_critical_resource']:
         #~ neuron_params['growth_cone_model'] = 'random_walk'

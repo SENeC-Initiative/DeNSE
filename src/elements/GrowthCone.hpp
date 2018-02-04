@@ -61,6 +61,7 @@ class GrowthCone : public TopologicalNode,
     Filopodia filopodia_;
     Move move_;
 
+    double total_proba_;  // integrated probability of all possible moves
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
 
@@ -92,9 +93,9 @@ class GrowthCone : public TopologicalNode,
     void compute_intrinsic_direction(std::vector<double> &directions_weights);
     int choose_pull_direction(const std::vector<double> &directions_weights,
                               const std::vector<std::string> &new_pos_area,
-                              mtPtr rnd_engine);
+                              double substep, mtPtr rnd_engine);
     virtual void compute_new_direction(mtPtr rnd_engine, double substep);
-    void widen_sensing_angle();
+    void change_sensing_angle(double angle);
     bool nonmax_sensing_angle();
 
     // elongation
@@ -134,10 +135,6 @@ inline bool GrowthCone::nonmax_sensing_angle()
     return abs(move_.sigma_angle - max_sensing_angle_) < 1e-6;
 }
 
-inline void GrowthCone::widen_sensing_angle()
-{
-    move_.sigma_angle = std::min(1.5 * move_.sigma_angle, max_sensing_angle_);
-}
 }
 
 #endif

@@ -52,22 +52,25 @@ shape = ng.GetEnvironment()
 top_areas = [k for k in shape.areas.keys() if k.find("default_area") != 0]
 
 params = {
-    "sensing_angle": 0.04,
-    "filopodia_wall_affinity": 2.5,
-    "proba_down_move": 0.05,
-    "scale_up_move": 5.,
+    "sensing_angle": 0.08,
+    "filopodia_wall_affinity": 150.,
+    "proba_down_move": 0.02,
+    "scale_up_move": 1.,
     "wall_area_width": 2.,
 }
 
+dend_params = params.copy()
+dend_params["speed_growth_cone"] = 0.001
+
 # ~ ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=2)
-gids = ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=1, params=params)
+gids = ng.CreateNeurons(n=10, on_area=top_areas, num_neurites=2, params=params)
 # ~ ng.CreateNeurons(n=1, on_area="default_area", num_neurites=1, params=params)
 
-ng.Simulate(25000)
-#~ for i in range(50):
-    #~ ng.Simulate(500)
-    #~ ng.PlotNeuron(show=True)
+ng.Simulate(2500)
+# ~ for i in range(50):
+    # ~ ng.Simulate(30)
+    # ~ ng.PlotNeuron(show=True)
 
-from NetGrowth.tools import fraction_neurites_near_walls
-print(fraction_neurites_near_walls(gids, culture=shape))
+# ~ from NetGrowth.tools import fraction_neurites_near_walls
+# ~ print(fraction_neurites_near_walls(gids, culture=shape))
 ng.PlotNeuron(show=True)

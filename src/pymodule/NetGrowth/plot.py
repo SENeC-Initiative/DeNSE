@@ -392,7 +392,7 @@ def PlotRecording(recorder, time_units="hours", show=True):
 # ---------- #
 
 def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
-               show_culture=True, aspect=1., soma="o", soma_radius=None,
+               show_culture=True, aspect=1., soma_radius=None,
                active_gc="d", inactiv_gc="x", gc_size=2., soma_color='k',
                axon_color="r", dendrite_color="b", save_path=None, title=None,
                axis=None, show=True, **kwargs):
@@ -447,6 +447,11 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         ax = axis
         fig = axis.get_figure()
     new_lines = 0
+    # plotting options
+    soma_alpha = kwargs.get("soma_alpha", 0.8)
+    axon_alpha = kwargs.get("axon_alpha", 1.)
+    dend_alpha = kwargs.get("dend_alpha", 1.)
+    gc_color   = kwargs.get("gc_color", "g")
     # get the objects describing the neurons
     somas, axons, dendrites, growth_cones, nodes = _pg._get_pyskeleton(gid)
     # get the culture if necessary
@@ -467,14 +472,15 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         new_lines += 1
     if show_active_gc:
         ax.plot(growth_cones[0], growth_cones[1], ls="", marker=active_gc,
-                c="g", ms=gc_size, zorder=4)
+                c=gc_color, ms=gc_size, zorder=4)
         new_lines += 1
     # plot the somas
     n = len(somas[2])
     radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
     r_max = np.max(radii)
     for x, y, r in zip(somas[0], somas[1], radii):
-        circle = plt.Circle((x, y), r, color=soma_color, alpha=0.5)
+        circle = plt.Circle(
+            (x, y), r, color=soma_color, alpha=soma_alpha)
         artist = ax.add_artist(circle)
         artist.set_zorder(5)
     # set the axis limits

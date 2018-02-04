@@ -19,8 +19,8 @@ from NetGrowth.tools import neurite_length
 Setting the parameters
 '''
 
-num_neurons = 1000
-simtime       = 5000.
+num_neurons   = 100
+simtime       = 3000.
 num_omp       = 12
 resolutions   = (1., 2., 5., 10., 20., 50.)[::-1]
 
@@ -58,16 +58,18 @@ for k, resol in enumerate(resolutions):
 
     params = {
         "sensing_angle": 0.04,
-        # ~ "filopodia_wall_affinity": 2.5/np.sqrt(resol),
-        # ~ "filopodia_wall_affinity": 2.5*np.sqrt(resol),
-        "filopodia_wall_affinity": 10./resol,
+        # ~ "filopodia_wall_affinity": 10.*np.sqrt(resol),
+        # ~ "filopodia_wall_affinity": 10.*resol,
+        # ~ "filopodia_wall_affinity": 10/np.sqrt(resol),
+        "filopodia_wall_affinity": 10.,
+        # ~ "filopodia_wall_affinity": 10./resol,
     }
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 
     print(ng.GetKernelStatus())
 
-    ng.Simulate(3000)
+    ng.Simulate(simtime)
     ng.PlotNeuron(show=False, title="Resolution: {}".format(resol))
 
     lengths.append(neurite_length(gids))

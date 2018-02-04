@@ -38,7 +38,7 @@ if __name__ =='__main__':
             # ~ "num_local_threads": 6,
             # ~ "resolution": 30.}
     kernel={
-        "seeds":[38],
+        "seeds":[35],
         "num_local_threads": 1,
         "resolution": 300.,
         "environment_required": False
@@ -84,18 +84,21 @@ if __name__ =='__main__':
         "B" : 900.,
         "E" : 0.1,
         "S" : 1.5, # large S leads to core dump
-        "T" : 1.5e-8,
+        "T" : 1.8e-8,
     }
 
-    ng.SetStatus(gids, params=vp_params, dendrites_params=vp_params)
+    dend_params = vp_params.copy()
+    dend_params["T"] = 1e-8
+
+    ng.SetStatus(gids, params=vp_params, dendrites_params=dend_params)
     pprint(ng.GetStatus(gids))
 
     ng.Simulate(hours=12, days=1)
     ng.PlotNeuron(show_nodes=True, show=True)
-    
+
 
     '''
-    Change the parameters to include growth cone splitting
+    Change the parameters to include lateral branching
     '''
 
     print("\nLateral branching ON\n")
@@ -111,10 +114,10 @@ if __name__ =='__main__':
 
     dlat_params = lat_params.copy()
     dlat_params.update({
-        "uniform_branching_rate": 0.001,
+        "uniform_branching_rate": 0.0001,
         "speed_growth_cone": 0.003,
     })
-        
+
 
     ng.SetStatus(gids, params=lat_params, dendrites_params=dlat_params)
 

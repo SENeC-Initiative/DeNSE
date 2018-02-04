@@ -688,6 +688,9 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     Update the status of the objects indexes by `gids` using the parameters
     contained in `params`.
 
+    @todo: clean up params creation, one common function with _create_neurons
+    + make set_status accept vectors.
+
     Parameters
     ----------
     gids : tuple
@@ -700,27 +703,55 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
         New dendrites parameters.
     '''
     gids             = list(gids) if nonstring_container(gids) else [gids]
+    num_objects      = len(gids)
     params           = {} if params is None else params
     axon_params      = {} if axon_params is None else axon_params
     dendrites_params = {} if dendrites_params is None else dendrites_params
 
     cdef:
         size_t i, n = len(gids)
-        statusMap status
+        statusMap base_neuron_status, base_axon_status, base_dend_status
 
     it_p, it_a, it_d = params, axon_params, dendrites_params
     if isinstance(params, dict):
-        it_p = (params for i in range(n))
+        base_neuron_status = _get_scalar_status(params, num_objects)
     if isinstance(axon_params, dict):
         it_a = (axon_params for i in range(n))
+        base_axon_status = _get_scalar_status(axon_params, num_objects)
     if isinstance(dendrites_params, dict):
         it_d = (dendrites_params for i in range(n))
+        base_dend_status = _get_scalar_status(dendrites_params, num_objects)
 
-    for i, p, ap, dp in zip(gids, it_p, it_a, it_d):
-        status = _get_scalar_status(p, n)
-        #TODO set_status it's calling the same dictionary over axon and dendrites
-        # I think it's solved
-        set_status(i, status, status, status)
+    cdef:
+        vector[statusMap] neuron_statuses = \
+            vector[statusMap](num_objects, base_neuron_status)
+        vector[statusMap] axon_statuses = \
+            vector[statusMap](num_objects, base_axon_status)
+        vector[statusMap] dendrites_statuses = \
+            vector[statusMap](num_objects, base_dend_status)
+
+    if isinstance(params, dict):
+        _set_vector_status(neuron_statuses, params)
+    else:
+        for i, p in enumerate(it_p):
+            for k, v in p.items():
+                neuron_statuses[i][_to_bytes(k)] = _to_property(k, v)
+    if isinstance(axon_params, dict):
+        _set_vector_status(axon_statuses, axon_params)
+    else:
+        for i, p in enumerate(it_a):
+            for k, v in p.items():
+                axon_statuses[i][_to_bytes(k)] = _to_property(k, v)
+    if isinstance(dendrites_params, dict):
+        _set_vector_status(dendrites_statuses, dendrites_params)
+    else:
+        for i, p in enumerate(it_d):
+            for k, v in p.items():
+                dendrites_statuses[i][_to_bytes(k)] = _to_property(k, v)
+
+    for i, neuron in enumerate(gids):
+        set_status(neuron, neuron_statuses[i], axon_statuses[i],
+                   dendrites_statuses[i])
 
 
 def Simulate(seconds=0., minutes=0, hours=0, days=0, force_resol=False):

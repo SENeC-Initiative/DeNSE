@@ -72,7 +72,7 @@ GrowthCone::GrowthCone()
 {
     // initialize move variables
     move_.sigma_angle = sensing_angle_;
-    move_.speed       = avg_speed_;
+    move_.speed       = local_avg_speed_;
 
     // random distributions
     normal_  = std::normal_distribution<double>(0, 1);
@@ -185,6 +185,10 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
+    // reset total probability and prepare angle widening
+    double angle_widening = 0.;
+    total_proba_ = 0.;
+
     compute_speed(rnd_engine, substep);
     compute_module(substep);
 
@@ -216,6 +220,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
         compute_pull_and_accessibility(directions_weights, new_pos_area,
                                        rnd_engine, substep);
 
+        // act depending on the state of the GC
         if (not stuck_)
         {
             // weight the directions by the intrinsic preference of the growth
@@ -223,9 +228,13 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             compute_intrinsic_direction(directions_weights);
             // set delta_angle_ as main pulling direction
             size_t n_direction = choose_pull_direction(
-                directions_weights, new_pos_area, rnd_engine);
+                directions_weights, new_pos_area, substep, rnd_engine);
 
-            if (not stuck_)
+            if (stuck_)
+            {
+                change_sensing_angle(substep*ONE_DEGREE);
+            }
+            else
             {
                 // compute new direction based on delta_angle_
                 compute_new_direction(rnd_engine, substep);
@@ -238,6 +247,12 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 
                 if (using_environment_)
                 {
+                    // widen angle depending on total_proba_
+                    angle_widening = std::max(
+                        1. - total_proba_*INV_PROBA_WIDENING_START, 0.);
+                    change_sensing_angle(ONE_DEGREE*angle_widening*substep);
+
+                    // check for change of area
                     if (new_pos_area.at(n_direction) != current_area_)
                     {
                         current_area_ =
@@ -247,15 +262,15 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     }
                     else
                     {
-                        // reset move_.sigma_angle to its default value
-                        AreaPtr area =
-                            kernel().space_manager.get_area(current_area_);
-                        move_.sigma_angle =
-                            sensing_angle_ *
-                            area->get_property(names::sensing_angle);
+                        // bring move_.sigma_angle towards its default value
+                        change_sensing_angle(-substep*ONE_DEGREE);
                     }
                 }
             }
+        }
+        else
+        {
+            change_sensing_angle(substep*ONE_DEGREE);
         }
     }
     if (move_.module < 0)
@@ -358,42 +373,19 @@ void GrowthCone::compute_pull_and_accessibility(
         stuck_ = false;
 
         // initialize direction test variables
-        bool all_nan = true;
-
         directions_weights = std::vector<double>(filopodia_.size, 1.);
         new_pos_area = std::vector<std::string>(filopodia_.size, current_area_);
 
-        while (all_nan and not stuck_)
+        // test the possibility of the step (set to NaN if position is not
+        // accessible)
+        kernel().space_manager.sense(
+            directions_weights, new_pos_area, filopodia_,
+            geometry_.position, move_, move_.module, substep,
+            current_area_, proba_down_move_, scale_up_move_);
+
+        if (allnan(directions_weights))
         {
-            // test the possibility of the step (set to NaN if position is not
-            // accessible)
-            kernel().space_manager.sense(
-                directions_weights, new_pos_area, filopodia_,
-                geometry_.position, move_, move_.module, substep,
-                current_area_, proba_down_move_, scale_up_move_);
-
-            all_nan = allnan(directions_weights);
-
-            if (all_nan)
-            {
-                if (nonmax_sensing_angle())
-                {
-                // completely stuck
-#ifndef NDEBUG
-                    printf("\nNeurite completely stucked\n");
-#endif
-                    stuck_ = true;
-                }
-                else
-                {
-                    // increase sensing angle and reset weights
-                    widen_sensing_angle();
-                    for (int i = 0; i < directions_weights.size(); i++)
-                    {
-                        directions_weights[i] = 1.;
-                    }
-                }
-            }
+            stuck_ = true;
         }
     }
     else
@@ -457,9 +449,10 @@ void GrowthCone::compute_intrinsic_direction(
  */
 int GrowthCone::choose_pull_direction(
     const std::vector<double> &directions_weights,
-    const std::vector<std::string> &new_pos_area, mtPtr rnd_engine)
+    const std::vector<std::string> &new_pos_area, double substep,
+    mtPtr rnd_engine)
 {
-    double sum = 0;
+    total_proba_ = 0.;
     assert(directions_weights.size() == filopodia_.size);
     assert(filopodia_.directions.size() == filopodia_.size);
 
@@ -467,21 +460,17 @@ int GrowthCone::choose_pull_direction(
     {
         if (not std::isnan(weight))
         {
-            sum += weight;
+            total_proba_ += weight;
         }
 #ifndef NDEBUG
-        if (weight < 0)
+        if (weight < 0.)
         {
             printf("negative weight: %f\n", weight);
         }
 #endif
     }
 
-    //~ #ifndef NDEBUG
-    //~ printf("sum: %f\n", sum);
-    //~ #endif
-
-    double x = uniform_(*(rnd_engine).get()) * sum;
+    double x = uniform_(*(rnd_engine).get()) * total_proba_;
 
     int n         = 0;
     double tot    = 0.;
@@ -489,7 +478,7 @@ int GrowthCone::choose_pull_direction(
 
     // we test whether we should make the next move or stop moving if moving
     // anywhere is too unlikely
-    if (uniform_(*rnd_engine.get()) < sum)
+    if (uniform_(*rnd_engine.get()) < total_proba_)
     {
         for (n = 0; n < filopodia_.size; n++)
         {
@@ -508,11 +497,6 @@ int GrowthCone::choose_pull_direction(
     else
     {
         stuck_ = true;
-        if (nonmax_sensing_angle())
-        {
-            widen_sensing_angle();
-        }
-        return -1;
     }
 }
 
@@ -587,6 +571,10 @@ void GrowthCone::compute_speed(mtPtr rnd_engine, double substep)
         move_.speed =
             local_avg_speed_ + local_speed_variance_ * sqrt(substep) *
                                normal_(*(rnd_engine).get());
+    }
+    else
+    {
+        move_.speed = local_avg_speed_;
     }
 }
 
@@ -717,6 +705,11 @@ void GrowthCone::set_status(const statusMap &status)
     {
         update_growth_properties(current_area_);
     }
+    else
+    {
+        local_avg_speed_ = avg_speed_;
+        local_speed_variance_ = speed_variance_;
+    }
 }
 
 
@@ -788,6 +781,24 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
 void GrowthCone::update_kernel_variables()
 {
     using_environment_ = kernel().using_environment();
+}
+
+
+void GrowthCone::change_sensing_angle(double angle)
+{
+    AreaPtr area = kernel().space_manager.get_area(current_area_);
+    if (angle > 0.)
+    {
+        move_.sigma_angle = std::min(
+            move_.sigma_angle + angle,
+            max_sensing_angle_*area->get_property(names::sensing_angle));
+    }
+    else
+    {
+        move_.sigma_angle = std::max(
+            move_.sigma_angle + angle,
+            sensing_angle_*area->get_property(names::sensing_angle));
+    }
 }
 
 } // namespace

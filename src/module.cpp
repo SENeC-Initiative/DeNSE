@@ -232,7 +232,7 @@ void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
     {
         local_params[param.first] = param.second;
     }
-    neuron->set_neurite_status("dendrites", local_params);
+    neuron->set_neurite_status("dendrite", local_params);
 
     // update max_resolution for simulation
     kernel().simulation_manager.set_max_resolution();
@@ -277,7 +277,6 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
         somas[2].push_back(neuron_skel.soma_radius);
     }
 #ifndef NDEBUG
-    printf("the soma is in %f, %f", somas[0], somas[1]);
     printf(" %lu neurons has been imported for visualization \n"
            " the size of neurites vector is: %lu \n"
            " the size of axon vector is :    %lu \n"

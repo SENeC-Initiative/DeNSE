@@ -111,7 +111,7 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     it = dstatus.find(names::growth_cone_model);
     if (it != dstatus.end())
     {
-        get_param(astatus, names::growth_cone_model, model_name);
+        get_param(dstatus, names::growth_cone_model, model_name);
         dendrite_gc = kernel().neuron_manager.get_model(model_name);
     }
 
@@ -387,7 +387,7 @@ void Neuron::set_neurite_status(const std::string &neurite_type,
     {
         for (auto &neurite : neurites_)
         {
-            if (neurite.first == neurite_type)
+            if (neurite.second->neurite_type_ == neurite_type)
             {
                 neurite.second->set_status(status);
             }

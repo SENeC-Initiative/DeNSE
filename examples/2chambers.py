@@ -25,6 +25,8 @@ def CleanFolder(tmp_dir, make=True):
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
 
+soma_radius = 10.
+
 neuron_params = {
     # "gc_split_angle_mean": 30.,
     # "gc_split_angle_std": 10.,
@@ -56,15 +58,17 @@ neuron_params = {
     "rw_memory_tau": 90.,
     "sensing_angle":0.1433,
 
-    "speed_growth_cone": 0.05,
+    "speed_growth_cone": 0.005,
 
     "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.,
-    "filopodia_angular_resolution": 30
-    }
+    "filopodia_angular_resolution": 30,
+
+    "soma_radius": soma_radius,
+}
 
 dendrite_params = {
-    "speed_growth_cone": 0.02,
+    "speed_growth_cone": 0.001,
     "critical_resource_speed_factor": 0.05,
 }
 
@@ -81,7 +85,7 @@ if __name__ =='__main__':
             #~ "resolution": 30.}
     kernel={"seeds":[33, 64, 84, 65, 68, 23],
             "num_local_threads": 6,
-            "resolution": 30.}
+            "resolution": 10.}
     # ~ kernel={"seeds":[33],
             # ~ "num_local_threads": 1,
             # ~ "resolution": 30.}
@@ -90,7 +94,7 @@ if __name__ =='__main__':
             #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = main_dir + "/culture/2chamber_culture2.svg"
+    culture_file = current_dir + "/2chamber_culture.svg"
 
     ng.SetKernelStatus(kernel, "ID")
 
@@ -105,8 +109,10 @@ if __name__ =='__main__':
     if kernel["environment_required"]:
         culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
-        pos_left = culture.seed_neurons(neurons=100, xmax=540, soma_radius=10.)
-        pos_right = culture.seed_neurons(neurons=100, xmin=1260, soma_radius=10.)
+        pos_left = culture.seed_neurons(
+            neurons=100, xmax=540, soma_radius=soma_radius)
+        pos_right = culture.seed_neurons(
+            neurons=100, xmin=1260, soma_radius=soma_radius)
         neuron_params['position'] = np.concatenate((pos_right, pos_left))
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
@@ -121,17 +127,17 @@ if __name__ =='__main__':
     #~ ng.plot.PlotNeuron(show=True)
 
     start = time.time()
-    step(30000, 0, True)
+    step(3000, 0, False)
     # ~ for loop_n in range(5):
          # ~ step(500, loop_n, True)
     duration = time.time() - start
 
     # prepare the plot
     fig, ax = plt.subplots()
-    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
-                       axon_color='g', axis=ax, show=False)
+    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+                       axon_color='g', gc_color="r", axis=ax, show=False)
     ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
-                       soma_color='k', axon_color='darkorange',
+                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
 
     # ~ # save

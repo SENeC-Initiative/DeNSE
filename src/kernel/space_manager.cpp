@@ -101,32 +101,38 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                          const std::string &area, double proba_down_move,
                          double max_height_up_move)
 {
-    assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
-
     // Useful values
+    double exp_factor = WALL_AFNTY_DECAY_CST*move.sigma_angle*8./filopodia.size;
     int omp_id        = kernel().parallelism_manager.get_thread_local_id();
     double subs_afty  = filopodia.substrate_affinity;
     double wall_afty  = filopodia.wall_affinity;
     double len_filo   = filopodia.finger_length;
     size_t n_max      = filopodia.size;
+    double sqrt_step  = sqrt(substep);
     AreaPtr old_area  = areas_[area];
     double old_height = old_area->get_height();
 
+    assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
+
     // values used locally inside loop
-    bool intersect, before, after, before_same_area, after_same_area;
     double angle, new_height, new_substrate_affinity, delta_h;
+    int last_filo_wall(-1), last_lamel_wall(-1);
     GeomPtr geosline, filo_line, lamel_line;
     Point target_pos, filo_pos, lamel_pos;
     std::vector<Point> middle_points;
     std::string name_new_area;
+    bool intersect, filo_wall;
     size_t n_intersect;
     AreaPtr new_area;
     unsigned int i;
 
     // test the environment for each of the filopodia's angles
-    for (int n_angle = 0; n_angle < n_max; n_angle++)
+    for (unsigned int n_angle = 0; n_angle < n_max; n_angle++)
     {
-        angle = move.angle + move.sigma_angle * sqrt(substep) *
+        intersect  = false;
+        filo_wall  = false;
+
+        angle = move.angle + move.sigma_angle * sqrt_step *
                              filopodia.directions[n_angle];
 
         // ===================== //
@@ -191,7 +197,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                     else
                     {
                         directions_weigths[n_angle] *=
-                            substep * (proba_down_move + delta_proba);
+                            (proba_down_move + delta_proba);
                     }
                 }
                 else
@@ -202,14 +208,13 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
                     //   new_substrate_affinity]
                     // - if step is higher, move is impossible
                     directions_weigths[n_angle] *=
-                        substep * new_substrate_affinity *
+                        new_substrate_affinity *
                         std::exp(-delta_h / max_height_up_move);
                 }
             }
         }
         else
         {
-            intersect = false;
             //~ #ifndef NDEBUG
             //~ printf("on regular substrate\n");
             //~ #endif
@@ -220,21 +225,11 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
         // test wall interactions //
         // ====================== //
 
+        // effect of wall on previous angles is done at the wall detection step
+        // effect future angles is done when their turn comes (in else block)
+
         if (intersect)
         {
-            // test which interactions are possible
-            before = (n_angle > 0);
-            after  = (n_angle < n_max - 1);
-
-            if (before)
-            {
-                before_same_area = (new_pos_area[n_angle - 1] == area);
-            }
-            if (after)
-            {
-                after_same_area  = (new_pos_area[n_angle + 1] == area);
-            }
-
             // set position/line
             filo_pos  = Point(position.at(0) + cos(angle) * len_filo,
                               position.at(1) + sin(angle) * len_filo);
@@ -243,16 +238,24 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
             // weak interaction (filopodia)
             if (env_intersect(filo_line, omp_id))
             {
-                intersect = true;
                 // wall affinity
-                if (before)
+                if (last_filo_wall != i-1)
                 {
-                    directions_weigths[n_angle - 1] *= wall_afty;
+                    for (i = 0; i < n_angle; i++)
+                    {
+                        if (new_pos_area[i] == area)
+                        {
+                            directions_weigths[i] *= (1. + wall_afty *
+                                (exp(-exp_factor*(n_angle-i-1))
+                                 - exp(-exp_factor*(n_angle-i))));
+                            //~ printf("%f\n", exp(-exp_factor*(n_angle-i-1))
+                                           //~ - exp(-exp_factor*(n_angle-i)));
+                        }
+                    }
                 }
-                if (after)
-                {
-                    directions_weigths[n_angle + 1] *= wall_afty;
-                }
+
+                filo_wall = true;
+                last_filo_wall = n_angle;
             }
             else if (area_intersect(area, filo_line, omp_id))
             {
@@ -264,23 +267,23 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
 
                 if (old_height < new_height)
                 {
-                    if (before && before_same_area)
+                    for (i = 0; i < n_angle; i++)
                     {
-                        directions_weigths[n_angle - 1] *= wall_afty;
+                        if (new_pos_area[i] == area)
+                        {
+                            directions_weigths[i] *= (1. + wall_afty *
+                                (exp(-exp_factor*(n_angle-i-1))
+                                 - exp(-exp_factor*(n_angle-i))));
+                        }
                     }
-                    if (after &&after_same_area)
-                    {
-                        directions_weigths[n_angle + 1] *= wall_afty;
-                    }
+
+                    filo_wall = true;
+                    last_filo_wall = n_angle;
                 }
-            }
-            else
-            {
-                intersect = false;
             }
 
             // strong interaction (lamelipodia) -> twice stronger
-            if (intersect)
+            if (filo_wall)
             {
                 lamel_pos  = Point(position.at(0) + 0.5*cos(angle)*len_filo,
                                    position.at(1) + 0.5*sin(angle)*len_filo);
@@ -288,29 +291,52 @@ bool SpaceManager::sense(std::vector<double> &directions_weigths,
 
                 if (env_intersect(lamel_line, omp_id))
                 {
-                    // wall affinity
-                    if (before)
+                    for (i = 0; i < n_angle; i++)
                     {
-                        directions_weigths[n_angle - 1] *= 2.;
+                        if (new_pos_area[i] == area)
+                        {
+                            directions_weigths[i] *=
+                                (1. + 2 * (exp(-exp_factor*(n_angle-i-1))
+                                           - exp(-exp_factor*(n_angle-i))));
+                        }
                     }
-                    if (after)
-                    {
-                        directions_weigths[n_angle + 1] *= 2.;
-                    }
+
+                    last_lamel_wall = n_angle;
                 }
                 else if (area_intersect(area, lamel_line, omp_id))
                 {
                     // everything was already computed for filopodia
-                    if (old_height < new_height)
+                    for (i = 0; i < n_angle; i++)
                     {
-                        if (before && before_same_area)
+                        if (new_pos_area[i] == area)
                         {
-                            directions_weigths[n_angle - 1] *= 2.;
+                            directions_weigths[i] *=
+                                (1. + 2 * (exp(-exp_factor*(n_angle-i-1))
+                                           - exp(-exp_factor*(n_angle-i))));
                         }
-                        if (after && after_same_area)
-                        {
-                            directions_weigths[n_angle + 1] *= 2.;
-                        }
+                    }
+
+                    last_lamel_wall = n_angle;
+                }
+            }
+        }
+        else
+        {
+            if (last_filo_wall != -1)
+            {
+                // apply effect of previous wall
+                if (new_pos_area[n_angle] == area)
+                {
+                    directions_weigths[n_angle] *= (1. + wall_afty *
+                        (exp(-exp_factor*(n_angle-last_filo_wall))
+                         - exp(-exp_factor*(n_angle + 1 - last_filo_wall))));
+
+                    if (last_lamel_wall != -1)
+                    {
+                        directions_weigths[n_angle] *= (1. + 2 *
+                            (exp(-exp_factor*(n_angle-last_lamel_wall))
+                             - exp(-exp_factor*
+                                   (n_angle + 1 - last_lamel_wall))));
                     }
                 }
             }

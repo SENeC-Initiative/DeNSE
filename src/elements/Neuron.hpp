@@ -63,34 +63,6 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     friend class Skeleton;
     friend class Swc;
 
-  private:
-    size_t gid_;
-    //! Container for the ``NeuritePtr`` objects
-    NeuriteMap neurites_;
-    BaseNodePtr soma_;
-    //! Center of mass of the neuron's soma
-    NeuronDetails details;
-    // obserables for recorders
-    std::vector<std::string> observables_;
-    // Actin waves
-    bool use_actin_waves_;
-    size_t aw_generation_step_;
-    double actin_content_;
-    size_t next_actin_event_;
-    double axon_angle_;
-    bool axon_angle_set_;
-
-    //! Simulator space variables, passed with statusMap
-    //!\param actin_waves_triggered is bool value to activate or not the actin
-    //! wave
-    //! defalut is ''False''
-    //! \param growth_cone_model is the model that will be used for the
-    //! ''Dendrite'
-    //  objects of this ''Neuron''
-    std::string growth_cone_model_;
-    std::uniform_real_distribution<double> uniform_;
-    std::normal_distribution<double> normal_;
-
   public:
     Neuron() = delete;
     Neuron(size_t gid);
@@ -141,7 +113,36 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     {
         return neurites_.cend();
     }
+
+  private:
+    size_t gid_;
+    //! Container for the ``NeuritePtr`` objects
+    NeuriteMap neurites_;
+    BaseNodePtr soma_;
+    //! Center of mass of the neuron's soma
+    NeuronDetails details;
+    // obserables for recorders
+    std::vector<std::string> observables_;
+    // Actin waves
+    bool use_actin_waves_;
+    size_t aw_generation_step_;
+    double actin_content_;
+    size_t next_actin_event_;
+    double axon_angle_;
+    bool axon_angle_set_;
+
+    //! Simulator space variables, passed with statusMap
+    //!\param actin_waves_triggered is bool value to activate or not the actin
+    //! wave
+    //! defalut is ''False''
+    //! \param growth_cone_model is the model that will be used for the
+    //! ''Dendrite'
+    //  objects of this ''Neuron''
+    std::string growth_cone_model_;
+    std::uniform_real_distribution<double> uniform_;
+    std::normal_distribution<double> normal_;
 };
+
 }
 
 #endif // NEURON_H

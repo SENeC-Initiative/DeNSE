@@ -19,7 +19,7 @@ from NetGrowth.tools import neurite_length
 Setting the parameters
 '''
 
-num_neurons   = 100
+num_neurons   = 1000
 simtime       = 3000.
 num_omp       = 12
 resolutions   = (1., 2., 5., 10., 20., 50.)[::-1]
@@ -36,6 +36,8 @@ Creating the environment: a disk
 
 # ~ shape = geom.Shape.disk(radius=800)
 shape = geom.Shape.rectangle(1600, 1600)
+r_params = {"height": 250., "width": 250.}
+shape.random_obstacles(0.4, form="rectangle", params=r_params, heights=30., etching=20.)
 
 
 '''
@@ -62,12 +64,12 @@ for k, resol in enumerate(resolutions):
         # ~ "filopodia_wall_affinity": 10.*resol,
         # ~ "filopodia_wall_affinity": 10/np.sqrt(resol),
         "filopodia_wall_affinity": 10.,
+        "proba_down_move": 0.02,
+        "scale_up_move": 1.,
         # ~ "filopodia_wall_affinity": 10./resol,
     }
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
-
-    print(ng.GetKernelStatus())
 
     ng.Simulate(simtime)
     ng.PlotNeuron(show=False, title="Resolution: {}".format(resol))

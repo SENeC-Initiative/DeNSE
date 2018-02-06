@@ -29,13 +29,13 @@ class Environment
 
   private:
     Environment(GEOSGeom environment, GEOSContextHandle_t handler);
-    GEOSGeom environment_;
+    std::vector<GEOSGeom> environment_;
     std::vector<const GEOSPreparedGeometry *> prepared_env_;
     std::vector<const GEOSPreparedGeometry *> prepared_border_;
 
   public:
     ~Environment();
-    GEOSGeom get_environment() const;
+    GEOSGeom get_environment(int omp_id) const;
     const GEOSPreparedGeometry *get_prepared(int omp_id) const;
     const GEOSPreparedGeometry *get_border(int omp_id) const;
 };

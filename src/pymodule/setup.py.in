@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
 from setuptools import setup, Extension, find_packages
+from distutils import sysconfig
+
 import numpy as np
 
 try:
@@ -16,6 +19,16 @@ except ImportError:
     with_cython = False
 
 
+# -------------------- #
+# Remove default flags #
+# -------------------- #
+
+sysconfig._config_vars['CFLAGS'] = ""
+sysconfig._config_vars['CXXFLAGS'] = ""
+sysconfig._config_vars['LDFLAGS'] = ""
+sysconfig._config_vars['OPT'] = ""
+
+
 # ------------------------------------- #
 # Extension to link C++ files to python #
 # ------------------------------------- #
@@ -28,7 +41,7 @@ extensions = Extension(
     mod_name + "._pygrowth", # name of extension
     sources = ['@PYMODULE_DIR@/' + mod_name + '/_pygrowth' + ext],
     extra_compile_args = [
-        "-std=c++11", "-fPIC", "-Wno-cpp","-Wno-unused-function"
+        "-std=c++11", "-fPIC", "-Wno-cpp", "-Wno-unused-function", "-O1"
     ],
     extra_link_args = [],
     language = "c++",

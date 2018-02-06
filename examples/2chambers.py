@@ -56,11 +56,11 @@ neuron_params = {
 
     "rw_persistence_length": 2.,
     "rw_memory_tau": 90.,
-    "sensing_angle":0.1433,
+    "sensing_angle":0.04,
 
-    "speed_growth_cone": 0.005,
+    "speed_growth_cone": 0.03,
 
-    "filopodia_wall_affinity": 0.05,
+    "filopodia_wall_affinity": 20.,
     "filopodia_finger_length": 20.,
     "filopodia_angular_resolution": 30,
 
@@ -68,7 +68,7 @@ neuron_params = {
 }
 
 dendrite_params = {
-    "speed_growth_cone": 0.001,
+    "speed_growth_cone": 0.01,
     "critical_resource_speed_factor": 0.05,
 }
 
@@ -85,7 +85,7 @@ if __name__ =='__main__':
             #~ "resolution": 30.}
     kernel={"seeds":[33, 64, 84, 65, 68, 23],
             "num_local_threads": 6,
-            "resolution": 10.}
+            "resolution": 200.}
     # ~ kernel={"seeds":[33],
             # ~ "num_local_threads": 1,
             # ~ "resolution": 30.}
@@ -127,7 +127,7 @@ if __name__ =='__main__':
     #~ ng.plot.PlotNeuron(show=True)
 
     start = time.time()
-    step(3000, 0, False)
+    step(60000, 0, False)
     # ~ for loop_n in range(5):
          # ~ step(500, loop_n, True)
     duration = time.time() - start

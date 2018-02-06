@@ -4,10 +4,11 @@
 #include <stdexcept>
 #include <string>
 
+
 namespace growth
 {
 
-class InvalidArg : public std::runtime_error
+class InvalidArg : public std::invalid_argument
 {
   public:
     InvalidArg();
@@ -15,21 +16,9 @@ class InvalidArg : public std::runtime_error
     InvalidArg(const std::string &msg, const char *func, const char *file,
                unsigned int line);
 
-    //~ virtual const char* what() const throw()
-    //~ {
-    //~ std::string message = name_ + ": " + msg_;
-    //~ return message.c_str();
-    //~ }
-
-    const char *what()
-    {
-        std::string message = name_ + ": " + msg_;
-        return message.c_str();
-    }
+    const char* what() const noexcept override;
 
     virtual ~InvalidArg() throw() {}
-
-    //~ virtual const char* what() const throw();
 
     const char *name() const { return name_.c_str(); }
 
@@ -38,32 +27,13 @@ class InvalidArg : public std::runtime_error
     std::string name_;
 };
 
+
 class BadPropertyName : public InvalidArg
 {
   public:
     BadPropertyName(const std::string &key, const char *func, const char *file,
                     unsigned int line);
 };
-
-
-//~ struct BadPropertyName : std::exception
-//~ {
-//~ BadPropertyName(const std::string &key, const char* func,
-//~ const char* file, unsigned int line)
-//~ {
-//~ msg_ = "@" + std::string(func) + " in " + std::string(file) + ":" +
-//~ std::to_string(line) + ": This configuration property does not "
-//~ "exist: '" + key + "'.";
-//~ }
-
-//~ const char* what() const noexcept
-//~ {
-//~ return msg_.c_str();
-//~ }
-
-//~ private:
-//~ std::string msg_;
-//~ };
 
 
 class BadPropertyType : public InvalidArg
@@ -75,28 +45,6 @@ class BadPropertyType : public InvalidArg
 };
 
 
-//~ struct BadPropertyType : std::exception
-//~ {
-//~ BadPropertyType(const std::string &key, const std::string &expected,
-//~ const std::string &received, const char* func,
-//~ const char* file, unsigned int line)
-//~ {
-//~ msg_ = "@" + std::string(func) + " in " + std::string(file) + ":" +
-//~ std::to_string(line) + ": Wrong type for configuration "
-//~ "property '" + key + "': expected '" + expected + "', received "
-//~ "'" + received + "'.";
-//~ }
-
-//~ const char* what() const noexcept
-//~ {
-//~ return msg_.c_str();
-//~ }
-
-//~ private:
-//~ std::string msg_;
-//~ };
-
-
 class InvalidParameter : public InvalidArg
 {
   public:
@@ -106,6 +54,7 @@ class InvalidParameter : public InvalidArg
     InvalidParameter(const std::string &message, const char *func,
                      const char *file, unsigned int line);
 };
+
 
 class InvalidTime : public InvalidArg
 {

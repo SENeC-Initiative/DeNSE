@@ -41,7 +41,7 @@ extern const std::string branching_proba_default;
  */
 
 extern const std::string duration_retraction;
-extern const std::string filopodia_angular_resolution;
+extern const std::string filopodia_min_number;
 extern const std::string filopodia_finger_length;
 extern const std::string filopodia_wall_affinity;
 extern const std::string max_sensing_angle;
@@ -53,23 +53,22 @@ extern const std::string speed_ratio_retraction;
 extern const std::string substrate_affinity;
 
 #define DURATION_RETRACTION 200.
-#define FILOPODIA_ANGULAR_RES 24
+#define FILOPODIA_MIN_NUM 24
 #define FILOPODIA_FINGER_LENGTH 50.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1
 #define FILOPODIA_WALL_AFFINITY 2.
-#define INV_PROBA_WIDENING_START 2.
-#define MAX_SENSING_ANGLE 2.04
+#define MAX_SENSING_ANGLE 1.5707963267948966  // 100 degrees max for 1 s resol
 #define ONE_DEGREE 0.017453292519943295
-#define PROBA_RETRACTION 0.0002
+#define PROBA_RETRACTION 0.002
 #define PROBA_DOWN_MOVE 0.008
 #define RW_DELTA_CORR 100.
 #define RW_MEMORY_TAU 100.
 #define RW_PERSISTENCE_LENGTH 10.
 #define SCALE_UP_MOVE 20.
-#define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
 #define SENSING_ANGLE 0.1433
 #define SPEED_RATIO_RETRACTION 0.2
 #define SPEED_GROWTH_CONE 1.
+#define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
 
 
 /*

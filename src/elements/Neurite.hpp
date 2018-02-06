@@ -34,42 +34,6 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     friend class Branching;
     friend class Neuron;
 
-  private:
-    //! Neuron parent
-    NeuronWeakPtr parent_;
-    Branching branching_model_;
-    std::string name_;
-    // keep track of how many nodes were created to set the ids
-    size_t num_created_nodes_;
-    size_t num_created_cones_;
-    // observables for recorders
-    std::vector<std::string> observables_;
-
-    //! timestep and distributions for random number generation
-    std::uniform_real_distribution<double> uniform_;
-    std::normal_distribution<double> normal_;
-    std::poisson_distribution<> poisson_;
-    std::exponential_distribution<> exponential_;
-
-    //! growth cones
-    std::string growth_cone_model_;
-    std::unordered_map<size_t, GCPtr> growth_cones_;
-    std::unordered_map<size_t, GCPtr> growth_cones_tmp_;
-    std::vector<size_t> dead_cones_;
-    std::deque<ActinPtr> actinDeck_;
-    std::unordered_map<size_t, NodePtr> nodes_;
-    std::vector<size_t> dead_nodes_;
-
-    //! declare the type of neurite (dendrite or axon)
-    std::string neurite_type_;
-    //! branch direction parameters
-    double diameter_eta_exp_;
-    double diameter_variance_;
-    double lateral_branching_angle_mean_;
-    double lateral_branching_angle_std_;
-    double gc_split_angle_mean_;
-    double gc_split_angle_std_;
-
   public:
     Neurite() = delete;
     Neurite(std::string name, const std::string &neurite_type_,
@@ -125,6 +89,42 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_cone(GCPtr);
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cend() const;
+
+  private:
+    //! Neuron parent
+    NeuronWeakPtr parent_;
+    Branching branching_model_;
+    std::string name_;
+    // keep track of how many nodes were created to set the ids
+    size_t num_created_nodes_;
+    size_t num_created_cones_;
+    // observables for recorders
+    std::vector<std::string> observables_;
+
+    //! timestep and distributions for random number generation
+    std::uniform_real_distribution<double> uniform_;
+    std::normal_distribution<double> normal_;
+    std::poisson_distribution<> poisson_;
+    std::exponential_distribution<> exponential_;
+
+    //! growth cones
+    std::string growth_cone_model_;
+    std::unordered_map<size_t, GCPtr> growth_cones_;
+    std::unordered_map<size_t, GCPtr> growth_cones_tmp_;
+    std::vector<size_t> dead_cones_;
+    std::deque<ActinPtr> actinDeck_;
+    std::unordered_map<size_t, NodePtr> nodes_;
+    std::vector<size_t> dead_nodes_;
+
+    //! declare the type of neurite (dendrite or axon)
+    std::string neurite_type_;
+    //! branch direction parameters
+    double diameter_eta_exp_;
+    double diameter_variance_;
+    double lateral_branching_angle_mean_;
+    double lateral_branching_angle_std_;
+    double gc_split_angle_mean_;
+    double gc_split_angle_std_;
 
 }; // Neurite
 

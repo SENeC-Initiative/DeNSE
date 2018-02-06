@@ -29,14 +29,14 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef unordered_map[string, Property] statusMap
 
     cdef cppclass Property:
-        Property()
-        Property(double d)
-        Property(int i)
-        Property(size_t ul)
-        Property(const vector[size_t]& v)
-        Property(const vector[long]& v)
-        Property(const string& s)
-        Property(const vector[string]& v)
+        Property() except +
+        Property(double d) except +
+        Property(int i) except +
+        Property(size_t ul) except +
+        Property(const vector[size_t]& v) except +
+        Property(const vector[long]& v) except +
+        Property(const string& s) except +
+        Property(const vector[string]& v) except +
         dtype data_type
         bool b
         double d
@@ -50,10 +50,10 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
 
 cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
     cdef cppclass CTime "growth::Time":
-        CTime()
+        CTime() except +
         CTime(float seconds, unsigned char minutes, unsigned char hours,
-             unsigned char days)
-        CTime(CTime initial_time, unsigned long steps)
+             unsigned char days) except +
+        CTime(CTime initial_time, unsigned long steps) except +
         void set_sec(float seconds)
         void set_min(char minutes)
         void set_hour(char hours)
@@ -65,31 +65,18 @@ cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
         double get_total_seconds() const
 
 
-# exception
-cdef extern from "../libgrowth/exceptions.hpp" namespace "growth":
-    cdef cppclass InvalidArg:
-        InvalidArg(const string&, const char*, const char*, unsigned int)
-
-    cdef cppclass BadPropertyType:
-        BadPropertyType(const string&, const char*, const char*,
-                        unsigned int)
-
-    cdef cppclass BadPropertyName:
-        BadPropertyType(const string&, const string&, const string&,
-                        const char*, const char*, unsigned int)
-
-
 # kernel functions
 ctypedef unordered_map[ string, vector[double] ] mapParams
 
 
 cdef extern from "../module.hpp" namespace "growth":
-    cdef void init_growth( int* argc, char** argv[] ) except +
+    cdef void init_growth( int* argc, char** argv[] ) except*
 
-    cdef void finalize_growth() except +
+    cdef void finalize_growth() except*
 
     cdef size_t create_objects(const string& object_name,
-                               const vector[statusMap]& obj_params) except +
+                               const vector[statusMap]& obj_params
+                               ) except +
 
     cdef size_t create_neurons(const vector[statusMap]& neuron_params,
                                const vector[statusMap]& axon_params,
@@ -100,13 +87,13 @@ cdef extern from "../module.hpp" namespace "growth":
                               vector[GEOSGeometry*]& areas,
                               vector[double] heights, vector[string]& names,
                               vector[unordered_map[string, double]]& properties
-                              ) except +
+                              ) except*
 
     cdef void set_environment(
-        GEOSGeometry* environment, const vector[GEOSGeometry*]& walls,
-        const vector[GEOSGeometry*]& areas,
+        GEOSGeometry* environment, const vector[GEOSGeometry*]& areas,
         const vector[double]& heights, vector[string]& names,
-        const vector[unordered_map[string, double]]& properties) except +
+        const vector[unordered_map[string, double]]& properties
+        ) except*
 
     cdef const CTime get_current_time() except +
 
@@ -117,27 +104,28 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef void get_skeleton(
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,
         SkelNeurite& growth_cones, SkelSomas& somas,
-        vector[size_t] gids) except +
+        vector[size_t] gids) except*
 
     cdef void get_swc(string output_file,
-        vector[size_t] gids, unsigned int resolution) except +
+        vector[size_t] gids, unsigned int resolution) except*
 
     cdef statusMap get_status(size_t gid) except +
 
     cdef statusMap get_neurite_status(size_t gid,
-                                      const string& n_type) except +
+                                      const string& n_type
+                                      ) except +
 
     cdef vector[size_t] get_neurons() except +
 
     cdef void get_defaults(const string& object_name,
                            const string& object_type,
-                           statusMap &status) except +
+                           statusMap &status) except*
 
     cdef void get_models(vector[string]& models,
-                         const string& object_type) except +
+                         const string& object_type) except*
 
     cdef void get_recorder_type(size_t gid, string& level,
-                                string& event_type) except +
+                                string& event_type) except*
 
     cdef bool get_next_recording(size_t gid, vector[Property]& ids,
                                  vector[double]& values) except +
@@ -148,21 +136,21 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef string object_type(size_t gid) except +
 
-    cdef void reset_kernel() except +
+    cdef void reset_kernel() except*
 
     cdef void set_kernel_status(statusMap status_dict,
-                                string c_simulation_ID) except +
+                                string c_simulation_ID) except*
 
     cdef string get_simulation_ID() except +
 
     cdef void set_status(size_t gid, statusMap neuron_status,
                          statusMap axon_status,
-                         statusMap dendrites_status) except +
+                         statusMap dendrites_status) except*
 
-    cdef void simulate(const CTime& simtime) except +
+    cdef void simulate(const CTime& simtime) except*
 
     cdef void test_random_generator(vector[vector[double]]& values,
-                                    size_t size) except+
+                                    size_t size) except*
 
 
 # ---------------------- #

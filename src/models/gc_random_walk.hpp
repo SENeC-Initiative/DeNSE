@@ -51,8 +51,9 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
     void after_split() override;
     void initialize_RW();
 
-    virtual void compute_new_direction(mtPtr rnd_engine,
-                                       double substep) override;
+    virtual Point compute_new_position(
+        const std::vector<double> &directions_weights, mtPtr rnd_engine,
+        double substep, double frac, int n, int omp_id) override;
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;

@@ -50,9 +50,7 @@ typedef std::shared_ptr<GEOSPrepGeom_t> PrepGeomPtr;
  */
 
 class Area;
-class Wall;
 typedef std::shared_ptr<Area> AreaPtr;
-typedef std::shared_ptr<Wall> WallPtr;
 
 
 /*

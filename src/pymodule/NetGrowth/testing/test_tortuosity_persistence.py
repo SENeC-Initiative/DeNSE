@@ -17,12 +17,12 @@ import NetGrowth as ng
 Setting the parameters
 '''
 
-num_neurons = 1000
-simtime       = 5000.
-num_omp       = 12
-resolutions   = (1., 5., 20., 50.)
+num_neurons   = 5000
+simtime       = 1000.
+num_omp       = 6
+resolutions   = (1., 2., 5., 20., 50.)
 
-sensing_angle = 0.04
+sensing_angle = 0.14
 
 cmap          = plt.get_cmap('plasma')
 colors        = np.linspace(0.2, 0.8, len(resolutions))
@@ -79,6 +79,8 @@ def tortuosity(points, step_size=None):
 
 
 fig, ax = plt.subplots()
+fig2, ax2 = plt.subplots()
+
 
 '''
 Gaussian random-walk for reference
@@ -113,6 +115,12 @@ ax.plot(step_size*resol, up, ls="--", color="grey", lw=3, alpha=0.4)
 Simulations with NetGrowth
 '''
 
+with_env = True
+shape = geom.Shape.rectangle(2000, 2000)
+
+gc_pos = []
+
+
 for k, resol in enumerate(resolutions[::-1]):
     np.random.seed(1)
     ng.ResetKernel()
@@ -120,12 +128,16 @@ for k, resol in enumerate(resolutions[::-1]):
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
-        "environment_required": False,
+        "environment_required": with_env,
     })
+
+    if with_env:
+        ng.SetEnvironment(shape)
 
     params = {
         "sensing_angle": sensing_angle,
         "filopodia_wall_affinity": 2.5,
+        "filopodia_min_number": 25,
         "proba_down_move": 0.05,
         "scale_up_move": 5.,
         "position": [(0., 0.) for _ in range(num_neurons)]
@@ -156,6 +168,14 @@ for k, resol in enumerate(resolutions[::-1]):
     ax.plot(step_size*resol, low, ls="--", color=cmap(colors[k]), alpha=0.5)
     ax.plot(step_size*resol, up, ls="--", color=cmap(colors[k]), alpha=0.5)
 
+    ng.PlotNeuron(show=False)
+
+    # compute distrib x positions
+    xs = np.concatenate(neurons["growth_cones"])[:, 0]
+    count, bins = np.histogram(xs, 'doane')
+    ax2.plot(bins[:-1] + 0.5*np.diff(bins), count, color=cmap(colors[k]),
+             alpha=0.5, label="resol: {}".format(resol))
+
 
 '''
 Make, save and show the figure
@@ -165,8 +185,14 @@ ax.legend(loc=2, fancybox=True, frameon=True)
 
 fig.suptitle("Evolution of tortuosity")
 fig.patch.set_alpha(0.)
-fig.savefig("tortuosity.pdf")
+#~ fig.savefig("tortuosity.pdf")
+
+
+ax2.legend(loc=2, fancybox=True, frameon=True)
+
+fig2.suptitle("Evolution of x-distribution")
+fig2.patch.set_alpha(0.)
 
 plt.show()
 
-ng.PlotNeuron(show=True)
+#~ ng.PlotNeuron(show=True)

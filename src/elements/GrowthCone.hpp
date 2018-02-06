@@ -38,9 +38,12 @@ class GrowthCone : public TopologicalNode,
 
   protected:
     bool using_environment_;   // whether we're embedded in space
+    double sqrt_resol_;
     size_t gc_ID_;             // unique number for growth cones
     std::string current_area_; // name of the area where the GC is
     bool stuck_;
+    bool stopped_;
+    bool update_filopodia_;
     std::vector<std::string> observables_;
 
     // motion-related data
@@ -51,12 +54,17 @@ class GrowthCone : public TopologicalNode,
     double speed_variance_;
     double local_speed_variance_;
     double duration_retraction_; // duration of a retraction period (seconds)
-    double max_sensing_angle_;
     double proba_retraction_; // proba of retracting when stuck
     double retracting_todo_;  // duration left to retract
     double speed_ratio_retraction_;
     double proba_down_move_; // proba of going down if bottom out of reach
     double scale_up_move_;   // maximal height that GC can cross upwards
+    double retraction_time_;
+
+    double base_sensing_angle_;
+    double max_sensing_angle_;
+    size_t min_filopodia_;   // minimal number of filopodia
+    size_t num_filopodia_;   // minimal number of filopodia
 
     Filopodia filopodia_;
     Move move_;
@@ -64,6 +72,7 @@ class GrowthCone : public TopologicalNode,
     double total_proba_;  // integrated probability of all possible moves
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
+    std::exponential_distribution<double> exponential_;
 
   public:
     GrowthCone();
@@ -81,22 +90,25 @@ class GrowthCone : public TopologicalNode,
 
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);
-    void step(mtPtr rnd_engine);
-    void retraction(double module);
+    void retraction();
     void prune(size_t cone_n);
 
     // compute direction
-    void
-    compute_pull_and_accessibility(std::vector<double> &directions_weights,
-                                   std::vector<std::string> &change_to_new_area,
-                                   mtPtr rnd_engine, double substep);
-    void compute_intrinsic_direction(std::vector<double> &directions_weights);
-    int choose_pull_direction(const std::vector<double> &directions_weights,
-                              const std::vector<std::string> &new_pos_area,
-                              double substep, mtPtr rnd_engine);
-    virtual void compute_new_direction(mtPtr rnd_engine, double substep);
+    bool compute_pull(std::vector<double> &directions_weights,
+                        std::vector<bool> &wall_presence, double substep,
+                        mtPtr rnd_engine);
+    void compute_accessibility(std::vector<double> &directions_weights,
+                               std::vector<std::string> &change_to_new_area);
+    void compute_intrinsic_direction(std::vector<double> &directions_weights,
+                                     double substep);
+    void make_move(const std::vector<double> &directions_weights,
+                   const std::vector<std::string> &new_pos_area,
+                   double substep, mtPtr rnd_engine, int omp_id);
+    virtual Point compute_new_position(
+        const std::vector<double> &directions_weights, mtPtr rnd_engine,
+        double substep, double frac, int n, int omp_id);
+    double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
-    bool nonmax_sensing_angle();
 
     // elongation
     void compute_module(double substep);
@@ -127,13 +139,8 @@ class GrowthCone : public TopologicalNode,
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();
     void update_growth_properties(const std::string &area_name);
+    void update_filopodia(double substep);
 };
-
-
-inline bool GrowthCone::nonmax_sensing_angle()
-{
-    return abs(move_.sigma_angle - max_sensing_angle_) < 1e-6;
-}
 
 }
 

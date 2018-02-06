@@ -193,12 +193,11 @@ std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
 
 
 void set_environment(
-    GEOSGeom environment, const std::vector<GEOSGeom> &walls,
-    const std::vector<GEOSGeom> &areas, std::vector<double> heights,
-    const std::vector<std::string> &names,
+    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+    std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties)
 {
-    kernel().space_manager.set_environment(environment, walls, areas, heights,
+    kernel().space_manager.set_environment(environment, areas, heights,
                                            names, properties);
 }
 

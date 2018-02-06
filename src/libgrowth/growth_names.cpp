@@ -26,7 +26,7 @@ const std::string diameter_variance("diameter_variance");
 const std::string duration_retraction("duration_of_retraction");
 
 const std::string filopodia_finger_length("filopodia_finger_length");
-const std::string filopodia_angular_resolution("filopodia_angular_resolution");
+const std::string filopodia_min_number("filopodia_min_number");
 
 const std::string gamma_coeff("gamma_coeff");
 const std::string gc_split_angle_mean("gc_split_angle_mean");

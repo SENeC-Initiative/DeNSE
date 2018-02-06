@@ -160,12 +160,14 @@ void GrowthCone_RandomWalk::initialize_RW()
  * whit alpha = 0 and f =0 it retrieves a diffusive process.
  *
  */
-void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine,
-                                                  double substep)
+Point GrowthCone_RandomWalk::compute_new_position(
+    const std::vector<double> &directions_weights, mtPtr rnd_engine,
+    double substep, double frac, int n, int omp_id)
 {
+    double mean      = 0.5*directions_weights[n];
     double resol     = kernel().simulation_manager.get_resolution();
-    double mem_coeff = (substep == resol)
-                           ? memory_.alpha_coeff
+    double mem_coeff =
+        (substep == resol) ? memory_.alpha_coeff
                            : pow(memory_.alpha_coeff, substep / resol);
     // update the memory length algorithm
     memory_.effective_angle =
@@ -181,25 +183,38 @@ void GrowthCone_RandomWalk::compute_new_direction(mtPtr rnd_engine,
                          + corr_rw_.f_coeff * corr_rw_.det_delta;
 
     // choose the new angle
-    double default_angle = move_.angle + move_.sigma_angle * delta_angle_;
-    double new_angle =
-        memory_.effective_angle + move_.sigma_angle * corr_rw_.det_delta;
-
-    // check that this step is allowed, otherwise move towards default_angle
+    double default_angle;
+    delta_angle_         = corr_rw_.det_delta;
+    double new_angle     = memory_.effective_angle + corr_rw_.det_delta;
     Point target_pos =
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
 
-    int omp_id = kernel().parallelism_manager.get_thread_local_id();
-
-    while (not kernel().space_manager.env_contains(target_pos, omp_id))
+    if (kernel().space_manager.env_contains(target_pos, omp_id))
     {
-        new_angle = 0.5 * (new_angle + default_angle);
-        target_pos =
+        return target_pos;
+    }
+    else if (frac > mean and not std::isnan(directions_weights[n-1]))
+    {
+        default_angle = move_.angle + filopodia_.directions[n-1];
+    }
+    else
+    {
+        default_angle = move_.angle + filopodia_.directions[n];
+    }
+
+    // move towards default_angle
+    do
+    {
+        new_angle    = 0.5 * (new_angle + default_angle);
+        delta_angle_ = new_angle - move_.angle;
+        target_pos   =
             Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
                   geometry_.position.at(1) + sin(new_angle) * move_.module);
     }
-    move_.angle = new_angle;
+    while (not kernel().space_manager.env_contains(target_pos, omp_id));
+
+    return target_pos;
 }
 
 

@@ -4,7 +4,7 @@ namespace growth
 {
 
 InvalidArg::InvalidArg()
-    : std::runtime_error("")
+    : std::invalid_argument("")
     , msg_("")
 {
 }
@@ -12,16 +12,21 @@ InvalidArg::InvalidArg()
 
 InvalidArg::InvalidArg(const std::string &msg, const char *func,
                        const char *file, unsigned int line)
-    : std::runtime_error("@" + std::string(func) + " in " + std::string(file) +
+    : std::invalid_argument("@" + std::string(func) + " in " + std::string(file) +
                          ":" + std::to_string(line) + "\n" + msg)
 {
+    name_ = "InvalidArgument";
 }
 
-//~ const char* InvalidArg::what() const throw()
-//~ {
-//~ std::string message = name_ + ": " + msg_;
-//~ return message.c_str();
-//~ }
+
+const char* InvalidArg::what() const noexcept
+{
+    std::string msg = name_ + " " + std::string(std::invalid_argument::what());
+    char * char_msg = new char[msg.size() + 1];
+    std::copy(msg.begin(), msg.end(), char_msg);
+    char_msg[msg.size()] = '\0'; // don't forget the terminating 0
+    return char_msg;
+}
 
 
 BadPropertyName::BadPropertyName(const std::string &key, const char *func,
@@ -58,6 +63,7 @@ InvalidParameter::InvalidParameter(const std::string &name,
     name_ = "BadPropertyType";
 }
 
+
 InvalidParameter::InvalidParameter(const std::string &message, const char *func,
                                    const char *file, unsigned int line)
     : InvalidArg(message, func, file, line)
@@ -65,10 +71,11 @@ InvalidParameter::InvalidParameter(const std::string &message, const char *func,
     name_ = "InvalidParameter";
 }
 
+
 InvalidTime::InvalidTime(const char *func, const char *file, unsigned int line)
     : InvalidArg("Negative time obtained.", func, file, line)
 {
-    name_ = "InvalidParameter";
+    name_ = "InvalidTime";
 }
 
 } /* namespace */

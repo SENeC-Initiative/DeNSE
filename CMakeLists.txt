@@ -50,8 +50,6 @@ cgrowth_process_with_openmp()
 cgrowth_process_with_mpi()
 cgrowth_process_with_docs()
 cgrowth_get_color_flags()
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CGROWTH_C_COLOR_FLAGS}" )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGROWTH_CXX_COLOR_FLAGS}" )
 
 # check installation directory
 message( "${CMAKE_INSTALL_PREFIX}" )
@@ -87,6 +85,9 @@ endif ()
 #################             Summary of flags                #################
 ###############################################################################
 
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CGROWTH_C_COLOR_FLAGS}" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGROWTH_CXX_COLOR_FLAGS}" )
+
 # all compiler flags
 if ( NOT CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "None" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
@@ -95,8 +96,8 @@ elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_DEBUG}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Release" )
-  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELEASE}" )
-  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS}" )
 elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
@@ -106,6 +107,7 @@ elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel" )
 else ()
   message( FATAL_ERROR "Unknown build type: '${CMAKE_BUILD_TYPE}'" )
 endif ()
+
 if ( with-defines )
   foreach ( def ${with-defines} )
     set( ALL_CFLAGS "${def} ${ALL_CFLAGS}" )

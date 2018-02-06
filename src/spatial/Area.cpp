@@ -32,7 +32,6 @@ Area::Area(GEOSGeom area, GEOSContextHandle_t handler, double height,
 
 Area::~Area()
 {
-    printf("\n\nDELETING AREA!\n");
     for (const GEOSPreparedGeometry *shape : prepared_area_)
     {
         delete shape;
@@ -44,7 +43,6 @@ Area::~Area()
         delete border;
     }
     prepared_border_.clear();
-    printf("DELETED AREA!\n\n");
 }
 
 

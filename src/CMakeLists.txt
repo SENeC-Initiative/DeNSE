@@ -24,6 +24,8 @@ if ( HAVE_PYTHON )
   add_subdirectory( pymodule )
 endif ()
 
+set ( ALL_CXX_FLAGS "" PARENT_SCOPE )
+
 
 ###############################################################################
 ################              Install All Files               #################
@@ -49,7 +51,7 @@ target_include_directories( cgrowth PUBLIC
 add_executable(growth "growth.cpp")
 target_include_directories( growth PRIVATE
      ${PROJECT_SOURCE_DIR}
-     "${PROJECT_SOURCE_DIR}/kernel"
+     ${PROJECT_SOURCE_DIR}/kernel
 )
 target_link_libraries( growth cgrowth )
 install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})

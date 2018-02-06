@@ -43,26 +43,32 @@ class SpaceManager : public ManagerInterface
     GeomPtr geosline_from_points(const Point &pointA,
                                  const Point &pointB) const;
     bool env_contains(const Point &point, int omp_id) const;
-    bool wall_area_contains(const std::string &area, const Point &point,
-                            int omp_id) const;
+
     bool env_intersect(GeomPtr line, int omp_id) const;
+    double get_wall_distance(const Point &position, int omp_id) const;
     bool area_intersect(const std::string &area, GeomPtr line,
                         int omp_id) const;
     size_t area_num_intersections(const std::string &area, GeomPtr line,
                                   const Point &tgt, std::vector<Point> &p,
                                   int omp_id) const;
+    double unstuck_angle(const Point& position, double current_angle,
+                         double radius, const std::string& area, int omp_id);
 
     bool sense(std::vector<double> &directions_weigths,
-               std::vector<std::string> &new_pos_area,
-               const Filopodia &filopodia, const Point &position,
-               const Move &move, double distance, double substep,
+               std::vector<bool> &wall_presence, const Filopodia &filopodia,
+               const Point &position, const Move &move,
                const std::string &area, double down_move_proba,
-               double max_height_up_move);
+               double max_height_up_move, double substep, double sqrt_resol,
+               unsigned int delta_filo);
+
+    void move_possibility(std::vector<double> &directions_weights,
+                          std::vector<std::string> &new_pos_area,
+                          const Filopodia &filopodia, const Point &position,
+                          const Move &move);
 
     void set_environment(
-        GEOSGeom environment, const std::vector<GEOSGeom> &walls,
-        const std::vector<GEOSGeom> &areas, const std::vector<double> &heights,
-        const std::vector<std::string> &names,
+        GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+        const std::vector<double> &heights, const std::vector<std::string> &names,
         const std::vector<std::unordered_map<std::string, double>> &properties);
     void get_environment(
         GEOSGeom &environment, std::vector<GEOSGeom> &areas,
@@ -84,11 +90,9 @@ class SpaceManager : public ManagerInterface
   private:
     // std::vector<Space::Shape> spatial_grid;
     bool environment_initialized_;
-    double wall_area_width_;
     GEOSContextHandle_t context_handler_;
     std::unique_ptr<Environment> environment_manager_;
     std::unordered_map<std::string, AreaPtr> areas_;
-    std::unordered_map<std::string, WallPtr> walls_;
 };
 
 } /* namespace */

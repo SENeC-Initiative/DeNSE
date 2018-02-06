@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <limits>
 #include <algorithm>
+#include <mutex>
 
 // Includes from kernel
 #include "GrowthCone.hpp"
@@ -66,6 +67,7 @@ void SimulationManager::reset_culture() {}
 void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
 {
     std::uniform_real_distribution<> uniform_(0, 1.);
+
 #pragma omp parallel
     {
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
@@ -122,24 +124,56 @@ void SimulationManager::initialize_simulation_(const Time &t)
     branching_ev_.clear();
     branching_ev_tmp_.clear();
 
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
+
 #pragma omp parallel
     {
-        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        try
+        {
+            int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
 #ifndef NDEBUG
-        printf("\n\n\n ######## Starting simulation ########## \n\n");
+            if (omp_id == 0)
+            printf("\n\n\n ######## Starting simulation ########## \n\n");
 #endif
 
-        mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
-        gidNeuronMap local_neurons =
-            kernel().neuron_manager.get_local_neurons(omp_id);
+            mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
+            gidNeuronMap local_neurons =
+                kernel().neuron_manager.get_local_neurons(omp_id);
 
-        // first, initialize neurons
-        for (auto &neuron : local_neurons)
-        {
-            neuron.second->initialize_next_event(
-                rnd_engine, resolution_scale_factor_, initial_step);
+            // first, initialize neurons
+            for (auto &neuron : local_neurons)
+            {
+                neuron.second->initialize_next_event(
+                    rnd_engine, resolution_scale_factor_, initial_step);
+            }
         }
+        catch (const std::exception& except)
+        {
+            std::call_once(
+                exception_capture_flag,
+                [&captured_exception]()
+                {
+                    captured_exception = std::current_exception();
+                }
+            );
+        }
+    }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
     }
 }
 
@@ -154,18 +188,49 @@ void SimulationManager::finalize_simulation_()
     //    final_time_.get_total_seconds());
     initial_time_.update(step_.front());
 
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
+
     // finalize neurons#pragma omp parallel
 #pragma omp parallel
     {
-        int omp_id = kernel().parallelism_manager.get_thread_local_id();
-
-        gidNeuronMap local_neurons =
-            kernel().neuron_manager.get_local_neurons(omp_id);
-
-        for (auto &neuron : local_neurons)
+        try
         {
-            neuron.second->finalize();
+            int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+            gidNeuronMap local_neurons =
+                kernel().neuron_manager.get_local_neurons(omp_id);
+
+            for (auto &neuron : local_neurons)
+            {
+                neuron.second->finalize();
+            }
         }
+        catch (const std::exception& except)
+        {
+            std::call_once(
+                exception_capture_flag,
+                [&captured_exception]()
+                {
+                    captured_exception = std::current_exception();
+                }
+            );
+        }
+    }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
     }
 
     // finalize recorder times
@@ -196,105 +261,136 @@ void SimulationManager::simulate(const Time &t)
 {
     initialize_simulation_(t);
 
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
+
 #pragma omp parallel
     {
-        int omp_id = kernel().parallelism_manager.get_thread_local_id();
-        size_t step_next_ev, current_step;
-        double previous_substep = 0.;
-        bool new_step           = false;
-        bool branched           = false;
-
-        mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
-        gidNeuronMap local_neurons =
-            kernel().neuron_manager.get_local_neurons(omp_id);
-
-        // then run the simulation
-        while (step_[omp_id] < final_step_)
+        try
         {
-            current_step     = step_[omp_id];
-            previous_substep = substep_[omp_id];
-            branched         = false;
+            int omp_id = kernel().parallelism_manager.get_thread_local_id();
+            size_t step_next_ev, current_step;
+            double previous_substep = 0.;
+            bool new_step           = false;
+            bool branched           = false;
+
+            mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
+            gidNeuronMap local_neurons =
+                kernel().neuron_manager.get_local_neurons(omp_id);
+
+            // then run the simulation
+            while (step_[omp_id] < final_step_)
+            {
+                current_step     = step_[omp_id];
+                previous_substep = substep_[omp_id];
+                branched         = false;
 
 #pragma omp barrier
 
 #pragma omp single
-            {
-                if (!branching_ev_tmp_.empty())
                 {
-                    branching_ev_.insert(branching_ev_.end(),
-                                         branching_ev_tmp_.begin(),
-                                         branching_ev_tmp_.end());
+                    if (!branching_ev_tmp_.empty())
+                    {
+                        branching_ev_.insert(branching_ev_.end(),
+                                             branching_ev_tmp_.begin(),
+                                             branching_ev_tmp_.end());
 
-                    branching_ev_tmp_.clear();
+                        branching_ev_tmp_.clear();
 
-                    std::sort(branching_ev_.begin(), branching_ev_.end(),
-                              ev_greater);
+                        std::sort(branching_ev_.begin(), branching_ev_.end(),
+                                  ev_greater);
+                    }
                 }
-            }
 
 #pragma omp barrier
 
-            // check when the next event will occur
-            step_next_ev = branching_ev_.empty()
-                               ? current_step + 1
-                               : std::get<0>(branching_ev_.back());
+                // check when the next event will occur
+                step_next_ev = branching_ev_.empty()
+                                   ? current_step + 1
+                                   : std::get<0>(branching_ev_.back());
 
-            // compute substep accordingly
-            if (step_next_ev == current_step)
-            {
-                substep_[omp_id] = std::get<1>(branching_ev_.back());
-                new_step         = (substep_[omp_id] == Time::RESOLUTION);
-            }
-            else
-            {
-                substep_[omp_id] = Time::RESOLUTION;
-                new_step         = true;
-            }
-
-            assert(substep_[omp_id] >= 0.);
-
-            // update neurons
-            for (auto &neuron : local_neurons)
-            {
-                neuron.second->grow(rnd_engine, current_step,
-                                    substep_[omp_id] - previous_substep);
-            }
-
-            if (step_next_ev == current_step)
-            {
-                // someone has to branch
-                Event &ev            = branching_ev_.back();
-                size_t gid_branching = std::get<2>(ev);
-                branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
-                // tell recorder manager
-                if (branched)
+                // compute substep accordingly
+                if (step_next_ev == current_step)
                 {
-                    kernel().record_manager.new_branching_event(ev);
+                    substep_[omp_id] = std::get<1>(branching_ev_.back());
+                    new_step         = (substep_[omp_id] == Time::RESOLUTION);
                 }
-                //~ std::string nname = std::get<3>(ev);
-                //~ printf("Branching event ar step: %lu and substep %f\n"
-                //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
-                //~ current_step, substep_[omp_id], nname.c_str(),
-                //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
-                branching_ev_.pop_back();
-            }
+                else
+                {
+                    substep_[omp_id] = Time::RESOLUTION;
+                    new_step         = true;
+                }
 
-            if (new_step)
-            {
-                // full step is completed, record, reset substep_, incr. step_
-                kernel().record_manager.record(omp_id);
-                substep_[omp_id] = 0.;
-                step_[omp_id]++;
-            }
+                assert(substep_[omp_id] >= 0.);
+
+                // update neurons
+                for (auto &neuron : local_neurons)
+                {
+                    neuron.second->grow(rnd_engine, current_step,
+                                        substep_[omp_id] - previous_substep);
+                }
+
+                if (step_next_ev == current_step)
+                {
+                    // someone has to branch
+                    Event &ev            = branching_ev_.back();
+                    size_t gid_branching = std::get<2>(ev);
+                    branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
+                    // tell recorder manager
+                    if (branched)
+                    {
+                        kernel().record_manager.new_branching_event(ev);
+                    }
+                    //~ std::string nname = std::get<3>(ev);
+                    //~ printf("Branching event ar step: %lu and substep %f\n"
+                    //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
+                    //~ current_step, substep_[omp_id], nname.c_str(),
+                    //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
+                    branching_ev_.pop_back();
+                }
+
+                if (new_step)
+                {
+                    // full step is completed, record, reset substep_, incr. step_
+                    kernel().record_manager.record(omp_id);
+                    substep_[omp_id] = 0.;
+                    step_[omp_id]++;
+                }
 
 #ifndef NDEBUG
-            if (step_[omp_id] % 50 == 0)
-            {
-                printf("##simulation step is %lu \n", step_[omp_id]);
-                printf("##simulation seconds is %f \n", get_current_seconds());
-            }
+                if (omp_id == 0 and step_[0] % 50 == 0)
+                {
+                    printf("##simulation step is %lu \n", step_[omp_id]);
+                    printf("##simulation seconds is %f \n", get_current_seconds());
+                }
 #endif /* NDEBUG */
+            }
         }
+        catch (const std::exception& except)
+        {
+            std::call_once(
+                exception_capture_flag,
+                [&captured_exception]()
+                {
+                    captured_exception = std::current_exception();
+                }
+            );
+        }
+    }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
     }
 
     finalize_simulation_();

@@ -41,7 +41,7 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     : parent_(p)
     , branching_model_(Branching())
     , name_(name)
-    , observables_({"length", "speed", "num_growth_cones"})
+    , observables_({"length", "speed", "num_growth_cones", "stopped"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
@@ -817,10 +817,15 @@ double Neurite::get_state(const char *observable) const
 
 double Neurite::get_max_resol() const
 {
+    // check speed limit
     double max_speed = growth_cones_.begin()->second->avg_speed_ +
                        5*growth_cones_.begin()->second->speed_variance_;
     double length    = growth_cones_.begin()->second->filopodia_.finger_length;
-    return length / max_speed;
+    // check angle limit
+    double sigma_sqrd   = growth_cones_.begin()->second->sensing_angle_ *
+                          growth_cones_.begin()->second->sensing_angle_;
+    double dt_angle_max = M_PI*M_PI/(9*sigma_sqrd);
+    return std::min(length / max_speed, dt_angle_max);
 }
 
 } // namespace

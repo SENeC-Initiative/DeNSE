@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <mutex>
 
 #include "config_impl.hpp"
 #include "kernel_manager.hpp"
@@ -48,7 +49,6 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
                               const std::vector<statusMap> &axon_params,
                               const std::vector<statusMap> &dendrites_params)
 {
-
     size_t first_id             = kernel().get_num_objects();
     size_t previous_num_neurons = neurons_.size();
     // put the neurons on the thread list they belong to
@@ -77,6 +77,17 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         thread_of_neuron_[first_id + i] = omp_id;
     }
 
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
+
 // create the neurons on the respective threads
 #pragma omp parallel
     {
@@ -89,8 +100,21 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
             size_t idx       = gid - first_id;
             NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
-            neuron->init_status(neuron_params[idx], axon_params[idx],
-                                dendrites_params[idx], rnd_engine);
+            try
+            {
+                neuron->init_status(neuron_params[idx], axon_params[idx],
+                                    dendrites_params[idx], rnd_engine);
+            }
+            catch (const std::exception& except)
+            {
+                std::call_once(
+                    exception_capture_flag,
+                    [&captured_exception]()
+                    {
+                        captured_exception = std::current_exception();
+                    }
+                );
+            }
 
             local_neurons.push_back(neuron);
         }
@@ -103,6 +127,14 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
             }
         }
     }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
+    }
+
     // tell the kernel manager to update the number of objects
     kernel().update_num_objects();
     return neurons_.size() - previous_num_neurons;
@@ -120,16 +152,47 @@ void NeuronManager::init_neurons_on_thread(unsigned int num_local_threads)
 
 void NeuronManager::update_kernel_variables()
 {
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
+
 #pragma omp parallel
     {
-        int omp_id = kernel().parallelism_manager.get_thread_local_id();
-
-        gidNeuronMap local_neurons = get_local_neurons(omp_id);
-
-        for (auto &neuron : local_neurons)
+        try
         {
-            neuron.second->update_kernel_variables();
+            int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+            gidNeuronMap local_neurons = get_local_neurons(omp_id);
+
+            for (auto &neuron : local_neurons)
+            {
+                neuron.second->update_kernel_variables();
+            }
         }
+        catch (const std::exception& except)
+        {
+            std::call_once(
+                exception_capture_flag,
+                [&captured_exception]()
+                {
+                    captured_exception = std::current_exception();
+                }
+            );
+        }
+    }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
     }
 }
 
@@ -166,6 +229,8 @@ void NeuronManager::get_defaults(statusMap &status,
 {
     if (object == "neuron")
     {
+        model_neuron_->get_neurite_status(status, "dendrite");
+        model_neuron_->get_neurite_status(status, "axon");
         model_neuron_->get_status(status);
     }
     else if (object == "axon")

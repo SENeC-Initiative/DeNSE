@@ -31,7 +31,7 @@ namespace growth
 Neuron::Neuron(size_t gid)
     : gid_(gid)
     , details()
-    , observables_({"length", "speed", "num_growth_cones"})
+    , observables_({"length", "speed", "num_growth_cones", "stopped"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
     , actin_content_(0)
@@ -258,6 +258,7 @@ std::string Neuron::new_neurite(const std::string &name,
     // initialize parameters
     double angle = 0;
     Point cone_start_point;
+    bool contained = false;
 
     // a minimal trophism approach: set the neurite on the other side of the
     // neuron
@@ -279,8 +280,15 @@ std::string Neuron::new_neurite(const std::string &name,
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
-        } while (
-            not kernel().space_manager.env_contains(cone_start_point, omp_id));
+            contained = kernel().space_manager.env_contains(
+                cone_start_point, omp_id);
+            if (axon_angle_set_ and not contained)
+            {
+                throw InvalidParameter("Invalid axon angle for neuron: growth "
+                                       "cone is outside the environment.",
+                                       __FUNCTION__, __FILE__, __LINE__);
+            }
+        } while (not contained);
 
         neurites_[name]->init_first_node(soma_, get_position(), name,
                                          details.soma_radius,
@@ -314,6 +322,7 @@ std::string Neuron::new_neurite(const std::string &name,
     GCPtr first_gc = gc_model->clone(neurites_[name]->get_first_node(),
                                      neurites_[name], details.soma_radius,
                                      name + "0", cone_start_point, angle);
+
     neurites_[name]->growth_cones_[0] = first_gc;
     first_gc->set_cone_ID();
     first_gc->set_diameter(
@@ -324,14 +333,6 @@ std::string Neuron::new_neurite(const std::string &name,
     // and adjust the topology of the new growth cone
     neurites_[name]->nodes_[0]->children_.push_back(first_gc);
     neurites_[name]->update_tree_structure(neurites_[name]->get_first_node());
-
-    //~ #ifndef NDEBUG
-    //~ printf("neurite %s is generated with angle %f\n"
-    //~ "soma position is %f, %f\n"
-    //~ "first growth cone has name: %s \n",
-    //~ name.c_str(), angle, get_position().at(0), get_position().at(1),
-    //~ neurites_[name]->growth_cones_[0]->get_treeID().c_str());
-    //~ #endif
 
     return name;
 }
@@ -436,6 +437,7 @@ void Neuron::get_status(statusMap &status) const
     set_param(status, names::axon_diameter, details.axon_diameter);
     set_param(status, names::dendrite_diameter, details.dendrite_diameter);
     set_param(status, names::observables, observables_);
+    set_param(status, names::axon_angle, axon_angle_);
 
     // set position
     Point pos = soma_->get_position();

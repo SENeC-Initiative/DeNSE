@@ -50,9 +50,8 @@ void set_kernel_status(const statusMap &status_dict, std::string simulation_ID);
 
 
 void set_environment(
-    GEOSGeom environment, const std::vector<GEOSGeom> &walls,
-    const std::vector<GEOSGeom> &areas, std::vector<double> heights,
-    const std::vector<std::string> &names,
+    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+    std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties);
 
 
@@ -134,6 +133,9 @@ std::string object_type(size_t gid);
 
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan);
+
+void is_valid_timestep(double timestep);
+
 }
 
 #endif // MODULE_H

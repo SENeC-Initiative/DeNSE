@@ -1,6 +1,34 @@
 What to implement:
 ==================
 
+Including reference formats and tools
+-------------------------------------
+
+* Morphorge_ + mdoc_
+* LibNeuroML_ + nmldoc_
+* MST-Dendrites_
+
+.. _Morphorge: https://github.com/mikehulluk/morphforge
+.. _mdoc: http://morphforge.readthedocs.io/en/latest/srcs_generated_examples/morphology050.html
+.. _LibNeuroML: https://github.com/NeuralEnsemble/libNeuroML
+.. _nmldoc: https://libneuroml.readthedocs.io/en/latest/examples.html#creating-a-neuroml-morphology
+.. _MST-Dendrites: https://github.com/pherbers/MST-Dendrites
+
+
+Units
+-----
+
+Make it possible to change the time/frequency and space units (s, min, h and µm, mm)
+
+
+Timestep limits
+---------------
+
+Timestep must not be too big to avoid
+
+* step longer than sensing distance of the filopodia
+* max sensing angle that does not contain at least 3 sigma on each side
+
 
 Various thoughts and data
 -------------------------

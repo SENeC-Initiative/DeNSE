@@ -15,8 +15,9 @@ cimport numpy as np
 
 from .geometry import Shape
 from ._helpers import *
-from ._helpers_geom import _get_wall_area
 from ._pygrowth cimport *
+
+#~ include "_cgrowth.pxi"
 
 
 __all__ = [
@@ -178,6 +179,11 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
                 params['position'] = (0., 0.)
             else:
                 raise ArgumentError("'position' entry in `params` required.")
+
+    # check parameters
+    _check_params(params, "neuron")
+    _check_params(ax_params, "axon")
+    _check_params(dend_params, "dendrite")
 
     if isinstance(params, dict):
         params = _neuron_param_parser(
@@ -610,22 +616,13 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
             interpolate_curve=interpolate_curve)
     cdef:
         GEOSGeometry* geos_geom
-        vector[GEOSGeometry*] c_areas, c_walls
+        vector[GEOSGeometry*] c_areas
         vector[double] heights
         vector[string] names
         vector[unordered_map[string, double]] properties
 
-    # create the environment "wall" buffer (1 mum around all higher limits)
-    width = GetKernelStatus("wall_area_width")
-    env_buffer = culture.intersection(culture.exterior.buffer(width))
-    for hole in culture.interiors:
-        env_buffer = env_buffer.union(culture.intersection(hole.buffer(width)))
-
     # fill the containers
     for name, area in culture.areas.items():
-        # create the area-related walls and fill wall container
-        wall_buffer = _get_wall_area(area, name, culture, env_buffer, width)
-        c_walls.push_back(geos_from_shapely(wall_buffer))
         # fill area containers
         c_areas.push_back(geos_from_shapely(area))
         names.push_back(_to_bytes(name))
@@ -634,19 +631,21 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
 
     geos_geom = geos_from_shapely(culture)
 
-    set_environment(geos_geom, c_walls, c_areas, heights, names, properties)
+    set_environment(geos_geom, c_areas, heights, names, properties)
 
     return culture
 
 
-def SetKernelStatus(status, simulation_ID=None):
+def SetKernelStatus(status, value=None, simulation_ID=None):
     '''
     Set the simulator's configuration.
 
     Parameters
     ----------
-    status : dict
+    status : dict or string
         Dictionary containing the configuration options.
+    value : object, optional (default: None)
+        Used to set a single value.
     simulation_ID: str
         Unique identifier of the simulation, generally
         simulation_ID = Hash(kernel_status, axon_params, dend_params)
@@ -673,12 +672,18 @@ def SetKernelStatus(status, simulation_ID=None):
         Property c_prop
         string c_simulation_ID = _to_bytes(simulation_ID)
 
-    for key, value in status.items():
-        key = _to_bytes(key)
-        if c_status_old.find(key) == c_status.end():
-            raise KeyError("`{}` is not a valid option.".format(key.decode()))
+    if value is not None:
+        key = _to_bytes(status)
         c_prop = _to_property(key, value)
         c_status.insert(pair[string, Property](key, c_prop))
+    else:
+        for key, value in status.items():
+            key = _to_bytes(key)
+            if c_status_old.find(key) == c_status.end():
+                raise KeyError(
+                    "`{}` is not a valid option.".format(key.decode()))
+            c_prop = _to_property(key, value)
+            c_status.insert(pair[string, Property](key, c_prop))
 
     set_kernel_status(c_status, c_simulation_ID)
 
@@ -707,6 +712,10 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     params           = {} if params is None else params
     axon_params      = {} if axon_params is None else axon_params
     dendrites_params = {} if dendrites_params is None else dendrites_params
+
+    # check parameters
+    object_name = GetObjectType(gids) 
+    _check_params(params, object_name)
 
     cdef:
         size_t i, n = len(gids)
@@ -780,8 +789,9 @@ def Simulate(seconds=0., minutes=0, hours=0, days=0, force_resol=False):
         raise RuntimeError(
             "Current `resolution` is too coarse and will lead to physically "
             "meaningless behaviors, please set a resolution lower than "
-            "{} s or change the speed/filopodia of your neurons.".format(
-                max_resol))
+            + str(max_resol) + " s or change the speed/filopodia of your "
+            "neurons.\nThis usually comes from a `speed_growth_cone` or a "
+            "`sensing_angle` too high.")
     s, m, h, d = format_time(seconds, minutes, hours, days)
     # initialize the Time instance
     cdef CTime simtime = CTime(s, m, h, d)
@@ -1364,3 +1374,68 @@ cdef void _set_recorder_status(
         status[b"end_time"] = _to_property("end_time", end)
     if restrict_to is not None:
         status[b"restrict_to"] = _to_property("restrict_to", restrict_to)
+
+
+def _check_params(params, object_name):
+    '''
+    Check the types and validity of the parameters passed.
+    '''
+    cdef:
+        string ctype
+        string cname = _to_bytes(object_name)
+        statusMap default_params
+        Property prop
+
+    if object_name in GetModels("growth_cones"):
+        ctype = _to_bytes("growth_cone")
+    elif object_name == "neuron":
+        ctype = _to_bytes("neuron")
+    elif object_name in ["axon", "dendrite", "neurite"]:
+        ctype = _to_bytes("neurite")
+    elif object_name == "recorder":
+        ctype = _to_bytes("recorder")
+    else:
+        raise RuntimeError("Unknown object : '" + object_name + "'. "
+                           "Candidates are 'recorder' and all entries in "
+                           "GetModels.")
+
+    get_defaults(cname, ctype, default_params)
+    py_defaults = _statusMap_to_dict(default_params)
+
+    for key, val in params.items():
+        if key in py_defaults:
+            prop = default_params[_to_bytes(key)]
+            if prop.data_type == BOOL:
+                assert val is True or val is False or val == 0 or val == 1, \
+                    "'{}' should be boolean.".format(key)
+            elif prop.data_type == DOUBLE:
+                assert isinstance(val, (float, np.floating)), \
+                    "'{}' should be float.".format(key)
+            elif prop.data_type == INT:
+                assert isinstance(val, (int, np.integer)), \
+                    "'{}' should be integer.".format(key)
+            elif prop.data_type == SIZE:
+                assert isinstance(val, (int, np.integer)) and val >= 0, \
+                    "'{}' should be positive integer.".format(key)
+            elif prop.data_type in (VEC_SIZE, VEC_LONG):
+                assert nonstring_container(val), \
+                    "'{}' should be a list.".format(key)
+                if val:
+                    for v in val:
+                        assert isinstance(v, (int, np.integer)), \
+                            "'{}' values should be integers.".format(key)
+            elif prop.data_type == STRING:
+                assert _is_string(val), "'{}' should be a string.".format(key)
+            elif prop.data_type == VEC_STRING:
+                assert nonstring_container(val), \
+                    "'{}' should be a list.".format(key)
+                if val:
+                    for v in val:
+                        assert _is_string(v), \
+                            "'{}' values should be a string.".format(key)
+            else:
+                raise RuntimeError("Unknown property type", prop.data_type)
+        else:
+            if key not in ("position",):
+                raise KeyError(
+                    "Unknown parameter '{}' for `{}`.".format(key, object_name))

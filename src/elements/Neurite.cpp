@@ -798,12 +798,7 @@ double Neurite::get_state(const char *observable) const
     double value = 0.;
 
     TRIE(observable)
-    CASE("length")
-    for (const auto &gc : growth_cones_)
-    {
-        value += gc.second->get_state(observable);
-    }
-    CASE("speed")
+    // default case, just sum up
     for (const auto &gc : growth_cones_)
     {
         value += gc.second->get_state(observable);

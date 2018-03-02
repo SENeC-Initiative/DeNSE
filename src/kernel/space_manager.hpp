@@ -64,7 +64,8 @@ class SpaceManager : public ManagerInterface
     void move_possibility(std::vector<double> &directions_weights,
                           std::vector<std::string> &new_pos_area,
                           const Filopodia &filopodia, const Point &position,
-                          const Move &move);
+                          const Move &move, double substep, double sqrt_resol,
+                          unsigned int delta_filo);
 
     void set_environment(
         GEOSGeom environment, const std::vector<GEOSGeom> &areas,

@@ -2,7 +2,6 @@ set( spatial_sources
      search.hpp search.cpp
      Environment.hpp Environment.cpp
      Area.hpp Area.cpp
-     Wall.hpp Wall.cpp
 )
 
 add_library( spatial STATIC ${spatial_sources} )

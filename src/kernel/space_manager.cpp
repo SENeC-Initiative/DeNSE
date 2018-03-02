@@ -128,16 +128,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     size_t n_intersect;
     AreaPtr new_area;
 
-    // set ignored direction weights to nan
-    for (n_angle = 0; n_angle < n_min; n_angle++)
-    {
-        directions_weights[n_angle] = std::nan("");
-    }
-    for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
-    {
-        directions_weights[n_angle] = std::nan("");
-    }
-
     // test the environment for each of the filopodia's angles
     for (n_angle = n_min; n_angle < n_max; n_angle++)
     {
@@ -312,26 +302,44 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 void SpaceManager::move_possibility(std::vector<double> &directions_weights,
                                     std::vector<std::string> &new_pos_area,
                                     const Filopodia &filopodia,
-                                    const Point &position, const Move &move)
+                                    const Point &position, const Move &move,
+                                    double substep, double sqrt_resol,
+                                    unsigned int delta_filo)
 {
     // Useful values
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
+    unsigned int n_angle;
     Point target_pos;
     double angle;
+
+    // compute the number of filopodia to ignore
+    unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
+    unsigned int n_max  = filopodia.size - ignore;
+    unsigned int n_min  = ignore;
+
+    // set ignored direction weights to nan
+    for (n_angle = 0; n_angle < n_min; n_angle++)
+    {
+        directions_weights[n_angle] = std::nan("");
+    }
+    for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
+    {
+        directions_weights[n_angle] = std::nan("");
+    }
 
     assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
 
     // test the environment for each of the filopodia's angles
-    for (unsigned int n_angle = 0; n_angle < filopodia.size; n_angle++)
+    for (n_angle = n_min; n_angle < n_max; n_angle++)
     {
-        angle = move.angle + filopodia.directions[n_angle];
+        angle = move.angle + filopodia.directions.at(n_angle);
 
         target_pos = Point(position.at(0) + cos(angle) * move.module,
                            position.at(1) + sin(angle) * move.module);
 
         if (not env_contains(target_pos, omp_id))
         {
-            directions_weights[n_angle] *= nan("");  // cannot escape env
+            directions_weights[n_angle] = std::nan("");  // cannot escape env
         }
         else
         {

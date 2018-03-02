@@ -47,6 +47,8 @@ class GrowthCone : public TopologicalNode,
     std::vector<std::string> observables_;
 
     // motion-related data
+    char turning_;
+    double turned_;
     double delta_angle_;
     double sensing_angle_;
     double avg_speed_;
@@ -98,7 +100,8 @@ class GrowthCone : public TopologicalNode,
                         std::vector<bool> &wall_presence, double substep,
                         mtPtr rnd_engine);
     void compute_accessibility(std::vector<double> &directions_weights,
-                               std::vector<std::string> &change_to_new_area);
+                               std::vector<std::string> &change_to_new_area,
+                               double substep);
     void compute_intrinsic_direction(std::vector<double> &directions_weights,
                                      double substep);
     void make_move(const std::vector<double> &directions_weights,

@@ -50,6 +50,8 @@ GrowthCone::GrowthCone()
     , delta_angle_(0)
     , stuck_(false)
     , stopped_(false)
+    , turning_(0)
+    , turned_(0.)
     , update_filopodia_(false)
     , filopodia_{{},
                  {},
@@ -101,6 +103,8 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , current_area_(copy.current_area_)
     , stuck_(false)
     , stopped_(false)
+    , turning_(0)
+    , turned_(0.)
     , update_filopodia_(false)
     , filopodia_(copy.filopodia_)
     , move_(copy.move_)
@@ -206,8 +210,8 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
     {
         local_substep = substep - current_time;
 
-        // reset stopped status and start sensing/moving
-        stopped_    = false;
+        // reset stopped status
+        stopped_ = false;
 
         // initialize direction test variables
         std::vector<double> directions_weights(filopodia_.size, 1.);
@@ -228,8 +232,8 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // check for end of retraction during local step
             if (retracting_todo_ <= local_substep)
             {
+                local_substep    = std::max(retracting_todo_, 1.);
                 retracting_todo_ = -1;
-                local_substep    = retracting_todo_;
             }
             else
             {
@@ -278,7 +282,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 directions_weights, wall_presence, substep, rnd_engine);
 
             // if interacting with obstacles, switch substep down
-            if (interacting)
+            if (interacting and local_substep > 4.)
             {
                 old_substep = local_substep;
                 tmp = std::max(0.25*local_substep, 1.);
@@ -292,6 +296,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 {
                     update_filopodia_ = true;
                 }
+            }
+            else if (interacting and local_substep >= 2.)
+            {
+                update_filopodia_ = true;
+                local_substep = 1.;
             }
 
             // update filopodia
@@ -315,7 +324,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 // Forward! Can we go there? //
                 // ========================= //
 
-                compute_accessibility(directions_weights, new_pos_area);
+                compute_accessibility(directions_weights, new_pos_area, local_substep);
 
                 if (not stuck_)
                 {
@@ -325,15 +334,30 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 
                     // take GC rigidity into account
                     compute_intrinsic_direction(directions_weights, local_substep);
+
+                    //~ printf("making move on %i\n", omp_id);
                     // set delta_angle_ as main pulling direction
                     make_move(
                         directions_weights, new_pos_area, local_substep,
                         rnd_engine, omp_id);
+                    //~ printf("move done on %i\n", omp_id);
 
                     if (not stopped_)
                     {
+                        // reset retraction
                         retraction_time_ = -1;
+                        // reset turning
+                        turning_ = 0;
+                        turned_ = 0.;
                     }
+                }
+
+                if ((stuck_ or stopped_) and turning_ == 0)
+                {
+                    // if we are stuck/stopped, we will start widening the
+                    // sensing angle and turning in a random direction so
+                    // we choose it
+                    turning_ = uniform_(*rnd_engine.get()) > 0.5 ? 1 : -1;
                 }
             }
         }
@@ -356,20 +380,16 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     current_area_, omp_id);
 
                 // compute the time necessary to reach that angle
-                local_substep = (unstuck_angle/4. - move_.sigma_angle)
-                                / ONE_DEGREE;
+                local_substep = std::max((unstuck_angle/4. - move_.sigma_angle)
+                                / ONE_DEGREE, 1.);
 
-                if (local_substep < 0. or unstuck_angle > 0.5*max_sensing_angle_)
+                if (unstuck_angle > 0.5*max_sensing_angle_)
                 {
                     local_substep = substep - current_time;
                 }
                 else if (local_substep > substep - current_time)
                 {
                     local_substep = substep - current_time;
-                }
-                else
-                {
-                    local_substep = static_cast<int>(local_substep) + 1.;
                 }
 
                 // check whether we would retract in that time
@@ -426,7 +446,7 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 {
     if (retraction_time_ < 0)
     {
-        retraction_time_ = exponential_(*rnd_engine.get());
+        retraction_time_ = 1. + exponential_(*rnd_engine.get());
     }
 
     if (retraction_time_ <= substep)
@@ -530,7 +550,8 @@ bool GrowthCone::compute_pull(std::vector<double> &directions_weights,
  * possible directions is possible given the desired step length.
  */
 void GrowthCone::compute_accessibility(std::vector<double> &directions_weights,
-                                       std::vector<std::string> &new_pos_area)
+                                       std::vector<std::string> &new_pos_area,
+                                       double substep)
 {
     // unstuck neuron
     stuck_ = false;
@@ -539,7 +560,7 @@ void GrowthCone::compute_accessibility(std::vector<double> &directions_weights,
     // accessible)
     kernel().space_manager.move_possibility(
         directions_weights, new_pos_area, filopodia_, geometry_.position,
-        move_);
+        move_, substep, sqrt_resol_, num_filopodia_ - min_filopodia_);
 
     if (allnan(directions_weights))
     {
@@ -675,8 +696,9 @@ Point GrowthCone::compute_new_position(
     double mean = 0.5*directions_weights[n-1];
 
     double default_angle;
-    double new_angle     = move_.angle + delta_angle_;
-    Point target_pos     =
+    double bin       = max_sensing_angle_ / filopodia_.size;
+    double new_angle = move_.angle + delta_angle_;
+    Point target_pos =
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
 
@@ -686,7 +708,7 @@ Point GrowthCone::compute_new_position(
         {
             return target_pos;
         }
-        else if (frac > mean and not directions_weights[n-1] > 0)
+        else if (frac < mean and directions_weights[n-1] > 0)
         {
             default_angle = move_.angle + filopodia_.directions[n-1];
         }
@@ -944,7 +966,7 @@ double GrowthCone::get_state(const char *observable) const
     CASE("angle")
     value = move_.angle;
     CASE("stopped")
-    value = stuck_ + stopped_;  // 0: moving, 1: stopped, 2: stuck
+    value = 2*stuck_ + stopped_;  // 0: moving, 1: stopped, 2: stuck
     ENDTRIE;
 
     return value;
@@ -1001,6 +1023,15 @@ void GrowthCone::change_sensing_angle(double angle)
     {
         move_.sigma_angle = std::min(
             move_.sigma_angle + angle, max_sensing_angle_);
+
+        // when not moving, start turning
+        if (turning_ != 0 and turned_ < 0.39269908169872414)
+        {
+            //~ printf("turning from %f", move_.angle);
+            move_.angle += turning_ * angle;
+            //~ printf(" to %f\n", move_.angle);
+            turned_ += angle;
+        }
     }
     else
     {

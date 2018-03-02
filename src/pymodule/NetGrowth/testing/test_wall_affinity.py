@@ -21,11 +21,11 @@ from NetGrowth.tools import fraction_neurites_near_walls, neurite_length
 Setting the parameters
 '''
 
-num_neurons = 50
+num_neurons = 200
 simtime     = 5000.
-num_omp     = 7
-#~ resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
-resolutions = (1., 2.)
+num_omp     = 14
+resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
+# ~ resolutions = (1., 2.)
 #~ resolutions = (50.,)[::-1]
 #~ resolutions = (2., 20., 50.)[::-1]
 #~ resolutions   = (10., 50.)[::-1]
@@ -56,10 +56,8 @@ affinities = []
 data_times = {}
 statuses   = {}
 observable = "length"
-#~ observable = "stopped"
+# ~ observable = "stopped"
 
-
-corrections = [1., 0.59, 0.25, 0.17, 0.09, 0.13, 0.185][::-1]
 
 for k, resol in enumerate(resolutions):
 

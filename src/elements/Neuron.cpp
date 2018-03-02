@@ -415,12 +415,7 @@ double Neuron::get_state(const char *observable) const
     double value = 0.;
 
     TRIE(observable)
-    CASE("length")
-    for (const auto &neurite : neurites_)
-    {
-        value += neurite.second->get_state(observable);
-    }
-    CASE("speed")
+    // default case, just sum up
     for (const auto &neurite : neurites_)
     {
         value += neurite.second->get_state(observable);

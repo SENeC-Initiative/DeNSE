@@ -24,7 +24,7 @@ __all__.extend("SaveToJson")
 
 
 try:
-    import matplotlib.pyplot as _plt
+    import matplotlib as _mpl
     _with_plot = True
     from . import plot
     from .plot import *

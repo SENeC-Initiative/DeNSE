@@ -102,7 +102,8 @@ size_t get_num_objects();
 statusMap get_status(size_t gid);
 
 
-statusMap get_neurite_status(size_t gid, const std::string &neurite_type);
+statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
+                             const std::string& level);
 
 
 std::vector<size_t> get_neurons();

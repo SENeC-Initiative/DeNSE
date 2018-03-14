@@ -4,7 +4,6 @@
 import os
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from . import _pygrowth as _pg
 from .dataIO import ImportRecordFile
@@ -48,6 +47,7 @@ def plot_dynamic_data(gc_list):
     Parameters:
     gc_list: list of np.array
     """
+    import matplotlib.pyplot as plt
     fig, ((ax1, ax2),(ax3, ax4))  = plt.subplots(2,2,sharex=True)
     ax3.set_title("Critical_resource received")
     ax2.set_title("Distance from soma over time")

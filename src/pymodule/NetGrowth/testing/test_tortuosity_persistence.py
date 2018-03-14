@@ -17,7 +17,7 @@ import NetGrowth as ng
 Setting the parameters
 '''
 
-num_neurons   = 5000
+num_neurons   = 500
 simtime       = 1000.
 num_omp       = 6
 resolutions   = (1., 2., 5., 20., 50.)
@@ -33,7 +33,8 @@ Analysis functions
 '''
 
 def norm_angle_from_vectors(vectors):
-    angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
+    #~ angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
+    angles  = np.arctan2(vectors[1], vectors[0])
     norms   = np.linalg.norm(vectors, axis=0)
     return angles, norms
 
@@ -58,24 +59,27 @@ def tortuosity(points, step_size=None):
     --------
     T
     """
-    vectors     = np.diff(points, axis=1)
-    N           = len(vectors[0])
-    step_size   = N if step_size is None else step_size
-    theta, rho  = norm_angle_from_vectors(vectors)
-    indices     = [i for i in range(0, N, step_size)]
-    if indices[-1] != N:
-        indices.append(N)
-    num_meas    = len(indices)
-    path_length = np.zeros(num_meas-1)
-    eucl_length = np.zeros(num_meas-1)
+    vectors = np.diff(points, axis=1)
 
-    for i, first in enumerate(indices[:-1]):
-        last           = indices[i+1]
-        path_length[i] = np.sum(rho[first:last])
-        eucl_length[i] = np.sqrt(
-            np.sum(np.square(points[:, last] - points[:, first])))
+    if np.shape(vectors)[1] > 0:
+        N          = len(vectors[0])
+        step_size  = N if step_size is None else step_size
+        theta, rho = norm_angle_from_vectors(vectors)
+        indices    = [i for i in range(0, N, step_size)]
+        if indices[-1] != N:
+            indices.append(N)
+        num_meas    = len(indices)
+        path_length = np.zeros(num_meas-1)
+        eucl_length = np.zeros(num_meas-1)
 
-    return np.average(path_length / eucl_length)
+        for i, first in enumerate(indices[:-1]):
+            last           = indices[i+1]
+            path_length[i] = np.sum(rho[first:last])
+            eucl_length[i] = np.sqrt(
+                np.sum(np.square(points[:, last] - points[:, first])))
+
+        return np.average(path_length / eucl_length)
+    return 0.
 
 
 fig, ax = plt.subplots()

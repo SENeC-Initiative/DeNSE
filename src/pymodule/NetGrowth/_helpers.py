@@ -125,10 +125,11 @@ def _hash_dict(_dict):
 # --------------- #
 
 valid_levels = {
-    "neuron": ["length", "speed", "num_growth_cones", "stopped"],
-    "neurite": ["length", "speed", "num_growth_cones", "A", "stopped"],
+    "neuron": ["length", "speed", "num_growth_cones"],
+    "neurite": ["length", "speed", "num_growth_cones", "A"],
     "growth_cone": [
-        "length", "speed", "resource", "angle", "persistence_angle", "stopped"
+        "length", "speed", "resource", "angle", "persistence_angle",
+        "retraction_time", "stopped"
     ],
 }
 

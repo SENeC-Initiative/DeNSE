@@ -68,19 +68,49 @@ void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
 {
     std::uniform_real_distribution<> uniform_(0, 1.);
 
+    // exception_capture_flag "guards" captured_exception. std::called_once()
+    // guarantees that will only execute any of its Callable(s) ONCE for each
+    // unique std::once_flag. See C++11 Standard Library documentation
+    // (``<mutex>``). These tools together ensure that we can capture exceptions
+    // from OpenMP parallel regions in a thread-safe way.
+    std::once_flag exception_capture_flag;
+    // pointer-like object that manages an exception captured with
+    // std::capture_exception(). We use this to capture exceptions thrown from
+    // the OpenMP parallel region.
+    std::exception_ptr captured_exception;
 #pragma omp parallel
     {
-        int omp_id       = kernel().parallelism_manager.get_thread_local_id();
-        mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
-        std::vector<double> randoms;
-        for (size_t n = 0; n < size; n++)
+        try
         {
-            randoms.push_back(uniform_(*(rnd_engine).get()));
+            int omp_id       = kernel().parallelism_manager.get_thread_local_id();
+            mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
+            std::vector<double> randoms;
+            for (size_t n = 0; n < size; n++)
+            {
+                randoms.push_back(uniform_(*(rnd_engine).get()));
+            }
+    #pragma omp critical
+            {
+                values.push_back(randoms);
+            }
         }
-#pragma omp critical
+        catch (const std::exception& except)
         {
-            values.push_back(randoms);
+            std::call_once(
+                exception_capture_flag,
+                [&captured_exception]()
+                {
+                    captured_exception = std::current_exception();
+                }
+            );
         }
+    }
+
+    // check if an exception was thrown there
+    if (captured_exception != nullptr)
+    {
+        // rethrowing nullptr is illegal
+        std::rethrow_exception(captured_exception);
     }
 }
 
@@ -156,6 +186,12 @@ void SimulationManager::initialize_simulation_(const Time &t)
                 neuron.second->initialize_next_event(
                     rnd_engine, resolution_scale_factor_, initial_step);
             }
+
+            // record the first step if time is zero
+            if (initial_time_ == Time())
+            {
+                kernel().record_manager.record(omp_id);
+            }
         }
         catch (const std::exception& except)
         {
@@ -184,9 +220,6 @@ void SimulationManager::finalize_simulation_()
     {
         assert(s == final_step_);
     }
-    //    assert(initial_time_.get_total_seconds() ==
-    //    final_time_.get_total_seconds());
-    initial_time_.update(step_.front());
 
     // exception_capture_flag "guards" captured_exception. std::called_once()
     // guarantees that will only execute any of its Callable(s) ONCE for each
@@ -235,6 +268,9 @@ void SimulationManager::finalize_simulation_()
 
     // finalize recorder times
     kernel().record_manager.finalize_simulation(final_step_);
+
+    //! IMPORTANT: THIS UPDATE MUST COME LAST!
+    initial_time_.update(step_.front());
 }
 
 
@@ -445,9 +481,8 @@ Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
-    Time t     = Time(substep_[omp_id], 0, 0, 0);
     t0.update(step_[omp_id]);
-    return t0 + t;
+    return t0;
 }
 
 

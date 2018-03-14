@@ -31,7 +31,7 @@ namespace growth
 Neuron::Neuron(size_t gid)
     : gid_(gid)
     , details()
-    , observables_({"length", "speed", "num_growth_cones", "stopped"})
+    , observables_({"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
     , actin_content_(0)
@@ -441,13 +441,14 @@ void Neuron::get_status(statusMap &status) const
 }
 
 
-void Neuron::get_neurite_status(statusMap &status, std::string neurite_type)
+void Neuron::get_neurite_status(statusMap &status, std::string neurite_type,
+                                const std::string& level)
 {
     for (const auto &neurite : neurites_)
     {
         if (neurite.second->neurite_type_ == neurite_type)
         {
-            neurite.second->get_status(status);
+            neurite.second->get_status(status, level);
             break;
         }
     }

@@ -50,7 +50,8 @@ class NeuronManager : public ManagerInterface
     void get_defaults(statusMap &status, const std::string &object) const;
     const statusMap get_neuron_status(size_t gid) const;
     const statusMap get_neurite_status(size_t gid,
-                                       const std::string &type) const;
+                                       const std::string &type,
+                                       const std::string& level) const;
 
     bool is_neuron(size_t gid) const;
 

@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy as sp
 
 import nngt
 import nngt.geometry as geom
@@ -23,7 +24,7 @@ Setting the parameters
 
 num_neurons = 200
 simtime     = 5000.
-num_omp     = 14
+num_omp     = 7
 resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
 # ~ resolutions = (1., 2.)
 #~ resolutions = (50.,)[::-1]
@@ -55,8 +56,9 @@ lengths    = []
 affinities = []
 data_times = {}
 statuses   = {}
-observable = "length"
-# ~ observable = "stopped"
+#~ observable = "length"
+observable = "angle"
+#~ observable = "stopped"
 
 
 for k, resol in enumerate(resolutions):
@@ -92,7 +94,7 @@ for k, resol in enumerate(resolutions):
     }
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
-    rec  = ng.CreateRecorders(gids, observable, levels="neuron")
+    rec  = ng.CreateRecorders(gids, observable, levels="growth_cone")
 
     t0 = time.time()
     ng.Simulate(simtime)
@@ -109,17 +111,20 @@ for k, resol in enumerate(resolutions):
     lengths.append(neurite_length(gids))
 
     # get observable status
-    data = ng.GetStatus(rec)
-    data_times[resol] = data[rec[0]]['recording']["times"]
+    data = ng.GetRecording(rec, "compact")
+
+    data_times[resol] = data[observable]["times"].values()[0]
 
     statuses[resol] = []
-    for r_id in rec:
-        for v in data[r_id]['recording'][observable].values():
-            statuses[resol].append(v)
+
+    for v in data[observable]["data"].values():
+        statuses[resol].append(v)
 
     # ~ for i, width in enumerate(widths):
         # ~ fractions[i].append(fraction_neurites_near_walls(
             # ~ gids, shape, width, percentiles=(85, 50, 15)))
+
+print("durations", times)
 
 
 '''
@@ -159,8 +164,6 @@ ax.plot(resolutions, lower, ls="--", color="b", alpha=0.5)
 ax.plot(resolutions, upper, ls="--", color="b", alpha=0.5)
 fig.patch.set_alpha(0.)
 
-print(times)
-
 # print the status
 
 for resol in resolutions:
@@ -170,7 +173,7 @@ for resol in resolutions:
 
     for vals in statuses[resol]:
         ax.plot(data_times[resol], np.array(vals) + offset)
-        offset += 2.5
+        offset += 7.
 
     fig.patch.set_alpha(0.)
     fig.suptitle("Status " + str(resol))

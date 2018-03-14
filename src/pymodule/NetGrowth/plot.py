@@ -10,7 +10,6 @@
 import numpy as np
 
 import matplotlib.animation as anim
-import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
@@ -57,6 +56,7 @@ class _Animator:
         Calling class is supposed to have defined `self.times`, `self.start`,
         `self.duration`, `self.trace`, and `self.timewindow`.
         '''
+        import matplotlib.pyplot as plt
         # figure/canvas: pause/resume and step by step interactions
         self.fig = plt.figure(
             figsize=kwargs.get("figsize", (8, 6)), dpi=kwargs.get("dpi", 75))
@@ -333,6 +333,7 @@ def PlotRecording(recorder, time_units="hours", show=True):
     show : bool, optional (default: True)
         Display the plot.
     '''
+    import matplotlib.pyplot as plt
     data = _pg.GetStatus(recorder, time_units=time_units)
     num_neurons = len(data["targets"])
     rec_type    = data["observable"]
@@ -439,6 +440,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     **kwargs : optional arguments
         Details on how to plot the environment, see :func:`PlotEnvironment`.
     '''
+    import matplotlib.pyplot as plt
     # plot
     fig, ax = None, None
     if axis is None:
@@ -504,6 +506,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
 # --------------- #
 
 def BtmorphVisualize(Simulation_folder):
+    import matplotlib.pyplot as plt
     import btmorph2
     from .dataIO import SimulationsFromFolder
     neurons = SimulationsFromFolder(Simulation_folder)

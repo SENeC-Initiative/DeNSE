@@ -103,9 +103,10 @@ statusMap get_status(size_t gid)
 size_t get_num_objects() { return kernel().get_num_objects(); }
 
 
-statusMap get_neurite_status(size_t gid, const std::string &neurite_type)
+statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
+                             const std::string& level)
 {
-    return kernel().neuron_manager.get_neurite_status(gid, neurite_type);
+    return kernel().neuron_manager.get_neurite_status(gid, neurite_type, level);
 }
 
 
@@ -308,9 +309,66 @@ void get_swc(std::string output_file, std::vector<size_t> gids,
 }
 
 
+void get_backtrace(std::string& msg, int depth = 0)
+{
+    try
+    {
+        throw;
+    }
+    catch (const std::exception &e)
+    {
+        // handle exceptions of known type
+        msg += std::to_string(depth) + ": [" + std::string(typeid(e).name())
+                + "] " + std::string(e.what()) + "\n";
+        try
+        {
+            std::rethrow_if_nested(e);
+        }
+        catch (...)
+        {
+            get_backtrace(msg, ++depth);
+        }
+    }
+    catch (const std::nested_exception & ne)
+    {
+        // Not all nesting exceptions will be of a known type, but if they use
+        // the mixin type std::nested_exception, then we can at least handle
+        // them enough to get the nested exception:
+        msg += std::to_string(depth) + ": Unknown nested exception\n";
+
+        try
+        {
+            ne.rethrow_nested();
+        }
+        catch (...)
+        {
+            get_backtrace(msg, ++depth);
+        }
+    }
+    catch (...)
+    {
+        // Exception nesting works through inheritance, hence if the type cannot
+        // be inherited std::nested_exception will not work.
+        // Trying something like std::throw_with_nested( int{10} ) will hit this
+        // final catch block.
+        msg += std::to_string(depth) + ": Unknown nested exception\n";
+    }
+}
+
+
 void simulate(const Time &simtime)
 {
-    kernel().simulation_manager.simulate(simtime);
+    try
+    {
+        kernel().simulation_manager.simulate(simtime);
+    }
+    catch ( ... )
+    {
+        std::string message = "Error occurred in `simulate`.\n";
+        get_backtrace(message, 0);
+
+        throw std::runtime_error(message);
+    }
 }
 
 

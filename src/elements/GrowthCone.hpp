@@ -43,6 +43,7 @@ class GrowthCone : public TopologicalNode,
     std::string current_area_; // name of the area where the GC is
     bool stuck_;
     bool stopped_;
+    bool stopped_from_1_;
     bool update_filopodia_;
     std::vector<std::string> observables_;
 
@@ -72,6 +73,7 @@ class GrowthCone : public TopologicalNode,
     Move move_;
 
     double total_proba_;  // integrated probability of all possible moves
+    double default_total_proba_;  // if timestep were 1
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
     std::exponential_distribution<double> exponential_;

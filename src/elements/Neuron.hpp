@@ -98,7 +98,8 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void set_status(const statusMap &status);
     void set_neurite_status(const std::string &neurite_type,
                             const statusMap &status);
-    void get_neurite_status(statusMap &status, std::string neurite_type);
+    void get_neurite_status(statusMap &status, std::string neurite_type,
+                            const std::string& level);
     void update_kernel_variables();
 
     // constant iterator to neurites map

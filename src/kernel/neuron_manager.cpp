@@ -229,17 +229,17 @@ void NeuronManager::get_defaults(statusMap &status,
 {
     if (object == "neuron")
     {
-        model_neuron_->get_neurite_status(status, "dendrite");
-        model_neuron_->get_neurite_status(status, "axon");
+        model_neuron_->get_neurite_status(status, "dendrite", "neurite");
+        model_neuron_->get_neurite_status(status, "axon", "neurite");
         model_neuron_->get_status(status);
     }
     else if (object == "axon")
     {
-        model_neuron_->get_neurite_status(status, "axon");
+        model_neuron_->get_neurite_status(status, "axon", "neurite");
     }
-    else if (object == "dendrite" || object == "neurite")
+    else if (object == "dendrite" || object == "neurite", "neurite")
     {
-        model_neuron_->get_neurite_status(status, "dendrite");
+        model_neuron_->get_neurite_status(status, "dendrite", "neurite");
     }
 }
 
@@ -266,10 +266,11 @@ std::vector<size_t> NeuronManager::get_gids() const
 
 
 const statusMap NeuronManager::get_neurite_status(size_t gid,
-                                                  const std::string &type) const
+                                                  const std::string &type,
+                                                  const std::string& level) const
 {
     statusMap status;
-    neurons_.at(gid)->get_neurite_status(status, type);
+    neurons_.at(gid)->get_neurite_status(status, type, level);
     return status;
 }
 

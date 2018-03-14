@@ -6,7 +6,6 @@ from os.path import join, isfile
 import warnings
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 __all__ = [
@@ -390,6 +389,7 @@ def SegmentToPath(segment):
     consecutive pieces, the angle is required to clean the path from sudden
     curves.
     """
+    import matplotlib.pyplot as plt
     matrix = np.ndarray((3, len(segment)))
     x_0 = float(segment[0].split()[2])
     y_0 = float(segment[0].split()[3])

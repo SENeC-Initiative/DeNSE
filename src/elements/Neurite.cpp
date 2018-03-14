@@ -41,7 +41,7 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     : parent_(p)
     , branching_model_(Branching())
     , name_(name)
-    , observables_({"length", "speed", "num_growth_cones", "stopped"})
+    , observables_({"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
@@ -771,21 +771,25 @@ void Neurite::set_status(const statusMap &status)
 
 
 //@TODO
-void Neurite::get_status(statusMap &status) const
+void Neurite::get_status(statusMap &status, const std::string& level) const
 {
-    set_param(status, names::gc_split_angle_mean,
-              _deg_from_rad(gc_split_angle_mean_));
-    set_param(status, names::gc_split_angle_mean,
-              _deg_from_rad(gc_split_angle_std_));
-    set_param(status, names::lateral_branching_angle_std,
-              _deg_from_rad(lateral_branching_angle_mean_));
-    set_param(status, names::lateral_branching_angle_mean,
-              _deg_from_rad(lateral_branching_angle_std_));
-    set_param(status, names::observables, observables_);
-    set_param(status, names::growth_cone_model, growth_cone_model_);
+    if (level == "neurite")
+    {
+        set_param(status, names::gc_split_angle_mean,
+                  _deg_from_rad(gc_split_angle_mean_));
+        set_param(status, names::gc_split_angle_mean,
+                  _deg_from_rad(gc_split_angle_std_));
+        set_param(status, names::lateral_branching_angle_std,
+                  _deg_from_rad(lateral_branching_angle_mean_));
+        set_param(status, names::lateral_branching_angle_mean,
+                  _deg_from_rad(lateral_branching_angle_std_));
+        set_param(status, names::observables, observables_);
+        // branching properties
+        branching_model_.get_status(status);
+    }
 
-    // branching and growth_cone properties
-    branching_model_.get_status(status);
+    // growth_cone properties
+    set_param(status, names::growth_cone_model, growth_cone_model_);
     growth_cones_.begin()->second->get_status(status);
 }
 

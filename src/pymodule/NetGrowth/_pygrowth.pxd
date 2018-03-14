@@ -112,7 +112,7 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef statusMap get_status(size_t gid) except +
 
     cdef statusMap get_neurite_status(size_t gid,
-                                      const string& n_type
+                                      const string& n_type, const string& level,
                                       ) except +
 
     cdef vector[size_t] get_neurons() except +
@@ -147,7 +147,7 @@ cdef extern from "../module.hpp" namespace "growth":
                          statusMap axon_status,
                          statusMap dendrites_status) except*
 
-    cdef void simulate(const CTime& simtime) except*
+    cdef void simulate(const CTime& simtime) except +
 
     cdef void test_random_generator(vector[vector[double]]& values,
                                     size_t size) except*

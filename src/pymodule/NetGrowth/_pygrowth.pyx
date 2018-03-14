@@ -30,6 +30,7 @@ __all__ = [
     "GetModels",
     "GetNeurons",
     "GetObjectType",
+    "GetRecording",
     "GetSimulationID",
     "GetStatus",
     "NeuronToSWC",
@@ -266,15 +267,16 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
                   else [observables]
     num_obs = len(observables)
 
-    # check that the targets are neurons and that the observables are valid
-    _check_neurons_obs(targets, observables)
+    # check that the targets are neurons
+    _check_neurons_targets(targets)
 
     # make sure that all keywords have required length and switch to lists
     # check the validity of all keyword arguments
     (sampling_intervals, start_times, end_times, levels, restrict_to,
      record_to, buffer_size) = \
-        _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
-                            restrict_to, record_to, buffer_size, observables)
+        _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
+                            levels,restrict_to, record_to, buffer_size,
+                            observables)
 
     # create the recorders
     for i in range(num_obs):
@@ -400,7 +402,8 @@ def GetSimulationID():
     return _to_string(c_simulation_ID)
 
 
-def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
+def GetStatus(gids, property_name=None, level=None, neurite=None,
+              time_units="hours"):
     '''
     Get the configuration properties.
 
@@ -411,6 +414,9 @@ def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
     property_name : str, optional (default: None)
         Name of the property that should be queried. By default, the full
         dictionary is returned.
+    level : str, optional (default: highest)
+        Level at which the status should be obtained (only for neurons).
+        Should be among "neuron", "neurite", or "growth_cone".
     neurite : str optional (default: None)
         Neurite of neurons `gids` that should be queried (either `axon` or
         `dendrites`). By default, both dictionaries are returned inside the
@@ -435,7 +441,7 @@ def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
     '''
     cdef:
         statusMap c_status
-        string level, event_type, ctime_units
+        string clevel, event_type, ctime_units
 
     valid_time_units = ("seconds", "minutes", "hours", "days")
     assert time_units in valid_time_units, \
@@ -448,13 +454,19 @@ def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
         gids = vector[size_t](1, <size_t>gids)
     for gid in gids:
         if GetObjectType(gid) == "neuron":
-            if neurite == "axon":
-                c_status = get_neurite_status(gid, "axon")
+            if level is None and neurite is None:
+                clevel = _to_bytes("neuron")
+            elif level is None and neurite is not None:
+                clevel = _to_bytes("neurite")
+            else:
+                clevel = _to_bytes(level)
+            if neurite == "axon" or level not in (None, "neuron"):
+                c_status = get_neurite_status(gid, "axon", clevel)
                 status[gid] = _statusMap_to_dict(c_status)
             elif neurite == "dendrites":
-                c_status = get_neurite_status(gid, "dendrites")
+                c_status = get_neurite_status(gid, "dendrites", clevel)
                 status[gid] = _statusMap_to_dict(c_status)
-            elif neurite is None:
+            else:
                 c_status = get_status(gid)
                 neuron_status = _statusMap_to_dict(c_status)
                 pos = [neuron_status["x"], neuron_status["y"]]
@@ -462,17 +474,17 @@ def GetStatus(gids, property_name=None, neurite=None, time_units="hours"):
                 del neuron_status["y"]
                 neuron_status["position"] = tuple(pos)
                 neuron_status["axon_params"] = _statusMap_to_dict(
-                    get_neurite_status(gid, "axon"))
+                    get_neurite_status(gid, "axon", "neurite"))
                 neuron_status["dendrites_params"] = _statusMap_to_dict(
-                    get_neurite_status(gid, "dendrites"))
+                    get_neurite_status(gid, "dendrites", "neurite"))
                 status[gid] = neuron_status
         elif GetObjectType(gid) == "recorder":
             c_status = get_status(gid)
             rec_status = _statusMap_to_dict(c_status)
-            _get_recorder_data(gid, rec_status, ctime_units)
             status[gid] = rec_status
         else:
-            raise NotImplementedError("Only neurons are implemented so far.")
+            raise NotImplementedError(
+                "Only neurons and recorders are implemented so far.")
 
     # return the right part
     if len(gids) == 1:
@@ -558,6 +570,118 @@ def GetModels(object_type="all"):
     get_models(cmodels, cname)
     models = [_to_string(m) for m in cmodels]
     return models
+
+
+def GetRecording(recorder, record_format="detailed"):
+    '''
+    Return the recorded data.
+
+    Parameters
+    ----------
+    recorder : gid or list of gids
+        Id(s) of the recorder(s).
+    record_format : str, optional (default: "detailed")
+        Formatting of the record. This is only useful if the recording occurs at
+        neurite or growth cone level. If "detailed", is used, the record dict
+        first contains all neurons ids; each entry is then a new dict with the
+        neurite ids as entries; if level is "growth_cone", then there is a final
+        dict with the growth cone ids as entries. If "compact" is used,
+        only one id per recorded item is used; for growth cones.
+
+    Examples
+    --------
+
+    At neurite level:
+
+    >>> GetRecording(rec)
+    >>> {observable: {
+    >>>     neuron0: {"axon": [...], "dendrite1": [...], ...},
+    >>>     neuron1: {"axon": [...], "dendrite1": [...], ...}, ...},
+    >>>  "times": [...]}
+
+    >>> GetRecording(rec, "compact")
+    >>> {observable: {
+    >>>     "data": {
+    >>>         (neuron0, "axon"): [...],
+    >>>         (neuron0, "dendrite1"): [...], ...
+    >>>         (neuron1, "axon"): [...], ...}
+    >>>     "times": [...]}}
+    '''
+    recording   = {}
+    ctime_units = "seconds"
+
+    if not nonstring_container(recorder):
+        recorder = [recorder]
+
+    for rec in recorder:
+        rec_status = GetStatus(rec)
+
+        observable = rec_status["observable"]
+        level      = rec_status["level"]
+        ev_type    = rec_status["event_type"]
+
+        recording[observable] = {}
+
+        rec_tmp = {}
+        _get_recorder_data(rec, rec_tmp, rec_status, ctime_units)
+
+        if record_format == "detailed":
+            if "data" in recording[observable]:
+                recording[observable]["data"].update(rec_tmp[observable])
+                recording[observable]["times"].update(rec_tmp["times"])
+            else:
+                recording[observable]["data"]  = rec_tmp[observable]
+                recording[observable]["times"] = rec_tmp["times"]
+        elif record_format == "compact":
+            tmp = {}
+            for n, v in rec_tmp[observable].items():
+                if isinstance(v, dict):
+                    for neurite, neurite_v in v.items():
+                        key_2 = [n]
+                        key_2.append(neurite)
+                        if isinstance(neurite_v, dict):
+                            for gc, gc_v in neurite_v.items():
+                                key_3 = list(key_2)
+                                key_3.append(gc)
+                                tmp[tuple(key_3)] = gc_v
+                        else:
+                            tmp[tuple(key_2)] = neurite_v
+                else:
+                    tmp[n] = v
+            if "data" in recording[observable]:
+                recording[observable]["data"].update(tmp)
+            else:
+                recording[observable]["data"] = tmp
+
+            if level == "growth_cone" or ev_type == "discrete":
+                tmp = {}
+                for n, v in rec_tmp["times"].items():
+                    if isinstance(v, dict):
+                        for neurite, neurite_v in v.items():
+                            key_2 = [n]
+                            key_2.append(neurite)
+                            if isinstance(neurite_v, dict):
+                                for gc, gc_v in neurite_v.items():
+                                    key_3 = list(key_2)
+                                    key_3.append(gc)
+                                    tmp[tuple(key_3)] = gc_v
+                            else:
+                                tmp[tuple(key_2)] = neurite_v
+                    else:
+                        tmp[n] = v
+                if "times" in recording[observable]:
+                    recording[observable]["times"].update(tmp)
+                else:
+                    recording[observable]["times"] = tmp
+            else:
+                if "times" in recording[observable]:
+                    recording[observable]["times"].update(rec_tmp["times"])
+                else:
+                    recording[observable]["times"] = rec_tmp["times"]
+        else:
+            raise ValueError("`record_format` must be 'detailed' or 'compact'.")
+
+    return recording
 
 
 def NeuronToSWC(output_file, gid=None, resolution=10):
@@ -1133,7 +1257,7 @@ def _neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
     return param
 
 
-def _get_recorder_data(gid, rec_status, time_units):
+def _get_recorder_data(gid, recording, rec_status, time_units):
     '''
     Fill the recorder status with the recorded data.
     How this data is recorded depends on both level and event_type.
@@ -1145,7 +1269,6 @@ def _get_recorder_data(gid, rec_status, time_units):
     level      = rec_status["level"]
     ev_type    = rec_status["event_type"]
     observable = rec_status["observable"]
-    recording  = {}
     resolution = GetKernelStatus("resolution")
 
     res_obs   = {}    # data for the observable
@@ -1229,8 +1352,8 @@ def _get_recorder_data(gid, rec_status, time_units):
                 if ev_type == "discrete":
                     res_times[neuron][neurite][gc] = times
                 else:
-                    res_times[neuron][neurite][gc] = np.linspace(
-                        times[0]*resolution, times[1]*resolution, int(times[2]))
+                    res_times[neuron][neurite][gc] = np.arange(
+                        times[0], times[1] + resolution, resolution)
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -1241,11 +1364,11 @@ def _get_recorder_data(gid, rec_status, time_units):
                            "on the git issue tracker.")
     recording[observable] = res_obs
     recording["times"] = res_times
-    rec_status["recording"] = recording
 
 
-def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
-                        restrict_to, record_to, buffer_size, observables):
+def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
+                        levels, restrict_to, record_to, buffer_size,
+                        observables):
     '''
     Make sure that all keywords have required length, switch them to lists,
     and make sure that they are valid
@@ -1303,20 +1426,23 @@ def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
     pos_auto  = []
     new_level = []
     for i, (level, obs) in enumerate(zip(levels, observables)):
-        if level == "auto":
-            # we get the highest level to replace "auto"
-            for new_lvl in ("neuron", "neurite", "growth_cone"):
-                if obs in valid_levels[new_lvl]:
-                    pos_auto.append(i)
-                    new_level.append(new_lvl)
-                    break
-        elif obs not in valid_levels[level]:
-            valid_lvl = []
-            for k, v in valid_levels.items():
-                if obs in v:
-                    valid_lvl.append(k)
-            raise RuntimeError("Valid levels for observable "
-                               "'{}' are {}.".format(obs, valid_lvl))
+        for n in targets:
+            if level == "auto":
+                # we get the highest level to replace "auto"
+                for new_lvl in ("neuron", "neurite", "growth_cone"):
+                    valid_obs = GetStatus(n, "observables", level=new_lvl)
+                    if obs in valid_obs:
+                        pos_auto.append(i)
+                        new_level.append(new_lvl)
+                        break
+            elif obs not in GetStatus(n, "observables", level=level):
+                valid_lvl = []
+                for k, v in valid_levels.items():
+                    if obs in v:
+                        valid_lvl.append(k)
+                print(GetStatus(n, "observables", level=level), level)
+                raise RuntimeError("Valid levels for observable "
+                                   "'{}' are {}.".format(obs, valid_lvl))
 
     # update the "auto" levels
     for pos, lvl in zip(pos_auto, new_level):
@@ -1326,30 +1452,18 @@ def _check_rec_keywords(sampling_intervals, start_times, end_times, levels,
             record_to, buffer_size)
 
 
-def _check_neurons_obs(targets, observables):
+def _check_neurons_targets(targets):
     '''
-    Check that all targets are neurons and that all observables are valid for
-    these neurons.
+    Check that all targets are neurons.
     '''
     invalid_neurons = []
-    invalid_obs     = {obs: [] for obs in observables}
-    invalid         = False
 
     for n in targets:
         if GetObjectType(n) != "neuron":
             invalid_neurons.append(n)
-        else:
-            n_obs = GetStatus(n, property_name="observables")
-            for obs in observables:
-                if obs not in n_obs:
-                    invalid_obs[obs].append(n)
-                    invalid = True
 
     if invalid_neurons:
         raise RuntimeError("Invalid targets: {}.".format(invalid_neurons))
-    if invalid:
-        raise RuntimeError("Some observables are invalid for the following "
-                           "neurons:\n{}".format(invalid_obs))
 
 
 cdef void _set_recorder_status(

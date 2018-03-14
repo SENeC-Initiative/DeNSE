@@ -83,6 +83,7 @@ class Point
 typedef struct Filopodia
 {
     std::vector<double> directions;
+    std::vector<double> default_normal_weights;
     std::vector<double> normal_weights;
     int size;
     double finger_length;

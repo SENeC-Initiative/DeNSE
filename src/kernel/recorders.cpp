@@ -1165,7 +1165,6 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                     values.push_back(t.get_total_days());
                 }
                 ENDTRIE;
-
                 // increment gc
                 t_gc_pos_++;
             }

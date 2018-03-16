@@ -67,7 +67,9 @@ class Point
     Point(double x, double y);
     Point(const Point &pt);
 
+    Point operator-(const Point point) const;
     double operator[](const int idx);
+    void shift(const double module, const double direction);
     double at(const int idx) const;
 
   private:
@@ -83,7 +85,6 @@ class Point
 typedef struct Filopodia
 {
     std::vector<double> directions;
-    std::vector<double> default_normal_weights;
     std::vector<double> normal_weights;
     int size;
     double finger_length;

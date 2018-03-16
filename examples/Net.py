@@ -33,13 +33,13 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params, save_path = "tmp
     culture = ng.CreateEnvironment(culture_file, min_x=0, max_x=1000)
     # pos_left = culture.seed_neurons(neurons=experiment_params["num_neurons"], xmax=200, soma_radius=10.)
 
-    neuron_params['growth_cone_model']='random_walk'
+    neuron_params['growth_cone_model']="persistent_random_walk"
     # neuron_params['position'] = pos_left
 
     gids = None
     # plt.show()
     gids = ng.CreateNeurons( experiment_params["num_neurons"],
-                                        "random_walk",
+                                        "persistent_random_walk",
                                         culture=culture,
                                         params=neuron_params,
                                         num_neurites=3

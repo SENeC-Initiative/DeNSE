@@ -111,9 +111,9 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
 
     // compute the number of filopodia to ignore
-    unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
-    unsigned int n_max  = filopodia.size - ignore;
-    unsigned int n_min  = ignore;
+    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
+    //~ unsigned int n_max  = filopodia.size - ignore;
+    //~ unsigned int n_min  = ignore;
 
     // values used locally inside loop
     double angle, new_height, new_substrate_affinity, distance;
@@ -129,7 +129,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     AreaPtr new_area;
 
     // test the environment for each of the filopodia's angles
-    for (n_angle = n_min; n_angle < n_max; n_angle++)
+    //~ for (n_angle = n_min; n_angle < n_max; n_angle++)
+    for (n_angle = 0; n_angle < filopodia.size; n_angle++)
     {
         filo_wall = false;
 
@@ -157,7 +158,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             wall_presence[n_angle]       = true;
 
             // apply partial wall affinity to previous angle if it exists
-            if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
+            //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
+            if (last_filo_wall != n_angle-1 and n_angle-1 >= 0)
             {
                 directions_weights[n_angle-1] *= (1. + 0.5*wall_afty);
             }
@@ -247,7 +249,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             if (old_height < new_height)
             {
                 // apply partial wall affinity to previous angle if it exists
-                if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
+                //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
+                if (last_filo_wall != n_angle-1 and n_angle-1 >= 0)
                 {
                     directions_weights[n_angle-1] *= (1. + 0.5*wall_afty);
                 }
@@ -288,7 +291,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         else
         {
             // apply partial wall affinity to next angle if relevant
-            if (n_angle != n_min and last_filo_wall == n_angle-1)
+            //~ if (n_angle != n_min and last_filo_wall == n_angle-1)
+            if (n_angle != 0 and last_filo_wall == n_angle-1)
             {
                 directions_weights[n_angle] *= (1. + 0.5*wall_afty);
             }
@@ -313,24 +317,25 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
     double angle;
 
     // compute the number of filopodia to ignore
-    unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
-    unsigned int n_max  = filopodia.size - ignore;
-    unsigned int n_min  = ignore;
+    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
+    //~ unsigned int n_max  = filopodia.size - ignore;
+    //~ unsigned int n_min  = ignore;
 
-    // set ignored direction weights to nan
-    for (n_angle = 0; n_angle < n_min; n_angle++)
-    {
-        directions_weights[n_angle] = std::nan("");
-    }
-    for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
-    {
-        directions_weights[n_angle] = std::nan("");
-    }
+    //~ // set ignored direction weights to nan
+    //~ for (n_angle = 0; n_angle < n_min; n_angle++)
+    //~ {
+        //~ directions_weights[n_angle] = std::nan("");
+    //~ }
+    //~ for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
+    //~ {
+        //~ directions_weights[n_angle] = std::nan("");
+    //~ }
 
     assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
 
     // test the environment for each of the filopodia's angles
-    for (n_angle = n_min; n_angle < n_max; n_angle++)
+    //~ for (n_angle = n_min; n_angle < n_max; n_angle++)
+    for (n_angle = 0; n_angle < filopodia.size; n_angle++)
     {
         angle = move.angle + filopodia.directions.at(n_angle);
 

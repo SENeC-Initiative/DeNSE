@@ -31,7 +31,7 @@ namespace growth
  * growth::set_status then a gaussian distribution for the speed is adopted.
  */
 GrowthCone_RandomWalk::GrowthCone_RandomWalk()
-    : GrowthCone()
+    : GrowthCone("persistent_random_walk")
     /* Model variables:: will be passed to statusMap
      defaults are initialized:
     */
@@ -67,8 +67,22 @@ GCPtr GrowthCone_RandomWalk::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
     printf(" It's calling RandomWalk->clone! with direction %f\n", angle);
 #endif
     auto newCone = std::make_shared<GrowthCone_RandomWalk>(*this);
+    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
+
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
                              position, angle);
+
+    // update containing area
+    newCone->current_area_ =
+        using_environment_
+            ? kernel().space_manager.get_containing_area(position, omp_id)
+            : "";
+
+    if (using_environment_)
+    {
+        newCone->update_growth_properties(current_area_);
+    }
+
     return newCone;
 }
 
@@ -85,29 +99,43 @@ GCPtr GrowthCone_RandomWalk::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
 void GrowthCone_RandomWalk::initialize_RW()
 {
     double average_step =
-        kernel().simulation_manager.get_resolution() * avg_speed_;
+    kernel().simulation_manager.get_resolution() * local_avg_speed_;
     // set the memory parameter.
-
-    { // initializing memory random walk
-        if (memory_.tau > 0)
-        {
-            memory_.alpha_coeff = exp(-average_step / memory_.tau);
-        }
-        else
-        {
-            memory_.alpha_coeff = 1;
-        }
-    }
-
-    // initializing persistance random walk
-    if (corr_rw_.tau > 0)
+    if (memory_.tau == -1)
     {
-        corr_rw_.f_coeff = exp(-average_step / corr_rw_.tau);
+        memory_.alpha_coeff =0;
+    }
+    else if (memory_.tau > 0)
+    {
+        memory_.alpha_coeff = exp(-average_step / get_diameter()/ memory_.tau);
+    }
+    else if (memory_.tau == 0)
+    {
+        memory_.alpha_coeff = 1;
     }
     else
     {
+        throw InvalidArg("`tau` coefficients for biased random walk must be "
+                         "either positive, or -1 to disable.", __FUNCTION__,
+                         __FILE__, __LINE__);
+    }
+
+    // initializing persistance random walk
+    if (corr_rw_.tau == -1)
+    {
         corr_rw_.f_coeff = 0;
     }
+    else if (corr_rw_.tau > 0)
+    {
+        corr_rw_.f_coeff = exp(-average_step / get_diameter()/ corr_rw_.tau);
+    }
+    else
+    {
+        throw InvalidArg("`tau` coefficients for biased random walk must be "
+                         "either positive, or -1 to disable.", __FUNCTION__,
+                         __FILE__, __LINE__);
+    }
+        
     corr_rw_.sqrt_f_coeff = sqrt(1 - corr_rw_.f_coeff * corr_rw_.f_coeff);
 
     memory_.effective_angle = move_.angle;
@@ -120,7 +148,6 @@ void GrowthCone_RandomWalk::initialize_RW()
            sensing_angle_, corr_rw_.f_coeff, memory_.alpha_coeff);
 #endif
 }
-
 
 /**
  * @brief Compute the new angle with persistence and memory length
@@ -160,11 +187,10 @@ void GrowthCone_RandomWalk::initialize_RW()
  * whit alpha = 0 and f =0 it retrieves a diffusive process.
  *
  */
-Point GrowthCone_RandomWalk::compute_new_position(
-    const std::vector<double> &directions_weights, mtPtr rnd_engine,
-    double substep, double frac, int n, int omp_id)
+Point GrowthCone_RandomWalk::compute_target_position(
+        const std::vector<double> &directions_weights, mtPtr rnd_engine,
+        double &substep, double &new_angle)
 {
-    double mean      = 0.5*directions_weights[n];
     double resol     = kernel().simulation_manager.get_resolution();
     double mem_coeff =
         (substep == resol) ? memory_.alpha_coeff
@@ -183,36 +209,13 @@ Point GrowthCone_RandomWalk::compute_new_position(
                          + corr_rw_.f_coeff * corr_rw_.det_delta;
 
     // choose the new angle
-    double default_angle;
-    delta_angle_         = corr_rw_.det_delta;
-    double new_angle     = memory_.effective_angle + corr_rw_.det_delta;
+    new_angle = memory_.effective_angle + corr_rw_.det_delta;
+    //printf("delta: %f \n", delta_angle_);
+
+    // check that this step is allowed, otherwise move towards default_angle
     Point target_pos =
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
-
-    if (kernel().space_manager.env_contains(target_pos, omp_id))
-    {
-        return target_pos;
-    }
-    else if (frac > mean and not std::isnan(directions_weights[n-1]))
-    {
-        default_angle = move_.angle + filopodia_.directions[n-1];
-    }
-    else
-    {
-        default_angle = move_.angle + filopodia_.directions[n];
-    }
-
-    // move towards default_angle
-    do
-    {
-        new_angle    = 0.5 * (new_angle + default_angle);
-        delta_angle_ = new_angle - move_.angle;
-        target_pos   =
-            Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
-                  geometry_.position.at(1) + sin(new_angle) * move_.module);
-    }
-    while (not kernel().space_manager.env_contains(target_pos, omp_id));
 
     return target_pos;
 }
@@ -258,8 +261,12 @@ void GrowthCone_RandomWalk::set_status(const statusMap &status)
 void GrowthCone_RandomWalk::get_status(statusMap &status) const
 {
     GrowthCone::get_status(status);
-    set_param(status, names::rw_delta_corr, corr_rw_.tau);
-    set_param(status, names::rw_memory_tau, memory_.tau);
+    double delta_corr(corr_rw_.tau), mem_tau(memory_.tau);
+    set_param(status, names::rw_delta_corr, delta_corr);
+    set_param(status, names::rw_memory_tau, mem_tau);
+    set_param(status, names::rw_persistence_length, persistence_length_);
+    //~ set_param(status, names::rw_delta_corr, corr_rw_.tau);
+    //~ set_param(status, names::rw_memory_tau, memory_.tau);
 }
 
 

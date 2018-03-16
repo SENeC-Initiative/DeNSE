@@ -12,19 +12,19 @@ import NetGrowth as ng
 
 neuron_params = {
     "use_critical_resource": False,
-    "growth_cone_model": "random_walk",
-    "use_lateral_branching": False,
+    "growth_cone_model": "persistent_random_walk",
+    "use_uniform_branching": False,
     "use_van_pelt": False,
 
     "rw_persistence_length": 20.,
     "rw_memory_tau": 100.,
-    "sensing_angle":0.1433,
+    "sensing_angle": 0.1433,
 
     "speed_growth_cone": 0.01,
 
     "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.,
-    "filopodia_angular_resolution": 30
+    "filopodia_min_number": 30
 }
 
 dendrite_params = {
@@ -40,7 +40,7 @@ if __name__ =='__main__':
     kernel={
         "seeds":[35],
         "num_local_threads": 1,
-        "resolution": 300.,
+        "resolution": 30.,
         "environment_required": False
     }
 
@@ -84,16 +84,17 @@ if __name__ =='__main__':
         "B" : 900.,
         "E" : 0.1,
         "S" : 1.5, # large S leads to core dump
-        "T" : 1.8e-8,
+        "T" : 8.6e2,
     }
 
     dend_params = vp_params.copy()
-    dend_params["T"] = 1e-8
+    #~ dend_params["T"] = 1e-8
 
     ng.SetStatus(gids, params=vp_params, dendrites_params=dend_params)
-    pprint(ng.GetStatus(gids))
+    # pprint(ng.GetStatus(gids))
 
     ng.Simulate(hours=12, days=1)
+    print("Simulation done")
     ng.PlotNeuron(show_nodes=True, show=True)
 
 
@@ -105,7 +106,7 @@ if __name__ =='__main__':
 
     lat_params = {
         "use_van_pelt": False,
-        "use_lateral_branching": True,
+        "use_uniform_branching": True,
         "speed_growth_cone": 0.005,
         "uniform_branching_rate": 0.00005,
         "lateral_branching_angle_mean": 45.,

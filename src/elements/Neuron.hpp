@@ -117,6 +117,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
 
   private:
     size_t gid_;
+    std::string description_;
     //! Container for the ``NeuritePtr`` objects
     NeuriteMap neurites_;
     BaseNodePtr soma_;

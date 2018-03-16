@@ -27,9 +27,9 @@ neuron_params = {
     # "critical_resource_elongation_th": 9.,
     # "critical_resource_std": 0.1,
     # "critical_resource_retraction_th": 2.,
-    "critical_resource_speed_factor": 0.5,
+    #~ "critical_resource_speed_factor": 0.5,
     # "critical_resource_split_th": 80.,
-    "critical_resource_split_tau": 100.,
+    #~ "critical_resource_split_tau": 100.,
 
     # #lateral branching model
     "uniform_branching_rate": 0.001,
@@ -37,20 +37,20 @@ neuron_params = {
     # "lateral_branching_angle_std": 20.,
 
 
-    "rw_persistence_length": 2.,
-    "rw_memory_tau": 90.,
+    #~ "rw_persistence_length": 2.,
+    #~ "rw_memory_tau": 90.,
     "sensing_angle":0.1433,
 
     "speed_growth_cone": 0.05,
 
     "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.,
-    "filopodia_angular_resolution": 30
+    "filopodia_min_number": 30
     }
 
 dendrite_params = {
     "speed_growth_cone": 0.02,
-    "critical_resource_speed_factor": 0.05,
+    #~ "critical_resource_speed_factor": 0.05,
 }
 
 
@@ -104,7 +104,5 @@ if __name__ =='__main__':
     print("start simu")
 
     step(100, 0, False)
-
-    data = ng.GetStatus(gids_rec)["recording"]
 
     ng.PlotRecording(gids_rec, show=True)

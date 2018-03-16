@@ -1,5 +1,6 @@
 #include "gc_dir_el.hpp"
 #include "config_impl.hpp"
+#include "kernel_manager.hpp"
 #include <cassert>
 #include <math.h>
 #include <memory>
@@ -50,16 +51,22 @@ GCPtr GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::clone(
     auto newCone = std::make_shared<
         GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>>(
         *this);
+    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
     // newCone= std::dynamic_pointer_cast<GrowthCone>(newCone);
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
                              position, angle);
-    // assert(newCone->ElongationModel::get_CR_demand() ==
-    // ElongationModel::get_CR_demand());
-    // printf("newcone  %s critical_resource is %f \n", get_treeID().c_str(),
-    // get_critical_resource_demand());
-    // printf("newcone  %s critical_resource is %f \n",
-    // newCone->get_treeID().c_str(),
-    // newCone->get_critical_resource_demand());
+
+    // update containing area
+    newCone->current_area_ =
+        newCone->using_environment_
+            ? kernel().space_manager.get_containing_area(position, omp_id)
+            : "";
+
+    if (newCone->using_environment_)
+    {
+        newCone->update_growth_properties(newCone->current_area_);
+    }
+
     return newCone;
 }
 

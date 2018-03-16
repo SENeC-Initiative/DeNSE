@@ -11,6 +11,7 @@ import random, shutil
 import os
 
 import nngt
+
 import NetGrowth as ng
 
 
@@ -25,53 +26,84 @@ def CleanFolder(tmp_dir, make=True):
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
 
+
+'''
+Main parameters
+'''
+
 soma_radius = 10.
+use_critical_resource = False
+use_uniform_branching = False
+use_vp                = False
 
 neuron_params = {
     # "gc_split_angle_mean": 30.,
     # "gc_split_angle_std": 10.,
-    # "B" : 6.5,
-    # "E" : 0.08,
-    # "S" : 1.02, # large S leads to core dump
-    # "T" : 0.01,
     #~ "axon_angle":0.,
 
-    "use_critical_resource": False,
-    # #critical_resource model
-    # "critical_resource_amount":100.,
-    # "critical_resource_initial_demand":1.,
-    # "critical_resource_topo_coeff": 1.,
-    # "critical_resource_elongation_th": 9.,
-    # "critical_resource_std": 0.1,
-    # "critical_resource_retraction_th": 2.,
-    "critical_resource_speed_factor": 0.5,
-    # "critical_resource_split_th": 80.,
-    "critical_resource_split_tau": 100.,
+    "use_critical_resource": use_critical_resource,
+    "use_uniform_branching": use_uniform_branching,
+    "use_van_pelt": use_vp,
 
     # #lateral branching model
-    "uniform_branching_rate": 0.001,
     # "lateral_branching_angle_mean": 50.,
     # "lateral_branching_angle_std": 20.,
 
-
-    "rw_persistence_length": 2.,
-    "rw_memory_tau": 90.,
     "sensing_angle":0.04,
 
     "speed_growth_cone": 0.03,
 
     "filopodia_wall_affinity": 20.,
     "filopodia_finger_length": 20.,
-    "filopodia_angular_resolution": 30,
+    "filopodia_min_number": 30,
 
     "soma_radius": soma_radius,
 }
 
 dendrite_params = {
     "speed_growth_cone": 0.01,
-    "critical_resource_speed_factor": 0.05,
 }
 
+
+'''
+Check for optional parameters
+'''
+
+if use_critical_resource:
+    cr_params = {
+        "critical_resource_amount":100.,
+        "critical_resource_initial_demand":1.,
+        "critical_resource_topo_coeff": 1.,
+        "critical_resource_elongation_th": 9.,
+        "critical_resource_std": 0.1,
+        "critical_resource_retraction_th": 2.,
+        "critical_resource_split_th": 80.,
+        "critical_resource_speed_factor": 0.5,
+        "critical_resource_split_tau": 100.,
+    }
+    neuron_params.update(cr_params)
+    dendrite_params["critical_resource_speed_factor"] = 0.05
+
+if use_uniform_branching:
+    neuron_params["uniform_branching_rate"] = 0.001
+
+if use_vp:
+    vp_params = {
+        "B" : 6.5,
+        "E" : 0.08,
+        "S" : 1.02, # large S leads to core dump
+        "T" : 0.01,
+    }
+    neuron_params.update(vp_params)
+
+if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
+    neuron_params["rw_persistence_length"] = 2.
+    neuron_params["rw_memory_tau"] = 90.
+
+
+'''
+Simulation
+'''
 
 def step(n, loop_n, plot=True):
     ng.Simulate(n)
@@ -85,7 +117,7 @@ if __name__ =='__main__':
             #~ "resolution": 30.}
     kernel={"seeds":[33, 64, 84, 65, 68, 23],
             "num_local_threads": 6,
-            "resolution": 200.}
+            "resolution": 30.}
     # ~ kernel={"seeds":[33],
             # ~ "num_local_threads": 1,
             # ~ "resolution": 30.}
@@ -96,7 +128,7 @@ if __name__ =='__main__':
 
     culture_file = current_dir + "/2chamber_culture.svg"
 
-    ng.SetKernelStatus(kernel, "ID")
+    ng.SetKernelStatus(kernel, simulation_ID="ID")
 
     if not neuron_params['use_critical_resource']:
         #~ neuron_params['growth_cone_model'] = 'random_walk'
@@ -120,14 +152,14 @@ if __name__ =='__main__':
     print("Creating neurons")
     gids = ng.CreateNeurons(n= 200, growth_cone_model='random_walk',
                             culture=culture,
-                            params = neuron_params,
+                            params=neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
 
     #~ ng.plot.PlotNeuron(show=True)
 
     start = time.time()
-    step(60000, 0, False)
+    step(6000, 0, False)
     # ~ for loop_n in range(5):
          # ~ step(500, loop_n, True)
     duration = time.time() - start

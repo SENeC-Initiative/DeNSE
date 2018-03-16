@@ -12,8 +12,9 @@ InvalidArg::InvalidArg()
 
 InvalidArg::InvalidArg(const std::string &msg, const char *func,
                        const char *file, unsigned int line)
-    : std::invalid_argument("@" + std::string(func) + " in " + std::string(file) +
-                         ":" + std::to_string(line) + "\n" + msg)
+    : std::invalid_argument(
+        "@" + std::string(func) + " in " + std::string(file) + ":" +
+        std::to_string(line) + "\n" + msg)
 {
     name_ = "InvalidArgument";
 }

@@ -38,9 +38,8 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
     Memory memory_;
 
   public:
-    // required for models
+    // public required for model manager
     GrowthCone_RandomWalk();
-
     GrowthCone_RandomWalk(const GrowthCone_RandomWalk &);
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
@@ -51,9 +50,9 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
     void after_split() override;
     void initialize_RW();
 
-    virtual Point compute_new_position(
+    virtual Point compute_target_position(
         const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double substep, double frac, int n, int omp_id) override;
+        double &substep, double &new_angle) override;
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;

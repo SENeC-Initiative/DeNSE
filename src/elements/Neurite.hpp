@@ -44,6 +44,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void init_first_node(BaseWeakNodePtr soma, Point pos,
                          std::string neurite_name, double soma_radius,
                          double neurite_diameter);
+    void set_soma_angle(const double angle);
+    double get_soma_angle() const;
     void finalize();
 
     // Growth functions
@@ -121,6 +123,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     //! branch direction parameters
     double diameter_eta_exp_;
     double diameter_variance_;
+    double soma_angle_;
     double lateral_branching_angle_mean_;
     double lateral_branching_angle_std_;
     double gc_split_angle_mean_;

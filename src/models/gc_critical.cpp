@@ -1,4 +1,5 @@
 #include "gc_critical.hpp"
+#include "kernel_manager.hpp"
 #include "config_impl.hpp"
 #include <math.h>
 
@@ -6,7 +7,7 @@ namespace growth
 {
 
 GrowthCone_Critical::GrowthCone_Critical()
-    : GrowthCone()
+    : GrowthCone("competitive")
     , critical_(0, CRITICAL_INITIAL_DEMAND, CRITICAL_INITIAL_DEMAND,
                 CRITICAL_LEAKAGE, CRITICAL_RETRACTION_TH,
                 CRITICAL_ELONGATION_TH, CRITICAL_SPEED_FACTOR,
@@ -40,8 +41,21 @@ GCPtr GrowthCone_Critical::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
     printf(" It's calling Critical->clone! with direction %f\n", angle);
 #endif
     auto newCone = std::make_shared<GrowthCone_Critical>(*this);
+    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
                              position, angle);
+
+    // update containing area
+    newCone->current_area_ =
+        using_environment_
+            ? kernel().space_manager.get_containing_area(position, omp_id)
+            : "";
+
+    if (using_environment_)
+    {
+        newCone->update_growth_properties(current_area_);
+    }
+
     return newCone;
 }
 
@@ -246,113 +260,6 @@ double GrowthCone_Critical::get_state(const char *observable) const
     ENDTRIE;
 
     return value;
-}
-
-
-//============================
-// Detailed
-//============================
-
-
-GrowthCone_Critical_Langevin::GrowthCone_Critical_Langevin()
-    : GrowthCone_Critical()
-{
-}
-
-
-GrowthCone_Critical_Langevin::GrowthCone_Critical_Langevin(
-    const GrowthCone_Critical &copy)
-    : GrowthCone_Critical(copy)
-{
-}
-
-
-/**
- * @brief Compute the critical_resource received from the neurite
- *
- * Compare the demand of the growth cone to the demand of the other growth cones
- * in the neurite
- * The summation of the demand is done in Branching.cpp.
- * The competition behaviour is here, and  the attenuation is computed too.
- * the sum of the critical_resource_received from all the growth cones in the
- * neurite is
- * equal to the critical_resource
- * amount of the neurite.
- *
- */
-void GrowthCone_Critical_Langevin::compute_CR()
-{
-
-    // compute received normalization on the neurite.
-    compute_CR_received();
-
-    critical_.left +=
-        (critical_.received) - (critical_.left) * (critical_.leakage);
-    critical_.used = (critical_.left) * critical_.use_ratio;
-    critical_.left *= (1 - critical_.use_ratio);
-
-
-    /*    printf("centrifugal_order: %f x %f x %f x %f \n = %f"*/
-    //,powf(2, -centrifugalOrder_ * critical_resource_topo_coeff_ )
-    //, neurite_dyn->get_critical_resource_quotient()
-    //, critical_resource_demand_
-    //, neurite_dyn->get_critical_resource_amount(),
-    /*critical_resource_received_);*/
-}
-
-GrowthCone_Critical_Lurd::GrowthCone_Critical_Lurd()
-    : GrowthCone_Critical()
-{
-}
-
-
-GrowthCone_Critical_Lurd::GrowthCone_Critical_Lurd(
-    const GrowthCone_Critical &copy)
-    : GrowthCone_Critical(copy)
-{
-}
-void GrowthCone_Critical_Lurd::compute_CR()
-{
-
-    compute_CR_received();
-
-
-    critical_.used =
-        (critical_.left + critical_.received) * critical_.use_ratio;
-    critical_.left =
-        (critical_.received + critical_.left) * (1 - critical_.use_ratio);
-
-    // printinfo();
-
-    /*    printf("centrifugal_order: %f x %f x %f x %f \n = %f"*/
-    //,powf(2, -centrifugalOrder_ * critical_resource_topo_coeff_ )
-    //, neurite_dyn->get_critical_resource_quotient()
-    //, critical_resource_demand_
-    //, neurite_dyn->get_critical_resource_amount(),
-    /*critical_resource_received_);*/
-}
-
-GrowthCone_Critical_Gaussian::GrowthCone_Critical_Gaussian()
-    : GrowthCone_Critical()
-{
-}
-
-GrowthCone_Critical_Gaussian::GrowthCone_Critical_Gaussian(
-    const GrowthCone_Critical &copy)
-    : GrowthCone_Critical(copy)
-{
-}
-
-void GrowthCone_Critical_Gaussian::compute_CR()
-{
-
-
-    compute_CR_received();
-
-    critical_.left = 0;
-    critical_.used = critical_.received * critical_.use_ratio;
-
-    // printinfo();
 }
 
 } // namespace

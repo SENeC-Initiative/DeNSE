@@ -37,13 +37,14 @@ class GrowthCone : public TopologicalNode,
     friend class Branching;
 
   protected:
+    const std::string model_;
     bool using_environment_;   // whether we're embedded in space
     double sqrt_resol_;
     size_t gc_ID_;             // unique number for growth cones
     std::string current_area_; // name of the area where the GC is
     bool stuck_;
     bool stopped_;
-    bool stopped_from_1_;
+    bool interacting_;
     bool update_filopodia_;
     std::vector<std::string> observables_;
 
@@ -73,24 +74,24 @@ class GrowthCone : public TopologicalNode,
     Move move_;
 
     double total_proba_;  // integrated probability of all possible moves
-    double default_total_proba_;  // if timestep were 1
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
     std::exponential_distribution<double> exponential_;
 
   public:
-    GrowthCone();
+    // public status required for models and model manager
+    GrowthCone(const std::string &model);
     ~GrowthCone();
     //! Copy constructor for GrowthCone
     GrowthCone(const GrowthCone &copy);
 
-    void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
-                         float distanceToParent, const std::string &binaryID,
-                         const Point &position, double angle);
-
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
                         const Point &position, double angle);
+
+    void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
+                         float distanceToParent, const std::string &binaryID,
+                         const Point &position, double angle);
 
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);
@@ -108,10 +109,10 @@ class GrowthCone : public TopologicalNode,
                                      double substep);
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
-                   double substep, mtPtr rnd_engine, int omp_id);
-    virtual Point compute_new_position(
+                   double &substep, mtPtr rnd_engine, int omp_id);
+    virtual Point compute_target_position(
         const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double substep, double frac, int n, int omp_id);
+        double &substep, double &new_angle);
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
 

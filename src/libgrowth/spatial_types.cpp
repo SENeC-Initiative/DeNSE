@@ -20,6 +20,19 @@ Point::Point(const Point &pt)
 {
 }
 
+void Point::shift(const double module, const double direction)
+{
+    x_ = x_+cos(direction)*module;
+    y_ = y_+sin(direction)*module;
+}
+
+Point Point::operator-(const Point point) const
+{
+    double dx = x_ - point.x_;
+    double dy = y_ - point.y_;
+    return Point(dx, dy);
+}
+
 double Point::operator[](const int idx)
 {
     if (idx == 0 || idx == -2)

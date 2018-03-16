@@ -320,7 +320,7 @@ class Animate(_Animator, anim.FuncAnimation):
 # Plot recording #
 # -------------- #
 
-def PlotRecording(recorder, time_units="hours", show=True):
+def PlotRecording(recorder, time_units="hours", display="overlay", show=True):
     '''
     Plot the result of a recording.
 
@@ -330,19 +330,26 @@ def PlotRecording(recorder, time_units="hours", show=True):
         Gid of the recorder(s).
     time_units : str, optional (default: hours)
         Unit for the time, among "seconds", "minutes", "hours", and "days".
+    display : str, optional (default: "overlay")
+        How to display the recordings for several neurons. By default, all
+        neurons are plotted on the same axes. For a reasonnable number of
+        neurons, the "separate" options can be used instead, where the
+        recordings of each neuron will be plotted on a separate subplot.
     show : bool, optional (default: True)
         Display the plot.
     '''
     import matplotlib.pyplot as plt
-    data = _pg.GetStatus(recorder, time_units=time_units)
-    num_neurons = len(data["targets"])
-    rec_type    = data["observable"]
-    level       = data["level"]
-    ev_type     = data["event_type"]
-    data        = data["recording"]
+    status      = _pg.GetStatus(recorder, time_units=time_units)
+    num_neurons = len(status["targets"])
+    rec_type    = status["observable"]
+    level       = status["level"]
+    ev_type     = status["event_type"]
+    data        = _pg.GetRecording(recorder)
 
-    num_cols = int(np.sqrt(num_neurons))
-    num_rows = num_cols + 1
+    num_cols = num_rows = 1
+    if display == "separate":
+        num_cols = int(np.sqrt(num_neurons))
+        num_rows = num_cols + 1 if num_cols**2 < num_neurons else num_cols
     gs = gridspec.GridSpec(num_rows, num_cols)
 
     i, j, k = 0, 0, 0
@@ -351,26 +358,26 @@ def PlotRecording(recorder, time_units="hours", show=True):
         if level == "neuron":
             if rec_type == "num_growth_cones":
                 # repeat the times and values to make sudden jumps
-                times  = np.repeat(data["times"][neuron], 2)
-                values = np.repeat(data[rec_type][neuron], 2)
+                times  = np.repeat(data[rec_type]["times"][neuron], 2)
+                values = np.repeat(data[rec_type]["data"][neuron], 2)
                 ax.plot(times[1:], values[:-1])
             else:
-                ax.plot(data["times"][neuron], data[rec_type][neuron])
+                ax.plot(data[rec_type]["times"][neuron], data[rec_type]["data"][neuron])
         else:
-            for neurite, values in data[rec_type][neuron].items():
+            for neurite, values in data[rec_type]["data"][neuron].items():
                 if level == "neurite":
                     if ev_type == "continuous":
-                        ax.plot(data["times"], values, label=neurite)
+                        ax.plot(data[rec_type]["times"], values, label=neurite)
                     else:
                         if rec_type == "num_growth_cones":
                             # repeat the times and values to make sudden jumps
                             times  = np.repeat(
-                                data["times"][neuron][neurite], 2)
+                                data[rec_type]["times"][neuron][neurite], 2)
                             values = np.repeat(values, 2)
                             ax.plot(times[1:], values[:-1], label=neurite)
                         else:
                             ax.plot(
-                                data["times"][neuron][neurite], values[1:],
+                                data[rec_type]["times"][neuron][neurite], values[1:],
                                 label=neurite)
                 else:
                     for gc_data, gc_time in zip(values.values(), times.values()):
@@ -381,7 +388,10 @@ def PlotRecording(recorder, time_units="hours", show=True):
         j += 1
         if j == num_cols:
             j  = 0
-            i += 1
+            if i+1 < num_rows:
+                i += 1
+            else:
+                i = 0
         ax.legend()
 
     if show:
@@ -464,6 +474,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         PlotEnvironment(culture, ax=ax, show=False, **kwargs)
         new_lines += 1
     # plot the axons
+    print(len(axons[0]))
     ax.plot(axons[0], axons[1], ls="-", c=axon_color)
     # plot the dendrites
     ax.plot(dendrites[0], dendrites[1], ls="-", c=dendrite_color)
@@ -504,7 +515,6 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
 # --------------- #
 # PlotEnvironment #
 # --------------- #
-
 def BtmorphVisualize(Simulation_folder):
     import matplotlib.pyplot as plt
     import btmorph2

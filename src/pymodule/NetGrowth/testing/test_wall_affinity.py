@@ -22,7 +22,7 @@ from NetGrowth.tools import fraction_neurites_near_walls, neurite_length
 Setting the parameters
 '''
 
-num_neurons = 200
+num_neurons = 300
 simtime     = 5000.
 num_omp     = 7
 resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
@@ -33,7 +33,7 @@ resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
 widths      = [5., 10., 20., 40.]
 colors      = ["b", "orange", "r", "purple"]
 
-sensing_angle = 0.04
+sensing_angle = 0.4
 
 
 '''
@@ -75,7 +75,7 @@ for k, resol in enumerate(resolutions):
     })
 
     # ~ width = resol*np.sin(sensing_angle*np.sqrt(resol))
-    width = 20.
+    width = 50.
 
     ng.SetEnvironment(shape)
 
@@ -100,7 +100,8 @@ for k, resol in enumerate(resolutions):
     ng.Simulate(simtime)
     times.append(time.time()-t0)
 
-    ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect='auto')
+    #~ ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect='auto')
+    ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect=1)
 
     affinities.append(
         ng.GetStatus(0, "axon_params")["filopodia_wall_affinity"])

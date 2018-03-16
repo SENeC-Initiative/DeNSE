@@ -12,11 +12,12 @@ CMakeFiles
 generated
 Makefile
 **/build
+**/cmake_install.cmake
 src/pymodule/setup.py
 src/libgrowth/config.hpp
 local_install
 install_test
-src/pymodule/NetGrowth/_*.cpp
+src/pymodule/NetGrowth/_pygrowth.cpp
 
 
 # Libraries
@@ -54,5 +55,6 @@ test.swc
 phd_tracking/tests
 phd_tracking/phd
 phd_tracking/vess
+image_analysis
 
 restats

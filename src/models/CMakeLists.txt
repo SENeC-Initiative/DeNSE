@@ -1,7 +1,9 @@
 set( models_sources
     gc_random_walk.hpp  gc_random_walk.cpp
+    gc_run_tumble.hpp  gc_run_tumble.cpp
     gc_critical.hpp gc_critical.cpp
     gc_dir_el.hpp gc_dir_el.cpp
+    gc_self_referential_forces.hpp gc_self_referential_forces.cpp
     ActinWave.cpp ActinWave.hpp
     models_manager.hpp
     models_manager.cpp

@@ -23,10 +23,10 @@ except ImportError:
 # Remove default flags #
 # -------------------- #
 
-sysconfig._config_vars['CFLAGS'] = ""
-sysconfig._config_vars['CXXFLAGS'] = ""
-sysconfig._config_vars['LDFLAGS'] = ""
-sysconfig._config_vars['OPT'] = ""
+# sysconfig._config_vars['CFLAGS'] = ""
+# sysconfig._config_vars['CXXFLAGS'] = ""
+# sysconfig._config_vars['LDFLAGS'] = ""
+# sysconfig._config_vars['OPT'] = ""
 
 
 # ------------------------------------- #

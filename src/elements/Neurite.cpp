@@ -124,6 +124,18 @@ void Neurite::finalize()
 }
 
 
+void Neurite::set_soma_angle(const double angle)
+{
+    soma_angle_ = angle;
+}
+
+
+double Neurite::get_soma_angle() const
+{
+    return soma_angle_;
+}
+
+
 /**
  * @brief store kernel parameters locally to avoid repeated calls
  *
@@ -777,7 +789,7 @@ void Neurite::get_status(statusMap &status, const std::string& level) const
     {
         set_param(status, names::gc_split_angle_mean,
                   _deg_from_rad(gc_split_angle_mean_));
-        set_param(status, names::gc_split_angle_mean,
+        set_param(status, names::gc_split_angle_std,
                   _deg_from_rad(gc_split_angle_std_));
         set_param(status, names::lateral_branching_angle_std,
                   _deg_from_rad(lateral_branching_angle_mean_));
@@ -820,11 +832,17 @@ double Neurite::get_max_resol() const
     double max_speed = growth_cones_.begin()->second->avg_speed_ +
                        5*growth_cones_.begin()->second->speed_variance_;
     double length    = growth_cones_.begin()->second->filopodia_.finger_length;
-    // check angle limit
-    double sigma_sqrd   = growth_cones_.begin()->second->sensing_angle_ *
-                          growth_cones_.begin()->second->sensing_angle_;
-    double dt_angle_max = M_PI*M_PI/(9*sigma_sqrd);
-    return std::min(length / max_speed, dt_angle_max);
+
+    // check angle limit for simple random walk (sigma depends on resolution)
+    if (growth_cone_model_ == "simple_random_walk")
+    {
+        double sigma_sqrd   = growth_cones_.begin()->second->sensing_angle_ *
+                              growth_cones_.begin()->second->sensing_angle_;
+        double dt_angle_max = M_PI*M_PI/(9*sigma_sqrd);
+        return std::min(length / max_speed, dt_angle_max);
+    }
+
+    return length / max_speed;
 }
 
 } // namespace

@@ -29,6 +29,7 @@ class Branching
     std::poisson_distribution<> poisson_;
     std::exponential_distribution<> exponential_;
     std::exponential_distribution<> exponential_uniform_;
+    std::exponential_distribution<> exponential_flpl_;
 
     NeuritePtr neurite_;
 
@@ -50,9 +51,14 @@ class Branching
     double T_;
 
     // variables for uniform branching
-    bool use_lateral_branching_;
-    Event next_lateral_event_;
+    bool use_uniform_branching_;
+    Event next_uniform_event_;
     double uniform_branching_rate_;
+
+    // variables for non-uniform lateral branching
+    bool use_flpl_branching_;
+    Event next_flpl_event_;
+    double flpl_branching_rate_;
 
   public:
     Branching(NeuritePtr neurite);
@@ -69,8 +75,12 @@ class Branching
     void compute_vanpelt_event(mtPtr rnd_engine);
 
     // uniform branching functions
-    void compute_lateral_event(mtPtr rnd_engine);
+    void compute_uniform_event(mtPtr rnd_engine);
     bool uniform_new_branch(mtPtr rnd_engine);
+
+    // powerlaw branching functions
+    void compute_flpl_event(mtPtr rnd_engine);
+    bool flpl_new_branch(mtPtr rnd_engine);
 
     // critical_resource functions
     double get_CR_quotient() const;

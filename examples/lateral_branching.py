@@ -14,26 +14,28 @@ neuron_params = {
     "use_critical_resource": False,
 
     # #lateral branching model
-    "uniform_branching_rate": 0.0002,
     "lateral_branching_angle_mean": 50.,
     "lateral_branching_angle_std": 20.,
-    "use_lateral_branching": True,
+    #~ "use_uniform_branching": True,
+    #~ "uniform_branching_rate": 0.0002,
+    "use_flpl_branching": True,
+    "flpl_branching_rate": 0.0002,
     "use_van_pelt": False,
 
-    "rw_persistence_length": 50.,
-    "rw_memory_tau": 2000.,
+    #~ "rw_persistence_length": 50.,
+    #~ "rw_memory_tau": 2000.,
     "sensing_angle":0.01433,
 
     "speed_growth_cone": 0.05,
 
     "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.,
-    "filopodia_angular_resolution": 30
+    "filopodia_min_number": 30
 }
 
 dendrite_params = {
     "speed_growth_cone": 0.02,
-    "critical_resource_speed_factor": 0.005,
+    #~ "critical_resource_speed_factor": 0.005,
     "uniform_branching_rate": 0.0005,
     "sensing_angle":0.02433,
 }

@@ -30,6 +30,7 @@ namespace growth
 //! Default constructor
 Neuron::Neuron(size_t gid)
     : gid_(gid)
+    , description_("standard_neuron")
     , details()
     , observables_({"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , use_actin_waves_(false)
@@ -224,6 +225,7 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
 bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
 {
     std::string name_neurite = std::get<3>(ev);
+
     return neurites_[name_neurite]->branching_model_.branching_event(rnd_engine,
                                                                      ev);
 }
@@ -433,6 +435,7 @@ void Neuron::get_status(statusMap &status) const
     set_param(status, names::dendrite_diameter, details.dendrite_diameter);
     set_param(status, names::observables, observables_);
     set_param(status, names::axon_angle, axon_angle_);
+    set_param(status, names::description, description_);
 
     // set position
     Point pos = soma_->get_position();

@@ -42,8 +42,8 @@ class Neurite(object):
 
     def __init__(self, neurite_path, gid, position):
         self.xy = neurite_path[0]
-        self.theta = neurite_path[1]
-        self.r = neurite_path[2]
+        self.r = neurite_path[1]
+        self.theta = neurite_path[2]
         self.diameter = neurite_path[3]
         self.gid = gid
         self.positions = position
@@ -76,6 +76,7 @@ class SwcEnsemble(object):
         """
         for neuron in neurons:
             axon_path, dendrite_path = GetPath(neuron=neurons[neuron]['data'])
+            # import pdb; pdb.set_trace()  # XXX BREAKPOINT
             try:
                 position = self.info["neurons"][str(
                     neurons[neuron]['gid'])]['position']
@@ -209,24 +210,27 @@ def SwcToSegments(input_file, angle_thresh, length_thresh, element_type=[3]):
     """
 
     segments = segment_from_swc(input_file, element_type)
-    paths    = []
+    popper=[]
+    for key in segments:
+        if segments[key]["length"] > length_thresh:
+            segments[key]["array"] = SegmentFromAngularThresh(
+                            SegmentToPath(segments[key]["neurite"]),
+                            angle_thresh)
+        else:
+            popper.append(key)
+    for key in popper:
+        segments.pop(key)
 
-    for seg in segments:
-        if len(seg) > 2:
-            segment = SegmentToPath(seg)
-            paths.extend(SegmentFromAngularThresh(segment,angle_thresh))
-
-    paths = np.array(omologate(paths, length_thresh))
-
-    if paths.shape[0] == 0:
-        raise ValueError("Segments list is empty")
-
-    return paths
+            # paths.extend((segment,angle_thresh))
+    # paths =np.array(omologate(paths, length_thresh))
+    # if paths.shape[0] ==0:
+        # raise ValueError("Segments list is empty")
+    return segments
 
 
 def SegmentsToNetgrowth(paths, name, info):
     """
-    Convert a list of segments to an equivale set of Neuron in NetGrowth format
+    Convert a list of segments to an equivalent set of Neuron in NetGrowth format
     NetGrowth_data:
     {"neurons":
         {
@@ -250,7 +254,8 @@ def SegmentsToNetgrowth(paths, name, info):
     return NetGrowth_data
 
 
-def GetPath(neuron, plot=False, neuron_gid=1, axon_ID=2, dendrite_ID=3):
+def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
+
     """
     Only import axon, assume that:
         1) there is only one neurite.
@@ -275,6 +280,8 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID=2, dendrite_ID=3):
         except:
             raise ValueError("xy neuron data ar ill formed. xy is {}", xy.shape)
         modules=_module_from_xy(xy)
+
+        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
         return (xy,modules,angles,None),None
     elif isfile(neuron) and neuron.endswith(".swc"):
         neuron = np.loadtxt(neuron)
@@ -285,21 +292,21 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID=2, dendrite_ID=3):
         axon_diam = neuron[axon, 5]
         dendrite_diam = neuron[dendrite, 5]
         try:
-            angles_axon = _angles_from_xy(axon_xy)
-        except:
-            raise ValueError(
-                "xy neuron data ar ill formed. neuron[axon] is "
-                "{}, while axon_xy is {}".format(neuron[axon].shape,
-                                                 axon_xy.shape))
+            angles_axon=_angles_from_xy(axon_xy)
+        except ValueError as e:
+            print ("xy neuron data ar ill formed. neuron[axon] \
+                             is {}, while axon_xy is {}\
+                             ".format(neuron[axon].shape, axon_xy.shape))
+            raise e
         try:
             angles_dendrite = _angles_from_xy(dendrite_xy)
         except:
             warnings.warn("no dendrites in this run")
-            return (axon_xy, angles_axon, _module_from_xy(axon_xy), axon_diam), None
+            return (axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam), None
 
-        return ((axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam),
-                (dendrite_xy, _module_from_xy(dendrite_xy), angles_dendrite,
-                 dendrite_diam))
+        return (axon_xy,_module_from_xy(axon_xy),angles_axon, axon_diam),\
+            (dendrite_xy, _module_from_xy(dendrite_xy),angles_dendrite, dendrite_diam)
+
     else:
         import btmorph2
         if isinstance(neuron, btmorph2.NeuronMorphology):
@@ -312,7 +319,6 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID=2, dendrite_ID=3):
             raise ValueError("xy neuron data ar ill formed. xy is {}", xy.shape)
 
         modules=_module_from_xy(xy)
-
         return xy, np.array([modules,angles])
 
 
@@ -366,19 +372,32 @@ def segment_from_swc(input_file, element_type):
     set of segments without branching.
     Returns them in a list
     """
-
     f = open(input_file, 'r')
-    segments = [[]]
+    segments={}
+    n=-1
+    parent_sample = -10
     for line in f:
         if not line.startswith('#') and line.strip():
             if int(line.split()[1]) in element_type:
                 sample_number = int(line.split()[0])
                 parent_sample = int(line.split()[-1])
-                if parent_sample == sample_number - 1:
-                    segments[-1].append(line)
-                else:
-                    segments.append([])
 
+                if parent_sample == sample_number-1:
+                    segments[n]["neurite"].append(line)
+                    segments[n]["last_id"]=sample_number
+                    segments[n]["length"]+=1
+                else:
+                    # segments[n]["last_id"]=sample_number
+                    n+=1
+                    first_sample = sample_number
+                    segments[n] = {
+                        "length": 1,
+                        "first_id":first_sample,
+                        "parent_id":parent_sample,
+                        "neurite":[],
+                        "last_id":first_sample,
+                        "array":None
+                    }
     return segments
 
 
@@ -406,7 +425,12 @@ def SegmentToPath(segment):
         x_0 = x
         y_0 = y
         theta_0 = theta
-    plt.plot(matrix[0,:],matrix[1,:])
+    # plt.plot(matrix[0,:],matrix[1,:], c ='k')
+    # print(matrix[2,matrix[2,:]>1])
+    # print(matrix[2,:])
+    # plt.scatter(matrix[0,matrix[2,:]>1],matrix[1,matrix[2,:]>1], c='g')
+        # if matrix[2][n] > 0.5:
+            # return matrix, segment[n:]
     return matrix
 
 
@@ -415,18 +439,25 @@ def SegmentFromAngularThresh(segment, thresh):
     Cut the segment into subsegments when the angle is bigger
     than threshold
     """
-    if np.any(np.abs(segment[2,:])>thresh):
-        breakpoints = np.where(np.abs(segment[2,:])>thresh)[0][1:]
-        broken      = []
-        start       = 0
-        stop        = 0
-        for stop in breakpoints:
-            broken.append(segment[:,start:stop-1])
-            start = stop
-        broken.append(segment[:,stop:])
-        return broken
+
+    breakpoints = list(np.where(np.abs(segment[2,:])>thresh)[0][1:])
+    if breakpoints:
+        stop=0
+        # for stop in breakpoints:
+            # broken.append(segment[:,start:stop])
+            # start=stop
+        stop= breakpoints[-1]
+        if not segment[:,stop:].shape[1] > 40:
+            segment = segment[:,:stop]
+            # broken.append(segment[:,stop:])
+        return segment
+
+
+        # longest = max(broken, key=lambda x: x.shape[1])
+        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
+
     else:
-        return [segment]
+        return segment
 
 
 def omologate(segments, thresh):

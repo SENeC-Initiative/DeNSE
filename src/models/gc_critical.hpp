@@ -70,15 +70,11 @@ class GrowthCone_Critical : public virtual GrowthCone
 
   public:
     GrowthCone_Critical();
-
     GrowthCone_Critical(const GrowthCone_Critical &);
-
-    // ~GrowthCone_Critical();
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
                         const Point &position, double angle) override;
-
 
     void initialize_CR();
     void prepare_for_split() override;
@@ -105,28 +101,5 @@ class GrowthCone_Critical : public virtual GrowthCone
     virtual double get_state(const char *observable) const override;
 };
 
-
-class GrowthCone_Critical_Langevin : public virtual GrowthCone_Critical
-{
-  public:
-    GrowthCone_Critical_Langevin();
-    GrowthCone_Critical_Langevin(const GrowthCone_Critical &);
-    void compute_CR() override;
-};
-
-class GrowthCone_Critical_Gaussian : public virtual GrowthCone_Critical
-{
-  public:
-    GrowthCone_Critical_Gaussian();
-    GrowthCone_Critical_Gaussian(const GrowthCone_Critical &);
-    void compute_CR() override;
-};
-class GrowthCone_Critical_Lurd : public virtual GrowthCone_Critical
-{
-  public:
-    GrowthCone_Critical_Lurd();
-    GrowthCone_Critical_Lurd(const GrowthCone_Critical &);
-    void compute_CR() override;
-};
 }
 #endif

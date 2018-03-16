@@ -12,6 +12,8 @@
 // Include from models
 #include "gc_dir_el.cpp"
 #include "gc_random_walk.hpp"
+#include "gc_self_referential_forces.hpp"
+#include "gc_run_tumble.hpp"
 
 
 namespace growth
@@ -19,31 +21,26 @@ namespace growth
 
 void init_models()
 {
+    // create all model neurons
     kernel().neuron_manager.register_model(
-        "default",
-        std::dynamic_pointer_cast<GrowthCone>(std::make_shared<GrowthCone>()));
+        "default", std::dynamic_pointer_cast<GrowthCone>(
+                           std::make_shared<GrowthCone_RunTumble>()));
 
     kernel().neuron_manager.register_model(
-        "random_walk", std::dynamic_pointer_cast<GrowthCone>(
+        "simple_random_walk",
+        std::dynamic_pointer_cast<GrowthCone>(std::make_shared<GrowthCone>("simple_random_walk")));
+
+    kernel().neuron_manager.register_model(
+        "persistent_random_walk", std::dynamic_pointer_cast<GrowthCone>(
                            std::make_shared<GrowthCone_RandomWalk>()));
 
     kernel().neuron_manager.register_model(
-        "random_walk_Langevin",
-        std::dynamic_pointer_cast<GrowthCone>(
-            std::make_shared<GrowthCone_Elongation_Direction<
-                GrowthCone_Critical_Langevin, GrowthCone_RandomWalk>>()));
+        "self_referential_forces", std::dynamic_pointer_cast<GrowthCone>(
+                           std::make_shared<GrowthCone_SelfReferentialForces>()));
 
     kernel().neuron_manager.register_model(
-        "random_walk_Gaussian",
-        std::dynamic_pointer_cast<GrowthCone>(
-            std::make_shared<GrowthCone_Elongation_Direction<
-                GrowthCone_Critical_Gaussian, GrowthCone_RandomWalk>>()));
-
-    kernel().neuron_manager.register_model(
-        "random_walk_Lurd",
-        std::dynamic_pointer_cast<GrowthCone>(
-            std::make_shared<GrowthCone_Elongation_Direction<
-                GrowthCone_Critical_Lurd, GrowthCone_RandomWalk>>()));
+        "run_tumble", std::dynamic_pointer_cast<GrowthCone>(
+                           std::make_shared<GrowthCone_RunTumble>()));
 
 #ifndef NDEBUG
     for (auto member : kernel().neuron_manager.model_map_)

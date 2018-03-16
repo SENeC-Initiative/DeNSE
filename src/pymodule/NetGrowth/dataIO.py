@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import os,csv
-from os.path import join, isfile
+import os, csv, errno, json
+from os.path import join, isfile, isdir
 from os import listdir
-import json
-from .dataIO_swc import ImportSwc
+import errno
+
 import numpy as np
 
 from . import _pygrowth as _pg
 from ._helpers import HashID
+from .dataIO_swc import ImportSwc
 
 
 __all__ = [
@@ -29,6 +30,12 @@ def SaveJson(filepath="default", gid=None):
     """
     if filepath=="default":
         filepath= _pg.GetSimulationID()
+    if not isdir(filepath):
+        try:
+            os.makedirs(filepath)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
     if gid is None:
         gid = _pg.GetNeurons()
     kernel = _pg.GetKernelStatus()
@@ -45,9 +52,16 @@ def SaveSwc(filepath="default", gid=None, swc_resolution=10):
     '''
     if filepath=="default":
         filepath= _pg.GetSimulationID()
+    if not isdir(filepath):
+        try:
+            os.makedirs(filepath)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
     if gid is None:
         gid = _pg.GetNeurons()
     _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)
+    return os.path.join(filepath,"morphology.swc")
 
 
 ############################

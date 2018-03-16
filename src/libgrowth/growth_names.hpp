@@ -14,6 +14,8 @@ namespace names
  * Neuron, neurite and growth cone properties
  */
 
+//! neuron description [string]
+extern const std::string description;
 //! growth con model for          'Rw'   [string]
 extern const std::string growth_cone_model;
 //! number of neurites for created neuron [int]
@@ -125,23 +127,71 @@ extern const std::string rw_delta_corr;
 //@param sensing angle is choosen from experimental
 // data and it's 8.2 degrees
 
+//! RUN AND TUMBLE
+extern const std::string rt_persistence_length;
+#define RT_PERSISTENCE_LENGTH 100.
+
+
+//SELF REFERENTIAL MODEL
+//
+#define SFR_AVOIDANCE_FORCE 1
+extern const std::string srf_avoidance_force;
+#define SFR_AVOIDANCE_DECAY 2
+extern const std::string srf_avoidance_decay;
+#define SFR_INERTIAL_FORCE 1
+extern const std::string srf_inertial_force ;
+#define SFR_INERTIAL_DECAY 2
+extern const std::string sfr_inertial_decay ;
+#define SFR_SOMATROPIC_FORCE 1
+extern const std::string sfr_somatropic_force;
+#define SFR_SOMATROPIC_DECAY 2
+extern const std::string sfr_somatropic_decay;
+
 
 /*
- * VAN PELT BEST MODEL
+ * GROWTH CONE SPLITTING PARAMETERS
  */
 
+extern const std::string gc_split_angle_mean;
+extern const std::string gc_split_angle_std;
 //! @param van_pelt model for branching probability and direction default: True
 extern const std::string use_van_pelt;
-#define USE_VAN_PELT true
 //! Van_Pelt BEST model parameters
 extern const std::string B;
-#define VP_B 5.
 extern const std::string E;
-#define VP_E 0.05
 extern const std::string S;
-#define VP_S 1.
 extern const std::string T;
+
+#define GC_SPLIT_ANGLE_MEAN 98.0 / 180 * 3.14
+#define GC_SPLIT_ANGLE_STD 10. / 180 * 3.14
+#define USE_VAN_PELT true
+#define VP_B 5.
+#define VP_E 0.05
+#define VP_S 1.
 #define VP_T 0.01
+
+
+/*
+ * LATERAL BRANCHING PARAMETERS
+ */
+
+extern const std::string use_flpl_branching;
+extern const std::string flpl_branching_rate;
+extern const std::string use_uniform_branching;
+extern const std::string uniform_branching_rate;
+extern const std::string lateral_branching_angle_mean;
+extern const std::string lateral_branching_angle_std;
+extern const std::string angle_in_degrees;
+extern const std::string diameter_variance;
+extern const std::string diameter_eta_exp;
+
+#define ANGLE_IN_DEGREES true
+#define DIAMETER_ETA_EXP 1.5
+#define DIAMETER_VARIANCE 0.1
+#define LATERAL_BRANCHING_ANGLE_MEAN 90 * 3.14 / 180
+#define LATERAL_BRANCHING_ANGLE_STD 1. / 180 * 3.14
+#define UNIFORM_BRANCHING_RATE 0.1
+#define UNIFORM_BRANCHING_RATE 0.1
 
 
 /*
@@ -163,29 +213,6 @@ extern const std::string actin_freq;
 
 
 /*
- * Uniform branching event parameters
- */
-
-extern const std::string use_lateral_branching;
-extern const std::string uniform_branching_rate;
-#define UNIFORM_BRANCHING_RATE 0.1
-extern const std::string lateral_branching_angle_mean;
-#define LATERAL_BRANCHING_ANGLE_MEAN 90 * 3.14 / 180
-extern const std::string lateral_branching_angle_std;
-#define LATERAL_BRANCHING_ANGLE_STD 1. / 180 * 3.14
-extern const std::string gc_split_angle_mean;
-#define GC_SPLIT_ANGLE_MEAN 98.0 / 180 * 3.14
-extern const std::string gc_split_angle_std;
-#define GC_SPLIT_ANGLE_STD 10. / 180 * 3.14
-extern const std::string angle_in_degrees;
-#define ANGLE_IN_DEGREES true
-extern const std::string diameter_variance;
-#define DIAMETER_VARIANCE 0.1
-extern const std::string diameter_eta_exp;
-#define DIAMETER_ETA_EXP 1.5
-
-
-/*
  * RECORDERS
  */
 
@@ -204,5 +231,7 @@ extern const signed char gc_deletion;
 
 extern const std::string num_growth_cones;
 }
+
 }
-#endif
+
+#endif /* NAMES_MODELS_H */

@@ -281,6 +281,7 @@ void SimulationManager::finalize_simulation_()
  */
 void SimulationManager::new_branching_event(const Event &ev)
 {
+#pragma omp critical
     branching_ev_tmp_.push_back(ev);
 }
 
@@ -379,18 +380,20 @@ void SimulationManager::simulate(const Time &t)
                     // someone has to branch
                     Event &ev            = branching_ev_.back();
                     size_t gid_branching = std::get<2>(ev);
-                    branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
-                    // tell recorder manager
-                    if (branched)
+                    auto it = local_neurons.find(gid_branching);
+
+                    if (it != local_neurons.end())
                     {
-                        kernel().record_manager.new_branching_event(ev);
+                        branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
+                        
+                        // tell recorder manager
+                        if (branched)
+                        {
+                            kernel().record_manager.new_branching_event(ev);
+                        }
+
+                        branching_ev_.pop_back();
                     }
-                    //~ std::string nname = std::get<3>(ev);
-                    //~ printf("Branching event ar step: %lu and substep %f\n"
-                    //~ "Neurite %s of neuron %lu is branching at %lu:%f\n",
-                    //~ current_step, substep_[omp_id], nname.c_str(),
-                    //~ gid_branching, std::get<0>(ev), std::get<1>(ev));
-                    branching_ev_.pop_back();
                 }
 
                 if (new_step)

@@ -158,6 +158,10 @@ PointArray Branch::at(size_t idx) const
     return {{points[0].at(idx), points[1].at(idx), points[2].at(idx)}};
 }
 
+Point Branch::xy_at(size_t idx) const
+{
+    return Point(points[0].at(idx), points[1].at(idx));
+}
 
 size_t Branch::size() const { return points[0].size(); }
 

@@ -100,6 +100,7 @@ class Branch
     Return a Point object from the 'idx' element of the Branch
     */
     PointArray at(size_t idx) const;
+    Point xy_at(size_t idx) const;
     size_t size() const;
 };
 }

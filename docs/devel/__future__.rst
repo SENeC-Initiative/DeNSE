@@ -15,10 +15,27 @@ Including reference formats and tools
 .. _MST-Dendrites: https://github.com/pherbers/MST-Dendrites
 
 
+Nice video to remember what we want:
+
+https://www.youtube.com/watch?v=EP4yeyD8ktY
+
+
 Units
 -----
 
 Make it possible to change the time/frequency and space units (s, min, h and µm, mm)
+
+
+Make the models combinable
+--------------------------
+
+Replace the current virtual functions by ``std::function`` attributes and
+use the callback mechanism to associate the proper instance to the function.
+
+http://en.cppreference.com/w/cpp/utility/functional/function
+https://stackoverflow.com/questions/14189440/c-class-member-callback-simple-examples
+
+Store the additional parameters into one or several maps depending on the types.
 
 
 Timestep limits

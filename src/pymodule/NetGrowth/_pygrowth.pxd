@@ -70,9 +70,9 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 
 
 cdef extern from "../module.hpp" namespace "growth":
-    cdef void init_growth( int* argc, char** argv[] ) except*
+    cdef void init_growth( int* argc, char** argv[] ) except +
 
-    cdef void finalize_growth() except*
+    cdef void finalize_growth() except +
 
     cdef size_t create_objects(const string& object_name,
                                const vector[statusMap]& obj_params
@@ -87,13 +87,13 @@ cdef extern from "../module.hpp" namespace "growth":
                               vector[GEOSGeometry*]& areas,
                               vector[double] heights, vector[string]& names,
                               vector[unordered_map[string, double]]& properties
-                              ) except*
+                              ) except +
 
     cdef void set_environment(
         GEOSGeometry* environment, const vector[GEOSGeometry*]& areas,
         const vector[double]& heights, vector[string]& names,
         const vector[unordered_map[string, double]]& properties
-        ) except*
+        ) except +
 
     cdef const CTime get_current_time() except +
 
@@ -104,10 +104,10 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef void get_skeleton(
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,
         SkelNeurite& growth_cones, SkelSomas& somas,
-        vector[size_t] gids) except*
+        vector[size_t] gids) except +
 
     cdef void get_swc(string output_file,
-        vector[size_t] gids, unsigned int resolution) except*
+        vector[size_t] gids, unsigned int resolution) except +
 
     cdef statusMap get_status(size_t gid) except +
 
@@ -119,13 +119,13 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void get_defaults(const string& object_name,
                            const string& object_type,
-                           statusMap &status) except*
+                           statusMap &status) except +
 
     cdef void get_models(vector[string]& models,
-                         const string& object_type) except*
+                         const string& object_type) except +
 
     cdef void get_recorder_type(size_t gid, string& level,
-                                string& event_type) except*
+                                string& event_type) except +
 
     cdef bool get_next_recording(size_t gid, vector[Property]& ids,
                                  vector[double]& values) except +
@@ -136,21 +136,21 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef string object_type(size_t gid) except +
 
-    cdef void reset_kernel() except*
+    cdef void reset_kernel() except +
 
     cdef void set_kernel_status(statusMap status_dict,
-                                string c_simulation_ID) except*
+                                string c_simulation_ID) except +
 
     cdef string get_simulation_ID() except +
 
     cdef void set_status(size_t gid, statusMap neuron_status,
                          statusMap axon_status,
-                         statusMap dendrites_status) except*
+                         statusMap dendrites_status) except +
 
     cdef void simulate(const CTime& simtime) except +
 
     cdef void test_random_generator(vector[vector[double]]& values,
-                                    size_t size) except*
+                                    size_t size) except +
 
 
 # ---------------------- #

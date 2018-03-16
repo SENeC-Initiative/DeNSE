@@ -514,7 +514,7 @@ def GetDefaults(object_name, settables=False):
     Parameters
     ----------
     object_name : str
-        Name of the object, e.g. "recorder", or "random_walk".
+        Name of the object, e.g. "recorder", or "persistant_random_walk".
     settables : bool, optional (default: False)
         Return only settable values; read-only values are hidden.
 
@@ -733,6 +733,16 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
     -------
     culture
     """
+    # make sure that, if neurons exist, their growth cones are not using the
+    # `simple_random_walk` model, which is not compatible.
+    neurons = GetNeurons()
+
+    if neurons:
+        for n in neurons:
+            assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
+                "The `simple_random_walk` model, is not compatible with " +\
+                "complex environments."
+    
     if _is_string(culture):
         from .geometry import culture_from_file
         culture = culture_from_file(
@@ -797,10 +807,30 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         string c_simulation_ID = _to_bytes(simulation_ID)
 
     if value is not None:
+        assert _is_string(status), "When using `value`, status must be the " +\
+            "name of the kernel property that will be set."
+        if status == "environment_required" and value is True:
+            # make sure that, if neurons exist, their growth cones are not using
+            # the `simple_random_walk` model, which is not compatible.
+            neurons = GetNeurons()
+            if neurons:
+                for n in neurons:
+                    assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
+                        "The `simple_random_walk` model, is not compatible with " +\
+                        "complex environments."
         key = _to_bytes(status)
         c_prop = _to_property(key, value)
         c_status.insert(pair[string, Property](key, c_prop))
     else:
+        if status.get("environment_required", False):
+            # make sure that, if neurons exist, their growth cones are not using
+            # the `simple_random_walk` model, which is not compatible.
+            neurons = GetNeurons()
+            if neurons:
+                for n in neurons:
+                    assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
+                        "The `simple_random_walk` model, is not compatible with " +\
+                        "complex environments."
         for key, value in status.items():
             key = _to_bytes(key)
             if c_status_old.find(key) == c_status.end():
@@ -837,16 +867,13 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     axon_params      = {} if axon_params is None else axon_params
     dendrites_params = {} if dendrites_params is None else dendrites_params
 
-    # check parameters
-    object_name = GetObjectType(gids) 
-    _check_params(params, object_name)
-
     cdef:
         size_t i, n = len(gids)
         statusMap base_neuron_status, base_axon_status, base_dend_status
 
     it_p, it_a, it_d = params, axon_params, dendrites_params
     if isinstance(params, dict):
+        it_p = (params for i in range(n))
         base_neuron_status = _get_scalar_status(params, num_objects)
     if isinstance(axon_params, dict):
         it_a = (axon_params for i in range(n))
@@ -854,6 +881,11 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     if isinstance(dendrites_params, dict):
         it_d = (dendrites_params for i in range(n))
         base_dend_status = _get_scalar_status(dendrites_params, num_objects)
+    
+    # check parameters
+    for gid, p in zip(gids, it_p):
+        object_name = GetObjectType(gid)
+        _check_params(p, object_name)
 
     cdef:
         vector[statusMap] neuron_statuses = \
@@ -1440,7 +1472,6 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 for k, v in valid_levels.items():
                     if obs in v:
                         valid_lvl.append(k)
-                print(GetStatus(n, "observables", level=level), level)
                 raise RuntimeError("Valid levels for observable "
                                    "'{}' are {}.".format(obs, valid_lvl))
 
@@ -1514,6 +1545,17 @@ def _check_params(params, object_name):
                            "GetModels.")
 
     get_defaults(cname, ctype, default_params)
+
+    if ("growth_cone_model" in params):
+        # when trying to create simple random walkers, check that the
+        # environment is not used
+        if params["growth_cone_model"] == "simple_random":
+            assert not GetKernelStatus("environment_required"), \
+                "The `simple_random_walk` model cannot be used with a " +\
+                "complex environment."
+        get_defaults(_to_bytes(params["growth_cone_model"]),
+                     _to_bytes("growth_cone"), default_params)
+
     py_defaults = _statusMap_to_dict(default_params)
 
     for key, val in params.items():

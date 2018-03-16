@@ -21,12 +21,27 @@ void NeuronManager::initialize()
 {
     // create default neuron with two neurites (axon + dendrite)
     statusMap empty_params;
-    statusMap params({{names::num_neurites, Property(2)},
-                      {names::growth_cone_model, ""},
-                      {"x", Property(0.)},
-                      {"y", Property(0.)}});
+    statusMap params({
+        {names::num_neurites, Property(2)}, {names::growth_cone_model, ""},
+        {"x", Property(0.)}, {"y", Property(0.)}
+    });
+
+    // set their status to use all possible parameters to have them all
+    // when using GetDefaults
+    std::vector<std::string> options({
+        "use_critical_resource", "use_van_pelt", "use_uniform_branching",
+        "use_flpl_branching"});
+
+    for (std::string opt : options)
+    {
+        Property p = Property(true);
+        params[opt] = p;
+    }
+
+    // get random engine
     mtPtr rnd_ptr = kernel().rng_manager.get_rng(0);
 
+    // create default neuron
     model_neuron_ = std::make_shared<Neuron>(0);
     model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
 }

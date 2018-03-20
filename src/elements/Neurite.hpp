@@ -52,6 +52,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void grow(mtPtr rnd_engine, size_t current_step, double substep);
     void delete_cone(size_t cone_n);
 
+
     // Branching functions
     void lateral_branching(TNodePtr branching_node, size_t branch_point,
                            double new_length, mtPtr rnd_engine);

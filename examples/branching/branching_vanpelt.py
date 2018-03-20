@@ -62,7 +62,7 @@ if use_uniform_branching:
 
 if use_vp:
     vp_params = {
-        "B": 0.8,
+        "B": 100.8,
         "E": E,
         "S": S,
         "T": 100.,
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     no_terminals = neuron1.no_terminals()
     print( 'Number of terminals=%f',  no_terminals)
 
-    neuron1.plot_dendrogram()
+    # neuron1.plot_dendrogram()
     # plt.show()
     plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S), format="pdf", ppi =300)
     plt.show()

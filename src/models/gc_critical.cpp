@@ -3,17 +3,24 @@
 #include "config_impl.hpp"
 #include <math.h>
 
+// Integrate the differential equation
+// da1 = -k*a1*dt
 namespace growth
 {
-
 GrowthCone_Critical::GrowthCone_Critical()
     : GrowthCone("competitive")
-    , critical_(0, CRITICAL_INITIAL_DEMAND, CRITICAL_INITIAL_DEMAND,
-                CRITICAL_LEAKAGE, CRITICAL_RETRACTION_TH,
-                CRITICAL_ELONGATION_TH, CRITICAL_SPEED_FACTOR,
-                CRITICAL_USE_RATIO)
-    , demand_(CR_DEMAND_MEAN, CR_DEMAND_CORRELATION, 0, CR_DEMAND_STDDEV,
-              CR_DEMAND_MEAN)
+    , critical_{0, 0, 0, 0,
+                CRITICAL_ELONGATION_TH,
+                CRITICAL_LEAKAGE,
+                CRITICAL_USE_RATIO,
+                CRITICAL_CORRELATION,
+                CRITICAL_VARIANCE}
+    , cr_speed_{CRITICAL_ELONGATION_FACTOR,
+                CRITICAL_ELONGATION_TH,
+                CRITICAL_RETRACTION_FACTOR,
+                CRITICAL_RETRACTION_TH}
+    , demand_{CRITICAL_WEIGHT,0,0}
+
 {
     observables_.push_back("resource");
 }
@@ -23,6 +30,7 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
     : GrowthCone(copy)
     , critical_(copy.critical_)
     , demand_(copy.demand_)
+    , cr_speed_(copy.cr_speed_)
 
 
 {
@@ -61,9 +69,10 @@ GCPtr GrowthCone_Critical::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
 
 void GrowthCone_Critical::initialize_CR()
 {
-    demand_.sqrt_corr = sqrt(1 - demand_.correlation * demand_.correlation);
+    critical_.sqrt_corr = sqrt(1 - critical_.correlation * critical_.correlation);
+    critical_.correlation = sqrt(critical_.correlation);
     // critical_.used = critical_.elongation_th;
-    critical_.left = critical_.elongation_th / critical_.use_ratio;
+    critical_.stored = cr_speed_.elongation_th/ critical_.use_ratio;
     neurite_dyn    = biology_.own_neurite->get_branching_model();
 }
 
@@ -75,8 +84,7 @@ void GrowthCone_Critical::initialize_CR()
  */
 void GrowthCone_Critical::prepare_for_split()
 {
-    critical_.left /= 2.;
-    demand_.local_demand /= 2.;
+    //critical_.stored /= 2.;
 }
 
 
@@ -92,8 +100,9 @@ void GrowthCone_Critical::compute_CR_received()
 {
 
     critical_.received =
+        neurite_dyn->get_CR_available()*
         // local demand
-        critical_.demand *
+        demand_.demand *
         // normalization factor for the neurite
         neurite_dyn->get_CR_quotient();
 }
@@ -104,24 +113,10 @@ void GrowthCone_Critical::compute_CR_received()
  *
  * @return CR_demand
  */
-double GrowthCone_Critical::compute_CR_demand(mtPtr rnd_engine)
+void GrowthCone_Critical::compute_CR_demand(mtPtr rnd_engine)
 {
-
-    // implement a correlated Gaussian whit fixed -user defined- correlation
-    // coefficient
-    demand_.local_demand = demand_.local_demand * demand_.correlation +
-                           demand_.sqrt_corr * normal_(*(rnd_engine).get());
-
-    critical_.demand = (demand_.mean + demand_.std_dev * demand_.local_demand);
-
-    // attenuation of growth cone demanding
-    // strength with topological distance
-    // printf("name is %s \n", get_treeID().c_str());
-    // printf("local demand is %f, sqrt %f\n", demand_.local_demand,
-    // demand_.sqrt_corr);
+    demand_.demand = critical_.stored * (1+demand_.weight*get_centrifugal_order());
     // printf("demand is %f \n", critical_.demand);
-
-    return critical_.demand;
 }
 
 
@@ -135,28 +130,86 @@ double GrowthCone_Critical::compute_CR_demand(mtPtr rnd_engine)
  */
 void GrowthCone_Critical::compute_speed(mtPtr rnd_engine, double substep)
 {
-    compute_CR();
+    compute_CR(rnd_engine);
     move_.speed = 0;
 
     // if it's over the elongation threshold the neurite will outgrowth
-    if (critical_.used > critical_.elongation_th)
+    if (critical_.stored * critical_.use_ratio  < cr_speed_.retraction_th)
     {
-        GrowthCone::move_.speed = critical_.used * critical_.speed_factor;
+        GrowthCone::move_.speed =cr_speed_.retraction_factor*
+                                (critical_.stored * critical_.use_ratio - cr_speed_.retraction_th)
+                                /cr_speed_.retraction_th ;
         //* (critical_.used - critical_.elongation_th);
     }
-    if (critical_.used < critical_.retraction_th)
+    if (critical_.stored * critical_.use_ratio > cr_speed_.elongation_th)
     {
-        GrowthCone::move_.speed = -critical_.speed_factor *
-                                  (critical_.retraction_th - critical_.used);
+        GrowthCone::move_.speed = cr_speed_.elongation_factor*
+                                (critical_.stored * critical_.use_ratio - cr_speed_.elongation_th)/
+                                (neurite_dyn->get_CR_available()*critical_.use_ratio - cr_speed_.elongation_th);
     }
-    // printf(" speed computed is %f \n", move_.speed);
+    //printf(" speed computed is %f, elongation_factor is %f\n", move_.speed, cr_speed_.elongation_factor);
 }
 
-void GrowthCone_Critical::compute_CR() {}
+
+double GrowthCone_Critical::CR_differential(double a, double k,  double noise, double received, double dt)
+{
+    return - a*k*(dt + noise) + received;
+}
+
+void GrowthCone_Critical::compute_CR(mtPtr rnd_engine)
+{
+
+    if (not stuck_)
+    {
+    timestep_= kernel().simulation_manager.get_resolution();
+    //compute received CR from the soma, in respect to other GC.
+    compute_CR_received();
+    // correlated gaussian
+    critical_.stochastic_tmp = critical_.stochastic_tmp * critical_.correlation +
+                           critical_.sqrt_corr * normal_(*(rnd_engine).get());
+    critical_.noise = (critical_.variance * critical_.stochastic_tmp)*sqrt(timestep_);
+
+    //consumption_rate is the stochastic correlated variable.
+    //integrate by the Heun method:
+    //first step: integrate with Euler
+    euler_step_= critical_.stored + CR_differential(critical_.stored,
+                                                    demand_.consumption_rate,
+                                                    critical_.noise,
+                                                    critical_.received,
+                                                    timestep_);
+
+    //second step: correct the prediction with trapezoidal rule
+    critical_.stored = critical_.stored +
+                    timestep_*0.5 *(
+                            CR_differential(critical_.stored,
+                                            demand_.consumption_rate,
+                                            critical_.noise,
+                                            critical_.received,
+                                            timestep_)
+                            +
+                            //@TODO here the euler step is computed with the received
+                            //      cr computed with a_i at the beginning of the time interval,
+                            //      the whole process should be updated and recomputed at the end
+                            //      of the interval, this means to communicate with the neurite
+                            //      and recompute the total demand
+                            CR_differential(euler_step_,
+                                            demand_.consumption_rate,
+                                            critical_.noise,
+                                            critical_.received,
+                                            timestep_)
+                            );
+    }
+    //printinfo();
+
+}
 
 void GrowthCone_Critical::reset_CR_demand()
 {
     //.demand = critical_.initial_demand;
+}
+
+double GrowthCone_Critical::get_speed() const {
+return cr_speed_.elongation_factor;
 }
 
 
@@ -165,83 +218,69 @@ double GrowthCone_Critical::get_CR_received() const
     return critical_.received;
 }
 
-double GrowthCone_Critical::get_CR_left() const { return critical_.left; }
-
-double GrowthCone_Critical::get_CR_used() const { return critical_.used; }
-
 
 double GrowthCone_Critical::get_CR_speed_factor() const
 {
-    return critical_.speed_factor;
+    return cr_speed_.elongation_factor;
 }
 
 
-double GrowthCone_Critical::get_CR_demand() const { return critical_.demand; }
+double GrowthCone_Critical::get_CR_demand() const { return demand_.demand; }
 
 void GrowthCone_Critical::printinfo() const
 {
-    printf("CR demand %f \n", critical_.demand);
+    printf("################ \n");
+    printf("CR stored %f \n", critical_.stored);
+    printf("CR demand %f \n", demand_.demand);
     printf("CR received %f \n", critical_.received);
-    printf("CR elongation_th:  %f \n", critical_.elongation_th);
-    printf("CR retraction_th:  %f \n", critical_.retraction_th);
+    printf("CR elongation_th:  %f \n", cr_speed_.elongation_th);
+    printf("CR elongation_th:  %f \n", cr_speed_.retraction_th);
+    printf("CR elongation_factor:  %f \n", cr_speed_.elongation_factor);
+    printf("CR retraction_factor:  %f \n", cr_speed_.retraction_factor);
     printf("CR use_ratio:  %f \n", critical_.use_ratio);
-    printf("after CR used:  %f \n", critical_.used);
-    printf("after CR left:  %f \n", critical_.left);
+    printf("CR available:  %f \n", neurite_dyn->get_CR_available());
+
     printf("################ \n");
 }
 
+
 void GrowthCone_Critical::set_status(const statusMap &status)
 {
+    get_param(status, names::CR_elongation_factor, cr_speed_.elongation_factor);
+    get_param(status, names::CR_retraction_factor, cr_speed_.retraction_factor);
+    get_param(status, names::CR_elongation_th,     cr_speed_.elongation_th);
+    get_param(status, names::CR_retraction_th,     cr_speed_.retraction_th);
 
-    get_param(status, names::CR_speed_factor, critical_.speed_factor);
-    get_param(status, names::CR_elongation_th, critical_.elongation_th);
-    get_param(status, names::CR_retraction_th, critical_.retraction_th);
-
-    get_param(status, "left", critical_.left);
+    //use and leakage
     get_param(status, names::CR_use_ratio, critical_.use_ratio);
     get_param(status, names::CR_leakage, critical_.leakage);
+    get_param(status, names::CR_correlation, critical_.correlation);
+    get_param(status, names::CR_variance, critical_.variance);
+    get_param(status, names::CR_weight, demand_.weight);
 
-    get_param(status, names::CR_demand_correlation, demand_.correlation);
-    if (get_param(status, names::CR_initial_demand, critical_.initial_demand))
-    {
-        critical_.demand = critical_.initial_demand;
-    }
-    get_param(status, names::CR_demand_mean, demand_.mean);
-    get_param(status, names::CR_demand_stddev, demand_.std_dev);
+    demand_.consumption_rate = critical_.use_ratio + 1./critical_.leakage;
 
     initialize_CR();
 
 #ifndef NDEBUG
-    printf("\n"
-           "CRITICAL RESOURCE MODEL \n"
-           "CR_leakage %f \n"
-           "CR_elongation_th %f \n"
-           "CR_retraction_th %f \n"
-           "CR_initial_demand %f \n"
-           "CR_speed_factor  %f \n"
-           "Demand model \n"
-           "CR_demand:  %f +- %f with correlation %f \n ",
-           critical_.leakage, critical_.elongation_th, critical_.retraction_th,
-           critical_.initial_demand, critical_.speed_factor, demand_.mean,
-           demand_.std_dev, demand_.correlation);
+    printinfo();
 #endif
 }
 void GrowthCone_Critical::get_status(statusMap &status) const
 {
     GrowthCone::get_status(status);
-    set_param(status, names::CR_speed_factor, critical_.speed_factor);
-    set_param(status, names::CR_elongation_th, critical_.elongation_th);
-    set_param(status, names::CR_retraction_th, critical_.retraction_th);
+    set_param(status, names::CR_elongation_factor, cr_speed_.elongation_factor);
+    set_param(status, names::CR_retraction_factor, cr_speed_.retraction_factor);
+    set_param(status, names::CR_elongation_th,     cr_speed_.elongation_th);
+    set_param(status, names::CR_retraction_th,     cr_speed_.retraction_th);
 
-    set_param(status, "left", critical_.left);
+    //use and leakage
     set_param(status, names::CR_use_ratio, critical_.use_ratio);
     set_param(status, names::CR_leakage, critical_.leakage);
+    set_param(status, names::CR_correlation, critical_.correlation);
+    set_param(status, names::CR_variance, critical_.variance);
+    set_param(status, names::CR_weight, demand_.weight);
 
-    set_param(status, names::CR_demand_correlation, demand_.correlation);
-    set_param(status, names::CR_initial_demand, critical_.demand);
-
-    set_param(status, names::CR_demand_mean, demand_.mean);
-    set_param(status, names::CR_demand_stddev, demand_.std_dev);
 }
 
 
@@ -256,10 +295,11 @@ double GrowthCone_Critical::get_state(const char *observable) const
 
     TRIE(observable)
     CASE("resource")
-    value = critical_.left;
+    value = critical_.stored;
     ENDTRIE;
 
     return value;
 }
 
 } // namespace
+

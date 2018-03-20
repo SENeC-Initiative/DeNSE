@@ -80,36 +80,41 @@ extern const std::string substrate_affinity;
 //! @param tub_topo_coefficient   0.1    [natural]
 extern const std::string use_critical_resource;
 #define USE_CRITICAL false
-// extern const std::string CR_topo_coeff;
-//#define CRITICAL_TOPO_COEFF 1.
-// extern const std::string CR_geom_coeff;
-//#define CRITICAL_GEOM_COEFF 1.
-extern const std::string CR_retraction_th;
-#define CRITICAL_RETRACTION_TH 0.02
-extern const std::string CR_elongation_th;
-#define CRITICAL_ELONGATION_TH 0.2
-extern const std::string CR_initial_demand;
-#define CRITICAL_INITIAL_DEMAND 1.
-extern const std::string CR_amount;
-#define CRITICAL_AMOUNT 1.
-extern const std::string CR_speed_factor;
-#define CRITICAL_SPEED_FACTOR 1.
-extern const std::string CR_split_th;
-#define CRITICAL_SPLIT_TH 8.
 extern const std::string CR_use_ratio;
-#define CRITICAL_USE_RATIO 0.2
+#define CRITICAL_USE_RATIO 1
 extern const std::string CR_leakage;
-#define CRITICAL_LEAKAGE 0.2
-// extern const std::string CR_use_ratio;
-//#define CRITICAL_USE_RATIO 0.2
-// extern const std::string CR_use_ratio;
-/*#define CRITICAL_USE_RATIO 0.2*/
-extern const std::string CR_demand_correlation;
-#define CR_DEMAND_CORRELATION 0.1
-extern const std::string CR_demand_stddev;
-#define CR_DEMAND_STDDEV 0.1
-extern const std::string CR_demand_mean;
-#define CR_DEMAND_MEAN 1
+#define CRITICAL_LEAKAGE 6
+extern const std::string CR_correlation;
+#define CRITICAL_CORRELATION 0.1
+extern const std::string CR_variance;
+#define CRITICAL_VARIANCE 0.1 //
+extern const std::string CR_weight;
+#define CRITICAL_WEIGHT 1.
+
+extern const std::string CR_elongation_factor;
+#define CRITICAL_ELONGATION_FACTOR 0.5
+extern const std::string CR_elongation_th;
+#define CRITICAL_ELONGATION_TH 0.35
+extern const std::string CR_retraction_factor;
+#define CRITICAL_RETRACTION_FACTOR 0.1
+extern const std::string CR_retraction_th;
+#define CRITICAL_RETRACTION_TH 0.15
+
+
+extern const std::string CR_neurite_split_th;
+#define CRITICAL_SPLIT_TH 250.
+extern const std::string CR_neurite_available;
+#define CRITICAL_AVAILABLE .
+extern const std::string CR_neurite_variance;
+#define CRITICAL_GEN_VAR 5.
+extern const std::string CR_neurite_generated;
+#define CRITICAL_GENERATED 150.
+extern const std::string CR_neurite_generated_tau;
+#define CRITICAL_GEN_TAU 100.
+extern const std::string CR_neurite_delivery_tau;
+#define CRITICAL_DEL_TAU 50.
+#define CRITICAL_GEN_CORR 0.
+
 
 
 /*
@@ -190,8 +195,7 @@ extern const std::string diameter_eta_exp;
 #define DIAMETER_VARIANCE 0.1
 #define LATERAL_BRANCHING_ANGLE_MEAN 90 * 3.14 / 180
 #define LATERAL_BRANCHING_ANGLE_STD 1. / 180 * 3.14
-#define UNIFORM_BRANCHING_RATE 0.1
-#define UNIFORM_BRANCHING_RATE 0.1
+#define UNIFORM_BRANCHING_RATE 0.001
 
 
 /*

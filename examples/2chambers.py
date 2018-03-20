@@ -32,36 +32,31 @@ Main parameters
 '''
 
 soma_radius = 10.
-use_critical_resource = False
 use_uniform_branching = False
-use_vp                = False
+use_vp = False
+use_run_tumble = False
+
+gc_model = 'persistent_random_walk'
 
 neuron_params = {
-    # "gc_split_angle_mean": 30.,
-    # "gc_split_angle_std": 10.,
-    #~ "axon_angle":0.,
-
-    "use_critical_resource": use_critical_resource,
+    "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-
-    # #lateral branching model
-    # "lateral_branching_angle_mean": 50.,
-    # "lateral_branching_angle_std": 20.,
-
-    "sensing_angle":0.04,
-
-    "speed_growth_cone": 0.03,
-
+    "sensing_angle": 0.08,
+    "speed_growth_cone": 0.95,
     "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 20.,
+    "filopodia_finger_length": 30.,
     "filopodia_min_number": 30,
 
     "soma_radius": soma_radius,
 }
 
 dendrite_params = {
-    "speed_growth_cone": 0.01,
+    "use_van_pelt": True,
+    "growth_cone_model": gc_model,
+    "speed_growth_cone": 0.1,
+    "filopodia_wall_affinity": 0.00,
+    "rw_persistence_length" : 2.
 }
 
 
@@ -69,32 +64,14 @@ dendrite_params = {
 Check for optional parameters
 '''
 
-if use_critical_resource:
-    cr_params = {
-        "critical_resource_amount":100.,
-        "critical_resource_initial_demand":1.,
-        "critical_resource_topo_coeff": 1.,
-        "critical_resource_elongation_th": 9.,
-        "critical_resource_std": 0.1,
-        "critical_resource_retraction_th": 2.,
-        "critical_resource_split_th": 80.,
-        "critical_resource_speed_factor": 0.5,
-        "critical_resource_split_tau": 100.,
+if use_run_tumble:
+    neuron_params ={
+        "rw_persistence_length":12.
     }
-    neuron_params.update(cr_params)
-    dendrite_params["critical_resource_speed_factor"] = 0.05
 
 if use_uniform_branching:
     neuron_params["uniform_branching_rate"] = 0.001
 
-if use_vp:
-    vp_params = {
-        "B" : 6.5,
-        "E" : 0.08,
-        "S" : 1.02, # large S leads to core dump
-        "T" : 0.01,
-    }
-    neuron_params.update(vp_params)
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
     neuron_params["rw_persistence_length"] = 2.
@@ -105,37 +82,30 @@ if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
 Simulation
 '''
 
+
 def step(n, loop_n, plot=True):
     ng.Simulate(n)
     if plot:
         ng.PlotNeuron(show_nodes=True, show=True)
 
 
-if __name__ =='__main__':
+if __name__ == '__main__':
     #~ kernel={"seeds":[33, 64, 84, 65],
             #~ "num_local_threads":4,
             #~ "resolution": 30.}
-    kernel={"seeds":[33, 64, 84, 65, 68, 23],
-            "num_local_threads": 6,
-            "resolution": 30.}
+    kernel = {"seeds": [33, 64, 84, 65, 68, 23],
+              "num_local_threads": 6,
+              "resolution": 10.}
     # ~ kernel={"seeds":[33],
-            # ~ "num_local_threads": 1,
-            # ~ "resolution": 30.}
+    # ~ "num_local_threads": 1,
+    # ~ "resolution": 30.}
     #~ kernel={"seeds":[23, 68],
-            #~ "num_local_threads": 2,
-            #~ "resolution": 30.}
+    #~ "num_local_threads": 2,
+    #~ "resolution": 30.}
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/2chamber_culture.svg"
-
     ng.SetKernelStatus(kernel, simulation_ID="ID")
-
-    if not neuron_params['use_critical_resource']:
-        #~ neuron_params['growth_cone_model'] = 'random_walk'
-        neuron_params['growth_cone_model'] = 'default'
-    else:
-        neuron_params['growth_cone_model'] = 'random_walk'
-
     gids, culture = None, None
 
     if kernel["environment_required"]:
@@ -150,41 +120,63 @@ if __name__ =='__main__':
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
 
     print("Creating neurons")
-    gids = ng.CreateNeurons(n= 200, growth_cone_model='random_walk',
+    gids = ng.CreateNeurons(n=200, growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
 
-    #~ ng.plot.PlotNeuron(show=True)
-
     start = time.time()
-    step(6000, 0, False)
+    step(2000, 0, False)
+
+    dendrite_params.update({"speed_growth_cone" : 0.001,
+                            "use_van_pelt" : False})
+
+    axon_params = {"speed_growth_cone" : 0.7,
+                            "use_van_pelt" : False,
+                   'B' : 10.,
+                   'T' : 1000.,
+                   'E' : 0.7}
+    ng.SetStatus(gids,
+                        params=neuron_params,
+                        dendrites_params=dendrite_params,
+                        axon_params=axon_params)
+    fig, ax = plt.subplots()
+    # ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+                       # axon_color='g', gc_color="r", axis=ax, show=False)
+    # ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+                       # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                       # show=True)
+    step(4000, 0, False)
     # ~ for loop_n in range(5):
-         # ~ step(500, loop_n, True)
+    # ~ step(500, loop_n, True)
     duration = time.time() - start
 
     # prepare the plot
-    fig, ax = plt.subplots()
     ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
     ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
+    plt.show(block=True)
+    print("SIMULATION ENDED")
 
-    # ~ # save
-    # ~ save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
-    # ~ ng.SaveJson(filepath=save_path)
-    # ~ ng.SaveSwc(filepath=save_path,swc_resolution = 10)
+    # save
+    save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
+    ng.SaveJson(filepath=save_path)
+    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
+    # ng.ResetKernel()
 
-    # ~ #### Import population for network analysis
-    # ~ ng_population = ng.SimulationsFromFolder(save_path)
-    # ~ population = ng.SwcEnsemble.from_population(ng_population)
-    # ~ intersection = ng.IntersectionsFromEnsemble(population)
-    # ~ num_connections = np.sum([len(a) for a in intersection.values()])
-    # ~ graph = ng.CreateGraph(population, intersection)
-    # ~ # graph info
-    # ~ nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # ~ nngt.plot.draw_network(graph, esize=0.1, show=True)
+    ### Import population for network analysis
+    # ng_population = ng.SimulationsFromFolder(save_path)
+    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
+    # population = ng.SwcEnsemble.from_population(ng_population)
 
-    print("duration", duration)
+    # intersection = ng.IntersectionsFromEnsemble(population)
+    # num_connections = np.sum([len(a) for a in intersection.values()])
+    # graph = ng.CreateGraph(population, intersection)
+    # #graph info
+    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
+    # nngt.plot.draw_network(graph, esize=0.1, show=True)
+
+    # print("duration", duration)

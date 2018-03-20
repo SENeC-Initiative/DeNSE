@@ -11,7 +11,7 @@ namespace growth
 template <class ElongationModel, class DirectionModel>
 GrowthCone_Elongation_Direction<
     ElongationModel, DirectionModel>::GrowthCone_Elongation_Direction()
-    : GrowthCone()
+    : GrowthCone("run_tumble_critical")
     , DirectionModel()
     , ElongationModel()
 
@@ -33,8 +33,8 @@ GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::
       // https://stackoverflow.com/questions/19167201/copy-constructor-of-template-class
       // but I cannot find a proper solution.
     GrowthCone(copy)
-    , GrowthCone_RandomWalk(copy)
-    , GrowthCone_Critical(copy)
+    , DirectionModel(copy)
+    , ElongationModel(copy)
 
 {
 }
@@ -49,8 +49,7 @@ GCPtr GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::clone(
            angle);
 #endif
     auto newCone = std::make_shared<
-        GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>>(
-        *this);
+        GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>>(*this);
     int omp_id   = kernel().parallelism_manager.get_thread_local_id();
     // newCone= std::dynamic_pointer_cast<GrowthCone>(newCone);
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
@@ -76,7 +75,7 @@ void GrowthCone_Elongation_Direction<
     ElongationModel, DirectionModel>::set_status(const statusMap &status)
 {
     ElongationModel::set_status(status);
-    DirectionModel::avg_speed_ = ElongationModel::critical_.speed_factor;
+    DirectionModel::avg_speed_ = ElongationModel::get_speed();
     DirectionModel::set_status(status);
 }
 

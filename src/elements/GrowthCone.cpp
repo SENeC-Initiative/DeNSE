@@ -296,9 +296,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             compute_speed(rnd_engine, local_substep);
             compute_module(local_substep);
 
-            if (move_.module > 0)
+            if (move_.module < 0)
             {
-                move_.module = -move_.module*speed_ratio_retraction_;
+                retracting_todo_ = 1;
+                move_.module = move_.module*speed_ratio_retraction_;
+
             }
 
             // retract
@@ -307,6 +309,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // prune growth cone if necessary
             if (biology_.branch->size() == 0)
             {
+                printf("pruning \n");
                 prune(cone_n);
             }
             geometry_.position = biology_.branch->get_last_xy();
@@ -381,6 +384,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // Assess current situation and decide on following move base on
             // that. Check and change the sensing_angle if necessary
             // update current_time and set next local_substep
+            if (move_.module < 0)
+            {
+                //printf("this is the case\n");
+                retracting_todo_ = 1;
+            }
             if (move_.module > 0)
             {
                 // ========================= //
@@ -524,6 +532,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 void GrowthCone::compute_module(double substep)
 {
     move_.module = move_.speed * substep;
+    //printf("speed used = %f", move_.speed);
 }
 
 
@@ -559,6 +568,8 @@ void GrowthCone::retraction()
         {
             to_retract -= biology_.branch->points[2].back();
             biology_.branch->retract();
+            //printf("GC is retrating with module %f\n", move_.module);
+            //printf("GC is removing of %f\n", to_retract);
         }
         else
         {
@@ -887,7 +898,7 @@ double GrowthCone::init_filopodia()
 // ###########################################################
 
 
-double GrowthCone::compute_CR_demand(mtPtr rnd_engine) { return 0; }
+void GrowthCone::compute_CR_demand(mtPtr rnd_engine) { }
 
 
 void GrowthCone::compute_speed(mtPtr rnd_engine, double substep)
@@ -917,10 +928,7 @@ double GrowthCone::get_growth_cone_speed() const { return move_.speed; }
 double GrowthCone::get_CR_received() const { return -1; }
 
 
-double GrowthCone::get_CR_left() const { return -1; }
-
-
-double GrowthCone::get_CR_used() const { return -1; }
+double GrowthCone::get_CR_demand() const { return -1; }
 
 
 void GrowthCone::reset_CR_demand() {}

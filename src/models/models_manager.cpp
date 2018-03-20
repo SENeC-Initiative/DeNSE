@@ -14,6 +14,7 @@
 #include "gc_random_walk.hpp"
 #include "gc_self_referential_forces.hpp"
 #include "gc_run_tumble.hpp"
+#include "gc_critical.hpp"
 
 
 namespace growth
@@ -41,6 +42,23 @@ void init_models()
     kernel().neuron_manager.register_model(
         "run_tumble", std::dynamic_pointer_cast<GrowthCone>(
                            std::make_shared<GrowthCone_RunTumble>()));
+
+    kernel().neuron_manager.register_model(
+        "critical", std::dynamic_pointer_cast<GrowthCone>(
+                           std::make_shared<GrowthCone_Critical>()));
+
+    kernel().neuron_manager.register_model(
+       "run_tumble_critical",
+        std::dynamic_pointer_cast<GrowthCone>(
+            std::make_shared<GrowthCone_Elongation_Direction<
+                GrowthCone_Critical, GrowthCone_RunTumble>>()));
+
+    kernel().neuron_manager.register_model(
+       "persistent_rw_critical",
+        std::dynamic_pointer_cast<GrowthCone>(
+            std::make_shared<GrowthCone_Elongation_Direction<
+                GrowthCone_Critical, GrowthCone_RandomWalk>>()));
+
 
 #ifndef NDEBUG
     for (auto member : kernel().neuron_manager.model_map_)

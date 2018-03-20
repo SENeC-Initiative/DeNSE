@@ -127,15 +127,14 @@ class GrowthCone : public TopologicalNode,
     void set_angle(double angle);
     virtual void prepare_for_split();
     virtual void after_split();
-    virtual double compute_CR_demand(mtPtr rnd_engine);
+    virtual void compute_CR_demand(mtPtr rnd_engine);
     virtual void reset_CR_demand();
 
     // get functions
     double get_module() const;
     virtual double get_state(const char *observable) const;
     virtual double get_CR_received() const;
-    virtual double get_CR_left() const;
-    virtual double get_CR_used() const;
+    virtual double get_CR_demand() const;
     virtual double get_growth_cone_speed() const;
     virtual double get_CR_speed_factor() const;
     virtual double get_CR_topo_coeff() const;

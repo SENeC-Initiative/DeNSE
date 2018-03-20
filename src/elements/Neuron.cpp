@@ -131,16 +131,20 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
 
     for (int i = 0; i < num_neurites; i++)
     {
+        /// @TODO BUGHERE
+        // it is calling init_neuron many times, or something weird is going on!
         if (i + neurites_.size() == 0)
         {
             new_neurite("axon", "axon", axon_gc, rnd_engine);
             set_neurite_status("axon", local_axon_params);
+            printf("\n neurite axon: size %li", neurites_.size());
         }
         else
         {
             std::string name = "dendrite_" + std::to_string(neurites_.size());
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
             set_neurite_status("dendrite", local_dendrites_params);
+            printf("\n neurite dendrite: size %li", neurites_.size());
         }
     }
 }
@@ -303,7 +307,7 @@ std::string Neuron::new_neurite(const std::string &name,
         {
             counter++;
             angle = fmod(axon_angle_ + M_PI, 2 * M_PI) +
-                    normal_(*(rnd_engine).get()) * M_PI / 4. * counter;
+                    normal_(*(rnd_engine).get()) * M_PI / 2. * counter;
             Point position = get_position();
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),

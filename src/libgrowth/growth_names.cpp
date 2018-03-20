@@ -17,19 +17,24 @@ const std::string axon_diameter("axon_diameter");
 const std::string B("B");
 const std::string branching_proba_default("branching_proba_default");
 
-const std::string CR_amount("CR_amount");
-const std::string CR_elongation_th("CR_elongation_th");
-// const std::string CR_geom_coeff("CR_geom_coeff");
-const std::string CR_demand_correlation("CR_demand_correlation");
-const std::string CR_demand_mean("CR_demand_mean");
-const std::string CR_demand_stddev("CR_demand_stddev");
-const std::string CR_initial_demand("CR_initial_demand");
+const std::string CR_correlation("CR_correlation");
 const std::string CR_leakage("CR_leakage");
-const std::string CR_speed_factor("CR_speed_factor");
-const std::string CR_retraction_th("CR_retraction_th");
-const std::string CR_split_th("CR_split_th");
-// const std::string CR_topo_coeff("CR_topo_coeff");
 const std::string CR_use_ratio("CR_use_ratio");
+const std::string CR_variance("CR_variance");
+const std::string CR_weight("CR_weight");
+
+const std::string CR_elongation_factor("CR_elongation_factor");
+const std::string CR_elongation_th("CR_elongation_th");
+const std::string CR_retraction_factor("CR_retraction_factor");
+const std::string CR_retraction_th("CR_retraction_th");
+
+// Critical parameters for neurite
+const std::string CR_neurite_split_th("CR_neurite_split_th");
+const std::string CR_neurite_available("CR_neurite_available");
+const std::string CR_neurite_variance("CR_neurite_varia");
+const std::string CR_neurite_generated("CR_neurite_generated");
+const std::string CR_neurite_generated_tau("CR_neurite_generated_tau");
+const std::string CR_neurite_delivery_tau("CR_neurite_delivery_tau");
 
 const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");

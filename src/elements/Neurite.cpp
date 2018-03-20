@@ -25,6 +25,7 @@
 #include <typeinfo>
 
 
+
 namespace growth
 {
 
@@ -294,7 +295,7 @@ void Neurite::delete_cone(size_t cone_n)
         size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
         auto parent_node = nodes_[parent_ID];
 
-        printf("pushing %lu to dead cones\n", cone_n);
+        //printf("pushing %lu to dead cones\n", cone_n);
         dead_cones_.push_back(cone_n);
 
         for (size_t i = 0; i < parent_node->children_.size(); i++)
@@ -304,7 +305,7 @@ void Neurite::delete_cone(size_t cone_n)
                 delete_parent_node(parent_node, i);
             }
         }
-        printf("how many %lu \n", parent_node.use_count());
+        //printf("how many %lu \n", parent_node.use_count());
         assert(parent_node.use_count() == 1);
     }
 }
@@ -820,7 +821,7 @@ double Neurite::get_state(const char *observable) const
         value += gc.second->get_state(observable);
     }
     CASE("A")
-    value = branching_model_.CR_amount_;
+    value = branching_model_.cr_neurite_.available;
     ENDTRIE;
 
     return value;
@@ -846,3 +847,4 @@ double Neurite::get_max_resol() const
 }
 
 } // namespace
+

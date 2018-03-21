@@ -15,7 +15,9 @@ from ._helpers import HashID
 from .dataIO import SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder
 from .dataIO_swc import *
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
+from .graph import CreateGraph
 from .geometry import Shape, culture_from_file
+from .structure import NeuronStructure
 
 
 __all__ = _pygrowth.__all__

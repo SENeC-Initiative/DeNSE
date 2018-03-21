@@ -15,8 +15,6 @@ __all__ = [
     "SegmentsToNetgrowth",
     "GetPath",
     "GetProperties",
-    "IntersectionsFromEnsemble",
-    "CreateGraph",
     "SwcEnsemble"
 ]
 
@@ -61,14 +59,13 @@ class SwcEnsemble(object):
     """
 
     def __init__(self, info):
-        try:
-            self.name, self.info = GetProperties(info)
-        except:
-            self.name, self.info = info["name"], info["description"]
         # Store a (N,max_len) matrix, where each neuron maintain it's properties
         self.neurons = []
+        self.info = info
+        self.name = "nameNone"
         # {"theta" : [],"r":[],"xy":[],"diameter":[],"gid":[]}
         # {"theta":[],"r":[],"xy":[],"diameter":[], "gid":[], "positions":[]}
+
 
     def add_population(self, neurons):
         """
@@ -99,45 +96,6 @@ class SwcEnsemble(object):
         return ensemble
 
 
-def CreateGraph(ensemble, intersection):
-    try:
-        import nngt
-    except ImportError:
-        raise RuntimeError("This function requires the NNGT library to work. "
-                           "Please install it by refering to the install "
-                           "section of the documentation: http://nngt."
-                           "readthedocs.org/en/latest/.")
-    num_neurons = len(ensemble.neurons)
-    positions = np.zeros((num_neurons, 2))
-    for neuron in ensemble.neurons:
-        positions[int(neuron.gid)] = neuron.position
-    graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
-    for node_out, nodes_in in intersection.items():
-        edges = np.zeros((len(nodes_in), 2), dtype=int)
-        edges[:, 0] = node_out
-        edges[:, 1] = nodes_in
-        graph.new_edges(edges)
-    return graph
-
-
-def IntersectionsFromEnsemble(ensemble):
-    """
-    Obtain synapses with naif approach of lines intersection
-    """
-    from shapely.geometry import LineString
-    axons = []
-    dendrites = []
-    for neuron in ensemble.neurons:
-        axons.append((neuron.gid, LineString(neuron.axon.xy.transpose())))
-        dendrites.append((neuron.gid, LineString(
-            neuron.dendrites.xy.transpose())))
-    intersection = {}
-    for axon in axons:
-        intersection[axon[0]] = []
-        for dendrite in dendrites:
-            if axon[1].intersects(dendrite[1]):
-                intersection[axon[0]].append(dendrite[0])
-    return intersection
 
 
 def ImportSwc(swc_file):
@@ -254,10 +212,10 @@ def SegmentsToNetgrowth(paths, name, info):
     return NetGrowth_data
 
 
-def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
+def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3,
+                                get_polar=True):
 
     """
-    Only import axon, assume that:
         1) there is only one neurite.
         1) there is no branching in the tree.
 
@@ -284,6 +242,7 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
         # import pdb; pdb.set_trace()  # XXX BREAKPOINT
         return (xy,modules,angles,None),None
     elif isfile(neuron) and neuron.endswith(".swc"):
+        print("import neuron from swc file")
         neuron = np.loadtxt(neuron)
         axon = np.where(neuron[:, 1] == axon_ID)[0]
         dendrite = np.where(neuron[:, 1] == dendrite_ID)[0]
@@ -293,15 +252,9 @@ def GetPath(neuron, plot=False, neuron_gid=1, axon_ID = 2, dendrite_ID=3):
         dendrite_diam = neuron[dendrite, 5]
         try:
             angles_axon=_angles_from_xy(axon_xy)
-        except ValueError as e:
-            print ("xy neuron data ar ill formed. neuron[axon] \
-                             is {}, while axon_xy is {}\
-                             ".format(neuron[axon].shape, axon_xy.shape))
-            raise e
-        try:
             angles_dendrite = _angles_from_xy(dendrite_xy)
         except:
-            warnings.warn("no dendrites in this run")
+            warnings.warn("angles were not acquired")
             return (axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam), None
 
         return (axon_xy,_module_from_xy(axon_xy),angles_axon, axon_diam),\

@@ -10,7 +10,6 @@ const std::string actin_content("actin_content");
 const std::string actin_content_tau("actin_content_tau");
 const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
-const std::string angle_in_degrees("angle_in_degrees");
 const std::string axon_angle("axon_angle");
 const std::string axon_diameter("axon_diameter");
 

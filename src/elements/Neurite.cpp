@@ -730,32 +730,39 @@ void Neurite::set_status(const statusMap &status)
     //~ #endif
     get_param(status, names::diameter_eta_exp, diameter_eta_exp_);
     get_param(status, names::diameter_variance, diameter_variance_);
-    if (not kernel().angles_in_radians() and
-        get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_))
+
+    bool is_rad = get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
+    bool is_rad_std = get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
+    printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
+
+    if (is_rad and not kernel().angles_in_radians())
     {
         gc_split_angle_mean_ = _rad_from_deg(gc_split_angle_mean_);
     }
-    if (not kernel().angles_in_radians() and
-        get_param(status, names::gc_split_angle_mean, gc_split_angle_std_))
+
+    if (is_rad_std and not kernel().angles_in_radians())
     {
         gc_split_angle_std_ = _rad_from_deg(gc_split_angle_std_);
     }
+    printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
 
-    if (not kernel().angles_in_radians() and
-        get_param(status, names::lateral_branching_angle_mean,
-                  lateral_branching_angle_mean_))
+    is_rad_std = false;
+    is_rad = false;
+    is_rad = get_param(status, names::lateral_branching_angle_mean, lateral_branching_angle_mean_);
+    if ( is_rad and not kernel().angles_in_radians() )
     {
         lateral_branching_angle_mean_ =
             _rad_from_deg(lateral_branching_angle_mean_);
     }
 
-    if (not kernel().angles_in_radians() and
-        get_param(status, names::lateral_branching_angle_mean,
-                  lateral_branching_angle_std_))
+    is_rad = false;
+    is_rad = get_param(status, names::lateral_branching_angle_std,lateral_branching_angle_std_);
+    if ( is_rad and not kernel().angles_in_radians())
     {
         lateral_branching_angle_std_ =
             _rad_from_deg(lateral_branching_angle_std_);
     }
+    is_rad = false;
 
 
     if (branching_model_.neurite_ == nullptr)

@@ -296,11 +296,23 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             compute_speed(rnd_engine, local_substep);
             compute_module(local_substep);
 
-            if (move_.module < 0)
-            {
-                retracting_todo_ = 1;
-                move_.module = move_.module*speed_ratio_retraction_;
 
+            // @TODO CHECK THIS, I think it should check
+            // whether it is < 0
+            // and then apply the retraction
+            if (move_.module > 0)
+            {
+                //@TODO CHECKTHIS it changes sign, but it does twice, the
+                //second inside retraction, as a consequence it is
+                //negative again!
+                move_.module = -move_.module*speed_ratio_retraction_;
+                //@TODO to make it retract I added:
+                /*
+                 * retracting_todo=1;
+                 *
+                */
+                // but I don't think is the right solution, indeed when I change the resolution everything breaks!
+                // I added another retracting to do somewhere else, to make it enter this first if-environment
             }
 
             // retract
@@ -309,7 +321,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // prune growth cone if necessary
             if (biology_.branch->size() == 0)
             {
-                printf("pruning \n");
                 prune(cone_n);
             }
             geometry_.position = biology_.branch->get_last_xy();
@@ -384,11 +395,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // Assess current situation and decide on following move base on
             // that. Check and change the sensing_angle if necessary
             // update current_time and set next local_substep
-            if (move_.module < 0)
-            {
-                //printf("this is the case\n");
-                retracting_todo_ = 1;
-            }
             if (move_.module > 0)
             {
                 // ========================= //
@@ -442,6 +448,14 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                         turned_ = 0.;
                     }
                 }
+
+                // @TODO CHECKTHIS here I added the other
+    //            if (move_.module < 0)
+    //            {
+    //                //printf("this is the case\n");
+    //                retracting_todo_ = 1;
+    //            }
+                //
 
                 if ((stuck_ or stopped_) and turning_ == 0)
                 {
@@ -532,7 +546,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 void GrowthCone::compute_module(double substep)
 {
     move_.module = move_.speed * substep;
-    //printf("speed used = %f", move_.speed);
 }
 
 
@@ -559,6 +572,8 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 
 void GrowthCone::retraction()
 {
+
+    //@TODO CHECKTHIS here the sign is changed again!
     double to_retract = -move_.module;  // retracting implies negative module
     double x0, y0, x1, y1;
 
@@ -568,8 +583,6 @@ void GrowthCone::retraction()
         {
             to_retract -= biology_.branch->points[2].back();
             biology_.branch->retract();
-            //printf("GC is retrating with module %f\n", move_.module);
-            //printf("GC is removing of %f\n", to_retract);
         }
         else
         {

@@ -307,10 +307,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 //negative again!
                 move_.module = -move_.module*speed_ratio_retraction_;
                 //@TODO to make it retract I added:
-                /*
-                 * retracting_todo=1;
-                 *
-                */
+
                 // but I don't think is the right solution, indeed when I change the resolution everything breaks!
                 // I added another retracting to do somewhere else, to make it enter this first if-environment
             }
@@ -358,6 +355,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 
             // if interacting with obstacles, switch substep down
             if (interacting_ and local_substep > 4.)
+
             {
                 //~ old_substep = local_substep;
                 tmp = std::max(0.25*local_substep, 1.);
@@ -373,6 +371,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     //~ update_filopodia_ = true;
                 //~ }
             }
+
             else if (interacting_ and local_substep >= 2.)
             {
                 //~ update_filopodia_ = true;
@@ -449,12 +448,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     }
                 }
 
-                // @TODO CHECKTHIS here I added the other
-    //            if (move_.module < 0)
-    //            {
-    //                //printf("this is the case\n");
-    //                retracting_todo_ = 1;
-    //            }
                 //
 
                 if ((stuck_ or stopped_) and turning_ == 0)
@@ -465,6 +458,18 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     turning_ = uniform_(*rnd_engine.get()) > 0.5 ? 1 : -1;
                 }
             }
+
+                // @TODO CHECKTHIS here I added the other
+                if (move_.module < 0)
+                {
+                    printf("this is the case\n");
+                    if (biology_.branch->size() == 0)
+                    {
+
+                        prune(cone_n);
+                    }
+                    retraction();
+                }
         }
 
         // ============================= //

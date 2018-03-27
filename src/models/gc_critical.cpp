@@ -19,7 +19,8 @@ GrowthCone_Critical::GrowthCone_Critical()
                 CRITICAL_ELONGATION_TH,
                 CRITICAL_RETRACTION_FACTOR,
                 CRITICAL_RETRACTION_TH}
-    , demand_{CRITICAL_WEIGHT,0,0}
+    , demand_{CRITICAL_WEIGHT_DIAMETER,
+              CRITICAL_WEIGHT_CENTRIFUGAL,0,0}
 
 {
     observables_.push_back("resource");
@@ -115,7 +116,9 @@ void GrowthCone_Critical::compute_CR_received()
  */
 void GrowthCone_Critical::compute_CR_demand(mtPtr rnd_engine)
 {
-    demand_.demand = critical_.stored * (1+demand_.weight*get_centrifugal_order());
+    demand_.demand = critical_.stored
+                   +(1+demand_.weight_centrifugal*get_centrifugal_order())
+                   +(1+demand_.weight_diameter*get_diameter());
     // printf("demand is %f \n", critical_.demand);
 }
 
@@ -256,7 +259,8 @@ void GrowthCone_Critical::set_status(const statusMap &status)
     get_param(status, names::CR_leakage, critical_.leakage);
     get_param(status, names::CR_correlation, critical_.correlation);
     get_param(status, names::CR_variance, critical_.variance);
-    get_param(status, names::CR_weight, demand_.weight);
+    get_param(status, names::CR_weight_diameter, demand_.weight_diameter);
+    get_param(status, names::CR_weight_centrifugal, demand_.weight_centrifugal);
 
     demand_.consumption_rate = critical_.use_ratio + 1./critical_.leakage;
 
@@ -279,7 +283,8 @@ void GrowthCone_Critical::get_status(statusMap &status) const
     set_param(status, names::CR_leakage, critical_.leakage);
     set_param(status, names::CR_correlation, critical_.correlation);
     set_param(status, names::CR_variance, critical_.variance);
-    set_param(status, names::CR_weight, demand_.weight);
+    set_param(status, names::CR_weight_diameter, demand_.weight_diameter);
+    set_param(status, names::CR_weight_centrifugal, demand_.weight_centrifugal);
 
 }
 

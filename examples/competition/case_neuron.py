@@ -13,7 +13,7 @@ Main parameters
 S = 0.901
 E = 0.3
 gc_model = "run_tumble_critical"
-num_neurons = 1
+num_neurons = 30
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
@@ -48,11 +48,11 @@ dendrite_params = {
     "CR_variance": 0.01,
     "CR_use_ratio": 0.16,
 
-    "CR_weight": 0.0,
+    # "CR_weight": 0.0,
 
     # Best model
-    "gc_split_angle_mean": 20.,
-    "B": 40.,
+    "gc_split_angle_mean": 1.,
+    "B": 20.,
     "E": 0.6,
     "S": 1.,
     "T": 10000.,
@@ -74,18 +74,18 @@ axon_params = {
     # Cr model
     "CR_retraction_factor": 0.010,
     "CR_elongation_factor": 0.10,
-    "CR_weight": -.0,
+    # "CR_weight": -.0,
     "CR_retraction_th": 0.10,
     "CR_elongation_th": 0.3,
     # "CR_split_th": 0.80,
     "CR_neurite_generated": 2500.,
-    "CR_neurite_delivery_tau":50.,
+    "CR_neurite_delivery_tau": 50.,
     "CR_correlation": 0.4,
     "CR_variance": 0.04,
     "CR_use_ratio": 0.1,
 
     # Best model
-    "gc_split_angle_mean": 20.,
+    "gc_split_angle_mean": 1.2,
     "B": 40.,
     "E": 0.6,
     "S": 1.,
@@ -115,11 +115,12 @@ def run_netgrowth(neuron_params):
     resolution = 1.
     np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
+    kernel["angles_in_radians"] = True
+    NetGrowth.SetKernelStatus(kernel, simulation_ID="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
-        -500, 500, (num_neurons, 2))
+        -1000, 1000, (num_neurons, 2))
     gid = NetGrowth.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
@@ -142,15 +143,15 @@ def run_netgrowth(neuron_params):
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     step(6000./resolution, 1, False, True)
-    axon_migated ={
-        'use_flpl_branching' : True,
-        "flpl_branching_rate" : 0.004,
+    axon_migated = {
+        # 'use_flpl_branching' : True,
+        # "flpl_branching_rate" : 0.004,
         "CR_retraction_th": 0.4,
         "CR_elongation_th": 0.15,
         "CR_elongation_factor": 0.6,
-        'use_van_pelt' : True,
+        # 'use_van_pelt' : True,
         "CR_neurite_generated": 4500.,
-        "CR_neurite_delivery_tau":50.,
+        "CR_neurite_delivery_tau": 50.,
         "CR_correlation": 0.15,
         "CR_variance": 0.02,
         "CR_use_ratio": 0.3,
@@ -195,7 +196,7 @@ def run_netgrowth(neuron_params):
 
 if __name__ == '__main__':
     kernel = {
-        "seeds": [33, 345, 17,193,177],
+        "seeds": [33, 345, 17, 193, 177],
         "num_local_threads": 5,
         "environment_required": False
     }

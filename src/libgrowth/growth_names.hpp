@@ -88,8 +88,10 @@ extern const std::string CR_correlation;
 #define CRITICAL_CORRELATION 0.1
 extern const std::string CR_variance;
 #define CRITICAL_VARIANCE 0.1 //
-extern const std::string CR_weight;
-#define CRITICAL_WEIGHT 1.
+extern const std::string CR_weight_diameter;
+#define CRITICAL_WEIGHT_DIAMETER 1.
+extern const std::string CR_weight_centrifugal;
+#define CRITICAL_WEIGHT_CENTRIFUGAL 1.
 
 extern const std::string CR_elongation_factor;
 #define CRITICAL_ELONGATION_FACTOR 0.5

@@ -744,7 +744,7 @@ void Neurite::set_status(const statusMap &status)
     {
         gc_split_angle_std_ = _rad_from_deg(gc_split_angle_std_);
     }
-    printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
+
 
     is_rad_std = false;
     is_rad = false;

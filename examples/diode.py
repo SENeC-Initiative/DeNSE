@@ -7,8 +7,6 @@ import time
 
 import numpy as np
 import matplotlib.pyplot as plt
-import random, shutil
-import os
 
 import nngt
 
@@ -42,11 +40,12 @@ neuron_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-    "sensing_angle": 0.08,
-    "speed_growth_cone": 0.95,
+    "sensing_angle": 0.18,
+    "speed_growth_cone": .6,
     "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 30.,
+    "filopodia_finger_length": 15.,
     "filopodia_min_number": 30,
+    "rw_persistence_length" : 0.7,
 
     "soma_radius": soma_radius,
 }
@@ -54,9 +53,9 @@ neuron_params = {
 dendrite_params = {
     "use_van_pelt": True,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.1,
+    "speed_growth_cone": 0.06,
     "filopodia_wall_affinity": 0.00,
-    "rw_persistence_length" : 2.
+    "rw_persistence_length" : 0.1
 }
 
 
@@ -73,9 +72,6 @@ if use_uniform_branching:
     neuron_params["uniform_branching_rate"] = 0.001
 
 
-if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 2.
-    neuron_params["rw_memory_tau"] = 90.
 
 
 '''
@@ -104,38 +100,38 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "/2chamber_culture.svg"
+    culture_file = "diode.svg"
     ng.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1800)
+        culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1500)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=100, xmax=540, soma_radius=soma_radius)
+            neurons=200,xmin =700, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
-            neurons=100, xmin=1260, soma_radius=soma_radius)
+            neurons=200,xmax =700, soma_radius=soma_radius)
         neuron_params['position'] = np.concatenate((pos_right, pos_left))
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
 
     print("Creating neurons")
-    gids = ng.CreateNeurons(n=200, growth_cone_model="persistent_rw_critical",
+    gids = ng.CreateNeurons(n=400, growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
-                            num_neurites=2)
+                            num_neurites=4)
 
     start = time.time()
-    step(4000, 0, False)
+    step(100, 0, False)
 
     dendrite_params.update({"speed_growth_cone" : 0.001,
                             "use_van_pelt" : False})
 
     axon_params = {"speed_growth_cone" : 0.7,
-                            "use_van_pelt" : True,
+                            "use_van_pelt" : False,
                    'B' : 10.,
-                   'T' : 10000.,
+                   'T' : 1000.,
                    'E' : 0.7}
     ng.SetStatus(gids,
                         params=neuron_params,
@@ -147,26 +143,29 @@ if __name__ == '__main__':
     # ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
                        # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        # show=True)
-    step(2000, 0, False)
+    # step(4000, 0, False)
     # ~ for loop_n in range(5):
     # ~ step(500, loop_n, True)
     duration = time.time() - start
 
     # prepare the plot
-    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+    ng.plot.PlotNeuron(gid=range(200), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+    ng.plot.PlotNeuron(gid=range(200, 400), show_culture=False, axis=ax, ymax=500,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                       show=True)
+    ng.plot.PlotNeuron(gid=range(200, 400), show_culture=False, axis=ax,
+                       soma_alpha=0.8, axon_color='yellow', gc_color="r",
                        show=True)
     plt.show(block=True)
     print("SIMULATION ENDED")
 
     # save
-    save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
-    ng.SaveJson(filepath=save_path)
-    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
     structure = ng.NeuronStructure()
     graph =ng.CreateGraph(structure=structure)
+    save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
+    ng.SaveJson(filepath=save_path)
+    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
 
 
 

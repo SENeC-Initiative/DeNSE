@@ -11,7 +11,6 @@ from .._helpers import nonstring_container
 
 __all__ = ["NeuronStructure"]
 
-
 def NeuronStructure(gid=None, downsample=False):
     '''
     Return the structure of the neurons.
@@ -105,4 +104,6 @@ def NeuronStructure(gid=None, downsample=False):
                 neurons[k][i] = np.array(neurons[k][i])
 
     return neurons
+
+
 

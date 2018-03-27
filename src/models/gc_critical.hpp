@@ -11,7 +11,8 @@ namespace growth
 
 typedef struct CR_Demand
 {
-    double weight;
+    double weight_diameter;
+    double weight_centrifugal;
     double consumption_rate;
     double demand;
 } CR_Demand;

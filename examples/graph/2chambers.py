@@ -7,8 +7,6 @@ import time
 
 import numpy as np
 import matplotlib.pyplot as plt
-import random, shutil
-import os
 
 import nngt
 
@@ -104,7 +102,7 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "/2chamber_culture.svg"
+    culture_file = current_dir + "/2chamber_culture_sharpen.svg"
     ng.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
 

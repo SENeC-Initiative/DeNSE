@@ -20,7 +20,8 @@ const std::string CR_correlation("CR_correlation");
 const std::string CR_leakage("CR_leakage");
 const std::string CR_use_ratio("CR_use_ratio");
 const std::string CR_variance("CR_variance");
-const std::string CR_weight("CR_weight");
+const std::string CR_weight_centrifugal("CR_weight_centrifugal");
+const std::string CR_weight_diameter("CR_weight_diameter");
 
 const std::string CR_elongation_factor("CR_elongation_factor");
 const std::string CR_elongation_th("CR_elongation_th");

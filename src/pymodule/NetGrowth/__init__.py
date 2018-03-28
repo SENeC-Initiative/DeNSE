@@ -13,6 +13,7 @@ from . import tools
 from ._pygrowth import *
 from ._helpers import HashID
 from .dataIO import SaveJson, SaveSwc, NeuronsFromSimulation, SimulationsFromFolder
+from .dataIO import PopulationFromSwc
 from .dataIO_swc import *
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
 from .graph import CreateGraph

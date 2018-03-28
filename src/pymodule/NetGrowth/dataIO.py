@@ -11,6 +11,7 @@ import numpy as np
 from . import _pygrowth as _pg
 from ._helpers import HashID
 from .dataIO_swc import ImportSwc
+from .structure.containers import Population
 
 
 __all__ = [
@@ -163,5 +164,30 @@ def NeuronsFromSimulation(simulation_path, population_to_singles=False):
     neurons      = {"neurons": neurons, "info": info}
 
     return neurons
+
+def PopulationFromSwc(swc_folder):
+    """
+    Import SWC files in NetGrowth Population:
+        the Population container retrieves all possible data
+        frome the swc file.
+        The import tool will look in the folder for the morphology file,
+        or for single neurons files.
+        the format style of SWC files is the standard
+
+    Parameters:
+    ==========
+        swc_folder: path,
+                    folder containing morphology.swc or single neurons file
+    Return:
+    =======
+        Population: Population container
+                    the container can be used to post process the neuron
+                    generated with NetGrowth
+                    or other neurons in general.
+
+    """
+    return Population.from_swc_population(NeuronsFromSimulation(swc_folder))
+
+
 
 

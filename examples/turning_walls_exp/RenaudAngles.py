@@ -2,9 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import NetGrowth as ng
-import numpy as np
 import matplotlib.pyplot as plt
-import random
 import os
 
 
@@ -22,6 +20,7 @@ neuron_params = {
 
     "axon_angle":0.,
     "use_critical_resource": False,
+    "use_uniform_branching": False,
     # #critical_resource model
     # "critical_resource_amount":100.,
     # "critical_resource_initial_demand":1.,
@@ -39,15 +38,15 @@ neuron_params = {
     # "lateral_branching_angle_std": 20.,
 
 
-    # "rw_persistence_length": 2.,
+    "rw_persistence_length": 2.,
     #~ "rw_memory_tau": 25.,
     #~ "rw_corr_delta": 2,
-    "sensing_angle": 0.034,
+    "sensing_angle": 0.24,
 
-    "speed_growth_cone": 0.1,
+    "speed_growth_cone": 0.5,
 
-    "filopodia_wall_affinity": 5.,
-    "filopodia_finger_length": 20.,
+    "filopodia_wall_affinity": 0.01,
+    "filopodia_finger_length": 40.,
     "filopodia_min_number": 30
 }
 
@@ -71,17 +70,13 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel={"seeds":[33],
             "num_local_threads": 1,
-            "resolution": 50.}
+            "resolution": 10.}
 
     culture_file = main_dir + "/culture/angle40.svg"
 
     ng.SetKernelStatus(kernel, simulation_ID="ID")
 
-    if not neuron_params['use_critical_resource']:
-        #~ neuron_params['growth_cone_model'] = 'random_walk'
-        neuron_params['growth_cone_model'] = 'default'
-    else:
-        neuron_params['growth_cone_model'] = 'random_walk'
+    neuron_params['growth_cone_model'] = 'persistent_random_walk'
 
     gids = None
     culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1000)
@@ -93,7 +88,7 @@ if __name__ == '__main__':
     pos_left = culture.seed_neurons(neurons=40, xmax=200, soma_radius=10.)
     neuron_params['position'] = pos_left
 
-    gids = ng.CreateNeurons(n=40, growth_cone_model='random_walk',
+    gids = ng.CreateNeurons(n=40, growth_cone_model='persistent_random_walk',
                             culture=culture,
                             params=neuron_params,
                             num_neurites=1)
@@ -101,7 +96,7 @@ if __name__ == '__main__':
     #~ ng.plot.PlotNeuron(show=True)
 
     #~ step(200, 0, False)
-    for loop_n in range(5):
+    for loop_n in range(3):
         step(500, loop_n, True)
 
     # prepare the plot

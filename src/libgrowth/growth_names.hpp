@@ -148,11 +148,11 @@ extern const std::string srf_avoidance_decay;
 #define SFR_INERTIAL_FORCE 1
 extern const std::string srf_inertial_force ;
 #define SFR_INERTIAL_DECAY 2
-extern const std::string sfr_inertial_decay ;
+extern const std::string srf_inertial_decay ;
 #define SFR_SOMATROPIC_FORCE 1
-extern const std::string sfr_somatropic_force;
+extern const std::string srf_somatropic_force;
 #define SFR_SOMATROPIC_DECAY 2
-extern const std::string sfr_somatropic_decay;
+extern const std::string srf_somatropic_decay;
 
 
 /*

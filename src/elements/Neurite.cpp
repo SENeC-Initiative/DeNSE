@@ -733,7 +733,7 @@ void Neurite::set_status(const statusMap &status)
 
     bool is_rad = get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
     bool is_rad_std = get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
-    printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
+    //printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
 
     if (is_rad and not kernel().angles_in_radians())
     {

@@ -742,7 +742,7 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
             assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
                 "The `simple_random_walk` model, is not compatible with " +\
                 "complex environments."
-    
+
     if _is_string(culture):
         from .geometry import culture_from_file
         culture = culture_from_file(
@@ -881,7 +881,7 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     if isinstance(dendrites_params, dict):
         it_d = (dendrites_params for i in range(n))
         base_dend_status = _get_scalar_status(dendrites_params, num_objects)
-    
+
     # check parameters
     for gid, p in zip(gids, it_p):
         object_name = GetObjectType(gid)
@@ -1114,6 +1114,7 @@ cdef Property _to_property(key, value) except *:
         vector[long] c_lvec
         vector[size_t] c_ulvec
         vector[string] c_svec
+        # vector[int] c_int
 
     key = _to_string(key)
 
@@ -1145,6 +1146,12 @@ cdef Property _to_property(key, value) except *:
             for val in value:
                 c_lvec.push_back(val)
             cprop = Property(c_lvec)
+
+    elif isinstance(value, list) and isinstance(value[0], int):
+        for val in value:
+            c_long.push_back(val)
+        cprop = Property(c_lvec)
+
     elif isinstance(value, Iterable) and isinstance(value[0], str):
         for val in value:
             c_svec.push_back(_to_bytes(val))

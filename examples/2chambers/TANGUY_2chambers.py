@@ -40,12 +40,11 @@ neuron_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-    "sensing_angle": 0.18,
-    "speed_growth_cone": .6,
+    "sensing_angle": 0.08,
+    "speed_growth_cone": 0.95,
     "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 25.,
+    "filopodia_finger_length": 30.,
     "filopodia_min_number": 30,
-    "rw_persistence_length" : 0.7,
 
     "soma_radius": soma_radius,
 }
@@ -53,9 +52,9 @@ neuron_params = {
 dendrite_params = {
     "use_van_pelt": True,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.06,
+    "speed_growth_cone": 0.1,
     "filopodia_wall_affinity": 0.00,
-    "rw_persistence_length" : 0.1
+    "rw_persistence_length" : 2.
 }
 
 
@@ -72,6 +71,9 @@ if use_uniform_branching:
     neuron_params["uniform_branching_rate"] = 0.001
 
 
+if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
+    neuron_params["rw_persistence_length"] = 2.
+    neuron_params["rw_memory_tau"] = 90.
 
 
 '''
@@ -91,7 +93,7 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 30.}
+              "resolution": 10.}
     # ~ kernel={"seeds":[33],
     # ~ "num_local_threads": 1,
     # ~ "resolution": 30.}
@@ -100,107 +102,69 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "/arches_diode.svg"
+    culture_file = current_dir + "/2chamber_culture.svg"
     ng.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
+
+    num_neurons = 10
 
     if kernel["environment_required"]:
         culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=300, soma_radius=soma_radius, ymax=-500)
+            neurons=num_neurons, xmax=540, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
-            neurons=300, soma_radius=soma_radius, ymin=500)
+            neurons=num_neurons, xmin=1260, soma_radius=soma_radius)
         neuron_params['position'] = np.concatenate((pos_right, pos_left))
-        # neuron_params['position'] = pos_right
     else:
-        neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
+        neuron_params['position'] = np.random.uniform(
+            -1000, 1000, (int(2*num_neurons), 2))
 
     print("Creating neurons")
-    gids = ng.CreateNeurons(n=600, growth_cone_model="persistent_rw_critical",
+    gids = ng.CreateNeurons(n=int(2*num_neurons),
+                            growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
-                            num_neurites=4)
+                            num_neurites=2)
 
     start = time.time()
-    step(10, 0, True)
     step(4000, 0, False)
 
     dendrite_params.update({"speed_growth_cone" : 0.001,
                             "use_van_pelt" : False})
 
     axon_params = {"speed_growth_cone" : 0.7,
-                            "use_van_pelt" : False,
+                            "use_van_pelt" : True,
                    'B' : 10.,
-                   'T' : 1000.,
+                   'T' : 10000.,
                    'E' : 0.7}
-    ng.SetStatus(gids,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params,
-                        axon_params=axon_params)
-    fig, ax = plt.subplots()
-    # ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
-                       # axon_color='g', gc_color="r", axis=ax, show=False)
-    # ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
-                       # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       # show=True)
-    # step(4000, 0, False)
+    print(time.time() - start)
+    ng.SetStatus(gids, params=neuron_params, dendrites_params=dendrite_params,
+                 axon_params=axon_params)
+    print(time.time() - start)
+
+    print("SIMULATION STARTED")
+    step(2000, 0, False)
+    print("SIMULATION ENDED")
     # ~ for loop_n in range(5):
     # ~ step(500, loop_n, True)
     duration = time.time() - start
+    print(duration)
 
     # prepare the plot
-    ng.plot.PlotNeuron(gid=range(300), culture=culture, soma_alpha=0.8,
+    fig, ax = plt.subplots()
+    ng.plot.PlotNeuron(gid=range(num_neurons), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ng.plot.PlotNeuron(gid=range(300, 600), show_culture=False, axis=ax,
-                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       show=True)
-    ng.plot.PlotNeuron(gid=range(300, 600), show_culture=False, axis=ax,
-                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       show=True)
-    plt.show(block=True)
-    print("SIMULATION ENDED")
-    # ng.ResetKernel()
+    ng.plot.PlotNeuron(gid=range(num_neurons, 2*num_neurons), show_culture=False,
+                       axis=ax, soma_alpha=0.8, axon_color='darkorange',
+                       gc_color="r", show=False)
 
     # save
-    # structure = ng.NeuronStructure()
-    # graph =ng.CreateGraph()
-    save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
+    save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
     ng.SaveJson(filepath=save_path)
-    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
+    ng.SaveSwc(filepath=save_path, swc_resolution=10)
 
+    graph = ng.CreateGraph()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ### Import population for network analysis
-    # ng_population = ng.SimulationsFromFolder(save_path)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # population = ng.SwcEnsemble.from_population(ng_population)
-
-    # intersection = ng.IntersectionsFromEnsemble(population)
-    # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ng.CreateGraph(population, intersection)
-    # #graph info
-    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # nngt.plot.draw_network(graph, esize=0.1, show=True)
-
-    # print("duration", duration)
+    nngt.plot.draw_network(graph, show=True)

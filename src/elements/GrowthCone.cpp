@@ -271,16 +271,10 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
         // Are we retracting because we were previously stuck? //
         // =================================================== //
 
-        // test retraction (compute retraction time if necessary)
+        // test stuck/stopped-induced retraction (compute retraction time if
+        // necessary)
         if (retracting_todo_ > 0)
         {
-            // cannot be stuck_ or on low proba mode when retracting
-            stuck_ = false;
-            total_proba_ = filopodia_.size;
-            // also reset turning
-            turning_ = 0;
-            turned_ = 0.;
-
             // check for end of retraction during local step
             if (retracting_todo_ <= local_substep)
             {
@@ -296,43 +290,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             compute_speed(rnd_engine, local_substep);
             compute_module(local_substep);
 
-
-            // @TODO CHECK THIS, I think it should check
-            // whether it is < 0
-            // and then apply the retraction
-            if (move_.module > 0)
-            {
-                //@TODO CHECKTHIS it changes sign, but it does twice, the
-                //second inside retraction, as a consequence it is
-                //negative again!
-                move_.module = -move_.module*speed_ratio_retraction_;
-                //@TODO to make it retract I added:
-
-                // but I don't think is the right solution, indeed when I change the resolution everything breaks!
-                // I added another retracting to do somewhere else, to make it enter this first if-environment
-            }
+            // make sure module is negative
+            move_.module = -std::abs(move_.module);
 
             // retract
-            retraction();
-
-            // prune growth cone if necessary
-            if (biology_.branch->size() == 0)
-            {
-                prune(cone_n);
-            }
-            geometry_.position = biology_.branch->get_last_xy();
-
-            if (using_environment_)
-            {
-                // check if we changed area
-                current_area_ = kernel().space_manager.get_containing_area(
-                            geometry_.position, omp_id);
-                update_growth_properties(current_area_);
-                // reset move_.sigma_angle to its default value
-                AreaPtr area = kernel().space_manager.get_area(current_area_);
-                move_.sigma_angle = sensing_angle_ *
-                                    area->get_property(names::sensing_angle);
-            }
+            retraction(cone_n, omp_id);
         }
         else
         {
@@ -355,7 +317,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 
             // if interacting with obstacles, switch substep down
             if (interacting_ and local_substep > 4.)
-
             {
                 //~ old_substep = local_substep;
                 tmp = std::max(0.25*local_substep, 1.);
@@ -365,27 +326,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 {
                     local_substep = tmp;
                 }
-
-                //~ if (old_substep != local_substep)
-                //~ {
-                    //~ update_filopodia_ = true;
-                //~ }
             }
-
             else if (interacting_ and local_substep >= 2.)
             {
-                //~ update_filopodia_ = true;
                 local_substep = 1.;
             }
-
-
-            //~ // update filopodia
-            //~ if (update_filopodia_)
-            //~ {
-                //~ update_filopodia(local_substep);
-            //~ }
-
-            //~ update_filopodia_ = false;
 
             // compute speed and module
             compute_speed(rnd_engine, local_substep);
@@ -448,8 +393,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     }
                 }
 
-                //
-
                 if ((stuck_ or stopped_) and turning_ == 0)
                 {
                     // if we are stuck/stopped, we will start widening the
@@ -458,18 +401,13 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     turning_ = uniform_(*rnd_engine.get()) > 0.5 ? 1 : -1;
                 }
             }
-
-                // @TODO CHECKTHIS here I added the other
-                if (move_.module < 0)
-                {
-                    printf("this is the case\n");
-                    if (biology_.branch->size() == 0)
-                    {
-
-                        prune(cone_n);
-                    }
-                    retraction();
-                }
+            else
+            {
+                // =========== //
+                // Back we go! //
+                // =========== //
+                retraction(cone_n, omp_id);
+            }
         }
 
         // ============================= //
@@ -575,13 +513,19 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 }
 
 
-void GrowthCone::retraction()
+void GrowthCone::retraction(size_t cone_n, int omp_id)
 {
+    // retracting implies negative module, we want a positive distance
+    double to_retract = -move_.module;
 
-    //@TODO CHECKTHIS here the sign is changed again!
-    double to_retract = -move_.module;  // retracting implies negative module
-    double x0, y0, x1, y1;
+    // cannot be stuck_ or on low proba mode when retracting, so reset all
+    stuck_ = false;
+    total_proba_ = filopodia_.size;
+    // also reset turning
+    turning_ = 0;
+    turned_ = 0.;
 
+    // remove the points
     while (to_retract > 0)
     {
         if (biology_.branch->size() > 0)
@@ -598,6 +542,7 @@ void GrowthCone::retraction()
     // set the new growth cone angle
     auto points = biology_.branch->points;
     size_t last = points[0].size();
+    double x0, y0, x1, y1;
 
     if (last > 0)
     {
@@ -617,6 +562,25 @@ void GrowthCone::retraction()
         }
 
         move_.angle = atan2(y1 - y0, x1 - x0);
+    }
+
+    // prune growth cone if necessary
+    if (biology_.branch->size() == 0)
+    {
+        prune(cone_n);
+    }
+    geometry_.position = biology_.branch->get_last_xy();
+
+    // check if we changed area
+    if (using_environment_)
+    {
+        current_area_ = kernel().space_manager.get_containing_area(
+                    geometry_.position, omp_id);
+        update_growth_properties(current_area_);
+        // reset move_.sigma_angle to its default value
+        AreaPtr area = kernel().space_manager.get_area(current_area_);
+        move_.sigma_angle = sensing_angle_ *
+                            area->get_property(names::sensing_angle);
     }
 }
 

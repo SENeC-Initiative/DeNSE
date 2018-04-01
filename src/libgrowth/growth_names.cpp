@@ -85,9 +85,9 @@ const std::string speed_variance("speed_variance");
 const std::string srf_avoidance_decay ("srf_avoidance_decay");
 const std::string srf_avoidance_force ("srf_avoidance_force");
 const std::string srf_inertial_force ("srf_inertial_force");
-const std::string sfr_inertial_decay ("sfr_inertial_decay");
-const std::string sfr_somatropic_force ("sfr_somatropic_force");
-const std::string sfr_somatropic_decay ("sfr_somatropic_decay");
+const std::string srf_inertial_decay ("srf_inertial_decay");
+const std::string srf_somatropic_force ("srf_somatropic_force");
+const std::string srf_somatropic_decay ("srf_somatropic_decay");
 
 const std::string substrate_affinity("substrate_affinity");
 

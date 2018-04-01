@@ -1,7 +1,5 @@
-#!/usr/bin/env cython
+#!/usr/bin/env python
 #-*- coding:utf-8 -*-
-#cython: boundscheck=False, wraparound=False, initializedcheck=False
-#cython: cdivision=True, embedsignature=True
 #
 # Path- and patch-related tools are inspired by Sean Gillies' `descartes`
 # library (https://pypi.python.org/pypi/descartes/) and are released under

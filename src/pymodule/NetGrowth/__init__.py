@@ -18,7 +18,7 @@ from .dataIO_swc import *
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
 from .graph import CreateGraph
 from .geometry import Shape, culture_from_file
-from .structure import NeuronStructure, Population
+from .structure import NeuronStructure, Population, EnsembleRW, PlotRWAnalysis
 
 __all__ = _pygrowth.__all__
 __all__.extend(("Shape", "culture_from_file"))

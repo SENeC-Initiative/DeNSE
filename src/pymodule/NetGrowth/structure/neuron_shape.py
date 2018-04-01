@@ -72,7 +72,6 @@ def NeuronStructure(gid=None, downsample=False):
     for i, n in enumerate(gid):
         neurons["gid"].append(n)
         neurons["position"].append((somas[0][i], somas[1][i]))
-        neurons["position"].append((somas[0][i], somas[1][i]))
         if i < len(axon_limits):
             final = axon_limits[i]
             neurons["axon"].append(

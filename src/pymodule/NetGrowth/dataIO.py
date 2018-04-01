@@ -113,7 +113,7 @@ def SimulationsFromFolder(simulation_folder):
     return simulations
 
 
-def NeuronsFromSimulation(simulation_path, population_to_singles=False):
+def NeuronsFromSimulation(simulation_path):
     """
     Return a list of netgrowth_format neurons for all the neurons in the simulation path.
     The simulations are expected to be a pair of morphology.swc and info.json files with same name.
@@ -165,7 +165,13 @@ def NeuronsFromSimulation(simulation_path, population_to_singles=False):
 
     return neurons
 
-def PopulationFromSwc(swc_folder):
+def NeuronFromSwcFile(_file, info=None):
+    netgrowth_format = {"gid": 0, "data":_file}
+    neurons ={0: netgrowth_format}
+    return  {"neurons": neurons, "info": info}
+
+
+def PopulationFromSwc(swc_folder=None, swc_file=None, info=None):
     """
     Import SWC files in NetGrowth Population:
         the Population container retrieves all possible data
@@ -186,7 +192,12 @@ def PopulationFromSwc(swc_folder):
                     or other neurons in general.
 
     """
-    return Population.from_swc_population(NeuronsFromSimulation(swc_folder))
+    if swc_file is not None:
+        return Population.from_swc_population(
+            NeuronFromSwcFile(swc_file,info))
+    if swc_folder is not None:
+        return Population.from_swc_population(
+            NeuronsFromSimulation(swc_folder))
 
 
 

@@ -137,14 +137,16 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         {
             new_neurite("axon", "axon", axon_gc, rnd_engine);
             set_neurite_status("axon", local_axon_params);
-            printf("\n neurite axon: size %li", neurites_.size());
+            //@TODO double neurite set status here
+            //printf("\n neurite axon: size %li", neurites_.size());
         }
         else
         {
             std::string name = "dendrite_" + std::to_string(neurites_.size());
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
             set_neurite_status("dendrite", local_dendrites_params);
-            printf("\n neurite dendrite: size %li", neurites_.size());
+            //@TODO double neurite set status here
+            //printf("\n neurite dendrite: size %li", neurites_.size());
         }
     }
 }

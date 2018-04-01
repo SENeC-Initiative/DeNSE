@@ -33,8 +33,9 @@ Main parameters
 
 soma_radius = 10.
 use_uniform_branching = False
-use_vp = False
+use_vp = True
 use_run_tumble = False
+use_critical_resource=False
 
 gc_model = 'persistent_random_walk'
 
@@ -49,12 +50,15 @@ neuron_params = {
     "filopodia_min_number": 30,
 
     "soma_radius": soma_radius,
+    'B' : 10.,
+    'T' : 10000.,
+    'E' : 0.7,
 }
 
 dendrite_params = {
-    "use_van_pelt": True,
+    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.1,
+    "speed_growth_cone": 3.9,
     "filopodia_wall_affinity": 0.00,
     "rw_persistence_length" : 2.
 }
@@ -104,7 +108,7 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "/2chamber_culture.svg"
+    culture_file = current_dir + "/2chamber_culture_sharpen.svg"
     ng.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
 
@@ -124,32 +128,11 @@ if __name__ == '__main__':
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
-                            num_neurites=2)
+                            num_neurites=1)
 
     start = time.time()
-    step(4000, 0, False)
-
-    dendrite_params.update({"speed_growth_cone" : 0.001,
-                            "use_van_pelt" : False})
-
-    axon_params = {"speed_growth_cone" : 0.7,
-                            "use_van_pelt" : True,
-                   'B' : 10.,
-                   'T' : 10000.,
-                   'E' : 0.7}
-    ng.SetStatus(gids,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params,
-                        axon_params=axon_params)
     fig, ax = plt.subplots()
-    # ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
-                       # axon_color='g', gc_color="r", axis=ax, show=False)
-    # ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
-                       # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       # show=True)
-    step(2000, 0, False)
-    # ~ for loop_n in range(5):
-    # ~ step(500, loop_n, True)
+    step(200, 0, False)
     duration = time.time() - start
 
     # prepare the plot

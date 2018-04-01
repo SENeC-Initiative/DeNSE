@@ -13,6 +13,7 @@ Main parameters
 rate = 0.005
 num_neurons = 1
 neuron_params = {
+    "axon_angle":3.14/2,
     # "growth_cone_model": "self_referential_forces",
 
     "rt_persistence_length": 10000.0,
@@ -24,8 +25,8 @@ neuron_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
 
-    "use_uniform_branching": True,
-    "uniform_branching_rate": rate,
+    "use_flpl_branching": True,
+    "flpl_branching_rate": rate,
 
     "use_van_pelt": False,
     "use_critical_resource": False,
@@ -70,16 +71,15 @@ def lateral_branching(neuron_params):
         -500, 500, (num_neurons, 2))
     gid = NetGrowth.CreateNeurons(n=num_neurons,
                             params=neuron_params,
-                            axon_params=neuron_params,
                             num_neurites=1,
                             position=[]
                             )
 
     step(10, 1, False, False)
-    neuron_params['use_uniform_branching'] = True
+    neuron_params['use_flpl_branching'] = True
     NetGrowth.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(1000, 1, False, False)
+    step(1000, 1, False, True)
     # neuron_params['use_lateral_branching'] = True
     NetGrowth.SaveSwc(swc_resolution=5)
     NetGrowth.SaveJson()

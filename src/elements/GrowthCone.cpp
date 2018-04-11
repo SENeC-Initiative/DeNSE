@@ -701,6 +701,7 @@ void GrowthCone::make_move(
     double frac   = 0.;  // fraction of current
     double weight = directions_weights.at(0);  // initial weight
     double new_angle, default_angle, mean;
+    GeomPtr line;
     Point p;
 
     // check whether we would be stopped is substep was 1
@@ -729,18 +730,23 @@ void GrowthCone::make_move(
                     p = compute_target_position(directions_weights, rnd_engine,
                                                 substep, new_angle);
 
+                    line = kernel().space_manager.geosline_from_points(
+                        geometry_.position, p);
+
                     // choose the new angle
                     if (using_environment_)
                     {
                         default_angle = move_.angle + filopodia_.directions[n];
 
                         // move towards default_angle
-                        while (not kernel().space_manager.env_contains(p, omp_id))
+                        while (kernel().space_manager.env_intersect(line, omp_id))
                         {
                             new_angle = 0.5 * (new_angle + default_angle);
                             p         =
                                 Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
                                       geometry_.position.at(1) + sin(new_angle) * move_.module);
+                            line = kernel().space_manager.geosline_from_points(
+                                geometry_.position, p);
                         }
 
                         // check if we switched to a new area

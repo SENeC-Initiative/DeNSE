@@ -4,6 +4,8 @@
 """ Containers for Neuronal shapes """
 
 from logging import warnings
+from collections import OrderedDict
+
 import numpy as np
 
 from ..dataIO_swc import GetSWCStructure
@@ -43,6 +45,7 @@ class Neurite(object):
                 popper.append(enum)
         for n in sorted(popper,reverse=True):
             self.branches.pop(n)
+
     @property
     def has_points(self):
         try:
@@ -171,47 +174,45 @@ class Population(object):
         return population
 
     def __init__(self, info, name="no_name"):
-        # Store a (N,max_len) matrix, where each neuron maintain
-        # it's properties
-        self.neurons = []
-        self.info = info
-        self.name = name
+        self._neurons = OrderedDict()
+        self.info    = info
+        self.name    = name
 
     def __len__(self):
-        return len(self.neurons)
+        return len(self._neurons)
 
     def axon_all_points(self, center_zero=False):
         if center_zero:
-            return np.vstack([neuron.axon.xy
-                              - neuron.position
-                              for neuron in self.neurons\
-                          if neuron.axon.xy.shape[1]>1
-                          ])
+            return np.vstack(
+                [neuron.axon.xy - neuron.position
+                 for neuron in self._neurons.values()
+                 if neuron.axon.xy.shape[1] > 1])
         else:
-            return np.vstack([neuron.axon.xy
-                              for neuron in self.neurons\
-                          if neuron.axon.xy.shape[1]>1
-                          ])
+            return np.vstack(
+                [neuron.axon.xy for neuron in self._neurons.values()
+                 if neuron.axon.xy.shape[1] > 1])
     def dendrites_all_points(self, center_zero=False):
         if center_zero:
-            return np.vstack([neuron.dendrites[0].xy
-                              - neuron.position
-                          for neuron in self.neurons\
-                          if neuron.dendrites[0].xy.shape[1]>1
-                          ])
+            return np.vstack(
+                [neuron.dendrites[0].xy - neuron.position
+                 for neuron in self._neurons.values()
+                 if neuron.dendrites[0].xy.shape[1]>1])
         else:
-            return np.vstack([neuron.dendrites[0].xy
-                          for neuron in self.neurons\
-                          if neuron.dendrites[0].xy.shape[1]>1
-                          ])
+            return np.vstack(
+                [neuron.dendrites[0].xy for neuron in self._neurons.values()
+                 if neuron.dendrites[0].xy.shape[1] > 1])
 
     @property
     def gids(self):
-        return [neuron.gid for neuron in self.neurons]
+        return list(self._neurons.keys())
+
+    @property
+    def neurons(self):
+        return list(self._neurons.values())
 
     @property
     def positions(self):
-        return [neuron.position for neuron in self.neurons]
+        return [neuron.position for neuron in self._neurons.values()]
 
     def add_structure_population(self, structure):
         for enum, gid in enumerate(structure['gid']):
@@ -224,13 +225,14 @@ class Population(object):
                 _neurite_from_skeleton(structure["dendrites"][enum],
                 "dendrite"))
 
-            self.neurons.append(neuron)
+            self._neurons[gid] = neuron
 
     def add_swc_population(self, neurons):
         '''
         add population
         '''
         for neuron in neurons:
+            gid = neurons[neuron]['gid']
             axon, dendrites = GetSWCStructure(
                 neuron=neurons[neuron]['data'])
             try:
@@ -240,33 +242,27 @@ class Population(object):
                 warnings.warn("Cannot retrieve `position` from info.json file "
                               "setting default position to [0, 0].")
                 position = [0, 0]
-            self.neurons.append(Neuron(position, neurons[neuron]['gid']))
+            self._neurons[gid] = Neuron(position, gid)
             if isinstance(axon, list):
-                self.neurons[-1].axon = Neurite([Branch(ax) for ax in axon],
+                self._neurons[gid].axon = Neurite([Branch(ax) for ax in axon],
                                                 neurite_type="axon")
             else:
                 raise Exception("Axon is expected to be a list of segments.")
             if dendrites is not None:
                 if isinstance(dendrites, list):
-                    self.neurons[-1].dendrites = []
+                    self._neurons[gid].dendrites = []
                     dend = Neurite([Branch(dend) for dend in dendrites],
                                    neurite_type="dendrite")
-                    self.neurons[-1].dendrites.append(dend)
+                    self._neurons[gid].dendrites.append(dend)
                 else:
                     raise Exception(
                         "Dendrites are expected to be a list of segments.")
 
     def get_gid(self, gids):
-        # if gids is None:
-            # return self.neurons
         if isinstance(gids, list):
-            n_gids = np.array([neuron.gid for neuron in self.neurons])
-            selected = np.array([np.where(n_gids==gid)[0][0] for gid in gids])
-            return gids, [self.neurons[n] for n in selected]
+            return gids, [self._neurons[n] for n in gids]
         if isinstance(gids, int):
-            n_gids = np.array([neuron.gid for neuron in self.neurons])
-            selected = np.array([np.where(n_gids==gid)[0][0] for gid in [gids]])
-            return [gids], [self.neurons[n] for n in selected]
+            return [gids], [self._neurons[gids]]
 
 
 # ------------- #

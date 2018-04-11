@@ -11,6 +11,7 @@ import random, shutil
 import os
 
 import nngt
+nngt.set_config('backend', 'networkx')
 
 import NetGrowth as ng
 
@@ -58,7 +59,7 @@ neuron_params = {
 dendrite_params = {
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 3.9,
+    "speed_growth_cone": 0.2,
     "filopodia_wall_affinity": 0.00,
     "rw_persistence_length" : 2.
 }
@@ -85,7 +86,6 @@ if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
 '''
 Simulation
 '''
-
 
 def step(n, loop_n, plot=True):
     ng.Simulate(n)
@@ -128,11 +128,13 @@ if __name__ == '__main__':
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
-                            num_neurites=1)
+                            num_neurites=2)
 
     start = time.time()
     fig, ax = plt.subplots()
-    step(200, 0, False)
+    # ~ for _ in range(10):
+        # ~ step(200, 0, True)
+    step(2000, 0, False)
     duration = time.time() - start
 
     # prepare the plot
@@ -147,42 +149,6 @@ if __name__ == '__main__':
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
-    ng.SaveSwc(filepath=save_path,swc_resolution = 10)
-    structure = ng.NeuronStructure()
-    graph =ng.CreateGraph(structure=structure)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # ng.ResetKernel()
-
-    ### Import population for network analysis
-    # ng_population = ng.SimulationsFromFolder(save_path)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # population = ng.SwcEnsemble.from_population(ng_population)
-
-    # intersection = ng.IntersectionsFromEnsemble(population)
-    # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ng.CreateGraph(population, intersection)
-    # #graph info
-    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # nngt.plot.draw_network(graph, esize=0.1, show=True)
-
-    # print("duration", duration)
+    ng.SaveSwc(filepath=save_path, swc_resolution = 10)
+    graph = ng.CreateGraph(connection_proba=1.)
+    nngt.plot.draw_network(graph, show=True)

@@ -313,7 +313,7 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
     // Useful values
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     unsigned int n_angle;
-    Point target_pos;
+    Point target_pos, starting_pos;
     double angle;
 
     // compute the number of filopodia to ignore
@@ -331,7 +331,8 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
         //~ directions_weights[n_angle] = std::nan("");
     //~ }
 
-    assert(env_contains(Point(position.at(0), position.at(1)), omp_id));
+    starting_pos = Point(position.at(0), position.at(1));
+    assert(env_contains(starting_pos, omp_id));
 
     // test the environment for each of the filopodia's angles
     //~ for (n_angle = n_min; n_angle < n_max; n_angle++)
@@ -342,7 +343,9 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
         target_pos = Point(position.at(0) + cos(angle) * move.module,
                            position.at(1) + sin(angle) * move.module);
 
-        if (not env_contains(target_pos, omp_id))
+        GeomPtr line = geosline_from_points(starting_pos, target_pos);
+
+        if (env_intersect(line, omp_id))
         {
             directions_weights[n_angle] = std::nan("");  // cannot escape env
         }

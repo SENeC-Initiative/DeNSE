@@ -44,6 +44,8 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
     # f,bx=plt.subplots()
     for n, ensemble in enumerate(ensembles):
 
+        # Contraction rate analysis
+
         ax1.set_title("Contraction rate")
         ax1.set_xlabel(r"length $\mu m$")
         ax1.set_ylabel(r"$\frac{Euclidean}{Length}$|")
@@ -63,12 +65,16 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
                     c=sorted_names[n],
                     yerr=yerr(ensemble.contraction),
                     alpha=0.5,
-                    errorevery=ev+n)
+                    errorevery=ev+n, label=ensemble.name)
 
         ax1.plot(ensemble.effective_length,
                 np.exp(- ensemble.effective_length / ensemble.fits['contraction'][0][0])
                 * ensemble.fits['contraction'][0][1]+ensemble.fits['contraction'][0][2],
                 '--', c='r')
+
+        ax1.legend()
+
+        # MSD analysis
 
         ax2.set_title(r"\textit{xy} position MSD: $\langle \Delta X^2 \rangle$")
         ax2.set_xlabel(r"length $\mu m$")
@@ -106,6 +112,10 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
                  ensemble.effective_length**2,
                  '--', c='r')
 
+        ax2.legend()
+
+        # Correlation analysis
+
         ax3.set_title(r"Correlation function $\langle \cos \theta \rangle$")
         ax3.set_xlabel(r"length $\mu m$")
         ax3.set_ylabel(r"$\langle \bar b_i \bar b_{i+n} \rangle$")
@@ -131,10 +141,12 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
                     c=sorted_names[n],
                     yerr=yerr(ensemble.cosine),
                     alpha=0.05,
-                    errorevery=ev+n)
+                    errorevery=ev+n, label=ensemble.name)
 
         ax3.semilogy()
         ax3.set_ylim(0.1 , 1)
+
+        ax3.legend()
 
         # ax3.errorbar(ensemble.effective_length,
                     # ensemble.cosine[:,0],
@@ -176,6 +188,8 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
                 ensemble.effective_length[0:theta_max]*ensemble.fits['msd_1D_ramp'][0][0] +
                 ensemble.fits['msd_1D_ramp'][0][1], '--',
                 c='r')
+
+        ax4.legend()
 
     # handles, labels = ax1.get_legend_handles_labels()
     # bx.axis("off")

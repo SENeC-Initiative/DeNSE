@@ -25,8 +25,8 @@
 #
 # Where <module_name> is the name of the resulting Python module and
 # <src1> <src2> ... are source files to be compiled into the module, e.g. *.pyx,
-# *.py, *.c, *.cxx, etc.  A CMake target is created with name <module_name>.  This can
-# be used for target_link_libraries(), etc.
+# *.py, *.c, *.cpp, etc.  A CMake target is created with name <module_name>.
+# This can be used for target_link_libraries(), etc.
 #
 # The sample paths set with the CMake include_directories() command will be used
 # for include directories to search for *.pxd when running the Cython complire.
@@ -74,10 +74,10 @@ mark_as_advanced( CYTHON_ANNOTATE CYTHON_NO_DOCSTRINGS CYTHON_FLAGS )
 find_package( Cython REQUIRED )
 find_package( PythonLibs REQUIRED )
 
-set( CYTHON_CXX_EXTENSION "cxx" )
+set( CYTHON_CXX_EXTENSION "cpp" )
 set( CYTHON_C_EXTENSION "c" )
 
-# Create a *.c or *.cxx file from a *.pyx file.
+# Create a *.c or *.cpp file from a *.pyx file.
 # Input the generated file basename.  The generate file will put into the variable
 # placed in the "generated_file" argument. Finally all the *.py and *.pyx files.
 function( compile_pyx _name generated_file )

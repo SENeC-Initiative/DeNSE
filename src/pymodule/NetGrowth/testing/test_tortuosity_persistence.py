@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-""" Testing the areas to reproduce Jordi's experiments """
+""" Testing the tortuosity and persistence length """
 
 import matplotlib
 matplotlib.use('Qt5Agg')
@@ -10,7 +10,9 @@ import numpy as np
 
 import nngt
 import nngt.geometry as geom
+
 import NetGrowth as ng
+from NetGrowth.structure.algorithms import contraction, tortuosity_local, msd_2D
 
 
 '''
@@ -19,7 +21,7 @@ Setting the parameters
 
 num_neurons   = 1000
 simtime       = 5000.
-num_omp       = 7
+num_omp       = 14
 resolutions   = (1., 2., 5., 10., 20., 50.)
 #~ resolutions   = (10., 20., 50.)
 
@@ -85,146 +87,6 @@ def tortuosity(points, step_size=None):
     return 0.
 
 
-
-def tortuosity_local(theta, rho, first=1):
-    """
-    Measure the local tortuosity as defined in u
-    'Computation of tortuosity vessels' 10.1109/ICAPR.2015.7050711
-
-    Params:
-    -------
-    arrays: numpy 2D array,
-            first dimension is the set of realizations
-            max_len: max interval where correlation is measured.
-            x_0   : first element of the list.
-
-    Returns:
-    --------
-    autocorrelation: 2D array, the percentile distribution with [50%, 75%, 25%]
-    """
-
-    # theta =  (arrays[:,:].transpose()- arrays[:,0]).transpose()
-    # differential measure reduce size -1
-    # print(theta.shape)
-    theta = np.abs(theta[:, first:] - theta[:, :-first])
-    rho = rho[:, :]
-    max_len = rho.shape[1]
-    tortuosity_local = np.zeros((max_len, 3))
-    length_local = np.zeros((max_len, 3))
-    # since distance needs to be greater thean 1, first element is jumped!
-    for shift in range(first, max_len):
-        somma = np.sum(theta[:, first:shift], axis =1)
-        tortuosity_local[shift-first,1:]= np.percentile(somma,q=[75, 25], axis=0, interpolation='midpoint')
-        tortuosity_local[shift-first,0] = np.mean(somma)
-        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-        somma = np.sum(rho[:, first:shift], axis=1)
-        length_local[shift-first,1:] = np.percentile(somma, q=[75, 25], axis=0, interpolation='midpoint')
-        length_local[shift-first,0] =np.mean(somma, axis=0)
-    length_local[0] = np.array([1, 1, 1])
-    tortuosity_local = tortuosity_local/length_local
-    tortuosity_local[0] = np.array([1., 1.2, 0.8])
-    return tortuosity_local
-
-
-def contraction(curvilinear, xy, first=1):
-    """
-    Measure the  ratio between two points
-    The  is the ratio between the euclidean distance and curvilinear distance
-    This value is always less than 1.
-
-       Params:
-    -------
-    array: numpy 1D array
-    max_len: double max interval where correlation is measured.
-
-    Returns:
-    --------
-    autocorrelation: 2D array, the percentile distribution with [50%, 75%, 25%]
-    """
-    dx = (xy[:, 0, :].transpose() - xy[:, 0, 0]).transpose()
-    dy = (xy[:, 1, :].transpose() - xy[:, 1, 0]).transpose()
-    max_len = dx.shape[1]
-    ratio = np.zeros((max_len, 3))
-    for shift in range(first, max_len):
-        r = np.sqrt((dx[:, shift])**2 + (dy[:, shift])**2)
-        length = np.sum(np.abs(curvilinear[:, :shift]), axis=1)
-        fraction = r/length
-        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-
-        ratio[shift-first,1:] = np.percentile(fraction, axis = 0,
-                                           q=[75, 25], interpolation='midpoint')
-        ratio[shift-first,0] = np.mean(fraction,\
-                                        axis =0)
-
-        ratio[0] = np.array([1., 1.2, 0.8])
-    return ratio
-
-
-def cosine_correlation(array, first=1):
-    """
-    Compute the mean square displacement with a temporal average over non stationary sequence.
-    Delta_x(n) = <(x_n - x_0)^2 > requires a set of replica to be averaged, we can compute
-    The max decorrelation time needs to be set and depends from the system
-
-       Params:
-    -------
-    array: numpy 1D array
-    max_len: double max interval where correlation is measured.
-    decorrelate: time lapse to consider the replica indipendent each other
-
-    Returns:
-    --------
-    correlation: 2D array, the percentile distribution with [50%, 75%, 25%]
-    """
-
-    theta = (array[:, :].transpose() - array[:, first]).transpose()
-    max_len = theta.shape[1]
-    cosine = np.zeros((max_len, 3))
-    for shift in range(first, max_len):
-        cosine[shift-first,1:] = np.percentile(np.cos(theta[:, shift]), q=[75,25], axis=0, interpolation='midpoint')
-        cosine[shift-first,0] = np.mean(np.cos(theta[:, shift]), axis = 0)
-        cosine[0] = np.array([1., 1.5, 0.5])
-    return cosine
-
-
-def msd_1D(array, first=1):
-    """
-    Compute the mean square displacement with a temporal average \
-        over non stationary sequence.
-    Using the translational invariance of msd on such sequence
-    Delta_x(n) = <(x_n - x_0)^2 > would require a set of replica \
-        to be averaged, we can compute
-    Delta_x(m-n) = <(x_n - x_m)^2 > just ensuring the \
-        two different blocks are uncorrelated.
-    The decorrelation time needs to be set and depends from the system
-
-       Params:
-    -------
-    array: numpy 1D array
-    max_len: double max interval where correlation is measured.
-    decorrelate: time lapse to consider the replica indipendent each other
-
-    Returns:
-    --------
-    msd: 2D array, the percentile distribution with [50%, 75%, 25%]
-    """
-
-    print (array.shape)
-    theta = (array[:, :].transpose() - array[:, first]).transpose()
-    max_len = theta.shape[1]
-    msd = np.zeros((max_len, 3))
-    for shift in range(first, max_len):
-        theta_sum = theta[:, shift]**2
-        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-
-        msd[shift-first,:] = np.percentile(theta_sum, q=[50,75,25], axis=0,\
-                 interpolation='midpoint')
-        # msd[shift-first,0] = np.mean(theta_sum, axis=0)
-    msd[0][1] = 1
-    msd[0][2] = 0
-    return msd
-
-
 '''
 Gaussian random-walk for reference
 '''
@@ -259,7 +121,7 @@ Simulations with NetGrowth
 '''
 
 with_env = False
-recording = False
+recording = True
 shape = geom.Shape.rectangle(2000, 2000)
 
 gc_pos = []
@@ -327,7 +189,7 @@ for k, resol in enumerate(resolutions[::-1]):
     ax.plot(step_size*resol, low, ls="--", color=cmap(colors[k]), alpha=0.5)
     ax.plot(step_size*resol, up, ls="--", color=cmap(colors[k]), alpha=0.5)
 
-    ng.PlotNeuron(show=False)
+    ng.PlotNeuron(show=False, title=str(resol))
 
     # compute distrib x positions
     xs = np.concatenate(neurons["growth_cones"])[:, 0]

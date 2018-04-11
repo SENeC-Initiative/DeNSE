@@ -1,7 +1,14 @@
+# !/usr/bin/env python
+# -*- coding:utf-8 -*-
+#
+# This software is part of the NetGrowth project and the SENEC initiative
+
+import numpy as np
+from scipy import optimize
+
+from .. import _pygrowth as _pg
 from .algorithms import msd_1D, cosine_correlation, msd_2D, tortuosity_local, contraction
 from .containers import Population
-from scipy import optimize
-import numpy as np
 
 
 class EnsembleRW(Population):
@@ -11,11 +18,11 @@ class EnsembleRW(Population):
     Once a population is ready perform analysis on it.
     """
 
-    def __init__(self, population):
+    def __init__(self, population, name=None):
         # Population.__init__(self, iption)
         # Single neurons properties
         self.population = population
-        self.name = self.population.name
+        self.name = self.population.name if name is None else name
 
         self.theta = None
         self.r = None
@@ -28,13 +35,13 @@ class EnsembleRW(Population):
         self.effective_length = None
 
         self.swc_resolution = None
-        self.kernel_resolution = None
+        self.kernel_resolution = _pg.GetKernelStatus("resolution")
 
     def set_swc_resolution(self, swc_resolution):
         self.swc_resolution = swc_resolution
 
     def set_kernel_resolution(self, kernel_resolution):
-        self.kernel_resolution
+        self.kernel_resolution = kernel_resolution
 
     def normalize_paths(self, neurite_type):
         # measure the shortest path to make all path equal length

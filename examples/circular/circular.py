@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import nngt
+nngt.set_config('backend', 'networkx')
 
 import NetGrowth as ng
 
@@ -109,9 +110,10 @@ if __name__ == '__main__':
                             dendrites_params=dendrite_params,
                             num_neurites=3)
     start = time.time()
-    step(1500, 0, True)
-    step(1500, 0, True)
-    step(1500, 0, True)
+    # ~ step(1500, 0, True)
+    # ~ step(1500, 0, True)
+    # ~ step(1500, 0, True)
+    step(4500, 0, True)
 
     # dendrite_params.update({"speed_growth_cone" : 0.001,
                             # "use_van_pelt" : False})
@@ -145,8 +147,11 @@ if __name__ == '__main__':
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)
     structure = ng.NeuronStructure()
-    graph =ng.CreateGraph(structure=structure)
+    graph =ng.CreateGraph()
 
+    print(graph.node_nb(), graph.edge_nb())
+    graph.to_file("circular.el")
+    nngt.plot.draw_network(graph, esize=0.1, show=True)
 
 
 

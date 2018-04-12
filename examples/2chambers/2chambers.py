@@ -11,7 +11,6 @@ import random, shutil
 import os
 
 import nngt
-nngt.set_config('backend', 'networkx')
 
 import NetGrowth as ng
 
@@ -150,5 +149,10 @@ if __name__ == '__main__':
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path, swc_resolution = 10)
-    graph = ng.CreateGraph(connection_proba=1.)
-    nngt.plot.draw_network(graph, show=True)
+    graph = ng.CreateGraph(connection_proba=0.5)
+    population = nngt.NeuralPop(with_models=False)
+    population.create_group("chamber_1", range(100))
+    population.create_group("chamber_2", range(100, 200))
+    nngt.Graph.make_network(graph, population)
+    # ~ nngt.plot.draw_network(graph, ewidth=0.01, decimate=10, show_environment=False, show=True)
+    nngt.plot.draw_network(graph, ecolor="groups", decimate=5, show_environment=False, show=True)

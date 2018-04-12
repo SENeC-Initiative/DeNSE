@@ -25,7 +25,6 @@
 #include <typeinfo>
 
 
-
 namespace growth
 {
 
@@ -214,19 +213,11 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
 void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
 {
     auto child = parent->children_[living_child_id];
-    TNodePtr other;
-    if (living_child_id == 1)
-    {
-        other = parent->children_[0];
-    }
-    else
-    {
-        other = parent->children_[1];
-    }
     size_t grand_parent_ID = parent->get_parent().lock()->get_nodeID();
     NodePtr grand_parent   = nodes_[grand_parent_ID];
 
 #ifndef NDEBUG
+    TNodePtr other = parent->children_[1 - living_child_id];
     printf("     size        @@@        size       \n"
            "      %lu         %s         %lu       \n"
            "                  ||                   \n "
@@ -291,11 +282,24 @@ void Neurite::delete_cone(size_t cone_n)
         printf(" dead cone is %s \n", dead_cone->topology_.binaryID.c_str());
 #endif
         dead_cone->biology_.dead = true;
+#ifndef NDEBUG
+        printf("got bio\n");
         assert(dead_cone->get_branch()->size() == 0);
+        printf("asserted\n");
+        if (dead_cone->topology_.parent.expired())
+        {
+            printf("invalid pointer coming\n");
+        }
+#endif
         size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
+#ifndef NDEBUG
+        printf("got parent ID\n");
+#endif
         auto parent_node = nodes_[parent_ID];
 
-        //printf("pushing %lu to dead cones\n", cone_n);
+#ifndef NDEBUG
+        printf("pushing %lu to dead cones\n", cone_n);
+#endif
         dead_cones_.push_back(cone_n);
 
         for (size_t i = 0; i < parent_node->children_.size(); i++)
@@ -305,7 +309,7 @@ void Neurite::delete_cone(size_t cone_n)
                 delete_parent_node(parent_node, i);
             }
         }
-        //printf("how many %lu \n", parent_node.use_count());
+
         assert(parent_node.use_count() == 1);
     }
 }

@@ -156,7 +156,7 @@ class TopologicalNode : public BaseNode
         return geometry_.dis_to_parent;
     }
 
-    // topology getter funbctions
+    // topology getter functions
     inline BaseWeakNodePtr get_parent() const { return topology_.parent; }
     inline int get_centrifugal_order() const override
     {

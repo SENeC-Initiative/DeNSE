@@ -81,16 +81,12 @@ def CreateGraph(neurons=None, population_gids=None, method="intersection", conne
     except:
         graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
 
-
     intersections    = {}
     intersections_xy = None
 
     if method == "intersection":
         intersections, intersections_xy = Intersections(
             gids, axons, dendrites, connection_proba)
-
-    print("intersections")
-    print(intersections)
 
     # add the edges
     for node_out, nodes_in in intersections.items():
@@ -111,15 +107,10 @@ def Intersections(gids, axons, dendrites, connection_proba):
     """
     Obtain synapses with naive approach of lines intersection
     """
-    from shapely.geometry import LineString
-    import matplotlib.pyplot as plt
+    from shapely.geometry import LineString, MultiLineString
 
     ls_axons     = []
     ls_dendrites = []
-
-    plt.figure()
-
-    crossing = []
 
     for gid, axon, dendrite_list in zip(gids, axons, dendrites):
         ## @TODO Sometimes the neurite has no points, this can happen when
@@ -128,66 +119,44 @@ def Intersections(gids, axons, dendrites, connection_proba):
         ## this propblem can lead to other troubles, fix it in containers
         if axon.single_branch:
             if np.shape(axon.xy)[0] > 2:
-                if axon.xy[-1][0] > 1200 and gid >= 100:
-                    crossing.append(gid)
-                    plt.plot(axon.xy[:, 0], axon.xy[:, 1], label=str(gid))
                 line = LineString(axon.xy)
-                assert line.is_valid, "axon invalid"
+                if not line.is_valid:
+                    line = MultiLineString(axon.xy.tolist())
                 ls_axons.append((gid, line))
         else:
             for branch in axon.branches:
                 if np.shape(branch.xy)[0] > 2:
-                    if branch.xy[-1][0] > 1200 and gid >= 100:
-                        crossing.append(gid)
-                        plt.plot(branch.xy[:, 0], branch.xy[:, 1], label=str(gid))
                     line = LineString(branch.xy)
-                    assert line.is_valid, "branched axon invalid"
+                    if not line.is_valid:
+                        line = MultiLineString(branch.xy.tolist())
                     ls_axons.append((gid, line))
 
         for dendrite in dendrite_list:
             if dendrite.single_branch:
                 if np.shape(dendrite.xy)[0] > 2:
-                    if gid < 100:
-                        plt.plot(dendrite.xy[:, 0], dendrite.xy[:, 1], c='gray')
                     line = LineString(dendrite.xy)
-                    assert line.is_valid, "dendrite invalid"
+                    if not line.is_valid:
+                        line = MultiLineString(dendrite.xy.tolist())
                     ls_dendrites.append((gid, line))
             else:
                 for branch in dendrite.branches:
                     if np.shape(branch.xy)[0] > 2:
-                        if gid < 100:
-                            plt.plot(branch.xy[:, 0], branch.xy[:, 1], c='gray')
                         line = LineString(branch.xy)
-                        assert line.is_valid, "branched dendrite invalid"
+                        if not line.is_valid:
+                            line = MultiLineString(branch.xy.tolist())
                         ls_dendrites.append((gid, line))
-
-    plt.legend()
-    plt.figure()
 
     intersections = {}
     synapses      = {}
-
-    print(crossing)
 
     for axon_gid, axon_segment in ls_axons:
         if axon_gid not in intersections:
            intersections[axon_gid] = []
            synapses[axon_gid]      = []
-        tot_len = 0
         for dend_gid, dendrite_segment in ls_dendrites:
-            tot_len += len(dendrite_segment.coords)
             if dend_gid != axon_gid and axon_segment.intersects(dendrite_segment):
-                print("CROSSING OCCURED")
-                if np.random.random() > connection_proba:
+                if np.random.random() < connection_proba:
                     intersections[axon_gid].append(dend_gid)
                     synapses[axon_gid].append(axon_segment.intersection(dendrite_segment))
-        if axon_gid in crossing:
-            arr = np.array(axon_segment.coords)
-            plt.plot(arr[:, 0], arr[:, 1], label=str(axon_gid))
-            print(axon_gid, "len dendrites", tot_len)
-            print(np.max(np.array(axon_segment.coords)[:, 0]), np.min(np.array(axon_segment.coords)[:, 0]))
-
-    plt.legend()
-    plt.show()
 
     return intersections, synapses

@@ -366,6 +366,11 @@ void SimulationManager::simulate(const Time &t)
                     new_step         = true;
                 }
 
+                if (substep_[omp_id] < 0)
+                {
+                    printf("current step %lu - new_step %i - substep %f\n",
+                           current_step, new_step, substep_[omp_id]);
+                }
                 assert(substep_[omp_id] >= 0.);
 
                 // update neurons
@@ -385,7 +390,7 @@ void SimulationManager::simulate(const Time &t)
                     if (it != local_neurons.end())
                     {
                         branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
-                        
+
                         // tell recorder manager
                         if (branched)
                         {

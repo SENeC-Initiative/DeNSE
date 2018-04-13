@@ -20,7 +20,9 @@ if ( HAVE_PYTHON )
   endforeach(f)
 
   # not working for now: cython needs to include everything in its .so
-  set( fileschanged 1 )
+  #~ set( fileschanged 1 )
+
+  message("\n\nfilechanged is ${fileschanged}\n\n")
 
   # Compile only if files changed or first install
   if (fileschanged OR NOT EXISTS ${PYTHON_INSTALL_DIR} )
@@ -51,8 +53,19 @@ if ( HAVE_PYTHON )
         )
       endif()
   else()
-    # just move the files
-
+    # just move the files (skip the build)
+    message("using skip build")
+    configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
+    install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
+        execute_process(
+            COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
+                install --skip-build --prefix=${PYTHON_INSTALL_DIR}
+                        --install-scripts=${PYTHON_INSTALL_DIR}
+                        --install-data=${PYTHON_INSTALL_DIR}/${PY_NAME}
+                        --install-headers=${PYTHON_INSTALL_DIR}
+                        --install-lib=${PYTHON_INSTALL_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
+        )
   endif()
 else ()
   message( FATAL_ERROR "Python required")

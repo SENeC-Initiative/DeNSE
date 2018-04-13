@@ -80,6 +80,7 @@ class Branching
     Branching(const Branching &cpy);
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
+    void set_branching_event(Event &ev, double duration);
     bool branching_event(mtPtr rnd_engine, const Event &ev);
 
     void update_growth_cones(mtPtr rnd_engine);

@@ -146,7 +146,7 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
-    save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
+    save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path, swc_resolution = 10)
     graph = ng.CreateGraph(connection_proba=0.5)

@@ -318,7 +318,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // if interacting with obstacles, switch substep down
             if (interacting_ and local_substep > 4.)
             {
-                //~ old_substep = local_substep;
+                //~ // old_substep = local_substep;
                 tmp = std::max(0.25*local_substep, 1.);
 
                 // always check remaining time >= 1.

@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy.linalg as spl
 
 import nngt
 import nngt.geometry as geom
@@ -19,7 +20,7 @@ from NetGrowth.structure.algorithms import contraction, tortuosity_local, msd_2D
 Setting the parameters
 '''
 
-num_neurons   = 1000
+num_neurons   = 10000
 simtime       = 5000.
 num_omp       = 14
 resolutions   = (1., 2., 5., 10., 20., 50.)
@@ -44,7 +45,7 @@ def norm_angle_from_vectors(vectors):
     return angles, norms
 
 
-def tortuosity(points, step_size=None):
+def tortuosity(points, step_size=1.):
     """
     Measure the local tortuosity as defined in
     'Computation of tortuosity vessels' 10.1109/ICAPR.2015.7050711
@@ -54,9 +55,9 @@ def tortuosity(points, step_size=None):
     Params:
     -------
     points : numpy 2D array of shape (2, N)
-        First dimension is the set of realizations.
-    step_size : int, optional (default: full length)
-        Number of steps separating the first and last points. By default the
+        Points composing a neuronal branch.
+    step_size : double, optional (default: 0.05)
+        Size of the step as a percentage of the total length. By default the
         global tortuosity is computed, looking at the origin and at the last
         points only.
 
@@ -64,26 +65,47 @@ def tortuosity(points, step_size=None):
     --------
     T
     """
+    assert 0 < step_size <= 1., \
+        "Step size must be between 0 and 1., not " + str(step_size)
+
+    points = np.array(points).T
     vectors = np.diff(points, axis=1)
 
     if np.shape(vectors)[1] > 0:
         N          = len(vectors[0])
         step_size  = N if step_size is None else step_size
-        theta, rho = norm_angle_from_vectors(vectors)
-        indices    = [i for i in range(0, N, step_size)]
-        if indices[-1] != N:
-            indices.append(N)
-        num_meas    = len(indices)
-        path_length = np.zeros(num_meas-1)
-        eucl_length = np.zeros(num_meas-1)
+        _, rho = norm_angle_from_vectors(vectors)
+        tot_length = np.sum(rho)
+        min_length = np.min(rho)
+        step_len   = step_size*tot_length
+        num_meas   = int(np.ceil(tot_length / step_len))
 
-        for i, first in enumerate(indices[:-1]):
-            last           = indices[i+1]
-            path_length[i] = np.sum(rho[first:last])
-            eucl_length[i] = np.sqrt(
-                np.sum(np.square(points[:, last] - points[:, first])))
+        eucl_length = np.zeros(num_meas)
 
-        return np.average(path_length / eucl_length)
+        i, r_tmp, p_tmp, p_int, ratio = 0, 0., points[:, 0], None, 0.
+
+        for l, p0, p1 in zip(rho, points[:, :-1], points[:, 1:]):
+            r_tmp += l
+            # test if the current distance is equal or greater to step_len
+            if r_tmp == step_len:
+                eucl_length = spl.norm(np.subtract(p_tmp, p1))
+                # set new p_tmp and r_tmp
+                p_tmp = p1
+                r_tmp = 0
+                # update i
+                i += 1
+            elif r_tmp > step_len:
+                ratio = (r_tmp - step_len) / l
+                p_int = (1-ratio)*p0 + ratio*p1
+                # compute distance
+                eucl_length = spl.norm(np.subtract(p_tmp, p_int))
+                # set new p_tmp
+                p_tmp = p_int
+                r_tmp -= step_len
+            # update i
+            i += 1
+
+        return np.average(step_len / eucl_length)
     return 0.
 
 
@@ -120,8 +142,9 @@ Gaussian random-walk for reference
 Simulations with NetGrowth
 '''
 
-with_env = False
-recording = True
+show_neurons = False
+with_env     = False
+recording    = False
 shape = geom.Shape.rectangle(2000, 2000)
 
 gc_pos = []
@@ -171,11 +194,9 @@ for k, resol in enumerate(resolutions[::-1]):
     ''' Analyze the resulting neurons '''
 
     neurons    = ng.structure.NeuronStructure(gids)
-    min_steps  = int(200/resol)
-    max_steps  = int(simtime/resol)
 
     num_trials = 10
-    step_size  = np.linspace(min_steps, max_steps, num_trials).astype(int)
+    step_size  = np.linspace(0.01, 1., num_trials)
     tort_evol  = np.zeros((num_neurons, num_trials))
 
     for i, s in enumerate(step_size):
@@ -184,12 +205,13 @@ for k, resol in enumerate(resolutions[::-1]):
 
     up, median, low = np.percentile(tort_evol, [90, 50, 10], axis=0)
 
-    ax.plot(step_size*resol, median, color=cmap(colors[k]), alpha=1,
+    ax.plot(step_size, median, color=cmap(colors[k]), alpha=1,
             label="resol: {}".format(resol))
-    ax.plot(step_size*resol, low, ls="--", color=cmap(colors[k]), alpha=0.5)
-    ax.plot(step_size*resol, up, ls="--", color=cmap(colors[k]), alpha=0.5)
+    ax.plot(step_size, low, ls="--", color=cmap(colors[k]), alpha=0.5)
+    ax.plot(step_size, up, ls="--", color=cmap(colors[k]), alpha=0.5)
 
-    ng.PlotNeuron(show=False, title=str(resol))
+    if show_neurons:
+        ng.PlotNeuron(show=False, title=str(resol))
 
     # compute distrib x positions
     xs = np.concatenate(neurons["growth_cones"])[:, 0]
@@ -201,7 +223,7 @@ for k, resol in enumerate(resolutions[::-1]):
     if recording:
         data = ng.GetRecording(rec, "compact")
 
-        data_times[resol] = data[observable]["times"].values()[0]
+        data_times[resol] = next(iter(data[observable]["times"].values()))
 
         statuses[resol] = []
 

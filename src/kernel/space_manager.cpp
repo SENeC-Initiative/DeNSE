@@ -108,8 +108,16 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     AreaPtr old_area  = areas_[area];
     double old_height = old_area->get_height();
 
-    assert(env_contains(Point(position.at(0), position.at(1)), omp_id)
-           && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0), position.at(1)));
+    //~ assert(env_contains(Point(position.at(0), position.at(1)), omp_id)
+           //~ && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0), position.at(1)));
+
+#ifndef NDEBUG
+    if (not env_contains(Point(position.at(0), position.at(1)), omp_id))
+    {
+        printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0),
+               position.at(1));
+    }
+#endif
 
     // compute the number of filopodia to ignore
     //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);

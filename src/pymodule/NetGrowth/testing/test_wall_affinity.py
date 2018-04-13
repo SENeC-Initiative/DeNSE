@@ -22,7 +22,7 @@ from NetGrowth.tools import fraction_neurites_near_walls, neurite_length
 Setting the parameters
 '''
 
-num_neurons = 300
+num_neurons = 500
 simtime     = 5000.
 num_omp     = 7
 resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
@@ -114,7 +114,7 @@ for k, resol in enumerate(resolutions):
     # get observable status
     data = ng.GetRecording(rec, "compact")
 
-    data_times[resol] = data[observable]["times"].values()[0]
+    data_times[resol] = next(iter(data[observable]["times"].values()))
 
     statuses[resol] = []
 

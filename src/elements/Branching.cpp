@@ -163,6 +163,60 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
 
 
 /**
+ * Set the event content based on the duration between the current time and
+ * the next event
+ */
+void Branching::set_branching_event(Event &ev, double duration)
+{
+    double current_substep =
+        kernel().simulation_manager.get_current_substep();
+    size_t current_step = kernel().simulation_manager.get_current_step();
+
+    size_t ev_step;
+    double ev_substep;
+    double resol = kernel().simulation_manager.get_resolution();
+
+    printf("%f vs %f\n", duration, resol - current_substep);
+
+    if (duration < resol - current_substep)
+    {
+        ev_step    = current_step;
+        ev_substep = current_substep + duration;
+    }
+    else
+    {
+        // remove what's left until next step
+        ev_step    = static_cast<size_t>(
+            (duration - resol + current_substep) / resol);
+        ev_substep = duration - resol + current_substep - ev_step * resol;
+        ev_step += current_step + 1;
+    }
+
+    auto n                   = neurite_->get_parent_neuron().lock();
+    size_t neuron_gid        = n->get_gid();
+    std::string neurite_name = neurite_->get_name();
+
+    if (ev_substep < 0)
+    {
+        printf("after set event lasting %f at %lu:%f, next event in %lu:%f \n",
+               duration, current_step, current_substep, ev_step, ev_substep);
+    }
+
+    assert(ev_substep >= 0);
+    assert(std::abs((ev_step - current_step)*resol +
+           (ev_substep - current_substep) - duration) < 1e-6);
+
+    ev = std::make_tuple(
+        ev_step, ev_substep, neuron_gid, neurite_name, names::gc_splitting);
+
+#ifndef NDEBUG
+    printf("after set event at %lu:%f, next event in %lu:%f \n",
+           current_step, current_substep, ev_step, ev_substep);
+#endif
+}
+
+
+/**
  * @brief Update each growth cone as the user defined in the branching model
  * @details Each model of neurite, like critical_resource has it's own
  * parameters to update, this function will be overriden by neurite's models
@@ -274,43 +328,12 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
     // here we compute next event with exponential distribution
     // we add one to save the case in which the distance between
     // two branching event is so short to appear zero.
-    double duration        = exponential_uniform_(*(rnd_engine).get());
-    double current_substep = kernel().simulation_manager.get_current_substep();
-    size_t current_step    = kernel().simulation_manager.get_current_step();
+    double duration = exponential_uniform_(*(rnd_engine).get());
 
-    size_t ev_step;
-    double ev_substep;
-    double resol = kernel().simulation_manager.get_resolution();
-
-    if (duration < resol - current_substep)
-    {
-        ev_step    = current_step;
-        ev_substep = current_substep + duration;
-    }
-    else
-    {
-        // remove what's left until next step
-        duration -= current_substep;
-        ev_step    = duration / resol;
-        ev_substep = duration - ev_step * resol;
-        ev_step += current_step + 1;
-    }
-
-    auto n                   = neurite_->get_parent_neuron().lock();
-    size_t neuron_gid        = n->get_gid();
-    std::string neurite_name = neurite_->get_name();
-    next_uniform_event_ =
-        std::make_tuple(ev_step, ev_substep, neuron_gid, neurite_name,
-                        names::lateral_branching);
+    set_branching_event(next_uniform_event_, duration);
 
     // send it to the simulation and recorder managers
     kernel().simulation_manager.new_branching_event(next_uniform_event_);
-
-#ifndef NDEBUG
-    printf("after lateral event, next lateral event in %lu, I m in %lu \n",
-           std::get<0>(next_uniform_event_),
-           kernel().simulation_manager.get_current_step());
-#endif
 }
 
 
@@ -330,45 +353,12 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
 void Branching::compute_flpl_event(mtPtr rnd_engine)
 {
     // here we compute next event with exponential distribution
-    // we add one to save the case in which the distance between
-    // two branching event is so short to appear zero.
-    double duration        = exponential_flpl_(*(rnd_engine).get());
-    double current_substep = kernel().simulation_manager.get_current_substep();
-    size_t current_step    = kernel().simulation_manager.get_current_step();
+    double duration = exponential_flpl_(*(rnd_engine).get());
 
-    size_t ev_step;
-    double ev_substep;
-    double resol = kernel().simulation_manager.get_resolution();
-
-    if (duration < resol - current_substep)
-    {
-        ev_step    = current_step;
-        ev_substep = current_substep + duration;
-    }
-    else
-    {
-        // remove what's left until next step
-        duration -= current_substep;
-        ev_step    = duration / resol;
-        ev_substep = duration - ev_step * resol;
-        ev_step += current_step + 1;
-    }
-
-    auto n                   = neurite_->get_parent_neuron().lock();
-    size_t neuron_gid        = n->get_gid();
-    std::string neurite_name = neurite_->get_name();
-    next_flpl_event_ =
-        std::make_tuple(ev_step, ev_substep, neuron_gid, neurite_name,
-                        names::lateral_branching);
+    set_branching_event(next_flpl_event_, duration);
 
     // send it to the simulation and recorder managers
     kernel().simulation_manager.new_branching_event(next_flpl_event_);
-
-#ifndef NDEBUG
-    printf("after flpl event, next flpl event in %lu, I m in %lu \n",
-           std::get<0>(next_flpl_event_),
-           kernel().simulation_manager.get_current_step());
-#endif
 }
 
 
@@ -598,13 +588,6 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
     exponential_ = std::exponential_distribution<double>(1. / delta);
 
     double duration = exponential_(*(rnd_engine).get());
-    double current_substep =
-        kernel().simulation_manager.get_current_substep();
-    size_t current_step = kernel().simulation_manager.get_current_step();
-
-    size_t ev_step;
-    double ev_substep;
-    double resol = kernel().simulation_manager.get_resolution();
 
     if (duration > std::numeric_limits<size_t>::max())
     {
@@ -612,32 +595,10 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
     }
     else
     {
-        if (duration < resol - current_substep)
-        {
-            ev_step    = current_step;
-            ev_substep = current_substep + duration;
-        }
-        else
-        {
-            duration  -= current_substep; // remove what's left until next step
-            ev_step    = static_cast<size_t>(duration / resol);
-            ev_substep = duration - ev_step * resol;
-            ev_step += current_step + 1;
-        }
-
-        auto n                   = neurite_->get_parent_neuron().lock();
-        size_t neuron_gid        = n->get_gid();
-        std::string neurite_name = neurite_->get_name();
-        next_vanpelt_event_      = std::make_tuple(
-            ev_step, ev_substep, neuron_gid, neurite_name, names::gc_splitting);
+        set_branching_event(next_vanpelt_event_, duration);
 
         // send it to the simulation and recorder managers
         kernel().simulation_manager.new_branching_event(next_vanpelt_event_);
-
-#ifndef NDEBUG
-        printf("after vanpelt event, next vanpelt event in %lu:%f \n", ev_step,
-           ev_substep);
-#endif
     }
 }
 

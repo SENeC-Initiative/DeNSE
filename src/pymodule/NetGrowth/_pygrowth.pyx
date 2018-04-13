@@ -1375,7 +1375,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 neuron           = int(data_ids[0].ul)
                 neurite          = _to_string(data_ids[1].s)
                 gc               = int(data_ids[2].ul)
-                get_next_time(gid, time_ids, times, time_units)
+                get_next_time(gid, time_ids, times, _to_bytes(time_units))
                 assert neuron   == int(time_ids[0].ul), "Internal error!"
                 assert neurite  == _to_string(time_ids[1].s), "Internal error!"
                 assert gc       == int(time_ids[2].ul), "Internal error!"

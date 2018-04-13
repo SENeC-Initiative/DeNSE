@@ -228,6 +228,11 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
            parent->get_treeID().c_str(), child->get_treeID().c_str(),
            grand_parent->get_centrifugal_order(),
            parent->get_centrifugal_order(), child->get_centrifugal_order());
+    printf("positions are:\n"
+           "  - (%f; %f)\n  - (%f; %f)\n  - (%f; %f)\n",
+           parent->get_position()[0], parent->get_position()[1],
+           child->get_position()[0], child->get_position()[1],
+           other->get_position()[0], other->get_position()[1]);
 #endif
     // reconcile the branch
     parent->biology_.branch->append_branch(child->get_branch());
@@ -283,7 +288,8 @@ void Neurite::delete_cone(size_t cone_n)
 #endif
         dead_cone->biology_.dead = true;
 #ifndef NDEBUG
-        printf("got bio\n");
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        printf("got bio on %i\n", omp_id);
         assert(dead_cone->get_branch()->size() == 0);
         printf("asserted\n");
         if (dead_cone->topology_.parent.expired())

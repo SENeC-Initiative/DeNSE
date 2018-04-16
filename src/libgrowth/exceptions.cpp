@@ -79,4 +79,34 @@ InvalidTime::InvalidTime(const char *func, const char *file, unsigned int line)
     name_ = "InvalidTime";
 }
 
+/*
+ * Logic Error
+ */
+
+LogicError::LogicError()
+    : std::logic_error("")
+    , msg_("")
+{
+}
+
+
+LogicError::LogicError(const std::string &msg, const char *func,
+                       const char *file, unsigned int line)
+    : std::logic_error(
+        "@" + std::string(func) + " in " + std::string(file) + ":" +
+        std::to_string(line) + "\n" + msg)
+{
+    name_ = "LogicError";
+}
+
+
+const char* LogicError::what() const noexcept
+{
+    std::string msg = name_ + " " + std::string(std::logic_error::what());
+    char * char_msg = new char[msg.size() + 1];
+    std::copy(msg.begin(), msg.end(), char_msg);
+    char_msg[msg.size()] = '\0'; // don't forget the terminating 0
+    return char_msg;
+}
+
 } /* namespace */

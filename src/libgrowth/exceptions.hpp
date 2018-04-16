@@ -62,6 +62,26 @@ class InvalidTime : public InvalidArg
     InvalidTime(const char *func, const char *file, unsigned int line);
 };
 
+
+class LogicError : public std::logic_error
+{
+  public:
+    LogicError();
+
+    LogicError(const std::string &msg, const char *func, const char *file,
+               unsigned int line);
+
+    const char* what() const noexcept override;
+
+    virtual ~LogicError() throw() {}
+
+    const char *name() const { return name_.c_str(); }
+
+  protected:
+    std::string msg_;
+    std::string name_;
+};
+
 } /* namespace */
 
 #endif // EXCEPT_H

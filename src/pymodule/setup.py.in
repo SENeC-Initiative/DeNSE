@@ -53,10 +53,10 @@ class CustomBuildExt(build_ext):
             from distutils import ccompiler
             c = ccompiler.get_default_compiler()
         # normalize names
-        if "g++" in c or "gcc" in c or "mingw" in c or "clang" in c:
-            c = "unix"
-        elif "msvc" in c:
+        if "msvc" in c:
             c = "msvc"
+        else:
+            c = "unix"
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")

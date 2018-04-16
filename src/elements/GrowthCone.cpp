@@ -564,12 +564,13 @@ void GrowthCone::retraction(size_t cone_n, int omp_id)
         move_.angle = atan2(y1 - y0, x1 - x0);
     }
 
+    geometry_.position = biology_.branch->get_last_xy();
+
     // prune growth cone if necessary
     if (biology_.branch->size() == 0)
     {
         prune(cone_n);
     }
-    geometry_.position = biology_.branch->get_last_xy();
 
     // check if we changed area
     if (using_environment_)

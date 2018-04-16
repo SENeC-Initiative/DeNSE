@@ -60,8 +60,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
                            double new_angle, double old_angle,
                            double new_diameter, double old_diameter);
     GCPtr create_branching_cone(const TNodePtr branching_node, NodePtr new_node,
-                                double new_length, Point xy,
-                                double new_cone_angle);
+                                double new_length, double new_diameter,
+                                Point xy, double new_cone_angle);
     void update_parent_nodes(NodePtr new_node, TNodePtr oldnode);
     void update_tree_structure(TNodePtr root);
     void delete_parent_node(NodePtr parent, int child_id);

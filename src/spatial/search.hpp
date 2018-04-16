@@ -15,8 +15,8 @@ namespace growth
 
 void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
                           double distanceToNode);
-void locate_from_idx(Point &xy, double &angle, const BranchPtr branch,
-                     size_t id_x);
+void locate_from_idx(Point &xy, double &angle, double &distance,
+                     const BranchPtr branch, size_t id_x);
 }
 
 #endif /* SEARCH_H */

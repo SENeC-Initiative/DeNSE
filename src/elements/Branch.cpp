@@ -31,7 +31,7 @@ Branch::Branch(const Branch &copy)
 Branch::Branch(const Point &initial_position, double initial_length)
     : Branch()
 {
-    initial_point = initial_point;
+    initial_point = initial_position;
     points[0].push_back(initial_position.at(0));
     points[1].push_back(initial_position.at(1));
     points[2].push_back(initial_length);
@@ -141,6 +141,10 @@ Point Branch::get_last_xy() const
 {
     if (points[0].size() == 0)
     {
+        if (initial_point.at(0) == 0 and initial_point.at(1) == 0)
+        {
+            printf("\n\nget_last_xy initial point in (0, 0)!!\n\n");
+        }
         return initial_point;
     }
     else

@@ -187,7 +187,7 @@ void Branching::set_branching_event(Event &ev, double duration)
         ev_step    = static_cast<size_t>(
             (duration - resol + current_substep) / resol);
         ev_substep = duration - resol + current_substep - ev_step * resol;
-        ev_step += current_step + 1;
+        ev_step   += current_step + 1;
     }
 
     auto n                   = neurite_->get_parent_neuron().lock();

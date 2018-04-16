@@ -217,6 +217,8 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
     NodePtr grand_parent   = nodes_[grand_parent_ID];
 
 #ifndef NDEBUG
+    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
+    printf("deleting on OMP %i\n", omp_id);
     TNodePtr other = parent->children_[1 - living_child_id];
     printf("     size        @@@        size       \n"
            "      %lu         %s         %lu       \n"
@@ -228,6 +230,7 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
            parent->get_treeID().c_str(), child->get_treeID().c_str(),
            grand_parent->get_centrifugal_order(),
            parent->get_centrifugal_order(), child->get_centrifugal_order());
+    printf("deleting on OMP %i\n", omp_id);
     printf("positions are:\n"
            "  - (%f; %f)\n  - (%f; %f)\n  - (%f; %f)\n",
            parent->get_position()[0], parent->get_position()[1],
@@ -410,16 +413,22 @@ void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
 }
 
 
-GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
-                                     NodePtr new_node, double new_length,
-                                     Point xy, double new_cone_angle)
+/**
+ * Create a new growth cone from a new parent node `new_node` created after a
+ * branching event.
+ * The new growth cone is a at a distance `new_length` of the parent `new_node`.
+ */
+GCPtr Neurite::create_branching_cone(
+    const TNodePtr branching_node, NodePtr new_node, double dist_to_parent,
+    double new_diameter, Point xy, double new_cone_angle)
 {
     // create a new growth cone
-    auto sibling = growth_cones_.begin()->second->clone(
-        new_node, shared_from_this(), new_length,
+    GCPtr sibling = growth_cones_.begin()->second->clone(
+        new_node, shared_from_this(), dist_to_parent,
         branching_node->get_treeID() + "1", xy, -3.14);
-    statusMap status;
+
     sibling->set_cone_ID();
+
     // Here we copy model and status from a random growth cone
     // in the neurite since all the growth cones have same status and
     // model. It's not possible to copy from the splitting cone since this
@@ -429,11 +438,15 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     // insert new elements in the tree
     new_node->children_.push_back(branching_node);
     new_node->children_.push_back(sibling);
-    // sibling->topology_.parent       = new_node;
-    sibling->biology_.branch = std::make_shared<Branch>(
-        xy, new_node->get_branch()->get_last_point()[2]);
-    sibling->set_first_point(xy, new_node->get_branch()->get_last_point()[2]);
+
+    double parent_to_soma = new_node->get_distance_to_soma();
+    sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
+    sibling->biology_.branch    = std::make_shared<Branch>(xy, parent_to_soma);
+    sibling->move_.angle        = new_cone_angle;
+    sibling->biology_.diameter  = new_diameter;
+
     add_cone(sibling);
+
     return sibling;
 }
 
@@ -441,11 +454,13 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 /**
  * @brief Branch from a node of the neuritic tree
  *
- * The branching event can happen wherever along the branch.
+ * The branching event can happen wherever along the branch of `branching_node`.
  * Both the internal nodes and the leaves (the GrowthCones) can have a
  * lateral branching event.
- * This function will create a new node at the branching event xy and a new
- * growth cone cloning from the 'models_manager'.
+ * This function will create a new node at the branching point `branch_point`
+ * along the branch of `branching_point`.
+ * A new Node will be created there and a new growth cone will start from this
+ * node, cloned from the Neurite's default model in 'models_manager'.
  *
  * @param branching_node the node which is going to branch
  * @param branchpoint index of the point in the branch where the
@@ -456,73 +471,76 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
                                 double new_length, mtPtr rnd_engine)
 {
-    // Locate the event and the event parameters
-    double branch_direction = 0;
-    Point xy;
-    locate_from_idx(xy, branch_direction, branching_node->get_branch(),
-                    branch_point);
-    char branching_side = 1;
-    if (uniform_(*(rnd_engine).get()) < 0.5)
+    if (not branching_node->is_dead())
     {
-        branching_side = -1;
-    }
-    double angle = branching_side * (lateral_branching_angle_mean_) +
-                   lateral_branching_angle_std_ * normal_(*(rnd_engine).get());
-    // create a new node and update the node counter
-    NodePtr new_node = std::make_shared<Node>(*branching_node);
-    update_parent_nodes(new_node, branching_node);
-    auto sibling = create_branching_cone(branching_node, new_node, new_length,
-                                         xy, branch_direction + angle);
-    sibling->move_.angle = branch_direction + angle;
+        // Locate the event and the event parameters
+        double branch_direction(0), distance_to_soma(0);
+        Point xy;
+        locate_from_idx(xy, branch_direction, distance_to_soma,
+                        branching_node->get_branch(), branch_point);
+        char branching_side = 1;
+        if (uniform_(*(rnd_engine).get()) < 0.5)
+        {
+            branching_side = -1;
+        }
+        double angle =
+            branching_side * (lateral_branching_angle_mean_) +
+            lateral_branching_angle_std_ * normal_(*(rnd_engine).get());
+
+        // create the new node at position xy, which is at a distance_to_soma,
+        // create a new node and update the node counter
+        NodePtr new_node = std::make_shared<Node>(*branching_node);
+        update_parent_nodes(new_node, branching_node);
+
+        // update the existing growth cone
+        branching_node->biology_.branch =
+            new_node->biology_.branch->resize_head(branch_point);
+        branching_node->set_first_point(xy, distance_to_soma);
+
+        // update the new node
+        new_node->get_branch()->resize_tail(branch_point + 1);
+
+        // create the new growth cone
+        auto sibling = create_branching_cone(
+            branching_node, new_node, 0., 0.5*branching_node->get_diameter(),
+            xy, branch_direction + angle);
+
+        // modify sequent nodes
+        update_tree_structure(new_node);
 
 #ifndef NDEBUG
-    printf("angle is %f\n", angle * 180 / M_PI);
-    printf("angle is %f\n", sibling->move_.angle * 180 / M_PI);
-    printf("angle is %f\n", branch_direction * 180 / M_PI);
-#endif
-
-    sibling->set_diameter(0.5 * branching_node->get_diameter());
-    // lateral branching specific
-    branching_node->biology_.branch =
-        new_node->biology_.branch->resize_head(branch_point);
-    new_node->get_branch()->resize_tail(branch_point + 1);
-    // Point xz = Point(10,10);
-    // printf("give position %f %f \n", xz.at(0),xz.at(1));
-    new_node->set_position(xy);
-    // printf("get position %f %f \n", new_node->geometry_.position.at(0),
-    // new_node->geometry_.position.at(1));
-
-    // modify sequent nodes
-    update_tree_structure(new_node);
-#ifndef NDEBUG
-    printf("xy: %f, %f, id_x: %lu,  and direction %f \n",
-           new_node->get_position().at(0), new_node->get_position().at(1),
-           branch_point, branch_direction * 180 / M_PI);
-    printf("parent_node has get_treeID: %lu and ID: %s\n",
-           new_node->get_parent().lock()->get_nodeID(),
-           new_node->get_parent().lock()->get_treeID().c_str());
-    printf("biology_.branchsize newcone: %lu               \n"
-           " branch size    %s         branch size   \n"
-           " oldNode        @@@        newNode/Cone  \n"
-           "      %lu       ||             %lu       \n"
-           "               || (%.2f)%.2f              \n "
-           "    ==========(%s)============>%.2f %s     \n "
-           "                                       \n"
-           "the centrifugal order of new node is %i \n"
-           "the centrifugal order of new cone is %i \n"
-           "the centrifugal order of old node is %i \n",
-           sibling->get_branch()->size(), sibling->get_treeID().c_str(),
-           new_node->get_branch()->size(), branching_node->get_branch()->size(),
-           angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI,
-           new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
-           branching_node->get_treeID().c_str(),
-           new_node->get_centrifugal_order(), sibling->get_centrifugal_order(),
-           branching_node->get_centrifugal_order());
+        printf("angle is %f\n", angle * 180 / M_PI);
+        printf("angle is %f\n", sibling->move_.angle * 180 / M_PI);
+        printf("angle is %f\n", branch_direction * 180 / M_PI);
+        printf("xy: %f, %f, id_x: %lu,  and direction %f \n",
+               new_node->get_position().at(0), new_node->get_position().at(1),
+               branch_point, branch_direction * 180 / M_PI);
+        printf("parent_node has get_treeID: %lu and ID: %s\n",
+               new_node->get_parent().lock()->get_nodeID(),
+               new_node->get_parent().lock()->get_treeID().c_str());
+        printf("biology_.branchsize newcone: %lu               \n"
+               " branch size    %s         branch size   \n"
+               " oldNode        @@@        newNode/Cone  \n"
+               "      %lu       ||             %lu       \n"
+               "               || (%.2f)%.2f              \n "
+               "    ==========(%s)============>%.2f %s     \n "
+               "                                       \n"
+               "the centrifugal order of new node is %i \n"
+               "the centrifugal order of new cone is %i \n"
+               "the centrifugal order of old node is %i \n",
+               sibling->get_branch()->size(), sibling->get_treeID().c_str(),
+               new_node->get_branch()->size(), branching_node->get_branch()->size(),
+               angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI,
+               new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
+               branching_node->get_treeID().c_str(),
+               new_node->get_centrifugal_order(), sibling->get_centrifugal_order(),
+               branching_node->get_centrifugal_order());
 #endif /* NDEBUG */
-    assert(sibling->get_centrifugal_order() ==
-           branching_node->get_centrifugal_order());
-    assert(new_node->get_child(0) == branching_node);
-    assert(new_node->get_child(1) == sibling);
+        assert(sibling->get_centrifugal_order() ==
+               branching_node->get_centrifugal_order());
+        assert(new_node->get_child(0) == branching_node);
+        assert(new_node->get_child(1) == sibling);
+    }
 }
 
 
@@ -548,29 +566,30 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
         printf("angles: %f %f, \n", (direction + new_angle) * 180 / 3.13,
                (direction + old_angle) * 180 / 3.14);
 #endif
-        // branching_cone->split_update();
-        // create new node as branching point and add to nodes_ + update counter
+
+        // prepare growth cone variables for split
         branching_cone->prepare_for_split();
+
+        // create new node as branching point
         NodePtr new_node = std::make_shared<Node>(*branching_cone);
         update_parent_nodes(new_node, branching_cone);
-        auto sibling = create_branching_cone(
-            branching_cone, new_node, new_length,
-            branching_cone->geometry_.position, direction + new_angle);
 
-        sibling->move_.angle        = direction + new_angle;
-        branching_cone->move_.angle = direction + old_angle;
         // move the old growth cone --> growth cone split specific
+        branching_cone->move_.angle = direction + old_angle;
         branching_cone->biology_.diameter = old_diameter;
-        sibling->biology_.diameter        = new_diameter;
-        branching_cone->after_split();
-        sibling->after_split();
         branching_cone->topological_advance();
-        /*        branching_cone->set_angle(direction+old_angle);*/
-        /*sibling->set_angle(direction+new_angle);*/
         branching_cone->biology_.branch = std::make_shared<Branch>(
             branching_cone->get_position(),
             branching_cone->get_branch()->get_distance_to_soma());
 
+        // create the new growth cone from the parent node
+        auto sibling = create_branching_cone(
+            branching_cone, new_node, new_length, new_diameter,
+            branching_cone->geometry_.position, direction + new_angle);
+
+        // update growth cones' variables after split
+        branching_cone->after_split();
+        sibling->after_split();
 
 #ifndef NDEBUG
         printf(""

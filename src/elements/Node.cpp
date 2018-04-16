@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "exceptions.hpp"
+
 #include "Branch.hpp"
 #include "GrowthCone.hpp"
 
@@ -86,13 +88,18 @@ void TopologicalNode::topological_advance()
 void TopologicalNode::set_first_point(const Point p, double length)
 {
     biology_.branch->set_first_point(p, length);
-    geometry_.dis_to_soma = length;
+
+    geometry_.position      = p;
+    geometry_.dis_to_soma   = length;
+    geometry_.dis_to_parent =
+        length - topology_.parent.lock()->get_distance_to_soma();
 }
 
 
 void TopologicalNode::set_position(const Point &pos)
 {
-    geometry_.position = pos;
+    LogicError("Cannot set only position for a TopologicalNode", __FUNCTION__,
+               __FILE__, __LINE__);
 }
 
 

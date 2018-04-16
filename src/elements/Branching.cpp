@@ -176,8 +176,6 @@ void Branching::set_branching_event(Event &ev, double duration)
     double ev_substep;
     double resol = kernel().simulation_manager.get_resolution();
 
-    printf("%f vs %f\n", duration, resol - current_substep);
-
     if (duration < resol - current_substep)
     {
         ev_step    = current_step;
@@ -195,12 +193,6 @@ void Branching::set_branching_event(Event &ev, double duration)
     auto n                   = neurite_->get_parent_neuron().lock();
     size_t neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
-
-    if (ev_substep < 0)
-    {
-        printf("after set event lasting %f at %lu:%f, next event in %lu:%f \n",
-               duration, current_step, current_substep, ev_step, ev_substep);
-    }
 
     assert(ev_substep >= 0);
     assert(std::abs((ev_step - current_step)*resol +

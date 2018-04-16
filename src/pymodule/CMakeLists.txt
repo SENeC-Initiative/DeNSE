@@ -22,10 +22,9 @@ if ( HAVE_PYTHON )
   # not working for now: cython needs to include everything in its .so
   #~ set( fileschanged 1 )
 
-  message("\n\nfilechanged is ${fileschanged}\n\n")
-
   # Compile only if files changed or first install
   if (fileschanged OR NOT EXISTS ${PYTHON_INSTALL_DIR} )
+      set( SKIP_BUILD 0 )
       configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
       if (PYTHON_DEVELOPER_MODE)
         install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
@@ -54,7 +53,7 @@ if ( HAVE_PYTHON )
       endif()
   else()
     # just move the files (skip the build)
-    message("using skip build")
+    set( SKIP_BUILD 1 )
     configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
     install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
         execute_process(

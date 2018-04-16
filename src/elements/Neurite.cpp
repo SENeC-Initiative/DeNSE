@@ -287,25 +287,16 @@ void Neurite::delete_cone(size_t cone_n)
         printf(" dead cone is %s \n", dead_cone->topology_.binaryID.c_str());
 #endif
         dead_cone->biology_.dead = true;
-#ifndef NDEBUG
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
-        printf("got bio on %i\n", omp_id);
         assert(dead_cone->get_branch()->size() == 0);
-        printf("asserted\n");
+#ifndef NDEBUG
         if (dead_cone->topology_.parent.expired())
         {
             printf("invalid pointer coming\n");
         }
 #endif
         size_t parent_ID = dead_cone->get_parent().lock()->get_nodeID();
-#ifndef NDEBUG
-        printf("got parent ID\n");
-#endif
         auto parent_node = nodes_[parent_ID];
-
-#ifndef NDEBUG
-        printf("pushing %lu to dead cones\n", cone_n);
-#endif
         dead_cones_.push_back(cone_n);
 
         for (size_t i = 0; i < parent_node->children_.size(); i++)

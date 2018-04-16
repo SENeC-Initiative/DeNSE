@@ -68,7 +68,8 @@ class CustomBuildExt(build_ext):
             e.extra_link_args.extend(lopt.get(c, []))
             e.extra_compile_args.extend(copt.get(c, []))
 
-        build_ext.build_extensions(self)
+        if not @SKIP_BUILD@:
+            build_ext.build_extensions(self)
 
 
 # ------------------------------------- #

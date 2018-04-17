@@ -39,7 +39,10 @@ GrowthCone_RunTumble::GrowthCone_RunTumble()
     */
     , deterministic_angle_(0)
     , persistence_length_(RT_PERSISTENCE_LENGTH)
+    , tumbling_(false)
+    , num_tumbles_(0)
 {
+    observables_.push_back("num_tumbles");
     initialize_RT();
 }
 
@@ -49,6 +52,8 @@ GrowthCone_RunTumble::GrowthCone_RunTumble(const GrowthCone_RunTumble &copy)
     , deterministic_angle_(copy.deterministic_angle_)
     , persistence_length_(copy.persistence_length_)
     , tau_(copy.tau_)
+    , tumbling_(false)
+    , num_tumbles_(0)
 {
     initialize_RT();
 }
@@ -84,15 +89,62 @@ GCPtr GrowthCone_RunTumble::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
 }
 
 void GrowthCone_RunTumble::initialize_RT()
-
 {
     tau_ = 1./persistence_length_;
-    exponential_ = std::exponential_distribution<double>(tau_);
+    exponential_rt_ = std::exponential_distribution<double>(tau_);
 
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     mtPtr rng = kernel().rng_manager.get_rng(omp_id);
 
-    next_tumble_ = exponential_(*(rng).get());
+    next_tumble_ = exponential_rt_(*(rng).get());
+}
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double GrowthCone_RunTumble::get_state(const char *observable) const
+{
+    double value = 0.;
+
+    TRIE(observable)
+    CASE("length")
+        value = biology_.branch->get_distance_to_soma();
+    CASE("speed")
+        value = move_.speed;
+    CASE("angle")
+        value = move_.angle;
+    CASE("stopped")
+        value = 2*stuck_ + stopped_;  // 0: moving, 1: stopped, 2: stuck
+    CASE("retraction_time")
+        value = retraction_time_;
+    CASE("num_tumbles")
+        value = num_tumbles_;
+    ENDTRIE;
+
+    return value;
+}
+
+
+/**
+ * @brief Intrinsic direction is not necessary for run and tumble
+ *
+ * Just compute the total_proba_
+ */
+void GrowthCone_RunTumble::compute_intrinsic_direction(
+    std::vector<double> &directions_weights, double substep)
+{
+    total_proba_ = 0.;
+    stuck_       = true;
+
+    for (double weight : directions_weights)
+    {
+        if (not std::isnan(weight))
+        {
+            total_proba_ += weight;
+            stuck_        = false;
+        }
+    }
 }
 
 
@@ -100,38 +152,56 @@ void GrowthCone_RunTumble::initialize_RT()
  * @brief Compute the new angle of the run and tumble
  */
 Point GrowthCone_RunTumble::compute_target_position(
-        const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double& substep, double &new_angle)
+    const std::vector<double> &directions_weights, mtPtr rnd_engine,
+    double& substep, double &new_angle)
 {
-    // the tumble occurs when the distance left before next_tumble_ reaches 0
-    if (next_tumble_ - move_.module <= 0)
+    // test whether tumbling happens
+    if (tumbling_)
     {
-        // we tumbled before the full module, change distance done
-        double distance_done = next_tumble_;
-        next_tumble_         = exponential_(*(rnd_engine).get());
-        // tumble occured, compute how much time it took using the average speed
-        // and update the current substep accordingly.
-        substep = distance_done * substep / move_.module;
-        //! IMPORTANT: update move_.module
-        move_.module = distance_done;
+        // make a tumble (leave delta_angle_ unchanged)
+        num_tumbles_++;
+        // compute next tumble and reset tumbling
+        next_tumble_ = exponential_rt_(*(rnd_engine).get());
+        tumbling_    = false;
     }
     else
     {
-        // no spontaneous tumble occured, check for interactions
+        // if not tumbling, set delta_angle_ to zero
+        delta_angle_ = 0.;
+    }
+
+    // test whether a new tumble will happen before the end of the substep
+    if (next_tumble_ - move_.module <= 0)
+    {
+        // we will tumble before the full module, change distance done
+        double distance_done = next_tumble_;
+        // compute how much time remains until tumble and update the current
+        // substep accordingly.
+        substep = substep * (distance_done / move_.module);
+        // we are still running, so set delta_angle_ to zero
+        
+        // IMPORTANT: update move_.module and set tumbling for next substep
+        move_.module = distance_done;
+        tumbling_    = true;
+    }
+    else
+    {
+        // no spontaneous tumble during substep, keep straight
         next_tumble_ -= move_.module;
-        if (interacting_)
-        {
-            // take the pull into account: just scale delta_angle by the substep
-            //~ delta_angle_ /=  sqrt(substep);
-        }
-        else
-        {
-            delta_angle_ = 0.;
-        }
+        //~ // check for interactions
+        //~ if (interacting_)
+        //~ {
+            //~ // take the pull into account: just scale delta_angle by the substep
+            //~ // delta_angle_ /=  sqrt(substep);
+        //~ }
+        //~ else
+        //~ {
+            //~ delta_angle_ = 0.;
+        //~ }
     }
 
     // compute target position
-    new_angle = move_.angle + delta_angle_;
+    new_angle        = move_.angle + delta_angle_;
     Point target_pos =
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);

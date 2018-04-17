@@ -4,7 +4,6 @@
 """ Testing the tortuosity and persistence length """
 
 import matplotlib
-matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg as spl
@@ -20,9 +19,9 @@ from NetGrowth.structure.algorithms import contraction, tortuosity_local, msd_2D
 Setting the parameters
 '''
 
-num_neurons   = 10000
+num_neurons   = 5000
 simtime       = 5000.
-num_omp       = 14
+num_omp       = 7
 resolutions   = (1., 2., 5., 10., 20., 50.)
 #~ resolutions   = (10., 20., 50.)
 
@@ -43,6 +42,7 @@ def norm_angle_from_vectors(vectors):
     angles  = np.arctan2(vectors[1], vectors[0])
     norms   = np.linalg.norm(vectors, axis=0)
     return angles, norms
+
 
 
 def tortuosity(points, step_size=1.):
@@ -74,7 +74,7 @@ def tortuosity(points, step_size=1.):
     if np.shape(vectors)[1] > 0:
         N          = len(vectors[0])
         step_size  = N if step_size is None else step_size
-        _, rho = norm_angle_from_vectors(vectors)
+        _, rho     = norm_angle_from_vectors(vectors)
         tot_length = np.sum(rho)
         min_length = np.min(rho)
         step_len   = step_size*tot_length
@@ -143,18 +143,28 @@ Simulations with NetGrowth
 '''
 
 show_neurons = False
+# ~ show_neurons = True
 with_env     = False
-recording    = False
+recording    = True
+show_rec     = True
+do_tort      = False
+do_angles    = True
+
 shape = geom.Shape.rectangle(2000, 2000)
 
-gc_pos = []
+gc_pos     = []
 data_times = {}
 statuses   = {}
-observable = "length"
+observable = "num_tumbles"
 fig, ax = plt.subplots()
 fig2, ax2 = plt.subplots()
 #~ observable = "angle"
 #~ observable = "stopped"
+
+xbins = np.linspace(-5000, 5000, int(num_neurons/200.))
+abins = np.linspace(-np.pi, np.pi, 50)
+tbins = np.linspace(50, 150, 50)
+sequence = []
 
 
 for k, resol in enumerate(resolutions[::-1]):
@@ -182,7 +192,7 @@ for k, resol in enumerate(resolutions[::-1]):
     }
 
     if gc_model == "run_tumble":
-        params["rt_persistence_length"] = 20.
+        params["rt_persistence_length"] = 50.
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 
@@ -193,31 +203,27 @@ for k, resol in enumerate(resolutions[::-1]):
 
     ''' Analyze the resulting neurons '''
 
-    neurons    = ng.structure.NeuronStructure(gids)
+    # neurons    = ng.structure.NeuronStructure(gids)
+    structure  = ng.NeuronStructure(gids)
+    population = ng.Population.from_structure(structure)
+    ens =  ng.EnsembleRW(population)
+    sequence.append(ens)
 
     num_trials = 10
     step_size  = np.linspace(0.01, 1., num_trials)
     tort_evol  = np.zeros((num_neurons, num_trials))
+    ahist      = np.zeros(len(abins)-1)
+    axons = [neuron.axon.xy.transpose() for neuron in population.neurons]
+    if do_tort:
+        for i, s in enumerate(step_size):
+            for j, points in enumerate(axons):
+                tort_evol[j][i] = tortuosity(points, step_size=s)
+        up, median, low = np.percentile(tort_evol, [90, 50, 10], axis=0)
 
-    for i, s in enumerate(step_size):
-        for j, points in enumerate(neurons["axon"]):
-            tort_evol[j][i] = tortuosity(points, step_size=s)
-
-    up, median, low = np.percentile(tort_evol, [90, 50, 10], axis=0)
-
-    ax.plot(step_size, median, color=cmap(colors[k]), alpha=1,
-            label="resol: {}".format(resol))
-    ax.plot(step_size, low, ls="--", color=cmap(colors[k]), alpha=0.5)
-    ax.plot(step_size, up, ls="--", color=cmap(colors[k]), alpha=0.5)
-
-    if show_neurons:
-        ng.PlotNeuron(show=False, title=str(resol))
-
-    # compute distrib x positions
-    xs = np.concatenate(neurons["growth_cones"])[:, 0]
-    count, bins = np.histogram(xs, 'doane')
-    ax2.plot(bins[:-1] + 0.5*np.diff(bins), count, color=cmap(colors[k]),
-             alpha=0.5, label="resol: {}".format(resol))
+        ax.plot(step_size, median, color=cmap(colors[k]), alpha=1,
+                label="resol: {}".format(resol))
+        ax.plot(step_size, low, ls="--", color=cmap(colors[k]), alpha=0.5)
+        ax.plot(step_size, up, ls="--", color=cmap(colors[k]), alpha=0.5)
 
     # get observable status
     if recording:
@@ -227,8 +233,52 @@ for k, resol in enumerate(resolutions[::-1]):
 
         statuses[resol] = []
 
-        for v in data[observable]["data"].values():
-            statuses[resol].append(v)
+        if observable == "num_tumbles":
+            for v in data[observable]["data"].values():
+                statuses[resol].append(v[-1])
+            hist, _ = np.histogram(statuses[resol], tbins)
+            statuses[resol] = hist
+        else:
+            for v in data[observable]["data"].values():
+                statuses[resol].append(v)
+
+    if do_angles:
+        hist_tmp=[]
+        for points in axons:
+            vectors=np.diff(points)
+            # get the angle for the segment
+            angles_tmp, _ = norm_angle_from_vectors(vectors)
+            # subtract each angle with the previous, hence the result
+            # is the relative angle between two segments
+            angles_tmp= np.diff(angles_tmp)
+            # put all the angles together, only a few are different
+            # from zero for each axon, most of time it goes straight
+            hist_tmp.extend(angles_tmp)
+        # make it an array and eliminate those zero corresponding
+        # to no turning growth cones (i.e. run and not tumble)
+        # becouse the angle is computed numerically as dy/dx there can
+        # be some spurious elements arround 10^-10, remove them and
+        # all the NO Turning zero with np.where
+        hist_tmp = np.array(hist_tmp)
+        hist_tmp = hist_tmp[~np.isclose(hist_tmp, 0)]
+        # make the histogram
+        ahist, _   = np.histogram(hist_tmp, abins, normed=True)
+
+        ax.plot(abins[:-1] + 0.5*(abins[1]-abins[0]), ahist,
+                color=cmap(colors[k]), label="resol: {}".format(resol))
+        ax.set_yscale("log", nonposy='clip')
+
+
+
+    if show_neurons:
+        ng.PlotNeuron(show=False, title=str(resol))
+
+    # compute distrib x positions
+    xs = np.concatenate(structure["growth_cones"])[:, 0]
+    print(np.average(xs), np.sum(np.isnan(xs)))
+    count, bins = np.histogram(xs, bins=xbins)
+    ax2.plot(bins[:-1] + 0.5*np.diff(bins), count, color=cmap(colors[k]),
+             alpha=0.5, label="resol: {}".format(resol))
 
 
 '''
@@ -236,9 +286,16 @@ Make, save and show the figure
 '''
 
 ax.legend(loc=2, fancybox=True, frameon=True)
-
-fig.suptitle("Evolution of tortuosity")
 fig.patch.set_alpha(0.)
+
+if do_tort:
+    fig.suptitle("Evolution of tortuosity")
+    ax.set_xlabel("Tortuosity")
+if do_angles:
+    fig.suptitle("Angle distribution")
+    ax.set_xlabel("Angle (rad)")
+    ax.set_ylim(0, 1.)
+
 #~ fig.savefig("tortuosity.pdf")
 
 
@@ -248,18 +305,27 @@ fig2.suptitle("Evolution of x-distribution")
 fig2.patch.set_alpha(0.)
 
 # print the status
-if recording:
-    for resol in resolutions:
+if recording and show_rec:
+    if observable == "num_tumbles":
         fig, ax = plt.subplots()
-
-        offset = 0
-
-        for vals in statuses[resol]:
-            ax.plot(data_times[resol], np.array(vals) + offset)
-            offset += 7.
-
+        for k, resol in enumerate(resolutions):
+            ax.plot(tbins[1:] + 0.5*(tbins[1]-tbins[0]), statuses[resol],
+                    color=cmap(colors[k]), alpha=0.5,
+                    label="resol: {}".format(resol))
+        plt.legend()
         fig.patch.set_alpha(0.)
         fig.suptitle("Status " + str(resol))
+    else:
+        for resol in resolutions:
+            fig, ax = plt.subplots()
+            offset = 0
+
+            for vals in statuses[resol]:
+                ax.plot(data_times[resol], np.array(vals) + offset)
+                offset += 7.
+
+            fig.patch.set_alpha(0.)
+            fig.suptitle("Status " + str(resol))
 
 plt.show()
 

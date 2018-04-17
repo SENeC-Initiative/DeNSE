@@ -76,7 +76,6 @@ GrowthCone::GrowthCone(const std::string &model)
     , retracting_todo_(-1)
     , speed_ratio_retraction_(SPEED_RATIO_RETRACTION)
     , proba_down_move_(PROBA_DOWN_MOVE)
-    , base_sensing_angle_(MAX_SENSING_ANGLE)
     , max_sensing_angle_(MAX_SENSING_ANGLE)
     , scale_up_move_(SCALE_UP_MOVE)
 {
@@ -124,7 +123,6 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , retracting_todo_(-1)
     , speed_ratio_retraction_(copy.speed_ratio_retraction_)
     , proba_down_move_(copy.proba_down_move_)
-    , base_sensing_angle_(copy.base_sensing_angle_)
     , max_sensing_angle_(copy.max_sensing_angle_)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
@@ -315,22 +313,22 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                         "Passed from `GrowthCone::compute_pull`."));
             }
 
-            // if interacting with obstacles, switch substep down
-            if (interacting_ and local_substep > 4.)
-            {
-                //~ // old_substep = local_substep;
-                tmp = std::max(0.25*local_substep, 1.);
+            //~ // if interacting with obstacles, switch substep down
+            //~ if (interacting_ and local_substep > 4.)
+            //~ {
+                // old_substep = local_substep;
+                //~ tmp = std::max(0.25*local_substep, 1.);
 
-                // always check remaining time >= 1.
-                if (substep - current_time - tmp >= 1.)
-                {
-                    local_substep = tmp;
-                }
-            }
-            else if (interacting_ and local_substep >= 2.)
-            {
-                local_substep = 1.;
-            }
+                //~ // always check remaining time >= 1.
+                //~ if (substep - current_time - tmp >= 1.)
+                //~ {
+                    //~ local_substep = tmp;
+                //~ }
+            //~ }
+            //~ else if (interacting_ and local_substep >= 2.)
+            //~ {
+                //~ local_substep = 1.;
+            //~ }
 
             // compute speed and module
             compute_speed(rnd_engine, local_substep);
@@ -360,14 +358,15 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     }
                 }
 
+                // check for stuck/total_proba_
+                // take optional GC rigidity into account
+                compute_intrinsic_direction(directions_weights, local_substep);
+
                 if (not stuck_)
                 {
                     // ========================= //
                     // Yes, making forward move! //
                     // ========================= //
-
-                    // take GC rigidity into account
-                    compute_intrinsic_direction(directions_weights, local_substep);
 
                     // set delta_angle_ as main pulling direction
                     try
@@ -383,6 +382,7 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                                 "Passed from `GrowthCone::make_move`."));
                     }
 
+                    // assess stopped state (computed in make_move)
                     if (not stopped_)
                     {
                         // reset retraction
@@ -508,6 +508,8 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
         // reset retraction time
         retraction_time_ = -1;
     }
+
+    assert(substep >= 0);
 
     return substep;
 }
@@ -640,11 +642,6 @@ void GrowthCone::compute_accessibility(std::vector<double> &directions_weights,
     kernel().space_manager.move_possibility(
         directions_weights, new_pos_area, filopodia_, geometry_.position,
         move_, substep, sqrt_resol_, num_filopodia_ - min_filopodia_);
-
-    if (allnan(directions_weights))
-    {
-        stuck_ = true;
-    }
 }
 
 
@@ -660,6 +657,7 @@ void GrowthCone::compute_intrinsic_direction(
     std::vector<double> &directions_weights, double substep)
 {
     total_proba_ = 0.;
+    stuck_       = true;
 
     double weight;
 
@@ -672,6 +670,7 @@ void GrowthCone::compute_intrinsic_direction(
         if (not std::isnan(weight))
         {
             total_proba_ += weight;
+            stuck_        = false;
         }
     }
 }
@@ -728,13 +727,15 @@ void GrowthCone::make_move(
 
                     delta_angle_ = filopodia_.directions[0] + bin * (n + frac / weight);
 
+                    // compute the target position base on the model
                     p = compute_target_position(directions_weights, rnd_engine,
                                                 substep, new_angle);
 
                     line = kernel().space_manager.geosline_from_points(
                         geometry_.position, p);
 
-                    // choose the new angle
+                    // set the new angle (chose a valid one if target position
+                    // is outside the environment)
                     if (using_environment_)
                     {
                         default_angle = move_.angle + filopodia_.directions[n];
@@ -802,6 +803,11 @@ Point GrowthCone::compute_target_position(
 }
 
 
+/**
+ * Init the filopodia's kernel
+ *
+ * @warning must always be preceeded by a call to update_growth_properties
+ */
 double GrowthCone::init_filopodia()
 {
     double dtheta, std_norm, proba_norm, bin, angle, P;
@@ -813,17 +819,18 @@ double GrowthCone::init_filopodia()
     if (model_ == "simple_random_walk")
     {
         // update move sensing angle
-        move_.sigma_angle = sqrt_resol_ * sensing_angle_;
+        move_.sigma_angle *= sqrt_resol_;
 
         // update max sensing angle depending on resolution
         //! IMPORTANT: MUST COME BEFORE dtheta
+        double old_max     = max_sensing_angle_;
         max_sensing_angle_ = std::min(max_sensing_angle_ * sqrt_resol_, 2*M_PI);
 
         // we add three quarters of what's needed, this is the lowest increase
         // giving correct results for the random walk behavior
-        bin = base_sensing_angle_ / (min_filopodia_ - 1);
+        bin = max_sensing_angle_ / (min_filopodia_ - 1);
         unsigned int add_filo =
-            static_cast<int>((max_sensing_angle_ - base_sensing_angle_) / bin);
+            static_cast<int>((max_sensing_angle_ - old_max) / bin);
 
         //! IMPORTANT: MUST COME BEFORE dtheta
         num_filopodia_        = min_filopodia_ + add_filo;
@@ -854,18 +861,18 @@ double GrowthCone::init_filopodia()
     }
     else
     {
-        // update move sensing angle
-        move_.sigma_angle = sensing_angle_;
+        // move sensing angle must have been updated by previous call to
+        // update_growth_properties
 
         // compute angles
-        dtheta     = max_sensing_angle_ / filopodia_.size;
-        std_norm   = 0.5 / (move_.sigma_angle * move_.sigma_angle);
-        proba_norm = SQRT_FRAC_1_2PI * dtheta / move_.sigma_angle;
-        bin        = base_sensing_angle_ / (min_filopodia_ - 1);
         num_filopodia_ = min_filopodia_;
+        dtheta         = max_sensing_angle_ / num_filopodia_;
+        std_norm       = 0.5 / (move_.sigma_angle * move_.sigma_angle);
+        proba_norm     = SQRT_FRAC_1_2PI * dtheta / move_.sigma_angle;
+        bin            = max_sensing_angle_ / (min_filopodia_ - 1);
 
-        filopodia_.directions             = std::vector<double>(num_filopodia_);
-        filopodia_.normal_weights         = std::vector<double>(num_filopodia_);
+        filopodia_.directions     = std::vector<double>(num_filopodia_);
+        filopodia_.normal_weights = std::vector<double>(num_filopodia_);
 
         // set the angles
         for (int n_angle = 0; n_angle < num_filopodia_; n_angle++)
@@ -1071,6 +1078,12 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
         filopodia_.substrate_affinity =
             area->get_property(names::substrate_affinity);
     }
+    else
+    {
+        move_.sigma_angle     = sensing_angle_;
+        local_avg_speed_      = avg_speed_;
+        local_speed_variance_ = speed_variance_;
+    }
 }
 
 
@@ -1085,6 +1098,9 @@ void GrowthCone::update_kernel_variables()
     // check if filopodia should be updated
     if (old_sqrt != sqrt_resol_)
     {
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        update_growth_properties(
+            kernel().space_manager.get_containing_area(get_position(), omp_id));
         init_filopodia();
     }
 }

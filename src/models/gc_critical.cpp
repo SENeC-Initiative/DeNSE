@@ -37,8 +37,8 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
 {
     neurite_dyn = biology_.own_neurite->get_branching_model();
     normal_     = std::normal_distribution<double>(0, 1);
-    observables_.insert(observables_.cend(), copy.observables_.cbegin(),
-                        copy.observables_.cend());
+    observables_.insert(observables_.end(), copy.observables_.begin(),
+                        copy.observables_.end());
 }
 
 

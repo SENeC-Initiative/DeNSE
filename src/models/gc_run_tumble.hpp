@@ -24,19 +24,25 @@ class GrowthCone_RunTumble : public virtual GrowthCone
     void after_split() override;
     void initialize_RT();
 
+    virtual void compute_intrinsic_direction(
+        std::vector<double> &directions_weights, double substep) override;
+
     virtual Point compute_target_position(
         const std::vector<double> &directions_weights, mtPtr rnd_engine,
         double &substep, double &new_angle) override;
 
+    virtual double get_state(const char *observable) const override;
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
-    
+
   private:
     double deterministic_angle_;
     double persistence_length_;
     double tau_;
     double next_tumble_;
-    std::exponential_distribution<double> exponential_;
+    double tumbling_;
+    size_t num_tumbles_;
+    std::exponential_distribution<double> exponential_rt_;
 };
 }
 #endif

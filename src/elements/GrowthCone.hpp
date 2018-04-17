@@ -65,7 +65,6 @@ class GrowthCone : public TopologicalNode,
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
 
-    double base_sensing_angle_;
     double max_sensing_angle_;
     size_t min_filopodia_;   // minimal number of filopodia
     size_t num_filopodia_;   // minimal number of filopodia
@@ -105,8 +104,8 @@ class GrowthCone : public TopologicalNode,
     void compute_accessibility(std::vector<double> &directions_weights,
                                std::vector<std::string> &change_to_new_area,
                                double substep);
-    void compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                     double substep);
+    virtual void compute_intrinsic_direction(
+        std::vector<double> &directions_weights, double substep);
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);

@@ -22,7 +22,7 @@ from NetGrowth.tools import fraction_neurites_near_walls, neurite_length
 Setting the parameters
 '''
 
-num_neurons = 500
+num_neurons = 1500
 simtime     = 5000.
 num_omp     = 7
 resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
@@ -35,6 +35,7 @@ colors      = ["b", "orange", "r", "purple"]
 
 sensing_angle = 0.4
 
+with_obs = False
 
 '''
 Creating the environment: a disk
@@ -43,6 +44,10 @@ Creating the environment: a disk
 #~ shape = geom.Shape.disk(radius=800)
 shape = geom.Shape.rectangle(16000., 1600.)
 # ~ geom.plot.plot_shape(shape, show=True)
+
+minx, miny, maxx, maxy = shape.bounds
+xbins = np.linspace(minx, maxx, 20)
+ybins = np.linspace(miny, maxy, 30)
 
 
 '''
@@ -60,6 +65,13 @@ statuses   = {}
 observable = "angle"
 #~ observable = "stopped"
 
+cmap          = plt.get_cmap('plasma')
+colors        = np.linspace(0.2, 0.8, len(resolutions))
+
+fig, ax = plt.subplots()
+fig.patch.set_alpha(0.)
+fig0, ax0 = plt.subplots()
+fig0.patch.set_alpha(0.)
 
 for k, resol in enumerate(resolutions):
 
@@ -91,17 +103,21 @@ for k, resol in enumerate(resolutions):
         "filopodia_wall_affinity": base_affinity,
         "position": [(720., 0.) for _ in range(num_neurons)],
         "axon_angle": 20.,
+        "growth_cone_model": "run_tumble",
     }
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
-    rec  = ng.CreateRecorders(gids, observable, levels="growth_cone")
+
+    rec = None
+    if with_obs:
+        rec  = ng.CreateRecorders(gids, observable, levels="growth_cone")
 
     t0 = time.time()
     ng.Simulate(simtime)
     times.append(time.time()-t0)
 
     #~ ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect='auto')
-    ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect=1)
+    # ~ ng.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect=1)
 
     affinities.append(
         ng.GetStatus(0, "axon_params")["filopodia_wall_affinity"])
@@ -111,22 +127,38 @@ for k, resol in enumerate(resolutions):
 
     lengths.append(neurite_length(gids))
 
+    # compute distrib x positions
+    neurons = ng.structure.NeuronStructure(gids)
+    xs = np.concatenate(neurons["growth_cones"])[:, 0]
+    ys = np.concatenate(neurons["growth_cones"])[:, 1]
+
+    count, bins = np.histogram(xs, xbins)
+    ax.plot(bins[:-1] + 0.5*np.diff(bins), count, color=cmap(colors[k]),
+             alpha=0.5, label="resol: {}".format(resol))
+    count, bins = np.histogram(ys, ybins)
+    ax0.plot(bins[:-1] + 0.5*np.diff(bins), count, color=cmap(colors[k]),
+             alpha=0.5, label="resol: {}".format(resol))
+    # ~ fig2, ax2 = plt.subplots()
+    # ~ fig2.patch.set_alpha(0.)
+    # ~ ax2.hist2d(xs, ys, (xbins, ybins), cmax=num_neurons/20.)
+    # ~ fig2.suptitle(str(resol))
+
     # get observable status
-    data = ng.GetRecording(rec, "compact")
+    if with_obs:
+        data = ng.GetRecording(rec, "compact")
+        data_times[resol] = next(iter(data[observable]["times"].values()))
 
-    data_times[resol] = next(iter(data[observable]["times"].values()))
+        statuses[resol] = []
 
-    statuses[resol] = []
-
-    for v in data[observable]["data"].values():
-        statuses[resol].append(v)
+        for v in data[observable]["data"].values():
+            statuses[resol].append(v)
 
     # ~ for i, width in enumerate(widths):
         # ~ fractions[i].append(fraction_neurites_near_walls(
             # ~ gids, shape, width, percentiles=(85, 50, 15)))
 
 print("durations", times)
-
+ax.legend()
 
 '''
 Plot the results
@@ -167,16 +199,17 @@ fig.patch.set_alpha(0.)
 
 # print the status
 
-for resol in resolutions:
-    fig, ax = plt.subplots()
+if with_obs:
+    for resol in resolutions:
+        fig, ax = plt.subplots()
 
-    offset = 0
+        offset = 0
 
-    for vals in statuses[resol]:
-        ax.plot(data_times[resol], np.array(vals) + offset)
-        offset += 7.
+        for vals in statuses[resol]:
+            ax.plot(data_times[resol], np.array(vals) + offset)
+            offset += 7.
 
-    fig.patch.set_alpha(0.)
-    fig.suptitle("Status " + str(resol))
+        fig.patch.set_alpha(0.)
+        fig.suptitle("Status " + str(resol))
 
 plt.show()

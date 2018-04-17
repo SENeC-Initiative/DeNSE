@@ -50,8 +50,8 @@ GrowthCone_RandomWalk::GrowthCone_RandomWalk(const GrowthCone_RandomWalk &copy)
     , corr_rw_(copy.corr_rw_)
     , memory_(copy.memory_)
 {
-    observables_.insert(observables_.cend(), copy.observables_.cbegin(),
-                        copy.observables_.cend());
+    observables_.insert(observables_.end(), copy.observables_.begin(),
+                        copy.observables_.end());
     memory_.effective_angle = move_.angle;
 }
 

@@ -47,6 +47,13 @@ Timestep must not be too big to avoid
 * max sensing angle that does not contain at least 3 sigma on each side
 
 
+User defined models
+-------------------
+
+Allow the user to declare custom models and use them inside parameters to
+create default neurons, neurites, or growth cones.
+
+
 Various thoughts and data
 -------------------------
 
@@ -213,3 +220,43 @@ Neuronal motion
 
 * rotations (compute torque from neurites)
 * translations (how do we quickly apply them?)
+
+
+Bugs
+====
+
+* retraction
+
+[msi-silma-lm:06719] *** Process received signal ***
+[msi-silma-lm:06719] Signal: Segmentation fault (11)
+[msi-silma-lm:06719] Signal code: Address not mapped (1)
+[msi-silma-lm:06719] Failing at address: (nil)
+[msi-silma-lm:06719] [ 0] /lib/x86_64-linux-gnu/libpthread.so.0(+0x11390)[0x7f9648c95390]
+[msi-silma-lm:06719] [ 1] /home/silmathoron/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth10GrowthCone10retractionEmi+0x443)[0x7f96106f5623]
+[msi-silma-lm:06719] [ 2] /home/silmathoron/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth10GrowthCone4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0x609)[0x7f96106f8519]
+[msi-silma-lm:06719] [ 3] /home/silmathoron/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth7Neurite4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0xce)[0x7f96106e9f3e]
+[msi-silma-lm:06719] [ 4] /home/silmathoron/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth6Neuron4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0x161)[0x7f96106ee411]
+[msi-silma-lm:06719] [ 5] /home/silmathoron/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(+0x5971e)[0x7f96106c971e]
+[msi-silma-lm:06719] [ 6] /usr/lib/x86_64-linux-gnu/libgomp.so.1(+0xf43e)[0x7f96137fc43e]
+[msi-silma-lm:06719] [ 7] /lib/x86_64-linux-gnu/libpthread.so.0(+0x76ba)[0x7f9648c8b6ba]
+[msi-silma-lm:06719] [ 8] /lib/x86_64-linux-gnu/libc.so.6(clone+0x6d)[0x7f96489c141d]
+[msi-silma-lm:06719] *** End of error message ***
+Segmentation fault (core dumped)
+
+
+[neuro-manjarodell:29585] *** Process received signal ***
+[neuro-manjarodell:29585] Signal: Segmentation fault (11)
+[neuro-manjarodell:29585] Signal code: Address not mapped (1)
+[neuro-manjarodell:29585] Failing at address: (nil)
+[neuro-manjarodell:29585] [ 0] /usr/lib/libpthread.so.0(+0x11b90)[0x7f33c29c9b90]
+[neuro-manjarodell:29585] [ 1] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth7Neurite11delete_coneEm+0x119)[0x7f3362338ea9]
+[neuro-manjarodell:29585] [ 2] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth10GrowthCone10retractionEmi+0x2bd)[0x7f33623468dd]
+[neuro-manjarodell:29585] [ 3] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth10GrowthCone4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0x5db)[0x7f3362349cdb]
+[neuro-manjarodell:29585] [ 4] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth7Neurite4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0xcb)[0x7f336233ae1b]
+[neuro-manjarodell:29585] [ 5] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(_ZN6growth6Neuron4growESt10shared_ptrISt23mersenne_twister_engineImLm32ELm624ELm397ELm31ELm2567483615ELm11ELm4294967295ELm7ELm2636928640ELm15ELm4022730752ELm18ELm1812433253EEEmd+0x125)[0x7f336233f655]
+[neuro-manjarodell:29585] [ 6] /home/tfardet/Documents/GitLabo/Growth/install_test/lib64/libcgrowth.so(+0x578f2)[0x7f33623178f2]
+[neuro-manjarodell:29585] [ 7] /usr/lib/libgomp.so.1(+0x168ee)[0x7f3373bca8ee]
+[neuro-manjarodell:29585] [ 8] /usr/lib/libpthread.so.0(+0x70bc)[0x7f33c29bf0bc]
+[neuro-manjarodell:29585] [ 9] /usr/lib/libc.so.6(clone+0x3f)[0x7f33c26f42ff]
+[neuro-manjarodell:29585] *** End of error message ***
+/tmp/geany_run_script_PCKIJZ.sh : ligne 7 : 29585 Erreur de segmentation  (core dumped)python "circular.py"

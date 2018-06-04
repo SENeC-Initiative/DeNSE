@@ -404,7 +404,8 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
                show_culture=True, aspect=1., soma_radius=None,
                active_gc="d", inactiv_gc="x", gc_size=2., soma_color='k',
                axon_color="r", dendrite_color="b", save_path=None, title=None,
-               axis=None, show=True, **kwargs):
+               axis=None, show_density=False, dstep=20., dmin=None, dmax=None,
+               show=True, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -505,6 +506,18 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         if not save_path.endswith('pdf'):
             save_path += ".pdf"
         plt.savefig(save_path, format="pdf", dpi=300)
+    if show_density:
+        from matplotlib.colors import LogNorm
+        fig, ax = plt.subplots()
+        x = np.concatenate((np.array(axons[0])[~np.isnan(axons[0])],
+                            np.array(dendrites[0])[~np.isnan(dendrites[0])]))
+        y = np.concatenate((np.array(axons[1])[~np.isnan(axons[1])],
+                            np.array(dendrites[1])[~np.isnan(dendrites[1])]))
+        xbins = int((np.max(x) - np.min(x)) / dstep)
+        ybins = int((np.max(y) - np.min(y)) / dstep)
+        ax.hist2d(x, y, bins=(xbins, ybins), vmin=dmin, vmax=dmax,
+                  cmap=kwargs.get("cmap", "viridis"))
+        ax.set_aspect(aspect)
     if show:
         plt.show()
 

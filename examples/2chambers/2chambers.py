@@ -150,11 +150,13 @@ if __name__ == '__main__':
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path, swc_resolution = 10)
 
-    graph = ng.CreateGraph(connection_proba=0.5)
+    graph = ng.CreateGraph(method="spine_based", connection_proba=0.5)
     population = nngt.NeuralPop(with_models=False)
     population.create_group("chamber_1", range(100))
     population.create_group("chamber_2", range(100, 200))
     nngt.Graph.make_network(graph, population)
 
-    nngt.plot.draw_network(graph, ecolor="groups", decimate=5,
-                           show_environment=False, colorbar=True, show=True)
+    graph.to_file("diode.el")
+
+    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group", decimate=5,
+                           show_environment=False, colorbar=False, show=True)

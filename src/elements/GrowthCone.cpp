@@ -807,7 +807,7 @@ Point GrowthCone::compute_target_position(
  *
  * @warning must always be preceeded by a call to update_growth_properties
  */
-double GrowthCone::init_filopodia()
+void GrowthCone::init_filopodia()
 {
     double dtheta, std_norm, proba_norm, bin, angle, P;
 

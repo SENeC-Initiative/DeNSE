@@ -31,7 +31,7 @@ Main parameters
 '''
 
 soma_radius = 10.
-num_neurons=100
+num_neurons = 100
 
 gc_model = 'persistent_random_walk'
 
@@ -146,44 +146,8 @@ if __name__ == '__main__':
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)
-    structure = ng.NeuronStructure()
-    graph =ng.CreateGraph()
 
-    print(graph.node_nb(), graph.edge_nb())
+    graph = ng.CreateGraph(method='spine_based')
+
     graph.to_file("circular.el")
-    nngt.plot.draw_network(graph, esize=0.1, show=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # ng.ResetKernel()
-
-    ### Import population for network analysis
-    # ng_population = ng.SimulationsFromFolder(save_path)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # population = ng.SwcEnsemble.from_population(ng_population)
-
-    # intersection = ng.IntersectionsFromEnsemble(population)
-    # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ng.CreateGraph(population, intersection)
-    # #graph info
-    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # nngt.plot.draw_network(graph, esize=0.1, show=True)
-
-    # print("duration", duration)
+    nngt.plot.draw_network(graph, show=True)

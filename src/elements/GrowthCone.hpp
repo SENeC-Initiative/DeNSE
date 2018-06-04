@@ -121,7 +121,7 @@ class GrowthCone : public TopologicalNode,
     void compute_module(double substep);
     virtual void compute_speed(mtPtr rnd_engine, double substep);
 
-    double init_filopodia();
+    void init_filopodia();
     void set_cone_ID();
     size_t get_cone_ID() const;
 

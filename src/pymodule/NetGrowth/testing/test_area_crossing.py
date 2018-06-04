@@ -31,11 +31,11 @@ shape.add_area(area)
 Set the environment in NetGrowth, then create the neurons
 '''
 
-num_neurons = 1000
-num_omp     = 7
+num_neurons = 2000
+num_omp     = 14
 # ~ resolutions = (1., 1.3, 1.6, 2., 3., 4., 5., 10., 18., 35., 50.)[::-1]
-# ~ resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
-resolutions = (10., 18., 35., 50.)[::-1]
+resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
+# ~ resolutions = (10., 18., 35., 50.)[::-1]
 
 fractions   = []
 lengths     = []
@@ -56,7 +56,8 @@ for k, resol in enumerate(resolutions):
     ng.SetEnvironment(shape)
 
     params = {
-        "sensing_angle": 0.04,
+        "sensing_angle": 0.12,
+        "rt_persistence_length": 200.,
         "filopodia_wall_affinity": 2.5,
         "proba_down_move": 0.1,
         "scale_up_move": 0.,
@@ -97,19 +98,19 @@ fig.patch.set_alpha(0.)
 
 # length plot
 
-# ~ fig, ax = plt.subplots()
+fig, ax = plt.subplots()
 
-# ~ upper, median, lower = [], [], []
+upper, median, lower = [], [], []
 
-# ~ for i, data in enumerate(lengths):
-    # ~ up, med, low = np.percentile(data, [90, 50, 10])
-    # ~ upper.append(up)
-    # ~ median.append(med)
-    # ~ lower.append(low)
+for i, data in enumerate(lengths):
+    up, med, low = np.percentile(data, [90, 50, 10])
+    upper.append(up)
+    median.append(med)
+    lower.append(low)
 
-# ~ ax.plot(resolutions, median, color="b", alpha=0.8)
-# ~ ax.plot(resolutions, lower, ls="--", color="b", alpha=0.5)
-# ~ ax.plot(resolutions, upper, ls="--", color="b", alpha=0.5)
-# ~ fig.patch.set_alpha(0.)
+ax.plot(resolutions, median, color="b", alpha=0.8)
+ax.plot(resolutions, lower, ls="--", color="b", alpha=0.5)
+ax.plot(resolutions, upper, ls="--", color="b", alpha=0.5)
+fig.patch.set_alpha(0.)
 
 plt.show()

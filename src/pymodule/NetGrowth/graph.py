@@ -8,13 +8,13 @@ from .structure import NeuronStructure, Population
 
 
 __all__ = [
-    "Intersections",
     "CreateGraph"
+    "intersections",
 ]
 
 
 def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
-                return_intersections=False, intersection_positions=False):
+                **kwargs):
     """
     Create the graph.
 
@@ -24,8 +24,19 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
         Indices of the neurons that should be used to generate the graph.
     method : str, optional (default: "intersection")
         Method to use to create synapses.
+        If "spine_based", `spine_density` and `max_spine_length` should be
+        passed in addition to `connection_proba` (they default respectively to
+        1 spine/$mu$m and 2 $\mu$m).
     connection_proba : double, optional (default: 0.5)
-        Default probability for synapse creation.
+        Maximum probability for synapse creation.
+    **kwargs : dict, optional arguments
+        Technical arguments, such as `return_intersections` and
+        `intersection_positions`.
+
+    See
+    ---
+    Details on the connection algorithms are available on the graph generation
+    page in the user manual.
     """
     try:
         import nngt
@@ -35,113 +46,210 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
                            "section of the documentation: http://nngt."
                            "readthedocs.org/en/latest/.")
 
+    spine_density          = kwargs.get("spine_density", 1.)
+    max_spine_length       = kwargs.get("max_spine_length", 2.)
+
+    return_intersections   = kwargs.get("return_intersections", False)
+    intersection_positions = kwargs.get("intersection_positions", False)
+
+    population = None
+
     if neurons is None:
         neurons    = _pg.GetNeurons()
 
     population  = Population.from_gids(neurons)
     num_neurons = len(neurons)
 
-    # This is more clean and more general
+    # Sort neurons
     idx_sort      = np.sort(neurons).tolist()
     gids, neurons = population.get_gid(idx_sort)
-    axons = [neuron.axon  for neuron in neurons]
-    dendrites = [neuron.dendrites for neuron in neurons]
-    positions = np.array([neuron.position for neuron in population])
+    axons         = [neuron.axon  for neuron in neurons]
+    dendrites     = [neuron.dendrites  for neuron in neurons]
+    positions     = np.array([neuron.position for neuron in neurons])
 
-    # gids, axons, dendrites = [], [], []
-    # positions        = np.zeros((num_neurons, 2))
-    # for idx in idx_sort:
-        # neuron         = population[idx]
-        # positions[idx] = neuron.position
+    shape = _pg.GetEnvironment()
+    graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions,
+                              shape=shape)
 
-        # gids.append(idx)
-        # axons.append(neuron.axon)
-        # dendrites.append(neuron.dendrites)
-
-    # create the graph in nngt, if has not environment don't break!
-    try:
-        shape = _pg.GetEnvironment()
-        graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions,
-                                  shape=shape)
-    except:
-        graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
-
+    # get intersections
     intersections    = {}
     intersections_xy = None
 
     if method == "intersection":
-        intersections, intersections_xy = Intersections(
+        intersections, intersections_xy = get_intersections(
             gids, axons, dendrites, connection_proba)
+    elif method == "spine_based":
+        intersections, intersections_xy = get_synapses(
+            gids, axons, dendrites, connection_proba, max_spine_length,
+            spine_density)
+    else:
+        raise ValueError("`method` should be either 'intersection' or "
+                         "'spine_based'.")
+
+    # create the graph in nngt
+    shape = _pg.GetEnvironment()
+    graph = nngt.SpatialGraph(
+        nodes=num_neurons, positions=positions, shape=shape)
 
     # add the edges
-    for node_out, nodes_in in intersections.items():
-        edges = np.zeros((len(nodes_in), 2), dtype=int)
+    for node_out, di_nodes_in in intersections.items():
+        edges       = np.zeros((len(di_nodes_in), 2), dtype=int)
+        nodes_in    = list(di_nodes_in.keys())
+        weights     = list(di_nodes_in.values())
         edges[:, 0] = node_out
         edges[:, 1] = nodes_in
-        graph.new_edges(edges)
+        graph.new_edges(
+            edges, attributes={"weight": weights}, check_edges=False)
 
     if return_intersections and not intersection_positions:
         return graph, intersections #, intersections_xy
-    if intersection_positions:
+    elif intersection_positions:
         return graph, intersections, intersections_xy
     else:
         return graph
 
 
-def Intersections(gids, axons, dendrites, connection_proba):
+def get_intersections(gids, axons, dendrites, connection_proba):
     """
     Obtain synapses with naive approach of lines intersection
     """
+    ls_dendrites = _get_linestrings(gids, dendrites, "intersection", 0)
+
+    intersections = {}
+    synapses      = {}
+
+    for axon_gid, axon_xy in zip(gids, axons):
+        segments = _to_lslist(axon_xy)
+
+        if axon_gid not in intersections:
+           intersections[axon_gid] = {}
+           synapses[axon_gid]      = {}
+
+        for axon_segment in segments:
+            for dend_gid, dendrite_segment in ls_dendrites:
+                # for each axon, check all dendrites
+                if dend_gid != axon_gid:
+                    if axon_segment.intersects(dendrite_segment):
+                        if np.random.random() < connection_proba:
+                            point = axon_segment.intersection(dendrite_segment)
+                            if dend_gid in intersections[axon_gid]:
+                                intersections[axon_gid][dend_gid] += 1.
+                                synapses[axon_gid][dend_gid].append(point)
+                            else:
+                                intersections[axon_gid][dend_gid] = 1.
+                                synapses[axon_gid][dend_gid] = [point]
+
+    return intersections, synapses
+
+
+def get_synapses(gids, axons, dendrites, max_proba, max_len, spine_density):
+    """
+    Create synapses based on distance and spine density.
+    """
+    ls_dendrites  = _get_linestrings(gids, dendrites, "spine_based", max_len)
+
+    intersections = {}
+    weights       = {}
+    synapses      = {}
+
+    max_step = 0.1  # steps of 0.1 mum to evaluate the distances and densities
+
+    for axon_gid, axon_xy in zip(gids, axons):
+        segments = _to_lslist(axon_xy)
+
+        if axon_gid not in intersections:
+           intersections[axon_gid] = {}
+           synapses[axon_gid]      = {}
+
+        for axon_segment in segments:
+            for dend_gid, dendrite_segment in ls_dendrites:
+                # for each axon, check all dendrites
+                if dend_gid != axon_gid:
+                    dend_area = dendrite_segment
+                    if axon_segment.intersects(dend_area):
+                        subaxon = axon_segment.intersection(dend_area)
+                        steps   = np.linspace(
+                            0, subaxon.length,
+                            max(int(np.ceil(subaxon.length/max_step)), 2))
+                        ds        = steps[1] - steps[0]
+                        distances = np.zeros(len(steps))
+                        # compute all distances on crossing length
+                        for i, s in enumerate(steps):
+                            distances[i] = subaxon.interpolate(s).distance(
+                                dendrite_segment)
+                        # compute connection proba
+                        p_syn  = subaxon.length*spine_density*np.sum(
+                            max_proba*(max_len - distances)/max_len)
+                        if p_syn > 1 or np.random.rand() < p_syn:
+                            if dend_gid in intersections[axon_gid]:
+                                intersections[axon_gid][dend_gid] += p_syn
+                                synapses[axon_gid][dend_gid].append(
+                                    subaxon)
+                            else:
+                                intersections[axon_gid][dend_gid] = p_syn
+                                synapses[axon_gid][dend_gid]      = [subaxon]
+
+    return intersections, synapses
+
+
+def _get_linestrings(gids, dendrites, method, max_len):
+    '''
+    Convert axon and dendrites to shapely linestrings
+    '''
     from shapely.geometry import LineString, MultiLineString
 
-    ls_axons     = []
     ls_dendrites = []
 
-    for gid, axon, dendrite_list in zip(gids, axons, dendrites):
+    for gid, dendrite_list in zip(gids, dendrites):
         ## @TODO Sometimes the neurite has no points, this can happen when
         ## it emerges in front of the wall, in this case the LineString
         ## return errore since there are not sufficient points,
         ## this propblem can lead to other troubles, fix it in containers
-        if axon.single_branch:
-            if np.shape(axon.xy)[0] > 2:
-                line = LineString(axon.xy)
-                if not line.is_valid:
-                    line = MultiLineString(axon.xy.tolist())
-                ls_axons.append((gid, line))
-        else:
-            for branch in axon.branches:
-                if np.shape(branch.xy)[0] > 2:
-                    line = LineString(branch.xy)
-                    if not line.is_valid:
-                        line = MultiLineString(branch.xy.tolist())
-                    ls_axons.append((gid, line))
-
         for dendrite in dendrite_list.values():
             if dendrite.single_branch:
                 if np.shape(dendrite.xy)[0] > 2:
                     line = LineString(dendrite.xy)
                     if not line.is_valid:
                         line = MultiLineString(dendrite.xy.tolist())
-                    ls_dendrites.append((gid, line))
+                    if method == "spine_based":
+                        ls_dendrites.append((gid, line.buffer(max_len)))
+                    else:
+                        ls_dendrites.append((gid, line))
             else:
                 for branch in dendrite.branches:
                     if np.shape(branch.xy)[0] > 2:
                         line = LineString(branch.xy)
                         if not line.is_valid:
                             line = MultiLineString(branch.xy.tolist())
-                        ls_dendrites.append((gid, line))
+                        if method == "spine_based":
+                            ls_dendrites.append((gid,
+                                                 line.buffer(max_len)))
+                        else:
+                            ls_dendrites.append((gid, line))
 
-    intersections = {}
-    synapses      = {}
+    return ls_dendrites
 
-    for axon_gid, axon_segment in ls_axons:
-        if axon_gid not in intersections:
-           intersections[axon_gid] = []
-           synapses[axon_gid]      = []
-        for dend_gid, dendrite_segment in ls_dendrites:
-            if dend_gid != axon_gid and axon_segment.intersects(dendrite_segment):
-                if np.random.random() < connection_proba:
-                    intersections[axon_gid].append(dend_gid)
-                    synapses[axon_gid].append(axon_segment.intersection(dendrite_segment))
 
-    return intersections, synapses
+def _to_lslist(neurite):
+    '''
+    Convert a branch to a Linestring
+    '''
+    from shapely.geometry import LineString, MultiLineString
+
+    lslist = []
+
+    if neurite.single_branch:
+        if np.shape(neurite.xy)[0] > 2:
+            line = LineString(neurite.xy)
+            if not line.is_valid:
+                line = MultiLineString(neurite.xy.tolist())
+            lslist.append(line)
+    else:
+        for branch in neurite.branches:
+            if np.shape(branch.xy)[0] > 2:
+                line = LineString(branch.xy)
+                if not line.is_valid:
+                    line = MultiLineString(branch.xy.tolist())
+                lslist.append(line)
+
+    return lslist

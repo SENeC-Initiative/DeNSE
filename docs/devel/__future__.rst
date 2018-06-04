@@ -154,6 +154,22 @@ Lateral branching far from previous branching points
 Clean up the ``Branching`` object.
 
 
+### Actin waves
+
+To make the frequency of actin waves tunable, use the same method as the
+ste_current_generator in nest: array with times + frequencies.
+
+Setting the frequency to a null or negative number switches the
+``use_actin_waves`` bool to false.
+
+
+### Branch stabilization
+
+Once a synapse is created, the growth cone cannot retract past the synapse.
+
+Create a "stable node" at a certain distance of the new synapse.
+
+
 ### OMP
 
 Check possibility of not having explicit `omp_id`

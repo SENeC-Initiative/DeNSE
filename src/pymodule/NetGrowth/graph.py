@@ -13,14 +13,14 @@ __all__ = [
 ]
 
 
-def CreateGraph(neurons=None, population_gids=None, method="intersection", connection_proba=0.5,
+def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
                 return_intersections=False, intersection_positions=False):
     """
     Create the graph.
 
     Parameters
     ----------
-    gids : :class:`Population` or list of ints, optional (default: all neurons)
+    neurons : :class:`Population` or list of ints, optional (default: all neurons)
         Indices of the neurons that should be used to generate the graph.
     method : str, optional (default: "intersection")
         Method to use to create synapses.
@@ -35,38 +35,23 @@ def CreateGraph(neurons=None, population_gids=None, method="intersection", conne
                            "section of the documentation: http://nngt."
                            "readthedocs.org/en/latest/.")
 
-    population = None
-
     if neurons is None:
         neurons    = _pg.GetNeurons()
-        structure  = NeuronStructure(neurons)
-        population = Population.from_structure(structure)
-    elif isinstance(neurons, Population):
-        population = neurons
-        if population_gids is None:
-            neurons    = population.gids
-        else:
-            neurons    = population_gids
-    elif nonstring_container(neurons):
-        structure  = NeuronStructure(neurons)
-        population = Population.from_structure(structure)
-    else:
-        raise ValueError("Expected Population or gids array for `neurons` but "
-                         "got {}.".format(neurons.__class__))
 
-    num_neurons      = len(neurons)
+    population  = Population.from_gids(neurons)
+    num_neurons = len(neurons)
 
     # This is more clean and more general
     idx_sort      = np.sort(neurons).tolist()
     gids, neurons = population.get_gid(idx_sort)
     axons = [neuron.axon  for neuron in neurons]
-    dendrites = [neuron.dendrites  for neuron in neurons]
-    positions = np.array([neuron.position for neuron in neurons])
+    dendrites = [neuron.dendrites for neuron in neurons]
+    positions = np.array([neuron.position for neuron in population])
 
     # gids, axons, dendrites = [], [], []
     # positions        = np.zeros((num_neurons, 2))
     # for idx in idx_sort:
-        # neuron         = population.neurons[idx]
+        # neuron         = population[idx]
         # positions[idx] = neuron.position
 
         # gids.append(idx)
@@ -131,7 +116,7 @@ def Intersections(gids, axons, dendrites, connection_proba):
                         line = MultiLineString(branch.xy.tolist())
                     ls_axons.append((gid, line))
 
-        for dendrite in dendrite_list:
+        for dendrite in dendrite_list.values():
             if dendrite.single_branch:
                 if np.shape(dendrite.xy)[0] > 2:
                     line = LineString(dendrite.xy)

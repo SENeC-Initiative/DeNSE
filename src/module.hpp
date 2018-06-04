@@ -7,15 +7,15 @@
 #include <string>
 #include <vector>
 
-// kernel includes
-#include "recorders.cpp"
+// kernel include
+#include "recorders.hpp"
 
 // libgrowth include
 #include "config.hpp"
 #include "elements_types.hpp"
 #include "growth_time.hpp"
 
-// spatial includes
+// spatial include
 #include "space_manager.hpp"
 #include "spatial_types.hpp"
 
@@ -106,8 +106,20 @@ statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
                              const std::string& level);
 
 
+// neuron- and structure-related
+
 std::vector<size_t> get_neurons();
 
+
+std::vector<std::string> get_neurites(size_t gid);
+
+
+void get_branches_data(size_t neuron, const std::string& neurite,
+                       std::vector<std::vector<std::vector<double>>>& points,
+                       std::vector<double>& diameters, size_t start_point);
+
+
+// parameters and recordings
 
 void get_defaults(const std::string &object_name,
                   const std::string &object_type, statusMap &status);

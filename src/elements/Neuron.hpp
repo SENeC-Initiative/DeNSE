@@ -90,6 +90,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     Point get_position() const;
     size_t get_gid() const;
     std::string get_gc_model() const;
+    NeuriteWeakPtr get_neurite(const std::string& name) const;
     double get_state(const char *observable) const;
     void get_status(statusMap &status) const;
     int get_num_neurites() const;

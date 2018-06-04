@@ -24,7 +24,7 @@ Setting the parameters
 
 num_neurons = 1500
 simtime     = 5000.
-num_omp     = 7
+num_omp     = 12
 resolutions = (1., 2., 5., 10., 18., 35., 50.)[::-1]
 # ~ resolutions = (1., 2.)
 #~ resolutions = (50.,)[::-1]
@@ -35,7 +35,7 @@ colors      = ["b", "orange", "r", "purple"]
 
 sensing_angle = 0.4
 
-with_obs = False
+with_obs = True
 
 '''
 Creating the environment: a disk
@@ -61,8 +61,8 @@ lengths    = []
 affinities = []
 data_times = {}
 statuses   = {}
-#~ observable = "length"
-observable = "angle"
+observable = "length"
+# ~ observable = "angle"
 #~ observable = "stopped"
 
 cmap          = plt.get_cmap('plasma')
@@ -184,17 +184,20 @@ fig.patch.set_alpha(0.)
 
 fig, ax = plt.subplots()
 
-upper, median, lower = [], [], []
+pcs     = [90, 75, 50, 25, 10]
+num_pcs = len(pcs)
+pc_data = [[] for _ in range(num_pcs)]
 
 for i, data in enumerate(lengths):
-    up, med, low = np.percentile(data, [90, 50, 10])
-    upper.append(up)
-    median.append(med)
-    lower.append(low)
+    lst_pcs = np.percentile(data, pcs)
+    for j in range(num_pcs):
+        pc_data[j].append(lst_pcs[j])
 
-ax.plot(resolutions, median, color="b", alpha=0.8)
-ax.plot(resolutions, lower, ls="--", color="b", alpha=0.5)
-ax.plot(resolutions, upper, ls="--", color="b", alpha=0.5)
+ax.plot(resolutions, pc_data[int(0.5*num_pcs)], color="b", alpha=0.8)
+for i in range(num_pcs):
+    if i != int(0.5*num_pcs):
+        ax.plot(resolutions, pc_data[i], ls="--", color="b", alpha=0.5)
+
 fig.patch.set_alpha(0.)
 
 # print the status
@@ -204,6 +207,8 @@ if with_obs:
         fig, ax = plt.subplots()
 
         offset = 0
+
+        print(len(statuses[resol]))
 
         for vals in statuses[resol]:
             ax.plot(data_times[resol], np.array(vals) + offset)

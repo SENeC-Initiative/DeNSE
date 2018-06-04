@@ -13,7 +13,7 @@ def CreateGraph(population=None, gids=None, method="intersection",intersection_p
                            "readthedocs.org/en/latest/.")
 
     if gids is None:
-        neurons, gids = population.neurons, population.gids
+        neurons, gids = population, population.gids
     else:
         gids, neurons = population.get_gid(gids)
     positions = np.array([neuron.position for neuron in neurons])

@@ -490,4 +490,10 @@ Point Neuron::get_position() const { return soma_->get_position(); }
 
 size_t Neuron::get_gid() const { return gid_; }
 
+
+NeuriteWeakPtr Neuron::get_neurite(const std::string& name) const
+{
+    return NeuriteWeakPtr(neurites_.at(name));
+}
+
 } // namespace

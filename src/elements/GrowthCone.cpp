@@ -313,22 +313,23 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                         "Passed from `GrowthCone::compute_pull`."));
             }
 
-            //~ // if interacting with obstacles, switch substep down
-            //~ if (interacting_ and local_substep > 4.)
-            //~ {
-                // old_substep = local_substep;
-                //~ tmp = std::max(0.25*local_substep, 1.);
+            // if interacting with obstacles, and adaptive timestep, switch
+            // local_substep down
+            if (interacting_ and adaptive_timestep_ > 1)
+            {
+                double substep_tmp = 1.;
 
-                //~ // always check remaining time >= 1.
-                //~ if (substep - current_time - tmp >= 1.)
-                //~ {
-                    //~ local_substep = tmp;
-                //~ }
-            //~ }
-            //~ else if (interacting_ and local_substep >= 2.)
-            //~ {
-                //~ local_substep = 1.;
-            //~ }
+                if (local_substep > adaptive_timestep_)
+                {
+                    substep_tmp = std::max(timestep_divider_*local_substep, 1.);
+                }
+
+                // always check remaining time >= 1.
+                if (substep - current_time - substep_tmp >= 1.)
+                {
+                    local_substep = substep_tmp;
+                }
+            }
 
             // compute speed and module
             compute_speed(rnd_engine, local_substep);
@@ -704,13 +705,11 @@ void GrowthCone::make_move(
     GeomPtr line;
     Point p;
 
-    // check whether we would be stopped is substep was 1
-    double rnd_dbl  = uniform_(*(rnd_engine.get()));
-    stopped_        = (rnd_dbl > total_proba_);
+    // check whether we're stopped
+    stopped_ = (uniform_(*(rnd_engine.get())) > total_proba_);
 
     // we test whether we should make the next move or stop moving if moving
     // anywhere is too unlikely
-    //~ if (uniform_(*rnd_engine.get()) < total_proba_*substep)
     if (not stopped_)
     {
         for (n = 0; n < filopodia_.size; n++)
@@ -1094,6 +1093,10 @@ void GrowthCone::update_kernel_variables()
     // check change in resolution
     double old_sqrt    = sqrt_resol_;
     sqrt_resol_        = sqrt(kernel().simulation_manager.get_resolution());
+
+    // check adaptive timestep
+    adaptive_timestep_ = kernel().get_adaptive_timestep();
+    timestep_divider_  = 1. / adaptive_timestep_;
 
     // check if filopodia should be updated
     if (old_sqrt != sqrt_resol_)

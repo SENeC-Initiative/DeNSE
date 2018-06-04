@@ -150,41 +150,14 @@ if __name__ == '__main__':
     save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)
-    structure = ng.NeuronStructure()
-    graph =ng.CreateGraph(structure=structure)
+    
+    graph = ng.CreateGraph()
 
+    population = nngt.NeuralPop(with_models=False)
+    population.create_group("chamber_1", range(100))
+    population.create_group("chamber_2", range(100, 200))
+    population.create_group("chamber_3", range(200, 300))
+    nngt.Graph.make_network(graph, population)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # ng.ResetKernel()
-
-    ### Import population for network analysis
-    # ng_population = ng.SimulationsFromFolder(save_path)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # population = ng.SwcEnsemble.from_population(ng_population)
-
-    # intersection = ng.IntersectionsFromEnsemble(population)
-    # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ng.CreateGraph(population, intersection)
-    # #graph info
-    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # nngt.plot.draw_network(graph, esize=0.1, show=True)
-
-    # print("duration", duration)
+    nngt.plot.draw_network(graph, ecolor="groups", decimate=5,
+                           show_environment=False, colorbar=True, show=True)

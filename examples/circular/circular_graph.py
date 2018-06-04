@@ -21,7 +21,7 @@ graph.to_file("circular.el")
                        # dpi = 400)
 
 ax1.set_title("Positions of nurons' soma")
-for neuron in pop.neurons:
+for neuron in pop:
     ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
 fig.savefig("graph_.pdf",format='pdf', ppi=300)
@@ -39,7 +39,7 @@ gids_position = np.array(gids_position,dtype)
 gids_sorted = np.sort(gids_position,order=["x_","y_"])['ID']
 trans_gid = { gid: num+1 for num,gid in enumerate(gids_sorted)}
 
-def positions_from_gid(gid,pop):
+def positions_from_gid(gid, pop):
     neuron = pop.get_gid(gid)[1][0]
     x,y = neuron.position
     return x,y
@@ -68,7 +68,7 @@ bx1.set_title("Density of neurites")
 bx1.set_xlabel("X")
 bx1.set_ylabel("Y")
 _x,_y =[],[]
-for neuron in pop.neurons:
+for neuron in pop:
     for branch in neuron.axon.branches:
         for x,y in branch.xy[:]:
             _x.append(x)

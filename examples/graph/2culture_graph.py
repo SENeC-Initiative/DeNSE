@@ -13,13 +13,13 @@ for key in intersections:
 ### Plot the graph in 2 subplots:
 fig, (ax1,ax2,ax3) = plt.subplots(3,1)
 nngt.plot.draw_network(graph,spatial = True, axis = ax3)
-for neuron in pop.neurons:
-    if neuron.gid<100:
+for neuron in pop:
+    if neuron < 100:
         try:
             ax1.plot(neuron.axon.xy[:,0], neuron.axon.xy[:,1], c='b')
         except:
             pass
-    if neuron.gid>99:
+    else:
         try:
             ax2.plot(neuron.axon.xy[:,0], neuron.axon.xy[:,1], c='r')
         except:

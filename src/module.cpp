@@ -1,14 +1,16 @@
 #include "module.hpp"
 
 
-// C++ includes
+// C++ include
 #include <algorithm>
 #include <cmath>
 #include <memory>
 #include <stdexcept>
 
-// elements includes
+// elements include
+#include "Branch.hpp"
 #include "GrowthCone.hpp"
+#include "Neurite.hpp"
 #include "Neuron.hpp"
 #include "Skeleton.hpp"
 #include "Swc.hpp"
@@ -94,7 +96,7 @@ statusMap get_status(size_t gid)
     }
     else
     {
-        throw std::runtime_error("Only neurons an recorders are supprted so "
+        throw std::runtime_error("Only neurons an recorders are supported so "
                                  "far.");
     }
 }
@@ -372,8 +374,98 @@ void simulate(const Time &simtime)
 }
 
 
+// ------------------------------------------------------------------------- //
+// Neuron/structure related
+
 std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
 
+
+
+std::vector<std::string> get_neurites(size_t gid)
+{
+    std::vector<std::string> neurite_names;
+
+    NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
+
+    std::unordered_map<std::string, NeuritePtr>::const_iterator it =
+        n->neurite_cbegin();
+    std::unordered_map<std::string, NeuritePtr>::const_iterator it_last =
+        n->neurite_cend();
+
+    while (it != it_last)
+    {
+        neurite_names.push_back(it->first);
+        it++;
+    }
+
+    return neurite_names;
+}
+
+
+void get_branches_data(size_t neuron, const std::string& neurite_name,
+                       std::vector<std::vector<std::vector<double>>>& points,
+                       std::vector<double>& diameters, size_t start_point)
+{
+    NeuronPtr n = kernel().neuron_manager.get_neuron(neuron);
+    NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
+
+    auto node_it = neurite.lock()->nodes_cbegin();
+    auto node_end = neurite.lock()->nodes_cend();
+    auto gc_it = neurite.lock()->gc_cbegin();
+    auto gc_end = neurite.lock()->gc_cend();
+
+    while (node_it != node_end)
+    {
+        std::vector<std::vector<double>> points_tmp;
+        BranchPtr b = node_it->second->get_branch();
+
+        if (b->size() != 0)
+        {
+            switch (start_point)
+            {
+                case 0:
+                    points_tmp.push_back(b->points.at(0));
+                    points_tmp.push_back(b->points.at(1));
+                    break;
+                default:
+                    std::vector<double> row_x, row_y;
+                    // x
+                    auto it  = b->points[0].cbegin();
+                    auto end = b->points[0].cend();
+                    row_x.insert(row_x.begin(), it+start_point, end);
+                    points_tmp.push_back(row_x);
+                    // y
+                    it  = b->points.at(1).cbegin();
+                    end = b->points.at(1).cend();
+                    row_y.insert(row_y.begin(), it+start_point, end);
+                    points_tmp.push_back(row_y);
+            }
+
+            points.push_back(points_tmp);
+            diameters.push_back(node_it->second->get_diameter());
+        }
+
+        node_it++;
+    }
+
+    while (gc_it != gc_end)
+    {
+        std::vector<std::vector<double>> points_tmp;
+        BranchPtr b = gc_it->second->get_branch();
+        points_tmp.push_back(b->points.at(0));
+        points_tmp.push_back(b->points.at(1));
+
+        points.push_back(points_tmp);
+
+        diameters.push_back(gc_it->second->get_diameter());
+
+        gc_it++;
+    }
+}
+
+
+// ------------------------------------------------------------------------- //
+// Recorder related
 
 bool get_next_recording(size_t gid, std::vector<Property> &ids,
                         std::vector<double> &values)

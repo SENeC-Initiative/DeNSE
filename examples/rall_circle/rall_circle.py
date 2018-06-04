@@ -19,7 +19,7 @@ def rall_circle(pop,gid):
     dx = plt.subplot(224, projection='polar')
     dx.set_title("Sholl Analysis: axon")
     # label_position=cx.get_rlabel_position()
-    for ng_neuron in pop.neurons[10:15]:
+    for ng_neuron in pop[10:15]:
         for dendrite in ng_neuron.dendrites:
             # ax.scatter(dendrite.xy[:,0] - ng_neuron.position[0],
                         # dendrite.xy[:,1] - ng_neuron.position[1], c='b',alpha=0.003,

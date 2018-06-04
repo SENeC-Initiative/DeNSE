@@ -117,6 +117,13 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef vector[size_t] get_neurons() except +
 
+    cdef vector[string] get_neurites(size_t gid) except +
+
+    cdef void get_branches_data(size_t neuron, const string& neurite_name,
+                                vector[vector[vector[double]]]& points,
+                                vector[double]& diameters,
+                                size_t start_point) except +
+
     cdef void get_defaults(const string& object_name,
                            const string& object_type,
                            statusMap &status) except +

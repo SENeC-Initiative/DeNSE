@@ -98,7 +98,7 @@ def finalize():
 
 def CreateNeurons(n=1, growth_cone_model="default", params=None,
                   axon_params=None, dendrites_params=None, num_neurites=0,
-                  culture=None, on_area=None, **kwargs):
+                  culture=None, on_area=None, return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -124,6 +124,9 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
     on_area : str or list, optional (default: everywhere in `culture`)
         Restrict the space where neurons while be randomly seeded to an
         area or a set of areas.
+    return_ints : bool, optional (default: False)
+        Whether the neurons are returned as :class:`Neuron` objects or simply
+        as integers (the neuron gids).
 
     Example
     Creating one neuron: ::
@@ -144,7 +147,7 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
 
     Returns
     -------
-    gids : tuple
+    neurons : tuple of :class:`Neuron` objects or of ints
         GIDs of the objects created.
     '''
     params       = {} if params is None else params
@@ -189,7 +192,8 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
     if isinstance(params, dict):
         params = _neuron_param_parser(
             params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
-        return _create_neurons(params, ax_params, dend_params, kwargs, n)
+        return _create_neurons(
+            params, ax_params, dend_params, kwargs, n, return_ints)
     else:
         if len(params) != n:
             raise RuntimeError("`n` is different from params list size.")
@@ -198,7 +202,8 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
             param = _neuron_param_parser(
                 param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
             gids.append(
-                _create_neurons(param, ax_params, dend_params, kwargs, 1))
+                _create_neurons(
+                    param, ax_params, dend_params, kwargs, 1, return_ints))
         return gids
 
 
@@ -292,8 +297,8 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
     num_created = create_objects(b"recorder", obj_params)
 
     assert num_created >= num_obs, "Wrong number of recorders created, " +\
-                                  "this is an internal error, please file " +\
-                                  "a bug on our issue tracker."
+                                   "this is an internal error, please file " +\
+                                   "a bug on our issue tracker."
 
     return [num_obj + i for i in range(num_created)]
 
@@ -405,7 +410,7 @@ def GetSimulationID():
 def GetStatus(gids, property_name=None, level=None, neurite=None,
               time_units="hours"):
     '''
-    Get the configuration properties.
+    Get the object's properties.
 
     Parameters
     ----------
@@ -974,12 +979,56 @@ def test_random_gen(size=10000):
     return c_values
 
 
+# --------------- #
+# Container tools #
+# --------------- #
+
+def _get_neurites(gid):
+    ''' Return a list of strings with the neurite names for neuron `gid` '''
+    return [_to_string(s) for s in get_neurites(gid)]
+
+
+def _get_branches_data(gid, neurite, start_point=0):
+    '''
+    Fill the Branches data for each branch in `neurite` of neuron `gid`.
+
+    Parameters
+    ----------
+    gid : int
+        Neuron gid.
+    neurite : str
+        Neurite name.
+    start_point : int, optional (default: 0)
+        Where the x, y lists should start.
+
+    Returns
+    -------
+    points, diameters : vector[vector[vector[double]]], vector[double]
+        List of [xx, yy] with xx, yy the lists of abscisses and ordinates, and
+        list of node diameters.
+    '''
+    if gid is None:
+        raise ValueError("Cannot retrieve data from Neurite with no parent "
+                         "Neuron.")
+    cdef:
+        vector[vector[vector[double]]] points
+        vector[double] diameters
+#~         int cgid = int(gid)
+    cneurite = _to_bytes(neurite)
+    try:
+        get_branches_data(gid, cneurite, points, diameters, start_point)
+    except Exception as e:
+        print(e)
+        print(gid, neurite)
+    return points, diameters
+
+
 # ------------ #
 # Subfunctions #
 # ------------ #
 
 cdef _create_neurons(dict params, dict ax_params, dict dend_params,
-                     dict optional_args, size_t n) except +:
+                     dict optional_args, size_t n, bool return_ints) except +:
     '''
     Create several neurons, return their GIDs.
     @todo: check for unused parameters.
@@ -1028,7 +1077,15 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
                    "minimal working example leading to the bug and the full " \
                    "error message, as well as your Python configuration " \
                    "(requested neurons: {}; created {}).".format(n, i)
-    return tuple(i for i in range(num_objects, num_objects + n))
+    if return_ints:
+        return tuple(i for i in range(num_objects, num_objects + n))
+    else:
+        from .structure import Neuron
+        neurons = []
+        for i in range(n):
+            pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
+            neurons.append(Neuron(pos, num_objects + i))
+        return tuple(neurons)
 
 
 def _get_pyskeleton(gid):
@@ -1069,10 +1126,10 @@ def _get_pyskeleton(gid):
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
     get_skeleton(axons, dendrites, nodes, growth_cones, somas, gids)
-    py_axons = (axons.first, axons.second)
-    py_dendrites = (dendrites.first, dendrites.second)
+    py_axons        = (axons.first, axons.second)
+    py_dendrites    = (dendrites.first, dendrites.second)
     py_growth_cones = (growth_cones.first, growth_cones.second)
-    py_nodes = (nodes.first, nodes.second)
+    py_nodes        = (nodes.first, nodes.second)
 
     return somas, py_axons, py_dendrites, py_growth_cones, py_nodes
 
@@ -1081,14 +1138,14 @@ def _get_pyskeleton(gid):
 # Tools #
 # ----- #
 
-cdef bytes _to_bytes(string):
+cpdef bytes _to_bytes(string):
     ''' Convert string to bytes '''
     if not isinstance(string, bytes):
         string = bytes(string.encode("UTF-8"))
     return string
 
 
-cdef str _to_string(byte_string):
+cpdef str _to_string(byte_string):
     ''' Convert bytes to string '''
     if isinstance(byte_string, bytes):
         return str(byte_string.decode())

@@ -92,6 +92,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_cone(GCPtr);
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cend() const;
+    std::unordered_map<size_t, NodePtr>::const_iterator nodes_cbegin() const;
+    std::unordered_map<size_t, NodePtr>::const_iterator nodes_cend() const;
 
   private:
     //! Neuron parent

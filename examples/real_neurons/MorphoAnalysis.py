@@ -35,7 +35,7 @@ if args.neuron:
     for neuron in args.neuron:
         pop = ng.PopulationFromSwc(swc_file=neuron, info={})
         ens = ng.EnsembleRW(pop)
-        pop.neurons[0].dendrites[0].remove_shorter(150)
+        pop[0].dendrites[0].remove_shorter(150)
         ens.characterizeRW("dendrite")
         ens.fit()
         ensembles.append(ens)

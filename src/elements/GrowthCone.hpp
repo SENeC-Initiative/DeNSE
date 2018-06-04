@@ -40,6 +40,8 @@ class GrowthCone : public TopologicalNode,
     const std::string model_;
     bool using_environment_;   // whether we're embedded in space
     double sqrt_resol_;
+    double adaptive_timestep_;
+    double timestep_divider_;
     size_t gc_ID_;             // unique number for growth cones
     std::string current_area_; // name of the area where the GC is
     bool stuck_;

@@ -213,7 +213,7 @@ for k, resol in enumerate(resolutions[::-1]):
     step_size  = np.linspace(0.01, 1., num_trials)
     tort_evol  = np.zeros((num_neurons, num_trials))
     ahist      = np.zeros(len(abins)-1)
-    axons = [neuron.axon.xy.transpose() for neuron in population.neurons]
+    axons = [neuron.axon.xy.transpose() for neuron in population]
     if do_tort:
         for i, s in enumerate(step_size):
             for j, points in enumerate(axons):

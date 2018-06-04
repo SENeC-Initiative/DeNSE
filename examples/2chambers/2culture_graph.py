@@ -18,10 +18,10 @@ fig, (ax1,ax2) = plt.subplots(2,1)
                        # axis = ax2,
                        # dpi = 400)
 ax1.set_title("Soma position")
-for neuron in pop.neurons:
-    if neuron.gid>99:
+for neuron in pop:
+    if neuron >= 100:
         ax1.scatter(neuron.position[0], neuron.position[1], c='b')
-    if neuron.gid<100:
+    else:
         ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
 fig.savefig("graph_.pdf",format='pdf', ppi=300)
@@ -82,7 +82,7 @@ bx1.set_title("Density of neurites")
 bx1.set_xlabel("X")
 bx1.set_ylabel("Y")
 _x,_y =[],[]
-for neuron in pop.neurons:
+for neuron in pop:
     for branch in neuron.axon.branches:
         for x,y in branch.xy[:]:
             _x.append(x)

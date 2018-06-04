@@ -19,6 +19,7 @@ __all__ = [
     "ImportSwc",
     "NeuronsFromSimulation",
     "SaveJson",
+    "SaveNeuroML",
     "SaveSwc",
     "SimulationsFromFolder"
 ]
@@ -47,6 +48,7 @@ def SaveJson(filepath="default", gid=None):
     with open (os.path.join(filepath,"info.json"), "w") as dumper:
         json.dump(experiment_dict, dumper, sort_keys =True)
 
+
 def SaveSwc(filepath="default", gid=None, swc_resolution=10):
     '''
     Save the morphology of each neuron to a single SWC file.
@@ -59,6 +61,30 @@ def SaveSwc(filepath="default", gid=None, swc_resolution=10):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
+    if gid is None:
+        gid = _pg.GetNeurons()
+    _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)
+    return os.path.join(filepath,"morphology.swc")
+
+
+def SaveNeuroML(filename, gid=None, spatial_resolution=10):
+    '''
+    Save the morphology of each neuron to a single NeuroML file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the file. If not present, the .nml suffix will be automatically
+        added.
+    gid : int or list, optional (default: all neurons)
+        Ids of the neurons to save.
+    spatial_resolution : int, optional (default: 10)
+        Spatial distance between two consecutive points on a neurite.
+    '''
+    import neuroml
+    import neuroml.writers as writers
+    if not filepath.endswith(".nml"):
+        filename += ".nml"
     if gid is None:
         gid = _pg.GetNeurons()
     _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)

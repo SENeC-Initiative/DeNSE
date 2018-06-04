@@ -111,7 +111,7 @@ def SmoothEnsembleAngle(ensemble, char_length):
     Apply smooth angle for a 2D array, values to average on the second axis
     """
     average_values = []
-    for neuron in ensemble.neurons:
+    for neuron in ensemble:
         last_value = AverageFromHere(neuron.axon.xy[0, :], end_of_the_tube)
         char_length = len(neuron.axon.xy[0, :]) - last_value
         average_values.append(SmoothAngle(neuron.axon.theta, char_length))

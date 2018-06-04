@@ -78,6 +78,7 @@ class KernelManager
     std::string simulation_ID_;
     bool angles_in_radians() const;
     double get_current_seconds() const;
+    double get_adaptive_timestep() const;
     bool using_environment() const;
     //! Returns true if kernel is initialized
     bool is_initialized() const;
@@ -98,6 +99,7 @@ class KernelManager
     bool initialized_;   //!< true if all sub-managers initialized
     size_t num_objects_; //!< number of objects created
     std::string version_;
+    double adaptive_timestep_;  //! if > 1, step divider when interacting
 };
 
 KernelManager &kernel();

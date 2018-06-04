@@ -472,7 +472,6 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         PlotEnvironment(culture, ax=ax, show=False, **kwargs)
         new_lines += 1
     # plot the axons
-    print(len(axons[0]))
     ax.plot(axons[0], axons[1], ls="-", c=axon_color)
     # plot the dendrites
     ax.plot(dendrites[0], dendrites[1], ls="-", c=dendrite_color)

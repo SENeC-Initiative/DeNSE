@@ -50,7 +50,7 @@ class Branching
 
     NeuritePtr neurite_;
 
-// variables for van Pelt branching model
+    // variables for van Pelt branching model
     bool use_van_pelt_;
     double van_pelt_norm_;
     Event next_vanpelt_event_;

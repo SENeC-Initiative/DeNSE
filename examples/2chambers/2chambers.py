@@ -6,6 +6,8 @@ import shutil
 import time
 
 import numpy as np
+import matplotlib
+matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import random, shutil
 import os
@@ -124,16 +126,14 @@ if __name__ == '__main__':
 
     print("Creating neurons")
     gids = ng.CreateNeurons(n=200, growth_cone_model="persistent_rw_critical",
-                            culture=culture,
-                            params=neuron_params,
-                            dendrites_params=dendrite_params,
-                            num_neurites=2)
+                            culture=culture, params=neuron_params,
+                            dendrites_params=dendrite_params, num_neurites=2)
 
     start = time.time()
     fig, ax = plt.subplots()
     # ~ for _ in range(10):
         # ~ step(200, 0, True)
-    step(2000, 0, False)
+    step(200, 0, False)
     duration = time.time() - start
 
     # prepare the plot
@@ -142,17 +142,19 @@ if __name__ == '__main__':
     ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
-    plt.show(block=True)
+    # ~ plt.show(block=True)
     print("SIMULATION ENDED")
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path, swc_resolution = 10)
+
     graph = ng.CreateGraph(connection_proba=0.5)
     population = nngt.NeuralPop(with_models=False)
     population.create_group("chamber_1", range(100))
     population.create_group("chamber_2", range(100, 200))
     nngt.Graph.make_network(graph, population)
-    # ~ nngt.plot.draw_network(graph, ewidth=0.01, decimate=10, show_environment=False, show=True)
-    nngt.plot.draw_network(graph, ecolor="groups", decimate=5, show_environment=False, show=True)
+
+    nngt.plot.draw_network(graph, ecolor="groups", decimate=5,
+                           show_environment=False, colorbar=True, show=True)

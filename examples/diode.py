@@ -161,8 +161,7 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
-    structure = ng.NeuronStructure()
-    graph =ng.CreateGraph(structure=structure)
+    graph =ng.CreateGraph()
     save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
     ng.SaveJson(filepath=save_path)
     ng.SaveSwc(filepath=save_path,swc_resolution = 10)

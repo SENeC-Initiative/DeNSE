@@ -723,6 +723,18 @@ std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cend() const
 }
 
 
+std::unordered_map<size_t, NodePtr>::const_iterator Neurite::nodes_cbegin() const
+{
+    return nodes_.cbegin();
+}
+
+
+std::unordered_map<size_t, NodePtr>::const_iterator Neurite::nodes_cend() const
+{
+    return nodes_.cend();
+}
+
+
 NodePtr Neurite::get_first_node() const { return nodes_.at(0); }
 
 

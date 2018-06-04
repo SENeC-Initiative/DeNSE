@@ -28,7 +28,7 @@ ax2.set_title("Connections as a directed graph")
                        # dpi = 400)
 
 ax1.set_title("Positions of nurons' soma")
-for neuron in pop.neurons:
+for neuron in pop:
     ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
 fig.savefig("graph_.pdf",format='pdf', ppi=300)
@@ -75,7 +75,7 @@ bx1.set_title("Density of neurites")
 bx1.set_xlabel("X")
 bx1.set_ylabel("Y")
 _x,_y =[],[]
-for neuron in pop.neurons:
+for neuron in pop:
     for branch in neuron.axon.branches:
         for x,y in branch.xy[:]:
             _x.append(x)

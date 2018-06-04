@@ -62,6 +62,7 @@ KernelManager::KernelManager()
     , record_enabled_(false)
     , env_required_(true)
     , num_objects_(0)
+    , adaptive_timestep_(4.)
     , version_("0.1.0")
 {
 }
@@ -125,6 +126,7 @@ const statusMap KernelManager::get_status() const
     set_param(status, "angles_in_radians", angles_in_radians_);
     set_param(status, "environment_required", env_required_);
     set_param(status, "record_enabled", record_enabled_);
+    set_param(status, "adaptive_timestep", adaptive_timestep_);
 
     // set_param(status, "simulation_ID", simulation_ID_);
     /*
@@ -163,6 +165,12 @@ double KernelManager::get_current_seconds() const
 }
 
 
+double KernelManager::get_adaptive_timestep() const
+{
+    return adaptive_timestep_;
+}
+
+
 bool KernelManager::using_environment() const { return env_required_; }
 
 
@@ -182,6 +190,10 @@ void KernelManager::set_status(const statusMap &status)
     get_param(status, "angles_in_radians", angles_in_radians_);
     get_param(status, "record_enabled", record_enabled_);
     get_param(status, "simulation_ID", simulation_ID_);
+
+    double at_old = adaptive_timestep_;
+    bool at_updated = get_param(status, "adaptive_timestep", adaptive_timestep_);
+
     bool env_required_old = env_required_;
     bool env_updated = get_param(status, "environment_required", env_required_);
 
@@ -198,8 +210,9 @@ void KernelManager::set_status(const statusMap &status)
 
     // update the objects
     env_updated *= (env_required_old != env_required_);
+    at_updated  *= (at_old != adaptive_timestep_);
 
-    if (env_updated)
+    if (env_updated or at_updated)
     {
         neuron_manager.update_kernel_variables();
     }

@@ -46,7 +46,7 @@ class EnsembleRW(Population):
     def normalize_paths(self, neurite_type):
         # measure the shortest path to make all path equal length
         shapes=[]
-        for neuron in self.population.neurons:
+        for neuron in self.population:
             if neurite_type is "axon":
                 for branch in neuron.axon.branches:
                     shapes.append(branch.r.shape[0])
@@ -55,14 +55,14 @@ class EnsembleRW(Population):
                     for branch in dendrite.branches:
                         shapes.append(branch.r.shape[0])
         max_len = np.min(shapes)
-        # for neuron in self.neurons:
+        # for neuron in self:
             # if neuron.axon.xy.shape[1] < min_shap:
                 # min_shap = neuron.axon.xy.shape[1]
         # min_shap = min_shap-2
         self.theta = []
         self.r     = []
         self.xy    = []
-        for neuron in self.population.neurons:
+        for neuron in self.population:
             if neurite_type is "axon":
                 for branch in neuron.axon.branches:
                     self.theta.append(branch.theta[:max_len])

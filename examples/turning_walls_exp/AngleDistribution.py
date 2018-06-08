@@ -145,10 +145,8 @@ if __name__ == "__main__":
         "filopodia_angular_resolution": 40,
         "axon_angle": 0.,
         "use_tubulin": False,
-        "rw_persistence_length": 20.,
-        # "rw_delta_corr": 0.1,
-        # "rw_memory_tau": 0.7,
-        "rw_sensing_angle": 0.15,
+        "persistence_length": 20.,
+        "sensing_angle": 0.15,
         "speed_growth_cone": 1.0,
     }
     names = np.logspace(0, 3, 6)

@@ -38,7 +38,7 @@ GrowthCone_RunTumble::GrowthCone_RunTumble()
      defaults are initialized:
     */
     , deterministic_angle_(0)
-    , persistence_length_(RT_PERSISTENCE_LENGTH)
+    , persistence_length_(PERSISTENCE_LENGTH)
     , tumbling_(false)
     , num_tumbles_(0)
 {
@@ -90,7 +90,10 @@ GCPtr GrowthCone_RunTumble::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
 
 void GrowthCone_RunTumble::initialize_RT()
 {
-    tau_ = 1./persistence_length_;
+    // this renormalization of the "tumbling rate" is necessary to obtain
+    // the correct persistence length
+    tau_ = 24./(max_sensing_angle_*max_sensing_angle_*persistence_length_);
+
     exponential_rt_ = std::exponential_distribution<double>(tau_);
 
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
@@ -166,8 +169,17 @@ Point GrowthCone_RunTumble::compute_target_position(
     }
     else
     {
-        // if not tumbling, set delta_angle_ to zero
-        delta_angle_ = 0.;
+        // if not tumbling check for interactions
+        if (interacting_)
+        {
+            // take the pull into account: just scale delta_angle by the substep
+            //~ delta_angle_ /=  sqrt(substep);
+            delta_angle_ = 0.;
+        }
+        else
+        {
+            delta_angle_ = 0.;
+        }
     }
 
     // test whether a new tumble will happen before the end of the substep
@@ -179,7 +191,7 @@ Point GrowthCone_RunTumble::compute_target_position(
         // substep accordingly.
         substep = substep * (distance_done / move_.module);
         // we are still running, so set delta_angle_ to zero
-        
+
         // IMPORTANT: update move_.module and set tumbling for next substep
         move_.module = distance_done;
         tumbling_    = true;
@@ -188,16 +200,6 @@ Point GrowthCone_RunTumble::compute_target_position(
     {
         // no spontaneous tumble during substep, keep straight
         next_tumble_ -= move_.module;
-        //~ // check for interactions
-        //~ if (interacting_)
-        //~ {
-            //~ // take the pull into account: just scale delta_angle by the substep
-            //~ // delta_angle_ /=  sqrt(substep);
-        //~ }
-        //~ else
-        //~ {
-            //~ delta_angle_ = 0.;
-        //~ }
     }
 
     // compute target position
@@ -227,16 +229,7 @@ void GrowthCone_RunTumble::set_status(const statusMap &status)
 {
     GrowthCone::set_status(status);
 
-    get_param(status, names::rt_persistence_length, persistence_length_);
-
     initialize_RT();
 }
 
-
-void GrowthCone_RunTumble::get_status(statusMap &status) const
-{
-    GrowthCone::get_status(status);
-
-    set_param(status, names::rt_persistence_length, persistence_length_);
-}
 }

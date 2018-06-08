@@ -57,7 +57,7 @@ for k, resol in enumerate(resolutions):
 
     params = {
         "sensing_angle": 0.12,
-        "rt_persistence_length": 200.,
+        "persistence_length": 200.,
         "filopodia_wall_affinity": 2.5,
         "proba_down_move": 0.1,
         "scale_up_move": 0.,

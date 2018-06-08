@@ -192,7 +192,7 @@ for k, resol in enumerate(resolutions[::-1]):
     }
 
     if gc_model == "run_tumble":
-        params["rt_persistence_length"] = 50.
+        params["persistence_length"] = 50.
 
     gids = ng.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 

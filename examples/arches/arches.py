@@ -33,12 +33,20 @@ Main parameters
 
 num_neurons = 1000
 
+<<<<<<< HEAD
+num_omp = 6
+=======
 num_omp = 12
+>>>>>>> d5ac10c9d5e838a7981d9b98e34157d87e9dde7a
 
 soma_radius = 10.
 use_uniform_branching = False
 use_vp = False
+<<<<<<< HEAD
+use_run_tumble = True
+=======
 use_run_tumble = False
+>>>>>>> d5ac10c9d5e838a7981d9b98e34157d87e9dde7a
 use_critical_resource = False
 
 gc_model = 'persistent_random_walk'
@@ -49,7 +57,11 @@ neuron_params = {
     "use_van_pelt": use_vp,
     "sensing_angle": 0.14,
     "speed_growth_cone": 0.95,
+<<<<<<< HEAD
+    "filopodia_wall_affinity": 100.,
+=======
     "filopodia_wall_affinity": 50.,
+>>>>>>> d5ac10c9d5e838a7981d9b98e34157d87e9dde7a
     "filopodia_finger_length": 30.,
     "filopodia_min_number": 20,
 
@@ -72,8 +84,8 @@ Check for optional parameters
 '''
 
 if use_run_tumble:
-    neuron_params ={
-        "rw_persistence_length":12.
+    neuron_params = {
+        "persistence_length": 50.
     }
 
 if use_uniform_branching:
@@ -81,8 +93,8 @@ if use_uniform_branching:
 
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 5.
-    dendrite_params["rw_persistence_length"] = 1.
+    neuron_params["persistence_length"] = 5.
+    dendrite_params["persistence_length"] = 1.
     # ~ neuron_params["rw_memory_tau"] = 90.
 
 
@@ -112,7 +124,7 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "arches_2.svg"
+    culture_file = current_dir + "arches_3_nonflat.svg"
     ng.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
     print(ng.GetKernelStatus("num_local_threads"))
@@ -135,7 +147,7 @@ if __name__ == '__main__':
     print("neuron created, starting simu")
 
     start = time.time()
-    step(20000, 0, False)
+    step(5000, 0, False)
 
     # prepare the plot
     ng.plot.PlotNeuron(show_density=True, dstep=4., dmax=10, cmap="jet")

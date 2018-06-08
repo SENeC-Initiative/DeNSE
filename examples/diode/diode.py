@@ -45,7 +45,7 @@ neuron_params = {
     "filopodia_wall_affinity": 20.,
     "filopodia_finger_length": 25.,
     "filopodia_min_number": 30,
-    "rw_persistence_length" : 0.7,
+    "persistence_length" : 0.7,
 
     "soma_radius": soma_radius,
 }
@@ -55,7 +55,7 @@ dendrite_params = {
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.06,
     "filopodia_wall_affinity": 0.00,
-    "rw_persistence_length" : 0.1
+    "persistence_length" : 0.1
 }
 
 
@@ -64,8 +64,8 @@ Check for optional parameters
 '''
 
 if use_run_tumble:
-    neuron_params ={
-        "rw_persistence_length":12.
+    neuron_params = {
+        "persistence_length":12.
     }
 
 if use_uniform_branching:

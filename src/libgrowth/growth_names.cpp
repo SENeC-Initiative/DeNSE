@@ -65,15 +65,13 @@ const std::string max_sensing_angle("max_sensing_angle");
 const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");
 
+const std::string persistence_length("persistence_length");
 const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 
 const std::string random_walk_submodel("random_walk_submodel");
 const std::string rw_memory_tau("rw_memory_tau");
-const std::string rw_persistence_length("rw_persistence_length");
 const std::string rw_delta_corr("rw_delta_corr");
-
-const std::string rt_persistence_length("rt_persistence_length");
 
 const std::string S("S");
 const std::string scale_up_move("scale_up_move");
@@ -88,7 +86,6 @@ const std::string srf_inertial_force ("srf_inertial_force");
 const std::string srf_inertial_decay ("srf_inertial_decay");
 const std::string srf_somatropic_force ("srf_somatropic_force");
 const std::string srf_somatropic_decay ("srf_somatropic_decay");
-
 const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");

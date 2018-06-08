@@ -13,7 +13,7 @@ neuron_params = {
     "growth_cone_model": "run_tumble",
     "axon_angle": 90.,
 
-    "rt_persistence_length": 99000050.,
+    "persistence_length": 99000050.,
 
     "srf_inertial_force": 0.9,
     "sfr_inertial_decay": 2.,
@@ -21,9 +21,7 @@ neuron_params = {
     "sfr_somatropic_decay": .5,
 
     "axon_diameter" : 1.,
-    "rw_persistence_length": -1.,
-    "rw_memory_tau": -1.,
-    "rw_delta_corr": 1.8,
+    "persistence_length": -1.,
     "angular_resolution": 30.0,
     "speed_growth_cone": 10.,
     "sensing_angle": 0.1195,
@@ -58,8 +56,7 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": "run_tumble",
-    "rt_persistence_length": 10.0,
-    "rw_memory_tau": 200.,
+    "persistence_length": 10.0,
     "angular_resolution": 30.0,
     "speed_growth_cone": 5.,
     "sensing_angle": 0.1195,

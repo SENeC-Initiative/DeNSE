@@ -33,7 +33,6 @@ class GrowthCone_RunTumble : public virtual GrowthCone
 
     virtual double get_state(const char *observable) const override;
     virtual void set_status(const statusMap &status) override;
-    virtual void get_status(statusMap &status) const override;
 
   private:
     double deterministic_angle_;

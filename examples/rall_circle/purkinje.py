@@ -31,7 +31,7 @@ dendrite_params = {
     "use_critical_resource": True,
     "use_van_pelt": False,
 
-    "rt_persistence_length": 60.0,
+    "persistence_length": 60.0,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
@@ -105,7 +105,7 @@ def run_netgrowth(neuron_params):
     step(2000./resolution, 1, False, True)
 
     splitting_dendrites=    {'use_van_pelt': True,
-    "rt_persistence_length": 60.0,
+    "persistence_length": 60.0,
     "gc_split_angle_mean": 1.,
     'use_flpl_branching' : True,
     "flpl_branching_rate" : 0.0036,
@@ -121,7 +121,7 @@ def run_netgrowth(neuron_params):
     step(2000./resolution, 1, False, True)
     arborization =    {'use_van_pelt': False,
     'use_flpl_branching' : False,
-    "rt_persistence_length": 30.0,
+    "persistence_length": 30.0,
     "CR_weight_diameter": 0.1,
     "CR_retraction_th": 0.01,
     "CR_elongation_th": 0.12,
@@ -144,7 +144,7 @@ def run_netgrowth(neuron_params):
     arborization =    {'use_van_pelt': True,
     # 'use_flpl_branching' : True,
     "flpl_branching_rate" : 0.00036,
-    "rt_persistence_length":5.0,
+    "persistence_length":5.0,
     "CR_retraction_th": 0.1,
     "CR_weight_diameter": 0.001,
     "CR_elongation_th": 0.14,

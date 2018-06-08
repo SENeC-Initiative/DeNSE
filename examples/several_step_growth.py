@@ -16,8 +16,7 @@ neuron_params = {
     "use_uniform_branching": False,
     "use_van_pelt": False,
 
-    "rw_persistence_length": 20.,
-    "rw_memory_tau": 100.,
+    "persistence_length": 20.,
     "sensing_angle": 0.1433,
 
     "speed_growth_cone": 0.01,

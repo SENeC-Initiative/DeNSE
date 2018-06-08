@@ -39,6 +39,7 @@ class GrowthCone : public TopologicalNode,
   protected:
     const std::string model_;
     bool using_environment_;   // whether we're embedded in space
+    double resol_;
     double sqrt_resol_;
     double adaptive_timestep_;
     double timestep_divider_;
@@ -55,21 +56,24 @@ class GrowthCone : public TopologicalNode,
     double turned_;
     double delta_angle_;
     double sensing_angle_;
+    bool sensing_angle_set_;
     double avg_speed_;
     double local_avg_speed_;
     double speed_variance_;
     double local_speed_variance_;
     double duration_retraction_; // duration of a retraction period (seconds)
-    double proba_retraction_; // proba of retracting when stuck
-    double retracting_todo_;  // duration left to retract
+    double proba_retraction_;    // proba of retracting when stuck
+    double retracting_todo_;     // duration left to retract
     double speed_ratio_retraction_;
-    double proba_down_move_; // proba of going down if bottom out of reach
-    double scale_up_move_;   // maximal height that GC can cross upwards
+    double proba_down_move_;     // proba of going down if bottom out of reach
+    double scale_up_move_;       // maximal height that GC can cross upwards
     double retraction_time_;
 
     double max_sensing_angle_;
-    size_t min_filopodia_;   // minimal number of filopodia
-    size_t num_filopodia_;   // minimal number of filopodia
+    size_t min_filopodia_;       // minimal number of filopodia
+    size_t num_filopodia_;       // minimal number of filopodia
+
+    double persistence_length_;  // persistence length of the neurite l_p
 
     Filopodia filopodia_;
     Move move_;

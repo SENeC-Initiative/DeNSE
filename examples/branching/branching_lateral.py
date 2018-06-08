@@ -16,7 +16,7 @@ neuron_params = {
     "axon_angle":3.14/2,
     # "growth_cone_model": "self_referential_forces",
 
-    "rt_persistence_length": 10000.0,
+    "persistence_length": 10000.0,
 
     "filopodia_min_number": 30,
     "speed_growth_cone": 9.,

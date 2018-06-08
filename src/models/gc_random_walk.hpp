@@ -33,7 +33,6 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
   private:
     bool _persistence_set_;
     double deterministic_angle_;
-    double persistence_length_;
     Corr_rw corr_rw_;
     Memory memory_;
 

@@ -33,7 +33,7 @@ dendrite_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
 
-    "rt_persistence_length": 20.0,
+    "persistence_length": 20.0,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
@@ -67,7 +67,7 @@ axon_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
 
-    "rt_persistence_length": 180.0,
+    "persistence_length": 180.0,
     # "use_flpl_branching": use_uniform_branching,
 
 

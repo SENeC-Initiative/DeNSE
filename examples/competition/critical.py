@@ -22,7 +22,7 @@ gc_model = "run_tumble" if use_run_tumble else "simple_random_walk"
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
 
-    "rt_persistence_length": 80.0,
+    "persistence_length": 80.0,
 
     "filopodia_min_number": 30,
     "speed_growth_cone": 1.,

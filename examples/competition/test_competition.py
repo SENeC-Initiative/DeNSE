@@ -37,7 +37,7 @@ neuron_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
 
-    "rt_persistence_length": 80.0,
+    "persistence_length": 80.0,
     # "use_flpl_branching": use_uniform_branching,
     "gc_split_angle_mean": 1.,
     "gc_split_angle_std": 0.3,

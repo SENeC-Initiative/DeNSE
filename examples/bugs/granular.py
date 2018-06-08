@@ -31,7 +31,7 @@ dendrite_params = {
     "use_critical_resource": False,
     "use_van_pelt": False,
 
-    "rt_persistence_length": 60.0,
+    "persistence_length": 60.0,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
@@ -59,7 +59,7 @@ axon_params = {
     "growth_cone_model": gc_model,
     "use_critical_resource": False,
     "sensing_angle": 0.5495,
-    "rt_persistence_length": 80.,
+    "persistence_length": 80.,
     "use_flpl_branching": False,
     # "CR_retraction_factor": 0.02,
     # "CR_elongation_factor": 0.10,
@@ -131,7 +131,7 @@ def run_netgrowth(neuron_params):
     step(1000./resolution, 1, False, True)
     elongation = {
         "use_van_pelt": False,
-        "rt_persistence_length":30.,
+        "persistence_length":30.,
     }
     dendrite_params.update(elongation)
     NetGrowth.SetStatus(gid,
@@ -141,13 +141,13 @@ def run_netgrowth(neuron_params):
     step(2002./resolution, 1, False, True)
     stortignation = {
         "use_van_pelt": False,
-        "rt_persistence_length":10.,
+        "persistence_length":10.,
     }
     stortignation_axon={
         "use_van_pelt": False,
     "sensing_angle": 0.20,
     "use_flpl_branching": True,
-    "rt_persistence_length": 91.,
+    "persistence_length": 91.,
     "flpl_branching_rate" : 0.0066,
       }
 
@@ -161,7 +161,7 @@ def run_netgrowth(neuron_params):
 
     # stortignation = {"use_van_pelt": False,
                      # "use_critical_resource":False,
-        # "rt_persistence_length":10.,
+        # "persistence_length":10.,
     # }
 
     # stortignation_axon={
@@ -169,7 +169,7 @@ def run_netgrowth(neuron_params):
         # "use_flpl_branching": True,
     # "flpl_branching_rate" : 0.003,
     # "sensing_angle": 0.63,
-    # "rt_persistence_length": 40.,
+    # "persistence_length": 40.,
       # }
 
     # dendrite_params.update(stortignation)

@@ -525,6 +525,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
 # --------------- #
 # PlotEnvironment #
 # --------------- #
+
 def BtmorphVisualize(Simulation_folder):
     import matplotlib.pyplot as plt
     import btmorph2

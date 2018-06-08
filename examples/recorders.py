@@ -37,9 +37,8 @@ neuron_params = {
     # "lateral_branching_angle_std": 20.,
 
 
-    #~ "rw_persistence_length": 2.,
-    #~ "rw_memory_tau": 90.,
-    "sensing_angle":0.1433,
+    #~ "persistence_length": 2.,
+    "sensing_angle": 0.1433,
 
     "speed_growth_cone": 0.05,
 

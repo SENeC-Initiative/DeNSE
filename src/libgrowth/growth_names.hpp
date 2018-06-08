@@ -59,13 +59,11 @@ extern const std::string substrate_affinity;
 #define FILOPODIA_FINGER_LENGTH 50.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1
 #define FILOPODIA_WALL_AFFINITY 2.
-#define MAX_SENSING_ANGLE 1.5707963267948966  // 100 degrees max for 1 s resol
+#define MAX_SENSING_ANGLE 1.5707963267948966  // 180 degrees max for 1 s resol
 #define ONE_DEGREE 0.017453292519943295
 #define PROBA_RETRACTION 0.001
 #define PROBA_DOWN_MOVE 0.008
-#define RW_DELTA_CORR 100.
-#define RW_MEMORY_TAU 100.
-#define RW_PERSISTENCE_LENGTH 10.
+#define PERSISTENCE_LENGTH 500.
 #define SCALE_UP_MOVE 20.
 #define SENSING_ANGLE 0.1433
 #define SPEED_RATIO_RETRACTION 0.2
@@ -127,31 +125,31 @@ extern const std::string random_walk_submodel;
 //! @param speed_growth_cone      10     [micormeter/second]
 extern const std::string speed_growth_cone;
 extern const std::string speed_variance;
-//! @param persistenc_length      2000  [micrometer]
-extern const std::string rw_persistence_length;
-extern const std::string rw_memory_tau;
-extern const std::string rw_delta_corr;
+//! @param persistence_length      500  [micrometer]
+extern const std::string persistence_length;
 //@param sensing angle is choosen from experimental
 // data and it's 8.2 degrees
 
-//! RUN AND TUMBLE
-extern const std::string rt_persistence_length;
-#define RT_PERSISTENCE_LENGTH 100.
+extern const std::string rw_memory_tau;
+extern const std::string rw_delta_corr;
+
+#define RW_DELTA_CORR 100.
+#define RW_MEMORY_TAU 100.
 
 
 //SELF REFERENTIAL MODEL
 //
-#define SFR_AVOIDANCE_FORCE 1
+#define SRF_AVOIDANCE_FORCE 1
 extern const std::string srf_avoidance_force;
-#define SFR_AVOIDANCE_DECAY 2
+#define SRF_AVOIDANCE_DECAY 2
 extern const std::string srf_avoidance_decay;
-#define SFR_INERTIAL_FORCE 1
+#define SRF_INERTIAL_FORCE 1
 extern const std::string srf_inertial_force ;
-#define SFR_INERTIAL_DECAY 2
+#define SRF_INERTIAL_DECAY 2
 extern const std::string srf_inertial_decay ;
-#define SFR_SOMATROPIC_FORCE 1
+#define SRF_SOMATROPIC_FORCE 1
 extern const std::string srf_somatropic_force;
-#define SFR_SOMATROPIC_DECAY 2
+#define SRF_SOMATROPIC_DECAY 2
 extern const std::string srf_somatropic_decay;
 
 

@@ -878,7 +878,9 @@ double Neurite::get_max_resol() const
     {
         double sigma_sqrd   = growth_cones_.begin()->second->sensing_angle_ *
                               growth_cones_.begin()->second->sensing_angle_;
-        double dt_angle_max = M_PI*M_PI/(9*sigma_sqrd);
+        // max angle should contain at least 3 sigma
+        double max_angle    = 0.5*growth_cones_.begin()->second->max_sensing_angle_;
+        double dt_angle_max = max_angle*max_angle/(9*sigma_sqrd);
         return std::min(length / max_speed, dt_angle_max);
     }
 

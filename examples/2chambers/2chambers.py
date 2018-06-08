@@ -62,7 +62,7 @@ dendrite_params = {
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.2,
     "filopodia_wall_affinity": 0.00,
-    "rw_persistence_length" : 2.
+    "persistence_length" : 2.
 }
 
 
@@ -72,7 +72,7 @@ Check for optional parameters
 
 if use_run_tumble:
     neuron_params ={
-        "rw_persistence_length":12.
+        "persistence_length": 12.
     }
 
 if use_uniform_branching:
@@ -80,8 +80,7 @@ if use_uniform_branching:
 
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 2.
-    neuron_params["rw_memory_tau"] = 90.
+    neuron_params["persistence_length"] = 2.
 
 
 '''

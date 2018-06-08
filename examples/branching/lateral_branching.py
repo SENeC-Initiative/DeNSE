@@ -22,8 +22,7 @@ neuron_params = {
     "flpl_branching_rate": 0.0002,
     "use_van_pelt": False,
 
-    #~ "rw_persistence_length": 50.,
-    #~ "rw_memory_tau": 2000.,
+    #~ "persistence_length": 50.,
     "sensing_angle":0.01433,
 
     "speed_growth_cone": 0.05,

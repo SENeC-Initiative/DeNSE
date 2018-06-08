@@ -21,6 +21,24 @@
 namespace growth
 {
 
+double generateGaussianNoise(double mean, double stdDev)
+{
+    double u, v, s;
+
+    do
+    {
+            u = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
+            v = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
+            s = u * u + v * v;
+    } while( (s >= 1.0) or (s == 0.0) );
+
+    s = sqrt(-2.0 * log(s) / s);
+
+    return mean + stdDev * u * s;
+
+}
+
+
 /**
  * This class provides a Random walk model with:
  *
@@ -38,12 +56,11 @@ GrowthCone_SelfReferentialForces::GrowthCone_SelfReferentialForces()
     /* Model variables:: will be passed to statusMap
      defaults are initialized:
     */
-    , inertial_{SFR_INERTIAL_FORCE, SFR_INERTIAL_DECAY}
-    , somatropic_{ SFR_SOMATROPIC_FORCE, SFR_SOMATROPIC_DECAY}
+    , inertial_{SRF_INERTIAL_FORCE, SRF_INERTIAL_DECAY}
+    , somatropic_{ SRF_SOMATROPIC_FORCE, SRF_SOMATROPIC_DECAY}
     // self avoidance or self affinity can be introduced together with fasciculation model
-    , selfavoidance_{SFR_AVOIDANCE_FORCE, SFR_AVOIDANCE_DECAY}
+    , selfavoidance_{SRF_AVOIDANCE_FORCE, SRF_AVOIDANCE_DECAY}
 {
-    initialize_SRF();
 }
 
 
@@ -83,33 +100,6 @@ GCPtr GrowthCone_SelfReferentialForces::clone(BaseWeakNodePtr parent, NeuritePtr
     }
 
     return newCone;
-}
-
-
-/**
- * @brief Initialize the Random Walker
- * Initialize memory and gaussian correlation algorithms.
- * The dimensional parameters set by the user are translated into coefficient
- * with respect to the average speed and the
- * time resolution of the simulator
- *
- *
- */
-void GrowthCone_SelfReferentialForces::initialize_SRF()
-{
-    //~ timestep_ = kernel().simulation_manager.get_resolution();
-
-    //~ double average_step = timestep_ * average_speed_;
-    // set the memory parameter.
-    //memory_.effective_angle = move_.angle;
-
-//// setting the diffusion process for the persistence length;
-//#ifndef NDEBUG
-    //printf("diffusive_sigma: %f\n"
-           //"correlation f coefficient: %f\n"
-           //"memory alpha coefficient: %f\n",
-           //rw_sensing_angle_, corr_rw_.f_coeff, memory_.alpha_coeff);
-//#endif
 }
 
 
@@ -179,30 +169,13 @@ Point GrowthCone_SelfReferentialForces::compute_target_position(
 }
 
 
-double generateGaussianNoise(const double& mean, const double &stdDev) {
-    static double u, v, s;
-    do {
-            u = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
-            v = (rand() / ((double) RAND_MAX)) * 2.0 - 1.0;
-            s = u * u + v * v;
-    }
-    while( (s >= 1.0) || (s == 0.0) );
-
-    s = sqrt(-2.0 * log(s) / s);
-    double spare = v * s;
-    return mean + stdDev * u * s;
-
-}
-
 void GrowthCone_SelfReferentialForces::prepare_for_split()
 {
-    // memory_.alpha_temp_sum=0;
 }
 
 
 void GrowthCone_SelfReferentialForces::after_split()
 {
-    //memory_.effective_angle = move_.angle;
 }
 
 
@@ -218,7 +191,6 @@ void GrowthCone_SelfReferentialForces::set_status(const statusMap &status)
     get_param(status, names::srf_inertial_decay, inertial_.decay);
     get_param(status, names::srf_somatropic_force, somatropic_.force);
     get_param(status, names::srf_somatropic_decay, somatropic_.decay);
-    initialize_SRF();
 }
 
 
@@ -234,4 +206,5 @@ void GrowthCone_SelfReferentialForces::get_status(statusMap &status) const
     set_param(status, names::srf_somatropic_force, somatropic_.force);
     set_param(status, names::srf_somatropic_decay, somatropic_.decay);
 }
+
 }

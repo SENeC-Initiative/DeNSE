@@ -817,9 +817,6 @@ void GrowthCone::init_filopodia()
     // resolution, hence so does the number of filopodia)
     if (model_ == "simple_random_walk")
     {
-        // update move sensing angle
-        move_.sigma_angle *= sqrt_resol_;
-
         // update max sensing angle depending on resolution
         //! IMPORTANT: MUST COME BEFORE dtheta
         double old_max     = max_sensing_angle_;
@@ -988,7 +985,47 @@ void GrowthCone::set_status(const statusMap &status)
     get_param(status, names::speed_ratio_retraction, speed_ratio_retraction_);
     get_param(status, names::proba_down_move, proba_down_move_);
 
-    update_filo += get_param(status, names::sensing_angle, sensing_angle_);
+    // sensing angle and persistence length
+    double sa_tmp, lp, old_lp(persistence_length_);
+    bool set_lp = get_param(status, names::persistence_length, lp);
+    bool set_sa = get_param(status, names::sensing_angle, sa_tmp);
+
+    if (model_ == "simple_random_walk")
+    {
+        if (set_sa and set_lp)
+        {
+            throw std::runtime_error("Cannot set both `sensing_angle` and "
+                                     "`persistence_length` in the "
+                                     "`simple_random_walk` model.");
+        }
+        else if (set_sa)
+        {
+            sensing_angle_     = sa_tmp;
+            sensing_angle_set_ = true;
+        }
+        else
+        {
+            persistence_length_ = lp;
+            sensing_angle_set_  = false;
+        }
+    }
+    else
+    {
+        sensing_angle_     = sa_tmp;
+        persistence_length_ = lp;
+    }
+
+    update_filo += set_sa;
+
+    double msa = max_sensing_angle_;
+    update_filo += get_param(status, names::max_sensing_angle, msa);
+
+    if (msa < 0.25*M_PI)
+    {
+        throw std::invalid_argument("`max_sensing_angle` must be greater "
+                                    "than 90°.");
+    }
+    max_sensing_angle_ = std::min(msa, 2*M_PI);
 
     // set growth properties
     if (using_environment_)
@@ -999,6 +1036,32 @@ void GrowthCone::set_status(const statusMap &status)
     {
         local_avg_speed_ = avg_speed_;
         local_speed_variance_ = speed_variance_;
+    }
+
+    // persistence length
+    // IMPORTANT: MUST COME AFTER local_avg_speed_ HAS BEEN SET!
+    if (set_lp)
+    {
+        if (lp < resol_*move_.speed)
+        {
+            persistence_length_ = old_lp;
+
+            throw InvalidParameter(names::persistence_length,
+                                   std::to_string(lp),
+                                   ">= " +
+                                   std::to_string(resol_*local_avg_speed_) +
+                                   " (the minimal step)",
+                                   __FUNCTION__, __FILE__, __LINE__);
+        }
+
+        if (model_ == "simple_random_walk")
+        {
+            sensing_angle_    = std::sqrt(
+                2*local_avg_speed_*resol_/persistence_length_);
+            move_.sigma_angle = sensing_angle_;
+        }
+
+        persistence_length_ = lp;
     }
 
     // reset filopodia parameters
@@ -1015,9 +1078,17 @@ void GrowthCone::get_status(statusMap &status) const
     set_param(status, names::filopodia_finger_length, filopodia_.finger_length);
     set_param(status, names::filopodia_min_number, min_filopodia_);
     set_param(status, names::speed_growth_cone, avg_speed_);
+
+    // @todo change behavior of sensing_angle and max_sensing angle:
+    // sensing angle set the min/max of the filopodia angle and is limited by
+    // max_sensing_angle
     set_param(status, names::sensing_angle, sensing_angle_);
+    set_param(status, names::max_sensing_angle, max_sensing_angle_);
+
     set_param(status, names::scale_up_move, scale_up_move_);
     set_param(status, names::proba_down_move, proba_down_move_);
+
+    set_param(status, names::persistence_length, persistence_length_);
 
     // update observables
     std::vector<std::string> tmp;
@@ -1064,18 +1135,26 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
     if (area != nullptr)
     {
         // set area name
-        current_area_ = area_name;
-        // speed and sensing angle may vary
-        move_.sigma_angle =
-            sensing_angle_ * area->get_property(names::sensing_angle);
-        local_avg_speed_ = avg_speed_ * area->get_property(
-            names::speed_growth_cone);
-        local_speed_variance_ = speed_variance_ * area->get_property(
-            names::speed_growth_cone);
+        if (current_area_ != area_name)
+        {
+            current_area_ = area_name;
+            // speed and sensing angle may vary
+            if (model_ == "simple_random_walk" and not sensing_angle_set_)
+            {
+                sensing_angle_ = std::sqrt(
+                    2*local_avg_speed_*resol_/persistence_length_);
+            }
+            move_.sigma_angle =
+                sensing_angle_ * area->get_property(names::sensing_angle);
+            local_avg_speed_ = avg_speed_ * area->get_property(
+                names::speed_growth_cone);
+            local_speed_variance_ = speed_variance_ * area->get_property(
+                names::speed_growth_cone);
 
-        // substrate affinity depends on the area
-        filopodia_.substrate_affinity =
-            area->get_property(names::substrate_affinity);
+            // substrate affinity depends on the area
+            filopodia_.substrate_affinity =
+                area->get_property(names::substrate_affinity);
+        }
     }
     else
     {
@@ -1091,19 +1170,26 @@ void GrowthCone::update_kernel_variables()
     using_environment_ = kernel().using_environment();
 
     // check change in resolution
-    double old_sqrt    = sqrt_resol_;
-    sqrt_resol_        = sqrt(kernel().simulation_manager.get_resolution());
+    double old_resol   = resol_;
+    resol_             = kernel().simulation_manager.get_resolution();
+
+    // check adaptive timestep
+    adaptive_timestep_ = kernel().get_adaptive_timestep();
+    timestep_divider_  = 1. / adaptive_timestep_;
 
     // check adaptive timestep
     adaptive_timestep_ = kernel().get_adaptive_timestep();
     timestep_divider_  = 1. / adaptive_timestep_;
 
     // check if filopodia should be updated
-    if (old_sqrt != sqrt_resol_)
+    if (old_resol != resol_)
     {
-        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        sqrt_resol_ = sqrt(resol_);
+        int omp_id  = kernel().parallelism_manager.get_thread_local_id();
+
         update_growth_properties(
             kernel().space_manager.get_containing_area(get_position(), omp_id));
+
         init_filopodia();
     }
 }

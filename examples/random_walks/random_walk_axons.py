@@ -65,9 +65,7 @@ if use_vp:
     neuron_params.update(vp_params)
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 30.
-    neuron_params["rw_memory_tau"] = 200.
-    neuron_params["rw_delta_corr"] = 1.8
+    neuron_params["persistence_length"] = 30.
 
 
 '''
@@ -93,7 +91,7 @@ def random_walk_axon(neuron_params):
                             num_neurites=1,
                             position=[]
                             )
-    name = str (neuron_params["rw_persistence_length"])
+    name = str (neuron_params["persistence_length"])
     step(1000, 1, os.path.join(os.getcwd(),"random_walk_axon_"+name))
 
     NetGrowth.ResetKernel()
@@ -107,5 +105,5 @@ if __name__ == '__main__':
     }
     for x in [3.0, 9.0, 15.0, 20.0]:
         print(x)
-        neuron_params["rw_persistence_length"] = x
+        neuron_params["persistence_length"] = x
         random_walk_axon(neuron_params)

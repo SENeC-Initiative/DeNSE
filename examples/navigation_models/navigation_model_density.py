@@ -85,9 +85,9 @@ if __name__ == '__main__':
         neuron_params.update(base_params)
         print(neuron_params)
         if model is "run_tumble":
-            neuron_params["rt_persistence_length"] = 50.
+            neuron_params["persistence_length"] = 50.
         if model is "persistent_random_walk":
-            neuron_params["rw_persistence_length"] = 10.
+            neuron_params["persistence_length"] = 10.
             ciao="1"
         if model is "self_referential_forces":
             neuron_params["srf_somatropic_force"]=4.

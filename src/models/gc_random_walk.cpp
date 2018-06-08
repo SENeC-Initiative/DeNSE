@@ -36,7 +36,6 @@ GrowthCone_RandomWalk::GrowthCone_RandomWalk()
      defaults are initialized:
     */
     , deterministic_angle_(0)
-    , persistence_length_(0)
     , corr_rw_{RW_DELTA_CORR, 0, 0, 0, 0}
     , memory_{RW_MEMORY_TAU, 1, 0, 0}
 {
@@ -98,8 +97,7 @@ GCPtr GrowthCone_RandomWalk::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
  */
 void GrowthCone_RandomWalk::initialize_RW()
 {
-    double average_step =
-    kernel().simulation_manager.get_resolution() * local_avg_speed_;
+    double average_step = resol_ * local_avg_speed_;
     // set the memory parameter.
     if (memory_.tau == -1)
     {
@@ -135,7 +133,7 @@ void GrowthCone_RandomWalk::initialize_RW()
                          "either positive, or -1 to disable.", __FUNCTION__,
                          __FILE__, __LINE__);
     }
-        
+
     corr_rw_.sqrt_f_coeff = sqrt(1 - corr_rw_.f_coeff * corr_rw_.f_coeff);
 
     memory_.effective_angle = move_.angle;
@@ -209,7 +207,9 @@ Point GrowthCone_RandomWalk::compute_target_position(
                          + corr_rw_.f_coeff * corr_rw_.det_delta;
 
     // choose the new angle
-    new_angle = memory_.effective_angle + corr_rw_.det_delta;
+    //~ new_angle = memory_.effective_angle + corr_rw_.det_delta;
+    //~ new_angle = memory_.effective_angle + delta_angle_;
+    new_angle = memory_.effective_angle + sqrt(substep) * delta_angle_;
     //printf("delta: %f \n", delta_angle_);
 
     // check that this step is allowed, otherwise move towards default_angle
@@ -240,19 +240,27 @@ void GrowthCone_RandomWalk::set_status(const statusMap &status)
 {
     GrowthCone::set_status(status);
 
-    get_param(status, names::rw_memory_tau, memory_.tau);
-    get_param(status, names::rw_delta_corr, corr_rw_.tau);
-    if (get_param(status, names::rw_persistence_length, persistence_length_))
+    bool mem_tau = get_param(status, names::rw_memory_tau, memory_.tau);
+    bool cor_tau = get_param(status, names::rw_delta_corr, corr_rw_.tau);
+
+    double lp;
+    bool has_lp = get_param(status, names::persistence_length, lp);
+
+    if (has_lp and (mem_tau or cor_tau))
+    {
+        throw std::runtime_error("`rw_memory_tau` or `rw_delta_corr` cannot "
+                                 "be set together with `persistence_length`.");
+    }
+    else if (has_lp)
     {
         _persistence_set_ = true;
         memory_.tau       = persistence_length_;
         corr_rw_.tau      = persistence_length_;
     }
-    else
+    else if (mem_tau or cor_tau)
     {
-        persistence_length_ = -1;
+        _persistence_set_ = false;
     }
-    assert(persistence_length_ != 0);
 
     initialize_RW();
 }
@@ -261,12 +269,14 @@ void GrowthCone_RandomWalk::set_status(const statusMap &status)
 void GrowthCone_RandomWalk::get_status(statusMap &status) const
 {
     GrowthCone::get_status(status);
-    double delta_corr(corr_rw_.tau), mem_tau(memory_.tau);
-    set_param(status, names::rw_delta_corr, delta_corr);
-    set_param(status, names::rw_memory_tau, mem_tau);
-    set_param(status, names::rw_persistence_length, persistence_length_);
-    //~ set_param(status, names::rw_delta_corr, corr_rw_.tau);
-    //~ set_param(status, names::rw_memory_tau, memory_.tau);
+
+    set_param(status, names::rw_delta_corr, corr_rw_.tau);
+    set_param(status, names::rw_memory_tau, memory_.tau);
+
+    if (not _persistence_set_)
+    {
+        set_param(status, names::persistence_length, -1.);
+    }
 }
 
 

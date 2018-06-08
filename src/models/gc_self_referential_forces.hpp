@@ -55,6 +55,7 @@ class GrowthCone_SelfReferentialForces : public virtual GrowthCone
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
 };
-    double generateGaussianNoise(const double& mean, const double &stdDev);
+
+    double generateGaussianNoise(double mean, double stdDev);
 }
 #endif

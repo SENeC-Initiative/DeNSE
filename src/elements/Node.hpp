@@ -144,6 +144,7 @@ class TopologicalNode : public BaseNode
     void set_first_point(const Point p, double length);
     void set_diameter(double diameter);
     void set_position(const Point &) override;
+    void set_position(const Point &pos, double dist_to_soma, BranchPtr b);
 
     // geometry getter functions
     inline Point get_position() const override { return geometry_.position; }

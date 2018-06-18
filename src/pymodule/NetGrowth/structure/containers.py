@@ -14,7 +14,7 @@ from .._pygrowth import _to_bytes
 from ..dataIO_swc import GetSWCStructure
 
 
-__all__ = ["Neuron", "Neurite", "Population"]
+__all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
 
 
 class Neuron(int):
@@ -243,6 +243,59 @@ class Branch(object):
             assert (isinstance(self.theta_, np.ndarray)), \
                 "branch's angles is not an array, there is a mistake"
             return self.theta_
+
+
+class Node(int):
+
+    '''
+    Container to facilitate drawing of dendrograms
+    '''
+
+    def __new__(cls, node_id, tree=None, parent=None, diameter=None,
+                dist_to_parent=None, pos=None):
+        return super(Neuron, cls).__new__(cls, node_id)
+
+    def __init__(self, node_id, tree=None, parent=None, diameter=None,
+                 dist_to_parent=None, pos=None):
+        self._tree          = tree
+        self.parent         = parent
+        self.diameter       = diameter
+        self.position       = pos
+        self.dist_to_parent = dist_to_parent
+        self.children       = []
+        if parent is not None and node_id not in parent.children:
+            parent.add_child(self)
+
+    def add_child(child):
+        self.children.append(child)
+        self._tree[int(child)] = child
+        child.parent           = self
+
+
+class Tree(dict):
+
+    def __init__(self, neuron, neurite, root):
+        super(Tree, self).__init__()
+        self._neuron    = neuron
+        self._neurite   = neurite
+        self._root      = root
+        self[int(root)] = root
+
+    @property
+    def neuron(self):
+        return self._neuron
+
+    @property
+    def neurite(self):
+        return self._neurite
+
+    @property
+    def root(self):
+        return self._root
+
+    def __setitem__(self, key, value):
+        super(Tree, self).__setitem__(key, value)
+        value._tree = self
 
 
 def _norm_angle_from_vectors(vectors):

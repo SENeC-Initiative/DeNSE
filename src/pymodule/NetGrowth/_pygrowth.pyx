@@ -14,6 +14,7 @@ import numpy as np
 cimport numpy as np
 
 from .geometry import Shape
+from .structure import Node, Tree
 from ._helpers import *
 from ._pygrowth cimport *
 
@@ -1132,6 +1133,33 @@ def _get_pyskeleton(gid):
     py_nodes        = (nodes.first, nodes.second)
 
     return somas, py_axons, py_dendrites, py_growth_cones, py_nodes
+
+
+def _get_tree(neuron, neurite):
+    '''
+    Return a tree describing a neurite.
+    '''
+    pos  = GetStatus(neuron, property_name="position")
+    d0   = GetStatus(neuron, property_name="diameter", neurite=neurite)
+    root = Node(0, diameter=d0, pos=pos)
+    tree = Tree(neuron, neurite, root)
+
+    keep_going = True
+
+    cdef:
+        NodeProp nprop = NodeProp(0, 0, 0, 0, [])
+        string cneurite = _to_string(neurite)
+
+    while keep_going:
+        keep_going = walk_neurite_tree(neuron, cneurite, nprop)
+
+        node      = Node(nprop.n_id, tree, parent=tree[nprop.p_id],
+                         diameter=nprop.diameter,
+                         dist_to_parent=nprop.dist_to_parent,
+                         pos=tuple(nprop.position))
+        tree[nid] = node
+
+    return tree
 
 
 # ----- #

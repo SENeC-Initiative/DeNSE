@@ -90,6 +90,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void update_kernel_variables();
     size_t get_and_increment_gc_ID();
     void add_cone(GCPtr);
+
+    bool walk_tree(NodeProp& np) const;
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cend() const;
     std::unordered_map<size_t, NodePtr>::const_iterator nodes_cbegin() const;

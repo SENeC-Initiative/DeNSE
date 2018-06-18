@@ -39,6 +39,20 @@ typedef std::array<std::vector<double>, 3> PointsArray;
 typedef std::array<double, 3> PointArray;
 typedef std::tuple<size_t, double, size_t, std::string, signed char> Event;
 
+typedef struct NodeProp
+{
+    size_t n_id;
+    size_t p_id;
+    double diameter;
+    double dist_to_parent;
+    std::vector<double> position;
+
+    NodeProp(size_t n, size_t p, double diam, double dtp,
+             std::vector<double> pos)
+        : n_id(n), p_id(p), diameter(diam), dist_to_parent(dtp), position(pos)
+    {};
+} NodeProp;
+
 
 /*
  * Typedef for shared and weak pointers

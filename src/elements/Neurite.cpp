@@ -711,6 +711,64 @@ void Neurite::add_cone(GCPtr cone)
 }
 
 
+bool Neurite::walk_tree(NodeProp& np) const
+{
+    static auto gc_it = gc_cbegin();
+    static auto n_it  = nodes_.cbegin();
+
+    size_t nid, pid;
+    double diam, dtp;
+
+    if (n_it != nodes_.cend())
+    {
+        // get node id
+        nid = n_it->second->get_nodeID();
+        // get parent id
+        pid = n_it->second->get_parent().lock()->get_nodeID();
+        // get diameter
+        diam = n_it->second->get_diameter();
+        // get distance to parent
+        dtp = n_it->second->get_distance_parent();
+        // get position
+        Point p = n_it->second->get_position();
+        std::vector<double> coords(p.at(0), p.at(1));
+
+        np = NodeProp(nid, pid, diam, dtp, coords);
+
+        n_it++;
+
+        return true;
+    }
+    else if (gc_it != growth_cones_.cend())
+    {
+        // get node id
+        nid = gc_it->second->get_nodeID();
+        // get parent id
+        pid = gc_it->second->get_parent().lock()->get_nodeID();
+        // get diameter
+        diam = gc_it->second->get_diameter();
+        // get distance to parent
+        dtp = gc_it->second->get_distance_parent();
+        // get position
+        Point p = gc_it->second->get_position();
+        std::vector<double> coords(p.at(0), p.at(1));
+
+        np = NodeProp(nid, pid, diam, dtp, coords);
+
+        gc_it++;
+
+        return true;
+    }
+
+    gc_it = gc_cbegin();
+    n_it  = nodes_.cbegin();    
+
+    return false;
+}
+        
+    
+
+
 std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cbegin() const
 {
     return growth_cones_.cbegin();

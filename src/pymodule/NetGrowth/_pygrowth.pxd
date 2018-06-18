@@ -21,6 +21,15 @@ cdef extern from "../libgrowth/elements_types.hpp" namespace "growth":
     ctypedef pair[vector[double], vector[double]] SkelNeurite
     ctypedef vector[vector[double]] SkelSomas
 
+    ctypedef struct NodeProp:
+        size_t n_id
+        size_t p_id
+        double diameter
+        double dist_to_parent
+        vector[double] position
+        NodeProp(size_t n, size_t p, double diam, double dtp,
+                 vector[double] pos) except +
+
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef enum dtype:
@@ -158,6 +167,10 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void test_random_generator(vector[vector[double]]& values,
                                     size_t size) except +
+
+    cdef bool walk_neurite_tree(
+        size_t neuron, string neurite,
+        NodeProp& np) except +
 
 
 # ---------------------- #

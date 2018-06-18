@@ -144,8 +144,13 @@ bool get_next_time(size_t gid, std::vector<Property> &ids,
 
 std::string object_type(size_t gid);
 
+
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan);
+
+
+bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np);
+
 
 void is_valid_timestep(double timestep);
 

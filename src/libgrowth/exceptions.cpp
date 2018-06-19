@@ -12,18 +12,18 @@ InvalidArg::InvalidArg()
 
 InvalidArg::InvalidArg(const std::string &msg, const char *func,
                        const char *file, unsigned int line)
-    : std::invalid_argument(
-        "@" + std::string(func) + " in " + std::string(file) + ":" +
-        std::to_string(line) + "\n" + msg)
+    : std::invalid_argument("@" + std::string(func) + " in " +
+                            std::string(file) + ":" + std::to_string(line) +
+                            "\n" + msg)
 {
     name_ = "InvalidArgument";
 }
 
 
-const char* InvalidArg::what() const noexcept
+const char *InvalidArg::what() const noexcept
 {
     std::string msg = name_ + " " + std::string(std::invalid_argument::what());
-    char * char_msg = new char[msg.size() + 1];
+    char *char_msg  = new char[msg.size() + 1];
     std::copy(msg.begin(), msg.end(), char_msg);
     char_msg[msg.size()] = '\0'; // don't forget the terminating 0
     return char_msg;
@@ -92,21 +92,20 @@ LogicError::LogicError()
 
 LogicError::LogicError(const std::string &msg, const char *func,
                        const char *file, unsigned int line)
-    : std::logic_error(
-        "@" + std::string(func) + " in " + std::string(file) + ":" +
-        std::to_string(line) + "\n" + msg)
+    : std::logic_error("@" + std::string(func) + " in " + std::string(file) +
+                       ":" + std::to_string(line) + "\n" + msg)
 {
     name_ = "LogicError";
 }
 
 
-const char* LogicError::what() const noexcept
+const char *LogicError::what() const noexcept
 {
     std::string msg = name_ + " " + std::string(std::logic_error::what());
-    char * char_msg = new char[msg.size() + 1];
+    char *char_msg  = new char[msg.size() + 1];
     std::copy(msg.begin(), msg.end(), char_msg);
     char_msg[msg.size()] = '\0'; // don't forget the terminating 0
     return char_msg;
 }
 
-} /* namespace */
+} // namespace growth

@@ -260,4 +260,4 @@ Time operator-(Time lhs, const Time &rhs)
     lhs -= rhs;
     return lhs;
 }
-}
+} // namespace growth

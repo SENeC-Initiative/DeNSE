@@ -103,10 +103,10 @@ void TopologicalNode::set_position(const Point &pos, double dist_to_soma,
 {
     assert(pos == b->get_last_xy());
 
-    geometry_.position      = pos;
-    geometry_.dis_to_soma   = dist_to_soma;
-    geometry_.dis_to_parent = dist_to_soma
-                              - topology_.parent.lock()->get_distance_to_soma();
+    geometry_.position    = pos;
+    geometry_.dis_to_soma = dist_to_soma;
+    geometry_.dis_to_parent =
+        dist_to_soma - topology_.parent.lock()->get_distance_to_soma();
 
     biology_.branch = b;
 }
@@ -167,4 +167,4 @@ Node::Node(const Node &copyNode)
 
 TNodePtr Node::get_child(int index) const { return children_.at(index); }
 
-} /* namespace */
+} // namespace growth

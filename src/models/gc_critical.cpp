@@ -1,6 +1,6 @@
 #include "gc_critical.hpp"
-#include "kernel_manager.hpp"
 #include "config_impl.hpp"
+#include "kernel_manager.hpp"
 #include <math.h>
 
 // Integrate the differential equation
@@ -26,7 +26,7 @@ GrowthCone_Critical::GrowthCone_Critical()
     , weight_centrifugal_(CRITICAL_WEIGHT_CENTRIFUGAL)
 {
     observables_.push_back("resource");
-    consumption_rate_ = use_ratio_ + 1./leakage_;
+    consumption_rate_ = use_ratio_ + 1. / leakage_;
 }
 
 
@@ -49,7 +49,7 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
     , weight_diameter_(copy.weight_diameter_)
     , weight_centrifugal_(copy.weight_centrifugal_)
 {
-    normal_     = std::normal_distribution<double>(0, 1);
+    normal_ = std::normal_distribution<double>(0, 1);
     observables_.insert(observables_.end(), copy.observables_.begin(),
                         copy.observables_.end());
 }
@@ -70,8 +70,8 @@ GCPtr GrowthCone_Critical::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
     // update containing area
     newCone->current_area_ =
         using_environment_
-        ? kernel().space_manager.get_containing_area(position, omp_id)
-        : "";
+            ? kernel().space_manager.get_containing_area(position, omp_id)
+            : "";
 
     if (using_environment_)
     {
@@ -83,8 +83,8 @@ GCPtr GrowthCone_Critical::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
 
 void GrowthCone_Critical::initialize_CR()
 {
-    sqrt_corr_   = sqrt(1 - correlation_ * correlation_);
-    stored_      = (stored_ == 0) ? 1.5*elongation_th_ : stored_;
+    sqrt_corr_ = sqrt(1 - correlation_ * correlation_);
+    stored_    = (stored_ == 0) ? 1.5 * elongation_th_ : stored_;
 }
 
 
@@ -96,7 +96,7 @@ void GrowthCone_Critical::initialize_CR()
  */
 void GrowthCone_Critical::prepare_for_split()
 {
-    stored_   *= 0.5;
+    stored_ *= 0.5;
     received_ *= 0.5;
 }
 
@@ -129,10 +129,10 @@ void GrowthCone_Critical::compute_CR_received(double substep)
  */
 double GrowthCone_Critical::get_CR_demand()
 {
-    double current_demand = stored_*consumption_rate_;
+    double current_demand = stored_ * consumption_rate_;
     // weight by centrifugal order and diameter if required
-                   //~ +(1+weight_centrifugal_*get_centrifugal_order())
-                   //~ +(1+weight_diameter_*get_diameter());
+    //~ +(1+weight_centrifugal_*get_centrifugal_order())
+    //~ +(1+weight_diameter_*get_diameter());
 
     return current_demand;
 }
@@ -158,9 +158,8 @@ double GrowthCone_Critical::compute_cr_speed(mtPtr rnd_engine, double substep)
     }
     else if (stored_ >= elongation_th_)
     {
-        speed =
-            elongation_factor_ * (stored_ - elongation_th_)
-            / (stored_ + elongation_th_);
+        speed = elongation_factor_ * (stored_ - elongation_th_) /
+                (stored_ + elongation_th_);
     }
 
     return speed;
@@ -186,9 +185,8 @@ void GrowthCone_Critical::compute_speed(mtPtr rnd_engine, double substep)
     }
     else if (stored_ >= elongation_th_)
     {
-        move_.speed =
-            elongation_factor_ * (stored_ - elongation_th_)
-            / (stored_ + elongation_th_);
+        move_.speed = elongation_factor_ * (stored_ - elongation_th_) /
+                      (stored_ + elongation_th_);
     }
 }
 
@@ -201,13 +199,13 @@ double GrowthCone_Critical::compute_CR(mtPtr rnd_engine, double substep)
         compute_CR_received(substep);
 
         // correlated gaussian (unit standard deviation)
-        noise_ = noise_*correlation_ +
-                 sqrt_corr_*normal_(*(rnd_engine).get());
+        noise_ =
+            noise_ * correlation_ + sqrt_corr_ * normal_(*(rnd_engine).get());
 
         // then use Euler for deterministic term and corrected Wiener term
         stored_ = stored_ +
-                  substep*(received_ - stored_*consumption_rate_) +
-                  sqrt(substep)*variance_*noise_;
+                  substep * (received_ - stored_ * consumption_rate_) +
+                  sqrt(substep) * variance_ * noise_;
 
         // amount of molecule cannot be negative
         if (stored_ < 0.)
@@ -224,15 +222,10 @@ void GrowthCone_Critical::reset_CR_demand()
     //.demand = critical_.initial_demand;
 }
 
-double GrowthCone_Critical::get_speed() const {
-return elongation_factor_;
-}
+double GrowthCone_Critical::get_speed() const { return elongation_factor_; }
 
 
-double GrowthCone_Critical::get_CR_received() const
-{
-    return received_;
-}
+double GrowthCone_Critical::get_CR_received() const { return received_; }
 
 
 double GrowthCone_Critical::get_CR_speed_factor() const
@@ -251,7 +244,8 @@ void GrowthCone_Critical::printinfo() const
     printf("CR elongation_factor:  %f \n", elongation_factor_);
     printf("CR retraction_factor:  %f \n", retraction_factor_);
     printf("CR use_ratio:  %f \n", use_ratio_);
-    //~ printf("CR available:  %f \n", biology_.own_neurite->get_available_cr(substep));
+    //~ printf("CR available:  %f \n",
+    //biology_.own_neurite->get_available_cr(substep));
 
     printf("################ \n");
 }
@@ -265,18 +259,18 @@ void GrowthCone_Critical::set_status(const statusMap &status)
     // speed-related stuff
     get_param(status, names::CR_elongation_factor, elongation_factor_);
     get_param(status, names::CR_retraction_factor, retraction_factor_);
-    get_param(status, names::CR_elongation_th,     elongation_th_);
-    get_param(status, names::CR_retraction_th,     retraction_th_);
+    get_param(status, names::CR_elongation_th, elongation_th_);
+    get_param(status, names::CR_retraction_th, retraction_th_);
 
-    //use and leakage
-    get_param(status, names::CR_use_ratio,          use_ratio_);
-    get_param(status, names::CR_leakage,            leakage_);
-    get_param(status, names::CR_correlation,        correlation_);
-    get_param(status, names::CR_variance,           variance_);
-    get_param(status, names::CR_weight_diameter,    weight_diameter_);
+    // use and leakage
+    get_param(status, names::CR_use_ratio, use_ratio_);
+    get_param(status, names::CR_leakage, leakage_);
+    get_param(status, names::CR_correlation, correlation_);
+    get_param(status, names::CR_variance, variance_);
+    get_param(status, names::CR_weight_diameter, weight_diameter_);
     get_param(status, names::CR_weight_centrifugal, weight_centrifugal_);
 
-    consumption_rate_ = use_ratio_ + 1./leakage_;
+    consumption_rate_ = use_ratio_ + 1. / leakage_;
 
     initialize_CR();
 
@@ -296,15 +290,15 @@ void GrowthCone_Critical::get_status(statusMap &status) const
     // speed-related
     set_param(status, names::CR_elongation_factor, elongation_factor_);
     set_param(status, names::CR_retraction_factor, retraction_factor_);
-    set_param(status, names::CR_elongation_th,     elongation_th_);
-    set_param(status, names::CR_retraction_th,     retraction_th_);
+    set_param(status, names::CR_elongation_th, elongation_th_);
+    set_param(status, names::CR_retraction_th, retraction_th_);
 
     // use and leakage
-    set_param(status, names::CR_use_ratio,          use_ratio_);
-    set_param(status, names::CR_leakage,            leakage_);
-    set_param(status, names::CR_correlation,        correlation_);
-    set_param(status, names::CR_variance,           variance_);
-    set_param(status, names::CR_weight_diameter,    weight_diameter_);
+    set_param(status, names::CR_use_ratio, use_ratio_);
+    set_param(status, names::CR_leakage, leakage_);
+    set_param(status, names::CR_correlation, correlation_);
+    set_param(status, names::CR_variance, variance_);
+    set_param(status, names::CR_weight_diameter, weight_diameter_);
     set_param(status, names::CR_weight_centrifugal, weight_centrifugal_);
 }
 
@@ -326,5 +320,4 @@ double GrowthCone_Critical::get_state(const char *observable) const
     return value;
 }
 
-} // namespace
-
+} // namespace growth

@@ -16,7 +16,7 @@ class InvalidArg : public std::invalid_argument
     InvalidArg(const std::string &msg, const char *func, const char *file,
                unsigned int line);
 
-    const char* what() const noexcept override;
+    const char *what() const noexcept override;
 
     virtual ~InvalidArg() throw() {}
 
@@ -71,7 +71,7 @@ class LogicError : public std::logic_error
     LogicError(const std::string &msg, const char *func, const char *file,
                unsigned int line);
 
-    const char* what() const noexcept override;
+    const char *what() const noexcept override;
 
     virtual ~LogicError() throw() {}
 
@@ -82,6 +82,6 @@ class LogicError : public std::logic_error
     std::string name_;
 };
 
-} /* namespace */
+} // namespace growth
 
 #endif // EXCEPT_H

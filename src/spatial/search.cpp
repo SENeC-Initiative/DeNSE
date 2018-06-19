@@ -66,4 +66,4 @@ void locate_from_idx(Point &xy, double &angle, double &distance,
      * delta_y,*/
     /*angle * 180 / M_PI);*/
 }
-}
+} // namespace growth

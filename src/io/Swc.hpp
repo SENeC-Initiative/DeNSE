@@ -33,6 +33,6 @@ class Swc
     void close_file();
     ~Swc();
 };
-}
+} // namespace growth
 
 #endif /* SWC_H */

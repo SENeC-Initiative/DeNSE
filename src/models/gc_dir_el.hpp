@@ -37,5 +37,5 @@ class GrowthCone_Elongation_Direction : public DirectionModel,
 };
 
 // GrowthCone_Elongation_Direction<GrowthCone_Critical_Langevin>;
-}
+} // namespace growth
 #endif

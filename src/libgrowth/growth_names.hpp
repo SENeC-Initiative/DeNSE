@@ -59,7 +59,7 @@ extern const std::string substrate_affinity;
 #define FILOPODIA_FINGER_LENGTH 50.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1
 #define FILOPODIA_WALL_AFFINITY 2.
-#define MAX_SENSING_ANGLE 1.5707963267948966  // 180 degrees max for 1 s resol
+#define MAX_SENSING_ANGLE 1.5707963267948966 // 180 degrees max for 1 s resol
 #define ONE_DEGREE 0.017453292519943295
 #define PROBA_RETRACTION 0.001
 #define PROBA_DOWN_MOVE 0.008
@@ -118,7 +118,6 @@ extern const std::string CR_neurite_delivery_tau;
 #define CRITICAL_GEN_CORR 0.
 
 
-
 /*
  * RANDOM WALK MODEL
  */
@@ -139,16 +138,16 @@ extern const std::string rw_delta_corr;
 #define RW_MEMORY_TAU 100.
 
 
-//SELF REFERENTIAL MODEL
+// SELF REFERENTIAL MODEL
 //
 #define SRF_AVOIDANCE_FORCE 1
 extern const std::string srf_avoidance_force;
 #define SRF_AVOIDANCE_DECAY 2
 extern const std::string srf_avoidance_decay;
 #define SRF_INERTIAL_FORCE 1
-extern const std::string srf_inertial_force ;
+extern const std::string srf_inertial_force;
 #define SRF_INERTIAL_DECAY 2
-extern const std::string srf_inertial_decay ;
+extern const std::string srf_inertial_decay;
 #define SRF_SOMATROPIC_FORCE 1
 extern const std::string srf_somatropic_force;
 #define SRF_SOMATROPIC_DECAY 2
@@ -235,8 +234,8 @@ extern const signed char gc_splitting;
 extern const signed char gc_deletion;
 
 extern const std::string num_growth_cones;
-}
+} // namespace names
 
-}
+} // namespace growth
 
 #endif /* NAMES_MODELS_H */

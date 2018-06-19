@@ -70,9 +70,9 @@ inline std::shared_ptr<std::mt19937> growth::RNGManager::get_rng(int t)
     return rng_[t];
 }
 
-    //~ inline std::mt19937& growth::RNGManager::get_grng()
-    //~ {
-    //~ return grng_;
-    //~ }
+//~ inline std::mt19937& growth::RNGManager::get_grng()
+//~ {
+//~ return grng_;
+//~ }
 
 #endif /* RNG_MANAGER_H */

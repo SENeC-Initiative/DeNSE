@@ -51,4 +51,4 @@ const GEOSPreparedGeometry *Wall::get_border(int omp_id) const
     return prepared_border_[omp_id];
 }
 
-} /* namespace */
+} // namespace growth

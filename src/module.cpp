@@ -106,7 +106,7 @@ size_t get_num_objects() { return kernel().get_num_objects(); }
 
 
 statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
-                             const std::string& level)
+                             const std::string &level)
 {
     return kernel().neuron_manager.get_neurite_status(gid, neurite_type, level);
 }
@@ -200,8 +200,8 @@ void set_environment(
     std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties)
 {
-    kernel().space_manager.set_environment(environment, areas, heights,
-                                           names, properties);
+    kernel().space_manager.set_environment(environment, areas, heights, names,
+                                           properties);
 }
 
 
@@ -311,7 +311,7 @@ void get_swc(std::string output_file, std::vector<size_t> gids,
 }
 
 
-void get_backtrace(std::string& msg, int depth = 0)
+void get_backtrace(std::string &msg, int depth = 0)
 {
     try
     {
@@ -320,8 +320,8 @@ void get_backtrace(std::string& msg, int depth = 0)
     catch (const std::exception &e)
     {
         // handle exceptions of known type
-        msg += std::to_string(depth) + ": [" + std::string(typeid(e).name())
-                + "] " + std::string(e.what()) + "\n";
+        msg += std::to_string(depth) + ": [" + std::string(typeid(e).name()) +
+               "] " + std::string(e.what()) + "\n";
         try
         {
             std::rethrow_if_nested(e);
@@ -331,7 +331,7 @@ void get_backtrace(std::string& msg, int depth = 0)
             get_backtrace(msg, ++depth);
         }
     }
-    catch (const std::nested_exception & ne)
+    catch (const std::nested_exception &ne)
     {
         // Not all nesting exceptions will be of a known type, but if they use
         // the mixin type std::nested_exception, then we can at least handle
@@ -364,7 +364,7 @@ void simulate(const Time &simtime)
     {
         kernel().simulation_manager.simulate(simtime);
     }
-    catch ( ... )
+    catch (...)
     {
         std::string message = "Error occurred in `simulate`.\n";
         get_backtrace(message, 0);
@@ -378,7 +378,6 @@ void simulate(const Time &simtime)
 // Neuron/structure related
 
 std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
-
 
 
 std::vector<std::string> get_neurites(size_t gid)
@@ -402,17 +401,17 @@ std::vector<std::string> get_neurites(size_t gid)
 }
 
 
-void get_branches_data(size_t neuron, const std::string& neurite_name,
-                       std::vector<std::vector<std::vector<double>>>& points,
-                       std::vector<double>& diameters, size_t start_point)
+void get_branches_data(size_t neuron, const std::string &neurite_name,
+                       std::vector<std::vector<std::vector<double>>> &points,
+                       std::vector<double> &diameters, size_t start_point)
 {
-    NeuronPtr n = kernel().neuron_manager.get_neuron(neuron);
+    NeuronPtr n            = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
 
-    auto node_it = neurite.lock()->nodes_cbegin();
+    auto node_it  = neurite.lock()->nodes_cbegin();
     auto node_end = neurite.lock()->nodes_cend();
-    auto gc_it = neurite.lock()->gc_cbegin();
-    auto gc_end = neurite.lock()->gc_cend();
+    auto gc_it    = neurite.lock()->gc_cbegin();
+    auto gc_end   = neurite.lock()->gc_cend();
 
     while (node_it != node_end)
     {
@@ -423,22 +422,22 @@ void get_branches_data(size_t neuron, const std::string& neurite_name,
         {
             switch (start_point)
             {
-                case 0:
-                    points_tmp.push_back(b->points.at(0));
-                    points_tmp.push_back(b->points.at(1));
-                    break;
-                default:
-                    std::vector<double> row_x, row_y;
-                    // x
-                    auto it  = b->points[0].cbegin();
-                    auto end = b->points[0].cend();
-                    row_x.insert(row_x.begin(), it+start_point, end);
-                    points_tmp.push_back(row_x);
-                    // y
-                    it  = b->points.at(1).cbegin();
-                    end = b->points.at(1).cend();
-                    row_y.insert(row_y.begin(), it+start_point, end);
-                    points_tmp.push_back(row_y);
+            case 0:
+                points_tmp.push_back(b->points.at(0));
+                points_tmp.push_back(b->points.at(1));
+                break;
+            default:
+                std::vector<double> row_x, row_y;
+                // x
+                auto it  = b->points[0].cbegin();
+                auto end = b->points[0].cend();
+                row_x.insert(row_x.begin(), it + start_point, end);
+                points_tmp.push_back(row_x);
+                // y
+                it  = b->points.at(1).cbegin();
+                end = b->points.at(1).cend();
+                row_y.insert(row_y.begin(), it + start_point, end);
+                points_tmp.push_back(row_y);
             }
 
             points.push_back(points_tmp);
@@ -522,13 +521,4 @@ void _fill_swc(const SkelNeurite &source_container,
     }
 }
 
-
-bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np)
-{
-    NeuronPtr n                = kernel().neuron_manager.get_neuron(neuron);
-    NeuriteWeakPtr neurite_ptr = n->get_neurite(neurite);
-
-    return neurite_ptr.lock()->walk_tree(np);
-}
-
-} /* namespace */
+} // namespace growth

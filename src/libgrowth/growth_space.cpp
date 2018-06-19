@@ -13,4 +13,4 @@ int Space::get_dimension() { return dim_; }
 void Space::set_dimension_(int dim) { dim_ = dim; }
 
 Space::Shape::Shape() {}
-}
+} // namespace growth

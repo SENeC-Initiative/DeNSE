@@ -40,6 +40,6 @@ class Area
     double height_;
     std::unordered_map<std::string, double> properties_;
 };
-}
+} // namespace growth
 
 #endif /* AREAS_H */

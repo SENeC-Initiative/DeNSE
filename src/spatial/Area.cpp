@@ -93,4 +93,4 @@ const GEOSPreparedGeometry *Area::get_border(int omp_id) const
 
 GeomPtr Area::get_shape(int omp_id) const { return shape_.at(omp_id); }
 
-} /* namespace */
+} // namespace growth

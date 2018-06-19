@@ -99,11 +99,11 @@ class KernelManager
     bool initialized_;   //!< true if all sub-managers initialized
     size_t num_objects_; //!< number of objects created
     std::string version_;
-    double adaptive_timestep_;  //! if > 1, step divider when interacting
+    double adaptive_timestep_; //! if > 1, step divider when interacting
 };
 
 KernelManager &kernel();
-}
+} // namespace growth
 
 // Inline implementations
 

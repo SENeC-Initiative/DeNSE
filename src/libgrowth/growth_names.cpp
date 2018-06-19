@@ -80,12 +80,12 @@ const std::string soma_radius("soma_radius");
 const std::string speed_growth_cone("speed_growth_cone");
 const std::string speed_ratio_retraction("speed_ratio_retraction");
 const std::string speed_variance("speed_variance");
-const std::string srf_avoidance_decay ("srf_avoidance_decay");
-const std::string srf_avoidance_force ("srf_avoidance_force");
-const std::string srf_inertial_force ("srf_inertial_force");
-const std::string srf_inertial_decay ("srf_inertial_decay");
-const std::string srf_somatropic_force ("srf_somatropic_force");
-const std::string srf_somatropic_decay ("srf_somatropic_decay");
+const std::string srf_avoidance_decay("srf_avoidance_decay");
+const std::string srf_avoidance_force("srf_avoidance_force");
+const std::string srf_inertial_force("srf_inertial_force");
+const std::string srf_inertial_decay("srf_inertial_decay");
+const std::string srf_somatropic_force("srf_somatropic_force");
+const std::string srf_somatropic_decay("srf_somatropic_decay");
 const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
@@ -111,6 +111,6 @@ const std::string targets("targets");
 const signed char lateral_branching(0);
 const signed char gc_splitting(1);
 const signed char gc_deletion(2);
-}
+} // namespace names
 
-}
+} // namespace growth

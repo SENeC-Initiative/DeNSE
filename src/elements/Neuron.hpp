@@ -90,7 +90,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     Point get_position() const;
     size_t get_gid() const;
     std::string get_gc_model() const;
-    NeuriteWeakPtr get_neurite(const std::string& name) const;
+    NeuriteWeakPtr get_neurite(const std::string &name) const;
     double get_state(const char *observable) const;
     void get_status(statusMap &status) const;
     int get_num_neurites() const;
@@ -100,7 +100,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void set_neurite_status(const std::string &neurite_type,
                             const statusMap &status);
     void get_neurite_status(statusMap &status, std::string neurite_type,
-                            const std::string& level);
+                            const std::string &level);
     void update_kernel_variables();
 
     // constant iterator to neurites map
@@ -146,6 +146,6 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     std::normal_distribution<double> normal_;
 };
 
-}
+} // namespace growth
 
 #endif // NEURON_H

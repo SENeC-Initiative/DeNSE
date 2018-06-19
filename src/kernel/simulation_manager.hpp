@@ -63,7 +63,7 @@ class SimulationManager : public ManagerInterface
     Time maximal_time_;
     bool terminate_;
     double resolution_scale_factor_;
-    double max_resol_;  // maximum allowed resolution
+    double max_resol_; // maximum allowed resolution
 };
 
 
@@ -106,6 +106,6 @@ inline void SimulationManager::terminate() { terminate_ = true; }
 //~ {
 //~ return clock_;
 //~ }
-}
+} // namespace growth
 
 #endif /* SIMULATION_M_H */

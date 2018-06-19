@@ -23,18 +23,18 @@ Point::Point(const Point &pt)
 
 void Point::shift(const double module, const double direction)
 {
-    x_ = x_+cos(direction)*module;
-    y_ = y_+sin(direction)*module;
+    x_ = x_ + cos(direction) * module;
+    y_ = y_ + sin(direction) * module;
 }
 
 
-bool Point::operator==(const Point& other) const
+bool Point::operator==(const Point &other) const
 {
     return (x_ == other.x_ and y_ == other.y_);
 }
 
 
-Point Point::operator-(const Point& point) const
+Point Point::operator-(const Point &point) const
 {
     double dx = x_ - point.x_;
     double dy = y_ - point.y_;
@@ -69,4 +69,4 @@ double Point::at(const int idx) const
                                  "large for Point.");
     }
 }
-}
+} // namespace growth

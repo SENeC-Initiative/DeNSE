@@ -102,6 +102,6 @@ class Branch
     Point xy_at(size_t idx) const;
     size_t size() const;
 };
-}
+} // namespace growth
 
 #endif // BRANCH_H

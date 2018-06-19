@@ -84,5 +84,5 @@ class Branching
     //~ void get_status(statusMap &) const;
     void get_status(statusMap &) const;
 };
-}
+} // namespace growth
 #endif /* BRANCHING_H */

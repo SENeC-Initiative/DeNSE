@@ -62,9 +62,8 @@ GrowthCone_RunTumble::GrowthCone_RunTumble(const GrowthCone_RunTumble &copy)
 // Clone function
 
 GCPtr GrowthCone_RunTumble::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
-                                   double distanceToParent,
-                                   std::string binaryID, const Point &position,
-                                   double angle)
+                                  double distanceToParent, std::string binaryID,
+                                  const Point &position, double angle)
 {
 #ifndef NDEBUG
     printf(" It's calling RunTumble->clone! with direction %f\n", angle);
@@ -92,12 +91,13 @@ void GrowthCone_RunTumble::initialize_RT()
 {
     // this renormalization of the "tumbling rate" is necessary to obtain
     // the correct persistence length
-    tau_ = 24./(max_sensing_angle_*max_sensing_angle_*persistence_length_);
+    tau_ =
+        24. / (max_sensing_angle_ * max_sensing_angle_ * persistence_length_);
 
     exponential_rt_ = std::exponential_distribution<double>(tau_);
 
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
-    mtPtr rng = kernel().rng_manager.get_rng(omp_id);
+    mtPtr rng  = kernel().rng_manager.get_rng(omp_id);
 
     next_tumble_ = exponential_rt_(*(rng).get());
 }
@@ -112,17 +112,17 @@ double GrowthCone_RunTumble::get_state(const char *observable) const
 
     TRIE(observable)
     CASE("length")
-        value = biology_.branch->get_distance_to_soma();
+    value = biology_.branch->get_distance_to_soma();
     CASE("speed")
-        value = move_.speed;
+    value = move_.speed;
     CASE("angle")
-        value = move_.angle;
+    value = move_.angle;
     CASE("stopped")
-        value = 2*stuck_ + stopped_;  // 0: moving, 1: stopped, 2: stuck
+    value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
     CASE("retraction_time")
-        value = retraction_time_;
+    value = retraction_time_;
     CASE("num_tumbles")
-        value = num_tumbles_;
+    value = num_tumbles_;
     ENDTRIE;
 
     return value;
@@ -145,7 +145,7 @@ void GrowthCone_RunTumble::compute_intrinsic_direction(
         if (not std::isnan(weight))
         {
             total_proba_ += weight;
-            stuck_        = false;
+            stuck_ = false;
         }
     }
 }
@@ -156,7 +156,7 @@ void GrowthCone_RunTumble::compute_intrinsic_direction(
  */
 Point GrowthCone_RunTumble::compute_target_position(
     const std::vector<double> &directions_weights, mtPtr rnd_engine,
-    double& substep, double &new_angle)
+    double &substep, double &new_angle)
 {
     // test whether tumbling happens
     if (tumbling_)
@@ -203,7 +203,7 @@ Point GrowthCone_RunTumble::compute_target_position(
     }
 
     // compute target position
-    new_angle        = move_.angle + delta_angle_;
+    new_angle = move_.angle + delta_angle_;
     Point target_pos =
         Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
@@ -212,14 +212,10 @@ Point GrowthCone_RunTumble::compute_target_position(
 }
 
 
-void GrowthCone_RunTumble::prepare_for_split()
-{
-}
+void GrowthCone_RunTumble::prepare_for_split() {}
 
 
-void GrowthCone_RunTumble::after_split()
-{
-}
+void GrowthCone_RunTumble::after_split() {}
 
 
 //#############################################
@@ -232,4 +228,4 @@ void GrowthCone_RunTumble::set_status(const statusMap &status)
     initialize_RT();
 }
 
-}
+} // namespace growth

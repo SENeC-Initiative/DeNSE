@@ -29,6 +29,6 @@ class Wall
     std::vector<const GEOSPreparedGeometry *> prepared_area_;
     std::vector<const GEOSPreparedGeometry *> prepared_border_;
 };
-}
+} // namespace growth
 
 #endif /* AREAS_H */

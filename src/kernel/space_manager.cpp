@@ -50,9 +50,9 @@ void log_and_exit(const char *fmt, ...)
 
 
 SpaceManager::SpaceManager()
-  : environment_initialized_(false)
-  , environment_manager_(nullptr)
-  , context_handler_(nullptr)
+    : environment_initialized_(false)
+    , environment_manager_(nullptr)
+    , context_handler_(nullptr)
 {
 }
 
@@ -95,7 +95,7 @@ GeomPtr SpaceManager::geospoint_from_point(const Point &point) const
 bool SpaceManager::sense(std::vector<double> &directions_weights,
                          std::vector<bool> &wall_presence,
                          const Filopodia &filopodia, const Point &position,
-                         const Move& move, const std::string &area,
+                         const Move &move, const std::string &area,
                          double proba_down_move, double max_height_up_move,
                          double substep, double sqrt_resol,
                          unsigned int delta_filo)
@@ -109,7 +109,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     double old_height = old_area->get_height();
 
     //~ assert(env_contains(Point(position.at(0), position.at(1)), omp_id)
-           //~ && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0), position.at(1)));
+    //~ && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0),
+    //position.at(1)));
 
 #ifndef NDEBUG
     if (not env_contains(Point(position.at(0), position.at(1)), omp_id))
@@ -120,9 +121,9 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 #endif
 
     // compute the number of filopodia to ignore
-    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
-    //~ unsigned int n_max  = filopodia.size - ignore;
-    //~ unsigned int n_min  = ignore;
+    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol -
+    //1) * delta_filo); ~ unsigned int n_max  = filopodia.size - ignore; ~
+    //unsigned int n_min  = ignore;
 
     // values used locally inside loop
     double angle, new_height, new_substrate_affinity, distance;
@@ -154,7 +155,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 
         // set position/line
         filo_pos  = Point(position.at(0) + cos(angle) * len_filo,
-                          position.at(1) + sin(angle) * len_filo);
+                         position.at(1) + sin(angle) * len_filo);
         filo_line = geosline_from_points(position, filo_pos);
 
         // weak interaction (filopodia)
@@ -164,16 +165,16 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 
             // wall affinity
             directions_weights[n_angle] *= (1. + wall_afty);
-            wall_presence[n_angle]       = true;
+            wall_presence[n_angle] = true;
 
             // apply partial wall affinity to previous angle if it exists
             //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
-            if (last_filo_wall != n_angle-1 and n_angle-1 >= 0)
+            if (last_filo_wall != n_angle - 1 and n_angle - 1 >= 0)
             {
-                directions_weights[n_angle-1] *= (1. + 0.5*wall_afty);
+                directions_weights[n_angle - 1] *= (1. + 0.5 * wall_afty);
             }
 
-            filo_wall = true;
+            filo_wall      = true;
             last_filo_wall = n_angle;
         }
         else if (area_intersect(area, filo_line, omp_id))
@@ -181,20 +182,21 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             interacting = true;
 
             // check the number of intersections
-            n_intersect = area_num_intersections(
-                area, filo_line, filo_pos, middle_points, omp_id);
+            n_intersect = area_num_intersections(area, filo_line, filo_pos,
+                                                 middle_points, omp_id);
 
             // get all other areas
             for (i = 0; i < n_intersect; i++)
             {
-                tmp_pos = middle_points[i];
+                tmp_pos       = middle_points[i];
                 name_new_area = get_containing_area(tmp_pos, omp_id);
-                distance      = sqrt(
-                    (position.at(0) - tmp_pos[0])*(position.at(0) - tmp_pos[0])
-                    + (position.at(1) - tmp_pos[1])*(position.at(1) - tmp_pos[1]));
+                distance      = sqrt((position.at(0) - tmp_pos[0]) *
+                                    (position.at(0) - tmp_pos[0]) +
+                                (position.at(1) - tmp_pos[1]) *
+                                    (position.at(1) - tmp_pos[1]));
 
-                new_area               = areas_[name_new_area];
-                new_height             = new_area->get_height();
+                new_area   = areas_[name_new_area];
+                new_height = new_area->get_height();
                 new_substrate_affinity =
                     new_area->get_property(names::substrate_affinity);
 
@@ -218,22 +220,27 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                     //   of making a down move
                     h = filopodia.finger_length - distance - delta_h;
 
-                    delta_proba =
-                        h > 0 ? new_substrate_affinity * h /
-                                     filopodia.finger_length
-                              : 0.;
+                    delta_proba = h > 0 ? new_substrate_affinity * h /
+                                              filopodia.finger_length
+                                        : 0.;
 
                     delta_proba += proba_down_move;
                     //~ delta_proba = proba_down_move/substep;
                     //~ delta_proba = proba_down_move/sqrt(substep);
-                    //~ delta_proba *= proba_down_move*substep*sin(0.5*M_PI/substep);
-                    //~ delta_proba *= proba_down_move*sin(0.5*M_PI/substep);
-                    //~ delta_proba *= 2*proba_down_move*(0.5+cos(0.5*M_PI/substep))/sqrt(substep);
+                    //~ delta_proba *=
+                    //proba_down_move*substep*sin(0.5*M_PI/substep); ~
+                    //delta_proba *= proba_down_move*sin(0.5*M_PI/substep); ~
+                    //delta_proba *=
+                    //2*proba_down_move*(0.5+cos(0.5*M_PI/substep))/sqrt(substep);
                     //~ delta_proba += proba_down_move/pow(substep, 1./3.);
-                    //~ delta_proba += proba_down_move*sqrt(1-cos(0.5*M_PI/sqrt(substep)));
-                    //~ delta_proba += proba_down_move*pow(1-cos(0.5*M_PI/sqrt(substep)), 1/3.);
-                    //~ delta_proba += proba_down_move*sqrt(sin(0.5*M_PI/sqrt(substep)));
-                    //~ delta_proba += proba_down_move/(1+sin(0.5*M_PI/sqrt(substep)));
+                    //~ delta_proba +=
+                    //proba_down_move*sqrt(1-cos(0.5*M_PI/sqrt(substep))); ~
+                    //delta_proba +=
+                    //proba_down_move*pow(1-cos(0.5*M_PI/sqrt(substep)), 1/3.);
+                    //~ delta_proba +=
+                    //proba_down_move*sqrt(sin(0.5*M_PI/sqrt(substep))); ~
+                    //delta_proba +=
+                    //proba_down_move/(1+sin(0.5*M_PI/sqrt(substep)));
                     directions_weights[n_angle] *= delta_proba;
                     //~ directions_weights[n_angle] *= new_substrate_affinity;
                 }
@@ -252,22 +259,22 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             // set wall affinity if necessary
             std::string name_new_area =
                 get_containing_area(middle_points[0], omp_id);
-            new_area                  = areas_[name_new_area];
-            new_height                = new_area->get_height();
+            new_area   = areas_[name_new_area];
+            new_height = new_area->get_height();
 
             if (old_height < new_height)
             {
                 // apply partial wall affinity to previous angle if it exists
                 //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
-                if (last_filo_wall != n_angle-1 and n_angle-1 >= 0)
+                if (last_filo_wall != n_angle - 1 and n_angle - 1 >= 0)
                 {
-                    directions_weights[n_angle-1] *= (1. + 0.5*wall_afty);
+                    directions_weights[n_angle - 1] *= (1. + 0.5 * wall_afty);
                 }
 
                 directions_weights[n_angle] *= (1. + wall_afty);
-                wall_presence[n_angle]       = true;
+                wall_presence[n_angle] = true;
 
-                filo_wall = true;
+                filo_wall      = true;
                 last_filo_wall = n_angle;
             }
         }
@@ -283,8 +290,8 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         // interaction with lamelipodia is twice stronger compared to filo/wall
         if (filo_wall)
         {
-            lamel_pos  = Point(position.at(0) + 0.5*cos(angle)*len_filo,
-                               position.at(1) + 0.5*sin(angle)*len_filo);
+            lamel_pos  = Point(position.at(0) + 0.5 * cos(angle) * len_filo,
+                              position.at(1) + 0.5 * sin(angle) * len_filo);
             lamel_line = geosline_from_points(position, lamel_pos);
 
             if (env_intersect(lamel_line, omp_id))
@@ -301,9 +308,9 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         {
             // apply partial wall affinity to next angle if relevant
             //~ if (n_angle != n_min and last_filo_wall == n_angle-1)
-            if (n_angle != 0 and last_filo_wall == n_angle-1)
+            if (n_angle != 0 and last_filo_wall == n_angle - 1)
             {
-                directions_weights[n_angle] *= (1. + 0.5*wall_afty);
+                directions_weights[n_angle] *= (1. + 0.5 * wall_afty);
             }
         }
     }
@@ -326,18 +333,18 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
     double angle;
 
     // compute the number of filopodia to ignore
-    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol - 1) * delta_filo);
-    //~ unsigned int n_max  = filopodia.size - ignore;
-    //~ unsigned int n_min  = ignore;
+    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol -
+    //1) * delta_filo); ~ unsigned int n_max  = filopodia.size - ignore; ~
+    //unsigned int n_min  = ignore;
 
     //~ // set ignored direction weights to nan
     //~ for (n_angle = 0; n_angle < n_min; n_angle++)
     //~ {
-        //~ directions_weights[n_angle] = std::nan("");
+    //~ directions_weights[n_angle] = std::nan("");
     //~ }
     //~ for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
     //~ {
-        //~ directions_weights[n_angle] = std::nan("");
+    //~ directions_weights[n_angle] = std::nan("");
     //~ }
 
     starting_pos = Point(position.at(0), position.at(1));
@@ -356,7 +363,7 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
 
         if (env_intersect(line, omp_id))
         {
-            directions_weights[n_angle] = std::nan("");  // cannot escape env
+            directions_weights[n_angle] = std::nan(""); // cannot escape env
         }
         else
         {
@@ -478,8 +485,8 @@ size_t SpaceManager::area_num_intersections(const std::string &area,
 /**
  * @brief returns the absolute value of the angle widening necessary to unstuck
  */
-double SpaceManager::unstuck_angle(const Point& position, double current_angle,
-                                   double radius, const std::string& area,
+double SpaceManager::unstuck_angle(const Point &position, double current_angle,
+                                   double radius, const std::string &area,
                                    int omp_id)
 {
     AreaPtr a = areas_.at(area);
@@ -491,9 +498,10 @@ double SpaceManager::unstuck_angle(const Point& position, double current_angle,
     GEOSCoordSeq_setY_r(context_handler_, sq, 0, position.at(1));
     p = GEOSGeom_createPoint_r(context_handler_, sq);
 
-    GEOSGeom disk      = GEOSBuffer_r(context_handler_, p, radius, 50);
-    GEOSGeom circle    = GEOSBoundary_r(context_handler_, disk);
-    GEOSGeom a_border  = GEOSBoundary_r(context_handler_, a->get_shape(omp_id).get());
+    GEOSGeom disk   = GEOSBuffer_r(context_handler_, p, radius, 50);
+    GEOSGeom circle = GEOSBoundary_r(context_handler_, disk);
+    GEOSGeom a_border =
+        GEOSBoundary_r(context_handler_, a->get_shape(omp_id).get());
 
     GEOSGeom intersect = GEOSIntersection_r(context_handler_, a_border, circle);
 
@@ -503,26 +511,27 @@ double SpaceManager::unstuck_angle(const Point& position, double current_angle,
     if (num_intersect > 0)
     {
         const GEOSGeometry *g0 =
-                GEOSGetGeometryN_r(context_handler_, intersect, 0);
+            GEOSGetGeometryN_r(context_handler_, intersect, 0);
         auto coords1 = GEOSGeom_getCoordSeq_r(context_handler_, g0);
         GEOSCoordSeq_getX_r(context_handler_, coords1, 0, &x0);
         GEOSCoordSeq_getY_r(context_handler_, coords1, 0, &y0);
 
-        angle_first = fmod(abs(atan2(y0 - position.at(1), x0 - position.at(0))
-                               - current_angle), M_PI);
+        angle_first = fmod(abs(atan2(y0 - position.at(1), x0 - position.at(0)) -
+                               current_angle),
+                           M_PI);
 
         if (num_intersect > 1)
         {
-            const GEOSGeometry *g1 =
-                GEOSGetGeometryN_r(context_handler_, intersect,
-                                   num_intersect - 1);
+            const GEOSGeometry *g1 = GEOSGetGeometryN_r(
+                context_handler_, intersect, num_intersect - 1);
             auto coords2 = GEOSGeom_getCoordSeq_r(context_handler_, g1);
             GEOSCoordSeq_getX_r(context_handler_, coords2, 0, &x1);
             GEOSCoordSeq_getY_r(context_handler_, coords2, 0, &y1);
 
-            angle_last = fmod(
-                abs(atan2(y1 - position.at(1), x1 - position.at(0))
-                - current_angle), M_PI);
+            angle_last =
+                fmod(abs(atan2(y1 - position.at(1), x1 - position.at(0)) -
+                         current_angle),
+                     M_PI);
             if (angle_last < angle_first)
             {
                 angle_first = angle_last;
@@ -663,7 +672,7 @@ std::vector<std::string> SpaceManager::get_area_names() const
 
 void SpaceManager::get_area_properties(
     const std::string &area,
-    std::unordered_map<std::string, double>& prop) const
+    std::unordered_map<std::string, double> &prop) const
 {
     areas_.at(area)->get_properties(prop);
 }

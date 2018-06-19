@@ -103,6 +103,6 @@ inline size_t ParallelismManager::get_num_virtual_processes() const
 {
     return num_omp_ * num_mpi_;
 }
-}
+} // namespace growth
 
 #endif // PARALLEL_M_H

@@ -51,15 +51,14 @@ class SpaceManager : public ManagerInterface
     size_t area_num_intersections(const std::string &area, GeomPtr line,
                                   const Point &tgt, std::vector<Point> &p,
                                   int omp_id) const;
-    double unstuck_angle(const Point& position, double current_angle,
-                         double radius, const std::string& area, int omp_id);
+    double unstuck_angle(const Point &position, double current_angle,
+                         double radius, const std::string &area, int omp_id);
 
     bool sense(std::vector<double> &directions_weigths,
                std::vector<bool> &wall_presence, const Filopodia &filopodia,
-               const Point &position, const Move &move,
-               const std::string &area, double down_move_proba,
-               double max_height_up_move, double substep, double sqrt_resol,
-               unsigned int delta_filo);
+               const Point &position, const Move &move, const std::string &area,
+               double down_move_proba, double max_height_up_move,
+               double substep, double sqrt_resol, unsigned int delta_filo);
 
     void move_possibility(std::vector<double> &directions_weights,
                           std::vector<std::string> &new_pos_area,
@@ -69,7 +68,8 @@ class SpaceManager : public ManagerInterface
 
     void set_environment(
         GEOSGeom environment, const std::vector<GEOSGeom> &areas,
-        const std::vector<double> &heights, const std::vector<std::string> &names,
+        const std::vector<double> &heights,
+        const std::vector<std::string> &names,
         const std::vector<std::unordered_map<std::string, double>> &properties);
     void get_environment(
         GEOSGeom &environment, std::vector<GEOSGeom> &areas,
@@ -82,9 +82,9 @@ class SpaceManager : public ManagerInterface
     std::vector<std::string> get_area_names() const;
     std::string get_containing_area(const Point &position, int omp_id) const;
     AreaPtr get_area(const std::string &name) const;
-    void get_area_properties(
-        const std::string &area,
-        std::unordered_map<std::string, double>& prop) const;
+    void
+    get_area_properties(const std::string &area,
+                        std::unordered_map<std::string, double> &prop) const;
 
     bool has_environment() const;
 
@@ -96,6 +96,6 @@ class SpaceManager : public ManagerInterface
     std::unordered_map<std::string, AreaPtr> areas_;
 };
 
-} /* namespace */
+} // namespace growth
 
 #endif // SPACE_M_H

@@ -38,7 +38,7 @@ class GrowthCone : public TopologicalNode,
 
   protected:
     const std::string model_;
-    bool using_environment_;   // whether we're embedded in space
+    bool using_environment_; // whether we're embedded in space
     double resol_;
     double sqrt_resol_;
     double adaptive_timestep_;
@@ -65,20 +65,20 @@ class GrowthCone : public TopologicalNode,
     double proba_retraction_;    // proba of retracting when stuck
     double retracting_todo_;     // duration left to retract
     double speed_ratio_retraction_;
-    double proba_down_move_;     // proba of going down if bottom out of reach
-    double scale_up_move_;       // maximal height that GC can cross upwards
+    double proba_down_move_; // proba of going down if bottom out of reach
+    double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
 
     double max_sensing_angle_;
-    size_t min_filopodia_;       // minimal number of filopodia
-    size_t num_filopodia_;       // minimal number of filopodia
+    size_t min_filopodia_; // minimal number of filopodia
+    size_t num_filopodia_; // minimal number of filopodia
 
-    double persistence_length_;  // persistence length of the neurite l_p
+    double persistence_length_; // persistence length of the neurite l_p
 
     Filopodia filopodia_;
     Move move_;
 
-    double total_proba_;  // integrated probability of all possible moves
+    double total_proba_; // integrated probability of all possible moves
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
     std::exponential_distribution<double> exponential_;
@@ -105,19 +105,21 @@ class GrowthCone : public TopologicalNode,
 
     // compute direction
     bool compute_pull(std::vector<double> &directions_weights,
-                        std::vector<bool> &wall_presence, double substep,
-                        mtPtr rnd_engine);
+                      std::vector<bool> &wall_presence, double substep,
+                      mtPtr rnd_engine);
     void compute_accessibility(std::vector<double> &directions_weights,
                                std::vector<std::string> &change_to_new_area,
                                double substep);
-    virtual void compute_intrinsic_direction(
-        std::vector<double> &directions_weights, double substep);
+    virtual void
+    compute_intrinsic_direction(std::vector<double> &directions_weights,
+                                double substep);
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
-    virtual Point compute_target_position(
-        const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double &substep, double &new_angle);
+    virtual Point
+    compute_target_position(const std::vector<double> &directions_weights,
+                            mtPtr rnd_engine, double &substep,
+                            double &new_angle);
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
 
@@ -146,6 +148,6 @@ class GrowthCone : public TopologicalNode,
     void update_filopodia(double substep);
 };
 
-}
+} // namespace growth
 
 #endif

@@ -17,6 +17,6 @@ void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
                           double distanceToNode);
 void locate_from_idx(Point &xy, double &angle, double &distance,
                      const BranchPtr branch, size_t id_x);
-}
+} // namespace growth
 
 #endif /* SEARCH_H */

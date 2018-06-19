@@ -104,7 +104,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     // Get/set functions
     // void init_status(const statusMap &status);
     void set_status(const statusMap &);
-    void get_status(statusMap &, const std::string& level) const;
+    void get_status(statusMap &, const std::string &level) const;
     double get_state(const char *observable) const;
     unsigned int num_growth_cones() const;
     NodePtr get_first_node() const;
@@ -169,6 +169,6 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
 inline bool reverse_sorting(int i, int j) { return (i > j); }
 
-} // namespace
+} // namespace growth
 
 #endif // NEURITE_H

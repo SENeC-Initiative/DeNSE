@@ -169,4 +169,4 @@ Point Branch::xy_at(size_t idx) const
 
 size_t Branch::size() const { return points[0].size(); }
 
-} /* namespace */
+} // namespace growth

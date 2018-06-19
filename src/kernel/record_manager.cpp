@@ -485,4 +485,4 @@ bool RecordManager::get_next_time(size_t gid, std::vector<Property> &ids,
 }
 
 
-} /* namespace */
+} // namespace growth

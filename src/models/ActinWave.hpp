@@ -59,6 +59,6 @@ class ActinWave : public std::enable_shared_from_this<ActinWave>
 };
 
 double get_angle(mtPtr, double);
-}
+} // namespace growth
 
 #endif

@@ -3,8 +3,8 @@
 // c++ includes
 #include <cmath>
 #include <functional>
-#include <stdexcept>
 #include <limits>
+#include <stdexcept>
 
 // elements includes
 #include "GrowthCone.hpp"
@@ -32,7 +32,8 @@ Neuron::Neuron(size_t gid)
     : gid_(gid)
     , description_("standard_neuron")
     , details()
-    , observables_({"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
+    , observables_(
+          {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , use_actin_waves_(false)
     , aw_generation_step_(-1)
     , actin_content_(0)
@@ -138,7 +139,7 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
             new_neurite("axon", "axon", axon_gc, rnd_engine);
             set_neurite_status("axon", local_axon_params);
             //@TODO double neurite set status here
-            //printf("\n neurite axon: size %li", neurites_.size());
+            // printf("\n neurite axon: size %li", neurites_.size());
         }
         else
         {
@@ -146,7 +147,7 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
             set_neurite_status("dendrite", local_dendrites_params);
             //@TODO double neurite set status here
-            //printf("\n neurite dendrite: size %li", neurites_.size());
+            // printf("\n neurite dendrite: size %li", neurites_.size());
         }
     }
 }
@@ -281,15 +282,15 @@ std::string Neuron::new_neurite(const std::string &name,
             }
             else
             {
-                angle       = uniform_(*(rnd_engine).get()) * 2 * M_PI;
+                angle = uniform_(*(rnd_engine).get()) * 2 * M_PI;
             }
-            axon_angle_ = angle;
+            axon_angle_    = angle;
             Point position = get_position();
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
-            contained = kernel().space_manager.env_contains(
-                cone_start_point, omp_id);
+            contained =
+                kernel().space_manager.env_contains(cone_start_point, omp_id);
             if (axon_angle_set_ and not contained)
             {
                 throw InvalidParameter("Invalid axon angle for neuron: growth "
@@ -451,7 +452,7 @@ void Neuron::get_status(statusMap &status) const
 
 
 void Neuron::get_neurite_status(statusMap &status, std::string neurite_type,
-                                const std::string& level)
+                                const std::string &level)
 {
     for (const auto &neurite : neurites_)
     {
@@ -491,9 +492,9 @@ Point Neuron::get_position() const { return soma_->get_position(); }
 size_t Neuron::get_gid() const { return gid_; }
 
 
-NeuriteWeakPtr Neuron::get_neurite(const std::string& name) const
+NeuriteWeakPtr Neuron::get_neurite(const std::string &name) const
 {
     return NeuriteWeakPtr(neurites_.at(name));
 }
 
-} // namespace
+} // namespace growth

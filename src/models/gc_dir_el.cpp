@@ -49,8 +49,9 @@ GCPtr GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::clone(
            angle);
 #endif
     auto newCone = std::make_shared<
-        GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>>(*this);
-    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
+        GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>>(
+        *this);
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
     // newCone= std::dynamic_pointer_cast<GrowthCone>(newCone);
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
                              position, angle);
@@ -133,4 +134,4 @@ GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::get_state(
 }
 
 // getter functions here
-}
+} // namespace growth

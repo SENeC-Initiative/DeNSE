@@ -103,7 +103,7 @@ statusMap get_status(size_t gid);
 
 
 statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
-                             const std::string& level);
+                             const std::string &level);
 
 
 // neuron- and structure-related
@@ -114,9 +114,9 @@ std::vector<size_t> get_neurons();
 std::vector<std::string> get_neurites(size_t gid);
 
 
-void get_branches_data(size_t neuron, const std::string& neurite,
-                       std::vector<std::vector<std::vector<double>>>& points,
-                       std::vector<double>& diameters, size_t start_point);
+void get_branches_data(size_t neuron, const std::string &neurite,
+                       std::vector<std::vector<std::vector<double>>> &points,
+                       std::vector<double> &diameters, size_t start_point);
 
 
 // parameters and recordings
@@ -154,6 +154,6 @@ bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np);
 
 void is_valid_timestep(double timestep);
 
-}
+} // namespace growth
 
 #endif // MODULE_H

@@ -31,6 +31,6 @@ class Skeleton
     //! Constructor to make the representation of a neuron
     Skeleton(const Neuron *);
 };
-}
+} // namespace growth
 
 #endif /* SKELETON_H */

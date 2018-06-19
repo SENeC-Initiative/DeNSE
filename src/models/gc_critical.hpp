@@ -74,5 +74,5 @@ class GrowthCone_Critical : public virtual GrowthCone
     virtual double get_state(const char *observable) const override;
 };
 
-}
+} // namespace growth
 #endif

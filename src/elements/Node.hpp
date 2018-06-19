@@ -199,5 +199,5 @@ class Node : public TopologicalNode
     TNodePtr get_child(int) const;
 
 }; // Node
-}
+} // namespace growth
 #endif

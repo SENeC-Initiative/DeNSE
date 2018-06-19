@@ -115,4 +115,4 @@ Skeleton::Skeleton(const Neuron *neuron)
         growth_cones.second.push_back(NAN);
     }
 }
-}
+} // namespace growth

@@ -163,4 +163,4 @@ void ParallelismManager::get_status(statusMap &status) const
     set_param(status, "num_virtual_processes", num_omp_ * num_mpi_);
 }
 
-} /* namespace */
+} // namespace growth

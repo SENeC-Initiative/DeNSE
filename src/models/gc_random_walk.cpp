@@ -101,11 +101,11 @@ void GrowthCone_RandomWalk::initialize_RW()
     // set the memory parameter.
     if (memory_.tau == -1)
     {
-        memory_.alpha_coeff =0;
+        memory_.alpha_coeff = 0;
     }
     else if (memory_.tau > 0)
     {
-        memory_.alpha_coeff = exp(-average_step / get_diameter()/ memory_.tau);
+        memory_.alpha_coeff = exp(-average_step / get_diameter() / memory_.tau);
     }
     else if (memory_.tau == 0)
     {
@@ -114,8 +114,8 @@ void GrowthCone_RandomWalk::initialize_RW()
     else
     {
         throw InvalidArg("`tau` coefficients for biased random walk must be "
-                         "either positive, or -1 to disable.", __FUNCTION__,
-                         __FILE__, __LINE__);
+                         "either positive, or -1 to disable.",
+                         __FUNCTION__, __FILE__, __LINE__);
     }
 
     // initializing persistance random walk
@@ -125,13 +125,13 @@ void GrowthCone_RandomWalk::initialize_RW()
     }
     else if (corr_rw_.tau > 0)
     {
-        corr_rw_.f_coeff = exp(-average_step / get_diameter()/ corr_rw_.tau);
+        corr_rw_.f_coeff = exp(-average_step / get_diameter() / corr_rw_.tau);
     }
     else
     {
         throw InvalidArg("`tau` coefficients for biased random walk must be "
-                         "either positive, or -1 to disable.", __FUNCTION__,
-                         __FILE__, __LINE__);
+                         "either positive, or -1 to disable.",
+                         __FUNCTION__, __FILE__, __LINE__);
     }
 
     corr_rw_.sqrt_f_coeff = sqrt(1 - corr_rw_.f_coeff * corr_rw_.f_coeff);
@@ -186,12 +186,12 @@ void GrowthCone_RandomWalk::initialize_RW()
  *
  */
 Point GrowthCone_RandomWalk::compute_target_position(
-        const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double &substep, double &new_angle)
+    const std::vector<double> &directions_weights, mtPtr rnd_engine,
+    double &substep, double &new_angle)
 {
     double resol     = kernel().simulation_manager.get_resolution();
-    double mem_coeff =
-        (substep == resol) ? memory_.alpha_coeff
+    double mem_coeff = (substep == resol)
+                           ? memory_.alpha_coeff
                            : pow(memory_.alpha_coeff, substep / resol);
     // update the memory length algorithm
     memory_.effective_angle =
@@ -210,7 +210,7 @@ Point GrowthCone_RandomWalk::compute_target_position(
     //~ new_angle = memory_.effective_angle + corr_rw_.det_delta;
     //~ new_angle = memory_.effective_angle + delta_angle_;
     new_angle = memory_.effective_angle + sqrt(substep) * delta_angle_;
-    //printf("delta: %f \n", delta_angle_);
+    // printf("delta: %f \n", delta_angle_);
 
     // check that this step is allowed, otherwise move towards default_angle
     Point target_pos =
@@ -297,4 +297,4 @@ double GrowthCone_RandomWalk::get_state(const char *observable) const
     return value;
 }
 
-} /* namespace */
+} // namespace growth

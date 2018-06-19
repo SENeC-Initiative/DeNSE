@@ -49,9 +49,8 @@ class NeuronManager : public ManagerInterface
 
     void get_defaults(statusMap &status, const std::string &object) const;
     const statusMap get_neuron_status(size_t gid) const;
-    const statusMap get_neurite_status(size_t gid,
-                                       const std::string &type,
-                                       const std::string& level) const;
+    const statusMap get_neurite_status(size_t gid, const std::string &type,
+                                       const std::string &level) const;
 
     bool is_neuron(size_t gid) const;
 
@@ -71,16 +70,17 @@ class NeuronManager : public ManagerInterface
     modelMap model_map_;
 
   private:
-    NeuronPtr model_neuron_;           // unused model neuron for get_defaults
-    gidNeuronMap neurons_;             // get neuron from gid
-    threadNeurons neurons_on_thread_;  // group neurons by thread
-    gidThreadMap thread_of_neuron_;    // get thread from gid
-    std::vector<std::unordered_map<size_t, double>> max_resolutions_;  // max allowed resol
+    NeuronPtr model_neuron_;          // unused model neuron for get_defaults
+    gidNeuronMap neurons_;            // get neuron from gid
+    threadNeurons neurons_on_thread_; // group neurons by thread
+    gidThreadMap thread_of_neuron_;   // get thread from gid
+    std::vector<std::unordered_map<size_t, double>>
+        max_resolutions_; // max allowed resol
 };
 
 
 void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan);
-}
+} // namespace growth
 
 #endif // NEURON_M_H

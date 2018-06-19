@@ -16,7 +16,8 @@ namespace growth
 // Define whether OpenMP is available
 #cmakedefine WITH_OMP
 
-typedef enum {
+typedef enum
+{
     BOOL,
     DOUBLE,
     INT,
@@ -99,6 +100,6 @@ inline void set_param(statusMap &map, const std::string &key,
                       const std::string &value);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::vector<std::string> &value);
-}
+} // namespace growth
 
 #endif // CONFIG_H

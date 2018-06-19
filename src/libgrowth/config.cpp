@@ -180,4 +180,4 @@ Property::~Property()
         break;
     }
 }
-}
+} // namespace growth

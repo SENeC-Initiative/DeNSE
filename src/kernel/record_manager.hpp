@@ -60,6 +60,6 @@ class RecordManager : public ManagerInterface
     std::vector<Event> events_;
 };
 
-} /* namespace */
+} // namespace growth
 
 #endif

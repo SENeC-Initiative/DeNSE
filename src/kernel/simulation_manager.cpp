@@ -1,11 +1,11 @@
 #include "simulation_manager.hpp"
 
 // C includes:
-#include <cmath>
-#include <sys/time.h>
-#include <limits>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 #include <mutex>
+#include <sys/time.h>
 
 // Includes from kernel
 #include "GrowthCone.hpp"
@@ -25,8 +25,8 @@ SimulationManager::SimulationManager()
     : simulating_(false)    //!< true if simulation in progress
     , step_()               //!< Current step of the simulation
     , substep_()            //!< Precise time inside current step
-    , initial_step_(0)       //!< first step, updated once per slice
-    , final_step_(0)       //!< Last step, updated once per slice
+    , initial_step_(0)      //!< first step, updated once per slice
+    , final_step_(0)        //!< Last step, updated once per slice
     , initial_time_(Time()) //!< Initial time (day, hour, min, sec)
     , final_time_(Time())   //!< Final time (day, hour, min, sec)
     , maximal_time_(Time()) //!< Maximal time (day, hour, min, sec)
@@ -84,27 +84,23 @@ void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
     {
         try
         {
-            int omp_id       = kernel().parallelism_manager.get_thread_local_id();
+            int omp_id = kernel().parallelism_manager.get_thread_local_id();
             mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
             std::vector<double> randoms;
             for (size_t n = 0; n < size; n++)
             {
                 randoms.push_back(uniform_(*(rnd_engine).get()));
             }
-    #pragma omp critical
+#pragma omp critical
             {
                 values.push_back(randoms);
             }
         }
-        catch (const std::exception& except)
+        catch (const std::exception &except)
         {
-            std::call_once(
-                exception_capture_flag,
-                [&captured_exception]()
-                {
-                    captured_exception = std::current_exception();
-                }
-            );
+            std::call_once(exception_capture_flag, [&captured_exception]() {
+                captured_exception = std::current_exception();
+            });
         }
     }
 
@@ -127,8 +123,8 @@ void SimulationManager::num_threads_changed(int num_omp)
     step_.clear();
     substep_.clear();
 
-    step_              = std::vector<Time::timeStep>(num_omp, old_step);
-    substep_           = std::vector<double>(num_omp, 0.);
+    step_    = std::vector<Time::timeStep>(num_omp, old_step);
+    substep_ = std::vector<double>(num_omp, 0.);
 }
 
 
@@ -143,7 +139,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
 
     // @todo: remove final_step and reset step_ to zero everytime, use Time
     // objects for discrete events
-    final_time_         = initial_time_ + t;
+    final_time_ = initial_time_ + t;
     final_step_ += Time::to_steps(t);
 
     // set the right number of step objects
@@ -174,7 +170,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
 
 #ifndef NDEBUG
             if (omp_id == 0)
-            printf("\n\n\n ######## Starting simulation ########## \n\n");
+                printf("\n\n\n ######## Starting simulation ########## \n\n");
 #endif
 
             mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
@@ -194,15 +190,11 @@ void SimulationManager::initialize_simulation_(const Time &t)
                 kernel().record_manager.record(omp_id);
             }
         }
-        catch (const std::exception& except)
+        catch (const std::exception &except)
         {
-            std::call_once(
-                exception_capture_flag,
-                [&captured_exception]()
-                {
-                    captured_exception = std::current_exception();
-                }
-            );
+            std::call_once(exception_capture_flag, [&captured_exception]() {
+                captured_exception = std::current_exception();
+            });
         }
     }
 
@@ -248,15 +240,11 @@ void SimulationManager::finalize_simulation_()
                 neuron.second->finalize();
             }
         }
-        catch (const std::exception& except)
+        catch (const std::exception &except)
         {
-            std::call_once(
-                exception_capture_flag,
-                [&captured_exception]()
-                {
-                    captured_exception = std::current_exception();
-                }
-            );
+            std::call_once(exception_capture_flag, [&captured_exception]() {
+                captured_exception = std::current_exception();
+            });
         }
     }
 
@@ -387,11 +375,12 @@ void SimulationManager::simulate(const Time &t)
                     // someone has to branch
                     Event &ev            = branching_ev_.back();
                     size_t gid_branching = std::get<2>(ev);
-                    auto it = local_neurons.find(gid_branching);
+                    auto it              = local_neurons.find(gid_branching);
 
                     if (it != local_neurons.end())
                     {
-                        branched = local_neurons[gid_branching]->branch(rnd_engine, ev);
+                        branched = local_neurons[gid_branching]->branch(
+                            rnd_engine, ev);
 
                         // tell recorder manager
                         if (branched)
@@ -405,7 +394,8 @@ void SimulationManager::simulate(const Time &t)
 
                 if (new_step)
                 {
-                    // full step is completed, record, reset substep_, incr. step_
+                    // full step is completed, record, reset substep_, incr.
+                    // step_
                     kernel().record_manager.record(omp_id);
                     substep_[omp_id] = 0.;
                     step_[omp_id]++;
@@ -415,20 +405,17 @@ void SimulationManager::simulate(const Time &t)
                 if (omp_id == 0 and step_[0] % 50 == 0)
                 {
                     printf("##simulation step is %lu \n", step_[omp_id]);
-                    printf("##simulation seconds is %f \n", get_current_seconds());
+                    printf("##simulation seconds is %f \n",
+                           get_current_seconds());
                 }
 #endif /* NDEBUG */
             }
         }
-        catch (const std::exception& except)
+        catch (const std::exception &except)
         {
-            std::call_once(
-                exception_capture_flag,
-                [&captured_exception]()
-                {
-                    captured_exception = std::current_exception();
-                }
-            );
+            std::call_once(exception_capture_flag, [&captured_exception]() {
+                captured_exception = std::current_exception();
+            });
         }
     }
 
@@ -548,4 +535,4 @@ void SimulationManager::set_max_resolution()
     max_resol_ = kernel().neuron_manager.get_max_resol() * max_modifier;
 }
 
-} // namespace
+} // namespace growth

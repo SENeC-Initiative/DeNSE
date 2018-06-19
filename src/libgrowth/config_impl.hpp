@@ -201,6 +201,6 @@ void set_param(statusMap &map, const std::string &key,
 {
     map[key] = Property(value);
 }
-}
+} // namespace growth
 
 #endif /* CONFIG_H_IMPL */

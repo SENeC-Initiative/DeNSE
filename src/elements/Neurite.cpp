@@ -19,8 +19,8 @@
 // models includes
 #include "ActinWave.hpp"
 #include "Node.hpp"
-#include "growth_names.hpp"
 #include "gc_critical.hpp"
+#include "growth_names.hpp"
 
 // debug
 #include <assert.h>
@@ -44,7 +44,7 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , branching_model_(Branching())
     , name_(name)
     , observables_(
-        {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
+          {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
@@ -65,7 +65,10 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
                   CRITICAL_DEL_TAU,
                   CRITICAL_GEN_VAR,
                   CRITICAL_GEN_CORR,
-                  0,0,0,0}
+                  0,
+                  0,
+                  0,
+                  0}
 {
     uniform_   = std::uniform_real_distribution<double>(0., 1.);
     poisson_   = std::poisson_distribution<>(0);
@@ -138,16 +141,10 @@ void Neurite::finalize()
 }
 
 
-void Neurite::set_soma_angle(const double angle)
-{
-    soma_angle_ = angle;
-}
+void Neurite::set_soma_angle(const double angle) { soma_angle_ = angle; }
 
 
-double Neurite::get_soma_angle() const
-{
-    return soma_angle_;
-}
+double Neurite::get_soma_angle() const { return soma_angle_; }
 
 
 /**
@@ -236,7 +233,7 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
         size_t i(0), j(0);
         double ministep = 0.1;
         double elapsed  = 0.;
-        double norm     = 1./substep;
+        double norm     = 1. / substep;
         std::vector<double> avg_speed(growth_cones_.size(), 0);
 
         while (elapsed < substep)
@@ -273,15 +270,17 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
             {
                 gcc = std::dynamic_pointer_cast<GrowthCone_Critical>(gc.second);
                 gcc->compute_CR(rnd_engine, ministep);
-                avg_speed[j] += gcc->compute_cr_speed(rnd_engine, ministep)*ministep;
+                avg_speed[j] +=
+                    gcc->compute_cr_speed(rnd_engine, ministep) * ministep;
                 j++;
             }
 
             // update the total resource
             cr_neurite_.available =
                 cr_neurite_.available +
-                ministep*(cr_neurite_.eq_cr - cr_neurite_.available)/cr_neurite_.tau +
-                sqrt(ministep)*cr_normal_(*(rnd_engine).get());
+                ministep * (cr_neurite_.eq_cr - cr_neurite_.available) /
+                    cr_neurite_.tau +
+                sqrt(ministep) * cr_normal_(*(rnd_engine).get());
         }
 
         // set the gcs' speed to the average value
@@ -289,7 +288,7 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
 
         for (auto &gc : growth_cones_)
         {
-            gc.second->move_.speed = avg_speed[j]*norm;
+            gc.second->move_.speed = avg_speed[j] * norm;
             j++;
         }
     }
@@ -321,12 +320,12 @@ double Neurite::get_available_cr() const
  */
 void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
 {
-    auto child = parent->children_[living_child_id];
+    auto child             = parent->children_[living_child_id];
     size_t grand_parent_ID = parent->get_parent().lock()->get_nodeID();
     NodePtr grand_parent   = nodes_[grand_parent_ID];
 
 #ifndef NDEBUG
-    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
     printf("deleting on OMP %i\n", omp_id);
     TNodePtr other = parent->children_[1 - living_child_id];
     printf("     size        @@@        size       \n"
@@ -528,9 +527,10 @@ void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
  * branching event.
  * The new growth cone is a at a distance `new_length` of the parent `new_node`.
  */
-GCPtr Neurite::create_branching_cone(
-    const TNodePtr branching_node, NodePtr new_node, double dist_to_parent,
-    double new_diameter, Point xy, double new_cone_angle)
+GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
+                                     NodePtr new_node, double dist_to_parent,
+                                     double new_diameter, Point xy,
+                                     double new_cone_angle)
 {
     // create a new growth cone
     GCPtr sibling = growth_cones_.begin()->second->clone(
@@ -549,10 +549,10 @@ GCPtr Neurite::create_branching_cone(
     new_node->children_.push_back(branching_node);
     new_node->children_.push_back(sibling);
 
-    double parent_to_soma = new_node->get_distance_to_soma();
-    BranchPtr b                 = std::make_shared<Branch>(xy, parent_to_soma);
-    sibling->move_.angle        = new_cone_angle;
-    sibling->biology_.diameter  = new_diameter;
+    double parent_to_soma      = new_node->get_distance_to_soma();
+    BranchPtr b                = std::make_shared<Branch>(xy, parent_to_soma);
+    sibling->move_.angle       = new_cone_angle;
+    sibling->biology_.diameter = new_diameter;
 
     sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
     sibling->set_position(xy, parent_to_soma + dist_to_parent, b);
@@ -612,12 +612,12 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         branching_node->set_first_point(xy, distance_to_soma);
 
         // update the new node
-        new_node->get_branch()->resize_tail(branch_point+1);
+        new_node->get_branch()->resize_tail(branch_point + 1);
         new_node->set_position(xy, distance_to_soma, new_node->get_branch());
 
         // create the new growth cone
         auto sibling = create_branching_cone(
-            branching_node, new_node, 0., 0.5*branching_node->get_diameter(),
+            branching_node, new_node, 0., 0.5 * branching_node->get_diameter(),
             xy, branch_direction + angle);
 
         // modify sequent nodes
@@ -644,11 +644,13 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
                "the centrifugal order of new cone is %i \n"
                "the centrifugal order of old node is %i \n",
                sibling->get_branch()->size(), sibling->get_treeID().c_str(),
-               new_node->get_branch()->size(), branching_node->get_branch()->size(),
-               angle * 180 / M_PI, angle * 180 / M_PI + branch_direction * 180 / M_PI,
+               new_node->get_branch()->size(),
+               branching_node->get_branch()->size(), angle * 180 / M_PI,
+               angle * 180 / M_PI + branch_direction * 180 / M_PI,
                new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
                branching_node->get_treeID().c_str(),
-               new_node->get_centrifugal_order(), sibling->get_centrifugal_order(),
+               new_node->get_centrifugal_order(),
+               sibling->get_centrifugal_order(),
                branching_node->get_centrifugal_order());
 #endif /* NDEBUG */
         assert(sibling->get_centrifugal_order() ==
@@ -690,7 +692,7 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
         update_parent_nodes(new_node, branching_cone);
 
         // move the old growth cone --> growth cone split specific
-        branching_cone->move_.angle = direction + old_angle;
+        branching_cone->move_.angle       = direction + old_angle;
         branching_cone->biology_.diameter = old_diameter;
         branching_cone->topological_advance();
         branching_cone->biology_.branch = std::make_shared<Branch>(
@@ -898,7 +900,8 @@ std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cend() const
 }
 
 
-std::unordered_map<size_t, NodePtr>::const_iterator Neurite::nodes_cbegin() const
+std::unordered_map<size_t, NodePtr>::const_iterator
+Neurite::nodes_cbegin() const
 {
     return nodes_.cbegin();
 }
@@ -938,9 +941,11 @@ void Neurite::set_status(const statusMap &status)
     get_param(status, names::diameter_eta_exp, diameter_eta_exp_);
     get_param(status, names::diameter_variance, diameter_variance_);
 
-    bool is_rad = get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
-    bool is_rad_std = get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
-    //printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
+    bool is_rad =
+        get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
+    bool is_rad_std =
+        get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
+    // printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
 
     if (is_rad and not kernel().angles_in_radians())
     {
@@ -954,17 +959,19 @@ void Neurite::set_status(const statusMap &status)
 
 
     is_rad_std = false;
-    is_rad = false;
-    is_rad = get_param(status, names::lateral_branching_angle_mean, lateral_branching_angle_mean_);
-    if ( is_rad and not kernel().angles_in_radians() )
+    is_rad     = false;
+    is_rad     = get_param(status, names::lateral_branching_angle_mean,
+                       lateral_branching_angle_mean_);
+    if (is_rad and not kernel().angles_in_radians())
     {
         lateral_branching_angle_mean_ =
             _rad_from_deg(lateral_branching_angle_mean_);
     }
 
     is_rad = false;
-    is_rad = get_param(status, names::lateral_branching_angle_std,lateral_branching_angle_std_);
-    if ( is_rad and not kernel().angles_in_radians())
+    is_rad = get_param(status, names::lateral_branching_angle_std,
+                       lateral_branching_angle_std_);
+    if (is_rad and not kernel().angles_in_radians())
     {
         lateral_branching_angle_std_ =
             _rad_from_deg(lateral_branching_angle_std_);
@@ -987,13 +994,17 @@ void Neurite::set_status(const statusMap &status)
         get_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
         get_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
         get_param(status, names::CR_neurite_variance, cr_neurite_.var);
-        get_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
-        get_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
-        //get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
+        get_param(status, names::CR_neurite_generated_tau,
+                  cr_neurite_.tau_generation);
+        get_param(status, names::CR_neurite_delivery_tau,
+                  cr_neurite_.tau_delivery);
+        // get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
         //
         // optimize variable for less computation:
-        cr_neurite_.tau = 1./(1./cr_neurite_.tau_delivery + 1./cr_neurite_.tau_generation);
-        cr_neurite_.eq_cr = (cr_neurite_.tau/cr_neurite_.tau_generation)* cr_neurite_.target_cr;
+        cr_neurite_.tau   = 1. / (1. / cr_neurite_.tau_delivery +
+                                1. / cr_neurite_.tau_generation);
+        cr_neurite_.eq_cr = (cr_neurite_.tau / cr_neurite_.tau_generation) *
+                            cr_neurite_.target_cr;
         // @TODO this is not obvious!!
         cr_neurite_.available = cr_neurite_.eq_cr;
 
@@ -1005,8 +1016,9 @@ void Neurite::set_status(const statusMap &status)
                "%s : %f \n"
                "%s : %f \n"
                "%s : %f \n",
-               names::CR_neurite_available.c_str(), cr_neurite_.available, names::CR_neurite_split_th.c_str(),
-               cr_neurite_.split_th, names::gc_split_angle_mean.c_str(),
+               names::CR_neurite_available.c_str(), cr_neurite_.available,
+               names::CR_neurite_split_th.c_str(), cr_neurite_.split_th,
+               names::gc_split_angle_mean.c_str(),
                gc_split_angle_mean_ * 180 / M_PI,
                names::gc_split_angle_std.c_str(),
                gc_split_angle_std_ * 180 / M_PI);
@@ -1034,7 +1046,7 @@ void Neurite::set_status(const statusMap &status)
 
 
 //@TODO
-void Neurite::get_status(statusMap &status, const std::string& level) const
+void Neurite::get_status(statusMap &status, const std::string &level) const
 {
     if (level == "neurite")
     {
@@ -1054,11 +1066,14 @@ void Neurite::get_status(statusMap &status, const std::string& level) const
         set_param(status, names::use_critical_resource, use_critical_resource_);
         if (use_critical_resource_)
         {
-            set_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
+            set_param(status, names::CR_neurite_generated,
+                      cr_neurite_.target_cr);
             set_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
             set_param(status, names::CR_neurite_variance, cr_neurite_.var);
-            set_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
-            set_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
+            set_param(status, names::CR_neurite_generated_tau,
+                      cr_neurite_.tau_generation);
+            set_param(status, names::CR_neurite_delivery_tau,
+                      cr_neurite_.tau_delivery);
         }
     }
 
@@ -1092,21 +1107,22 @@ double Neurite::get_max_resol() const
 {
     // check speed limit
     double max_speed = growth_cones_.begin()->second->avg_speed_ +
-                       5*growth_cones_.begin()->second->speed_variance_;
-    double length    = growth_cones_.begin()->second->filopodia_.finger_length;
+                       5 * growth_cones_.begin()->second->speed_variance_;
+    double length = growth_cones_.begin()->second->filopodia_.finger_length;
 
     // check angle limit for simple random walk (sigma depends on resolution)
     if (growth_cone_model_ == "simple_random_walk")
     {
-        double sigma_sqrd   = growth_cones_.begin()->second->sensing_angle_ *
-                              growth_cones_.begin()->second->sensing_angle_;
+        double sigma_sqrd = growth_cones_.begin()->second->sensing_angle_ *
+                            growth_cones_.begin()->second->sensing_angle_;
         // max angle should contain at least 3 sigma
-        double max_angle    = 0.5*growth_cones_.begin()->second->max_sensing_angle_;
-        double dt_angle_max = max_angle*max_angle/(9*sigma_sqrd);
+        double max_angle =
+            0.5 * growth_cones_.begin()->second->max_sensing_angle_;
+        double dt_angle_max = max_angle * max_angle / (9 * sigma_sqrd);
         return std::min(length / max_speed, dt_angle_max);
     }
 
     return length / max_speed;
 }
 
-} // namespace
+} // namespace growth

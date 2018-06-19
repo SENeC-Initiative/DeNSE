@@ -25,6 +25,6 @@ class Space
         Shape();
     };
 };
-}
+} // namespace growth
 
 #endif // SPACE_H

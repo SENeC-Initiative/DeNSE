@@ -49,15 +49,16 @@ class GrowthCone_RandomWalk : public virtual GrowthCone
     void after_split() override;
     void initialize_RW();
 
-    virtual Point compute_target_position(
-        const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double &substep, double &new_angle) override;
+    virtual Point
+    compute_target_position(const std::vector<double> &directions_weights,
+                            mtPtr rnd_engine, double &substep,
+                            double &new_angle) override;
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
     virtual double get_state(const char *observable) const override;
 };
 
-} /* namespace */
+} // namespace growth
 
 #endif /* GC_RW_H */

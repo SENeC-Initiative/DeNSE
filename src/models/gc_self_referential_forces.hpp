@@ -30,7 +30,7 @@ class GrowthCone_SelfReferentialForces : public virtual GrowthCone
     } Inertial;
 
   private:
-    double gaussian_x, gaussian_y  ;
+    double gaussian_x, gaussian_y;
     SelfAvoidance selfavoidance_;
     SomaTropic somatropic_;
     Inertial inertial_;
@@ -48,14 +48,15 @@ class GrowthCone_SelfReferentialForces : public virtual GrowthCone
     void after_split() override;
     void initialize_SRF();
 
-    virtual Point compute_target_position(
-        const std::vector<double> &directions_weights, mtPtr rnd_engine,
-        double &substep, double &new_angle) override;
+    virtual Point
+    compute_target_position(const std::vector<double> &directions_weights,
+                            mtPtr rnd_engine, double &substep,
+                            double &new_angle) override;
 
     virtual void set_status(const statusMap &status) override;
     virtual void get_status(statusMap &status) const override;
 };
 
-    double generateGaussianNoise(double mean, double stdDev);
-}
+double generateGaussianNoise(double mean, double stdDev);
+} // namespace growth
 #endif

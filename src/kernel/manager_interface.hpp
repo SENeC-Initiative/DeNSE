@@ -57,6 +57,6 @@ class ManagerInterface
      */
     virtual void finalize() = 0;
 };
-}
+} // namespace growth
 
 #endif /* MANAGER_INTERFACE_H */

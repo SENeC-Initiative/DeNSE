@@ -95,6 +95,6 @@ typedef std::pair<std::vector<double>, std::vector<double>> SkelNeurite;
 typedef std::vector<std::tuple<int, int, double, double, double, int>>
     SwcNeurite;
 typedef std::shared_ptr<SkelNeurite> SkelPtr;
-}
+} // namespace growth
 
 #endif /* ELT_TYPE_H */

@@ -109,6 +109,6 @@ inline bool operator>=(const Time &lhs, const Time &rhs)
 {
     return !(lhs < rhs);
 }
-}
+} // namespace growth
 
 #endif // TIME_H

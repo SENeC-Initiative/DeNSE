@@ -21,20 +21,20 @@ void NeuronManager::initialize()
 {
     // create default neuron with two neurites (axon + dendrite)
     statusMap empty_params;
-    statusMap params({
-        {names::num_neurites, Property(2)}, {names::growth_cone_model, ""},
-        {"x", Property(0.)}, {"y", Property(0.)}
-    });
+    statusMap params({{names::num_neurites, Property(2)},
+                      {names::growth_cone_model, ""},
+                      {"x", Property(0.)},
+                      {"y", Property(0.)}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
-    std::vector<std::string> options({
-        "use_critical_resource", "use_van_pelt", "use_uniform_branching",
-        "use_flpl_branching"});
+    std::vector<std::string> options({"use_critical_resource", "use_van_pelt",
+                                      "use_uniform_branching",
+                                      "use_flpl_branching"});
 
     for (std::string opt : options)
     {
-        Property p = Property(true);
+        Property p  = Property(true);
         params[opt] = p;
     }
 
@@ -120,15 +120,11 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
                 neuron->init_status(neuron_params[idx], axon_params[idx],
                                     dendrites_params[idx], rnd_engine);
             }
-            catch (const std::exception& except)
+            catch (const std::exception &except)
             {
-                std::call_once(
-                    exception_capture_flag,
-                    [&captured_exception]()
-                    {
-                        captured_exception = std::current_exception();
-                    }
-                );
+                std::call_once(exception_capture_flag, [&captured_exception]() {
+                    captured_exception = std::current_exception();
+                });
             }
 
             local_neurons.push_back(neuron);
@@ -191,15 +187,11 @@ void NeuronManager::update_kernel_variables()
                 neuron.second->update_kernel_variables();
             }
         }
-        catch (const std::exception& except)
+        catch (const std::exception &except)
         {
-            std::call_once(
-                exception_capture_flag,
-                [&captured_exception]()
-                {
-                    captured_exception = std::current_exception();
-                }
-            );
+            std::call_once(exception_capture_flag, [&captured_exception]() {
+                captured_exception = std::current_exception();
+            });
         }
     }
 
@@ -280,9 +272,9 @@ std::vector<size_t> NeuronManager::get_gids() const
 }
 
 
-const statusMap NeuronManager::get_neurite_status(size_t gid,
-                                                  const std::string &type,
-                                                  const std::string& level) const
+const statusMap
+NeuronManager::get_neurite_status(size_t gid, const std::string &type,
+                                  const std::string &level) const
 {
     statusMap status;
     neurons_.at(gid)->get_neurite_status(status, type, level);
@@ -350,9 +342,9 @@ double NeuronManager::get_max_resol() const
 {
     double max_resol = std::numeric_limits<double>::max();
 
-    for (const auto& map : max_resolutions_)
+    for (const auto &map : max_resolutions_)
     {
-        for (const auto& pair : map)
+        for (const auto &pair : map)
         {
             max_resol = std::min(max_resol, pair.second);
         }
@@ -361,4 +353,4 @@ double NeuronManager::get_max_resol() const
     return max_resol;
 }
 
-}
+} // namespace growth

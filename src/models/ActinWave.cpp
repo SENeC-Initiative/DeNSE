@@ -151,4 +151,4 @@ void ActinWave::set_status(const statusMap &status)
 }
 
 void ActinWave::get_status(statusMap &status) const {}
-}
+} // namespace growth

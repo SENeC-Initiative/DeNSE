@@ -176,7 +176,7 @@ bool KernelManager::using_environment() const { return env_required_; }
 
 void KernelManager::update_num_objects()
 {
-    num_objects_  = neuron_manager.num_neurons();
+    num_objects_ = neuron_manager.num_neurons();
     num_objects_ += record_manager.num_recorders();
 }
 
@@ -192,7 +192,8 @@ void KernelManager::set_status(const statusMap &status)
     get_param(status, "simulation_ID", simulation_ID_);
 
     double at_old = adaptive_timestep_;
-    bool at_updated = get_param(status, "adaptive_timestep", adaptive_timestep_);
+    bool at_updated =
+        get_param(status, "adaptive_timestep", adaptive_timestep_);
 
     bool env_required_old = env_required_;
     bool env_updated = get_param(status, "environment_required", env_required_);
@@ -210,11 +211,11 @@ void KernelManager::set_status(const statusMap &status)
 
     // update the objects
     env_updated *= (env_required_old != env_required_);
-    at_updated  *= (at_old != adaptive_timestep_);
+    at_updated *= (at_old != adaptive_timestep_);
 
     if (env_updated or at_updated)
     {
         neuron_manager.update_kernel_variables();
     }
 }
-}
+} // namespace growth

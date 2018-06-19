@@ -120,11 +120,10 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 // TNodePtr node = nodes.front().second;
                 /*}*/
             }
-
         }
-    swc_file_ << "#end_neuron gid " << gid << "\n";
+        swc_file_ << "#end_neuron gid " << gid << "\n";
     }
 }
 
 Swc::~Swc() { swc_file_.close(); }
-}
+} // namespace growth

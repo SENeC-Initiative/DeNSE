@@ -40,6 +40,6 @@ class Environment
     const GEOSPreparedGeometry *get_border(int omp_id) const;
 };
 
-} /* namespace */
+} // namespace growth
 
 #endif /* ENVIRONMENT_H */

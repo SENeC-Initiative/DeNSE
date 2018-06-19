@@ -39,8 +39,8 @@ void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
 void locate_from_idx(Point &xy, double &angle, double &distance,
                      const BranchPtr branch, size_t id_x)
 {
-    xy       = Point(branch->at(id_x).at(0), branch->at(id_x).at(1));
-    distance = branch->at(id_x).at(2);
+    xy       = branch->xy_at(id_x);
+    distance = branch->at(id_x)[2];
 
     Point xy_1;      // second point to get the local direction of the branch
     double sign = 0; // correct the direction if xy_1 before xy

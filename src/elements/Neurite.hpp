@@ -26,6 +26,25 @@ class Branching;
 class Neuron;
 
 
+typedef struct CR_Neurite
+{
+    // CR_params
+    double target_cr;
+    double eq_cr;
+    double split_th;
+    double tau_generation;
+    double tau_delivery;
+    double var;
+    double correlation;
+
+    // CR_run time variable
+    double available;
+    double tot_demand;
+    double tau; // t^-1 = t_A ^-1 t_d^-1
+    double stochastic_tmp;
+} CR_Neurite;
+
+
 //! Neurite class,
 class Neurite : public std::enable_shared_from_this<Neurite>
 {
@@ -49,9 +68,14 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void finalize();
 
     // Growth functions
+    void update_growth_cones(mtPtr rnd_engine, double substep);
+    void update_resource(mtPtr rnd_engine, double substep);
     void grow(mtPtr rnd_engine, size_t current_step, double substep);
     void delete_cone(size_t cone_n);
 
+    // critical resource
+    double get_quotient_cr() const;
+    double get_available_cr() const;
 
     // Branching functions
     void lateral_branching(TNodePtr branching_node, size_t branch_point,
@@ -113,6 +137,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::normal_distribution<double> normal_;
     std::poisson_distribution<> poisson_;
     std::exponential_distribution<> exponential_;
+    std::normal_distribution<> cr_normal_;
 
     //! growth cones
     std::string growth_cone_model_;
@@ -125,6 +150,11 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;
+
+    // competition
+    bool use_critical_resource_;
+    CR_Neurite cr_neurite_;
+
     //! branch direction parameters
     double diameter_eta_exp_;
     double diameter_variance_;

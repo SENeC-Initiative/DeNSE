@@ -196,6 +196,17 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             {
                 // set recorder status
                 c_recorders_[gid]->set_status(local_status);
+
+                for (size_t n : local_targets)
+                {
+                    auto it = neuron_to_c_recorder_.find(n);
+                    if (it == neuron_to_c_recorder_.end())
+                    {
+                        neuron_to_c_recorder_[n] = std::vector<size_t>();
+                    }
+                    neuron_to_c_recorder_[n].push_back(gid);
+                }
+
                 // assign recorder to a specific thread
                 omp_id_crec_[last_omp_id_].push_back(gid);
             }
@@ -319,6 +330,20 @@ void RecordManager::new_branching_event(const Event &ev)
             for (auto rec_gid : it->second)
             {
                 d_recorders_[rec_gid]->record(ev);
+            }
+        }
+    }
+
+    if (!c_recorders_.empty())
+    {
+        size_t neuron_gid = std::get<2>(ev);
+        auto it           = neuron_to_c_recorder_.find(neuron_gid);
+
+        if (it != neuron_to_c_recorder_.end())
+        {
+            for (auto rec_gid : it->second)
+            {
+                c_recorders_[rec_gid]->record(ev);
             }
         }
     }

@@ -892,39 +892,35 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
  * Constructor for GrowthConeContinuousRecorder
  */
 GrowthConeContinuousRecorder::GrowthConeContinuousRecorder()
-    : v_gc_pos_(0)
-    , v_gc_endpos_(0)
-    , t_gc_pos_(0)
-    , t_gc_endpos_(0)
 {
 }
 
 
 void GrowthConeContinuousRecorder::record()
 {
-    Time t0 = kernel().simulation_manager.get_time();
-
     if (record_to_ == "memory")
     {
         for (const auto &neuron : targets_)
         {
             for (const auto &neurite : neuron.second->neurites_)
             {
-                std::vector<std::vector<double>> &gc_values =
+                std::unordered_map<size_t, std::vector<double>> &gc_values =
                     recording_[neuron.first][neurite.first];
-                std::vector<std::array<Time, 2>> &gc_times =
+                std::unordered_map<size_t, std::array<Time, 2>> &gc_times =
                     times_[neuron.first][neurite.first];
-                std::vector<size_t> &gc_num_times =
+                std::unordered_map<size_t, size_t> &gc_num_times =
                     num_times_[neuron.first][neurite.first];
 
                 for (const auto &gc : neurite.second->growth_cones_)
                 {
-                    if (gc_values.size() <= gc.first)
+                    auto it = gc_values.find(gc.first);
+                    if (it == gc_values.end())
                     {
-                        gc_values.push_back(std::vector<double>(
-                            {gc.second->get_state(cstr_obs_)}));
-                        gc_times.push_back(std::array<Time, 2>({t0, t0}));
-                        gc_num_times.push_back(1);
+                        Time t0 = kernel().simulation_manager.get_time();
+                        gc_values[gc.first] = std::vector<double>(
+                            {gc.second->get_state(cstr_obs_)});
+                        gc_times[gc.first] = std::array<Time, 2>({t0, t0});
+                        gc_num_times[gc.first] = 1;
                     }
                     else
                     {
@@ -944,6 +940,46 @@ void GrowthConeContinuousRecorder::record()
 
 
 /**
+ * Take branching event into account
+ */
+void GrowthConeContinuousRecorder::record(const Event &ev)
+{
+    // branching event occured on a neuron
+    size_t step         = std::get<0>(ev);
+    float substep       = std::get<1>(ev);
+    size_t neuron       = std::get<2>(ev);
+    std::string neurite = std::get<3>(ev);
+
+    Time event_time = Time::from_steps(step, substep);
+
+    std::unordered_map<size_t, std::vector<double>> &gc_values =
+        recording_[neuron][neurite];
+    std::unordered_map<size_t, std::array<Time, 2>> &gc_times =
+        times_[neuron][neurite];
+    std::unordered_map<size_t, size_t> &gc_num_times =
+        num_times_[neuron][neurite];
+
+    // get the neuron and neurite objects
+    NeuronPtr n     = kernel().neuron_manager.get_neuron(neuron);
+    auto neurite_it = n->neurites_.find(neurite);
+
+    // add the new growth cone that just appeared
+    for (const auto &gc : neurite_it->second->growth_cones_)
+    {
+        auto it = gc_values.find(gc.first);
+        if (it == gc_values.end())
+        {
+            Time t0 = kernel().simulation_manager.get_time();
+            gc_values[gc.first] = std::vector<double>(
+                {gc.second->get_state(cstr_obs_)});
+            gc_times[gc.first] = std::array<Time, 2>({event_time, event_time});
+            gc_num_times[gc.first] = 1;
+        }
+    }
+}
+
+
+/**
  * @brief Set the final times for the continuous records
  */
 void GrowthConeContinuousRecorder::final_timestep(size_t step)
@@ -954,7 +990,7 @@ void GrowthConeContinuousRecorder::final_timestep(size_t step)
         {
             for (auto &ttt : neurite_it.second)
             {
-                ttt[1] = kernel().simulation_manager.get_time();
+                ttt.second[1] = kernel().simulation_manager.get_time();
             }
         }
     }
@@ -998,17 +1034,17 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
 
-            recording_[gid] = std::unordered_map<std::string, vVecDouble>();
-            times_[gid]     = std::unordered_map<std::string, vArrayTime>();
+            recording_[gid] = std::unordered_map<std::string, mapNumVecDouble>();
+            times_[gid]     = std::unordered_map<std::string, mapNumArrayTime>();
             num_times_[gid] =
-                std::unordered_map<std::string, std::vector<size_t>>();
+                std::unordered_map<std::string, std::unordered_map<size_t, size_t>>();
             for (const auto &neurite : n->neurites_)
             {
                 size_t size = neurite.second->growth_cones_.size();
 
-                recording_[gid][neurite.first] = vVecDouble(size);
-                times_[gid][neurite.first]     = vArrayTime(size);
-                num_times_[gid][neurite.first] = std::vector<size_t>(size);
+                recording_[gid][neurite.first] = mapNumVecDouble();
+                times_[gid][neurite.first]     = mapNumArrayTime();
+                num_times_[gid][neurite.first] = std::unordered_map<size_t, size_t>();
             }
         }
     }
@@ -1028,8 +1064,8 @@ bool GrowthConeContinuousRecorder::get_next_recording(
             v_neurite_endit_ = v_neuron_it_->second.cend();
             if (v_neurite_it_ != v_neurite_endit_)
             {
-                v_gc_pos_    = 0;
-                v_gc_endpos_ = v_neurite_it_->second.size();
+                v_gc_pos_    = v_neurite_it_->second.cbegin();
+                v_gc_endpos_ = v_neurite_it_->second.cend();
             }
         }
     }
@@ -1047,15 +1083,15 @@ bool GrowthConeContinuousRecorder::get_next_recording(
                 ids.push_back(p_neuron);
                 Property p_neurite = Property(v_neurite_it_->first);
                 ids.push_back(p_neurite);
-                Property p_gc = Property(v_gc_pos_);
+                Property p_gc = Property(v_gc_pos_->first);
                 ids.push_back(p_gc);
 
                 // set the values
                 values.reserve(values.size() +
-                               v_neurite_it_->second[v_gc_pos_].size());
+                               v_neurite_it_->second.at(v_gc_pos_->first).size());
                 values.insert(values.end(),
-                              v_neurite_it_->second[v_gc_pos_].cbegin(),
-                              v_neurite_it_->second[v_gc_pos_].cend());
+                              v_neurite_it_->second.at(v_gc_pos_->first).cbegin(),
+                              v_neurite_it_->second.at(v_gc_pos_->first).cend());
 
                 // increment gc
                 v_gc_pos_++;
@@ -1067,8 +1103,8 @@ bool GrowthConeContinuousRecorder::get_next_recording(
                 v_neurite_it_++;
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_    = 0;
-                    v_gc_endpos_ = v_neurite_it_->second.size();
+                    v_gc_pos_    = v_neurite_it_->second.cbegin();
+                    v_gc_endpos_ = v_neurite_it_->second.cend();
                 }
             }
         }
@@ -1083,8 +1119,8 @@ bool GrowthConeContinuousRecorder::get_next_recording(
                 v_neurite_endit_ = v_neuron_it_->second.cend();
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_    = 0;
-                    v_gc_endpos_ = v_neurite_it_->second.size();
+                    v_gc_pos_    = v_neurite_it_->second.cbegin();
+                    v_gc_endpos_ = v_neurite_it_->second.cend();
                 }
             }
             else
@@ -1120,8 +1156,8 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
             t_neurite_endit_ = t_neuron_it_->second.cend();
             if (t_neurite_it_ != t_neurite_endit_)
             {
-                t_gc_pos_    = 0;
-                t_gc_endpos_ = t_neurite_it_->second.size();
+                t_gc_pos_    = t_neurite_it_->second.cbegin();
+                t_gc_endpos_ = t_neurite_it_->second.cend();
             }
         }
     }
@@ -1139,28 +1175,28 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                 ids.push_back(p_neuron);
                 Property p_neurite = Property(t_neurite_it_->first);
                 ids.push_back(p_neurite);
-                Property p_gc = Property(t_gc_pos_);
+                Property p_gc = Property(t_gc_pos_->first);
                 ids.push_back(p_gc);
 
                 // set the values
                 TRIE(ctu)
                 CASE("seconds")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_seconds());
                 }
                 CASE("minutes")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_minutes());
                 }
                 CASE("hours")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_hours());
                 }
                 CASE("days")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_days());
                 }
@@ -1175,8 +1211,8 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                 t_neurite_it_++;
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_    = 0;
-                    t_gc_endpos_ = t_neurite_it_->second.size();
+                    t_gc_pos_    = t_neurite_it_->second.cbegin();
+                    t_gc_endpos_ = t_neurite_it_->second.cend();
                 }
             }
         }
@@ -1191,8 +1227,8 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                 t_neurite_endit_ = t_neuron_it_->second.cend();
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_    = 0;
-                    t_gc_endpos_ = t_neurite_it_->second.size();
+                    t_gc_pos_    = t_neurite_it_->second.cbegin();
+                    t_gc_endpos_ = t_neurite_it_->second.cend();
                 }
             }
             else
@@ -1216,10 +1252,6 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
  * Constructor for GrowthConeDiscreteRecorder
  */
 GrowthConeDiscreteRecorder::GrowthConeDiscreteRecorder()
-    : v_gc_pos_(0)
-    , v_gc_endpos_(0)
-    , t_gc_pos_(0)
-    , t_gc_endpos_(0)
 {
 }
 
@@ -1305,8 +1337,8 @@ bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
             v_neurite_endit_ = v_neuron_it_->second.cend();
             if (v_neurite_it_ != v_neurite_endit_)
             {
-                v_gc_pos_    = 0;
-                v_gc_endpos_ = v_neurite_it_->second.size();
+                v_gc_pos_    = v_neurite_it_->second.cbegin();
+                v_gc_endpos_ = v_neurite_it_->second.cend();
             }
         }
     }
@@ -1324,15 +1356,15 @@ bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
                 ids.push_back(p_neuron);
                 Property p_neurite = Property(v_neurite_it_->first);
                 ids.push_back(p_neurite);
-                Property p_gc = Property(v_gc_pos_);
+                Property p_gc = Property(v_gc_pos_->first);
                 ids.push_back(p_gc);
 
                 // set the values
                 values.reserve(values.size() +
-                               v_neurite_it_->second[v_gc_pos_].size());
+                               v_neurite_it_->second.at(v_gc_pos_->first).size());
                 values.insert(values.end(),
-                              v_neurite_it_->second[v_gc_pos_].cbegin(),
-                              v_neurite_it_->second[v_gc_pos_].cend());
+                              v_neurite_it_->second.at(v_gc_pos_->first).cbegin(),
+                              v_neurite_it_->second.at(v_gc_pos_->first).cend());
 
                 // increment gc
                 v_gc_pos_++;
@@ -1344,8 +1376,8 @@ bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
                 v_neurite_it_++;
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_    = 0;
-                    v_gc_endpos_ = v_neurite_it_->second.size();
+                    v_gc_pos_    = v_neurite_it_->second.cbegin();
+                    v_gc_endpos_ = v_neurite_it_->second.cend();
                 }
             }
         }
@@ -1360,8 +1392,8 @@ bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
                 v_neurite_endit_ = v_neuron_it_->second.cend();
                 if (v_neurite_it_ != v_neurite_endit_)
                 {
-                    v_gc_pos_    = 0;
-                    v_gc_endpos_ = v_neurite_it_->second.size();
+                    v_gc_pos_    = v_neurite_it_->second.cbegin();
+                    v_gc_endpos_ = v_neurite_it_->second.cend();
                 }
             }
             else
@@ -1397,8 +1429,8 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
             t_neurite_endit_ = t_neuron_it_->second.cend();
             if (t_neurite_it_ != t_neurite_endit_)
             {
-                t_gc_pos_    = 0;
-                t_gc_endpos_ = t_neurite_it_->second.size();
+                t_gc_pos_    = t_neurite_it_->second.cbegin();
+                t_gc_endpos_ = t_neurite_it_->second.cend();
             }
         }
     }
@@ -1416,31 +1448,31 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                 ids.push_back(p_neuron);
                 Property p_neurite = Property(t_neurite_it_->first);
                 ids.push_back(p_neurite);
-                Property p_gc = Property(t_gc_pos_);
+                Property p_gc = Property(t_gc_pos_->first);
                 ids.push_back(p_gc);
 
                 // set the values
                 values.reserve(values.size() +
-                               t_neurite_it_->second[t_gc_pos_].size());
+                               t_neurite_it_->second.at(t_gc_pos_->first).size());
 
                 TRIE(ctu)
                 CASE("seconds")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_seconds());
                 }
                 CASE("minutes")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_minutes());
                 }
                 CASE("hours")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_hours());
                 }
                 CASE("days")
-                for (auto t : t_neurite_it_->second[t_gc_pos_])
+                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
                 {
                     values.push_back(t.get_total_days());
                 }
@@ -1456,8 +1488,8 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                 t_neurite_it_++;
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_    = 0;
-                    t_gc_endpos_ = t_neurite_it_->second.size();
+                    t_gc_pos_    = t_neurite_it_->second.cbegin();
+                    t_gc_endpos_ = t_neurite_it_->second.cend();
                 }
             }
         }
@@ -1472,8 +1504,8 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                 t_neurite_endit_ = t_neuron_it_->second.cend();
                 if (t_neurite_it_ != t_neurite_endit_)
                 {
-                    t_gc_pos_    = 0;
-                    t_gc_endpos_ = t_neurite_it_->second.size();
+                    t_gc_pos_    = t_neurite_it_->second.cbegin();
+                    t_gc_endpos_ = t_neurite_it_->second.cend();
                 }
             }
             else

@@ -16,25 +16,8 @@
 
 namespace growth
 {
-
 class Neurite;
 
-typedef struct CR_Neurite
-{
-    // CR_params
-    double generated;
-    double split_th;
-    double tau_generation;
-    double tau_delivery;
-    double var;
-    double correlation;
-
-    // CR_run time variable
-    double available;
-    double tot_demand;
-    double tau; // t^-1 = t_A ^-1 t_d^-1
-    double stochastic_tmp;
-} CR_Neurite;
 
 class Branching
 {
@@ -42,7 +25,6 @@ class Branching
 
   private:
     std::uniform_real_distribution<double> uniform_;
-    std::normal_distribution<> cr_normal_;
     std::poisson_distribution<> poisson_;
     std::exponential_distribution<> exponential_;
     std::exponential_distribution<> exponential_uniform_;
@@ -60,9 +42,6 @@ class Branching
     double T_;
 
     bool use_critical_resource_;
-    CR_Neurite cr_neurite_;
-    double timestep_;
-    double euler_step_;
 
     // variables for uniform branching
     bool use_uniform_branching_;
@@ -83,8 +62,6 @@ class Branching
     void set_branching_event(Event &ev, double duration);
     bool branching_event(mtPtr rnd_engine, const Event &ev);
 
-    void update_growth_cones(mtPtr rnd_engine);
-
     // van Pelt branching functions
     bool vanpelt_new_branch(mtPtr rnd_engine);
     void compute_vanpelt_event(mtPtr rnd_engine);
@@ -98,9 +75,6 @@ class Branching
     bool flpl_new_branch(mtPtr rnd_engine);
 
     // critical_resource functions
-    void update_critical_resource(mtPtr rnd_engine);
-    double get_CR_quotient() const;
-    double get_CR_available() const;
     void CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone);
     void initialize_next_event(mtPtr rnd_engine, double new_resolution,
                                size_t previous_step);

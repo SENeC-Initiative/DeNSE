@@ -155,6 +155,7 @@ if __name__ == '__main__':
     population.create_group("chamber_2", range(100, 200))
     nngt.Graph.make_network(graph, population)
 
+
     graph.to_file("diode.el")
 
     nngt.plot.draw_network(graph, ecolor="groups", ncolor="group", decimate=5,

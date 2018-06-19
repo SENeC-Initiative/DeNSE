@@ -57,6 +57,7 @@ class SimulationManager : public ManagerInterface
     std::vector<Event> branching_ev_;
     std::vector<Event> branching_ev_tmp_;
     Time::timeStep final_step_;
+    Time::timeStep initial_step_;
     Time initial_time_;
     Time final_time_;
     Time maximal_time_;

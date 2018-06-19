@@ -25,7 +25,8 @@ SimulationManager::SimulationManager()
     : simulating_(false)    //!< true if simulation in progress
     , step_()               //!< Current step of the simulation
     , substep_()            //!< Precise time inside current step
-    , final_step_(0L)       //!< Last step, updated once per slice
+    , initial_step_(0)       //!< first step, updated once per slice
+    , final_step_(0)       //!< Last step, updated once per slice
     , initial_time_(Time()) //!< Initial time (day, hour, min, sec)
     , final_time_(Time())   //!< Final time (day, hour, min, sec)
     , maximal_time_(Time()) //!< Maximal time (day, hour, min, sec)
@@ -51,7 +52,8 @@ void SimulationManager::finalize()
     step_.clear();
     substep_.clear();
 
-    final_step_   = 0L;
+    initial_step_ = 0;
+    final_step_   = 0;
     initial_time_ = Time();
     final_time_   = Time();
     max_resol_    = std::numeric_limits<double>::max();
@@ -142,12 +144,11 @@ void SimulationManager::initialize_simulation_(const Time &t)
     // @todo: remove final_step and reset step_ to zero everytime, use Time
     // objects for discrete events
     final_time_         = initial_time_ + t;
-    size_t initial_step = final_step_;
     final_step_ += Time::to_steps(t);
 
     // set the right number of step objects
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
-    step_       = std::vector<Time::timeStep>(num_omp, initial_step);
+    step_       = std::vector<Time::timeStep>(num_omp, initial_step_);
     substep_    = std::vector<double>(num_omp, 0.);
 
     // reset branching events
@@ -184,7 +185,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
             for (auto &neuron : local_neurons)
             {
                 neuron.second->initialize_next_event(
-                    rnd_engine, resolution_scale_factor_, initial_step);
+                    rnd_engine, resolution_scale_factor_, initial_step_);
             }
 
             // record the first step if time is zero
@@ -270,7 +271,8 @@ void SimulationManager::finalize_simulation_()
     kernel().record_manager.finalize_simulation(final_step_);
 
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
-    initial_time_.update(step_.front());
+    initial_time_.update(final_step_ - initial_step_);
+    initial_step_ = final_step_;
 }
 
 
@@ -480,7 +482,7 @@ void SimulationManager::get_status(statusMap &status) const
 double SimulationManager::get_current_seconds() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
-    return step_.at(omp_id) * Time::RESOLUTION +
+    return (step_.at(omp_id) - initial_step_) * Time::RESOLUTION +
            initial_time_.get_total_seconds();
 }
 
@@ -489,7 +491,7 @@ Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
-    t0.update(step_[omp_id]);
+    t0.update(step_[omp_id] - initial_step_);
     return t0;
 }
 

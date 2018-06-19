@@ -27,8 +27,6 @@ const std::string CR_elongation_factor("CR_elongation_factor");
 const std::string CR_elongation_th("CR_elongation_th");
 const std::string CR_retraction_factor("CR_retraction_factor");
 const std::string CR_retraction_th("CR_retraction_th");
-
-// Critical parameters for neurite
 const std::string CR_neurite_split_th("CR_neurite_split_th");
 const std::string CR_neurite_available("CR_neurite_available");
 const std::string CR_neurite_variance("CR_neurite_varia");
@@ -46,9 +44,10 @@ const std::string duration_retraction("duration_of_retraction");
 const std::string E("E");
 
 const std::string filopodia_angular_resolution("filopodia_angular_resolution");
-const std::string flpl_branching_rate("flpl_branching_rate");
 const std::string filopodia_finger_length("filopodia_finger_length");
 const std::string filopodia_min_number("filopodia_min_number");
+const std::string filopodia_wall_affinity("filopodia_wall_affinity");
+const std::string flpl_branching_rate("flpl_branching_rate");
 
 const std::string gamma_coeff("gamma_coeff");
 const std::string gc_split_angle_mean("gc_split_angle_mean");
@@ -70,6 +69,7 @@ const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 
 const std::string random_walk_submodel("random_walk_submodel");
+const std::string resource("resource");
 const std::string rw_memory_tau("rw_memory_tau");
 const std::string rw_delta_corr("rw_delta_corr");
 
@@ -97,7 +97,7 @@ const std::string use_flpl_branching("use_flpl_branching");
 const std::string use_uniform_branching("use_uniform_branching");
 const std::string use_van_pelt("use_van_pelt");
 
-const std::string filopodia_wall_affinity("filopodia_wall_affinity");
+// recorders
 
 const std::string event_type("event_type");
 const std::string interval("interval");

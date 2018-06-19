@@ -12,7 +12,7 @@ add_library( elements STATIC ${elements_sources} )
 set_target_properties( elements PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
 target_include_directories(
-    elements PRIVATE
+    elements PUBLIC
     ${PROJECT_SOURCE_DIR}/kernel
     ${PROJECT_SOURCE_DIR}/libgrowth
     ${PROJECT_SOURCE_DIR}/spatial

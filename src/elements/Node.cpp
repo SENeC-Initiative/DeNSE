@@ -88,11 +88,6 @@ void TopologicalNode::topological_advance()
 void TopologicalNode::set_first_point(const Point p, double length)
 {
     biology_.branch->set_first_point(p, length);
-
-    geometry_.position      = p;
-    geometry_.dis_to_soma   = length;
-    geometry_.dis_to_parent =
-        length - topology_.parent.lock()->get_distance_to_soma();
 }
 
 
@@ -100,6 +95,20 @@ void TopologicalNode::set_position(const Point &pos)
 {
     LogicError("Cannot set only position for a TopologicalNode", __FUNCTION__,
                __FILE__, __LINE__);
+}
+
+
+void TopologicalNode::set_position(const Point &pos, double dist_to_soma,
+                                   BranchPtr b)
+{
+    assert(pos == b->get_last_xy());
+
+    geometry_.position      = pos;
+    geometry_.dis_to_soma   = dist_to_soma;
+    geometry_.dis_to_parent = dist_to_soma
+                              - topology_.parent.lock()->get_distance_to_soma();
+
+    biology_.branch = b;
 }
 
 

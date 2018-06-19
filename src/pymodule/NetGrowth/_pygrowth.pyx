@@ -301,7 +301,7 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
                                    "this is an internal error, please file " +\
                                    "a bug on our issue tracker."
 
-    return [num_obj + i for i in range(num_created)]
+    return tuple([num_obj + i for i in range(num_created)])
 
 
 def GenerateSimulationID(*args):
@@ -1394,6 +1394,8 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
         vector[Property] data_ids, time_ids
         vector[double] data, times
 
+    time_units = _to_bytes(time_units)
+
     level      = rec_status["level"]
     ev_type    = rec_status["event_type"]
     observable = rec_status["observable"]
@@ -1480,8 +1482,21 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     res_times[neuron][neurite][gc] = times
                 else:
-                    res_times[neuron][neurite][gc] = np.arange(
-                        times[0], times[1] + resolution, resolution)
+                    num_obs = len(res_obs[neuron][neurite][gc])
+                    if num_obs != int((times[1] - times[0]) / resolution):
+                        # @todo check where this multiple recording of first
+                        # step comes from
+                        start = int(
+                            np.abs(int((times[1] - times[0]) / resolution)
+                            - num_obs) - 1)
+                        res_obs[neuron][neurite][gc] = \
+                            res_obs[neuron][neurite][gc][start:]
+                        # initially existing gc
+                        res_times[neuron][neurite][gc] = np.arange(
+                            times[0], times[1] + resolution, resolution)
+                    else:
+                        res_times[neuron][neurite][gc] = np.arange(
+                            times[0], times[1], resolution)
             # clear data
             data_ids.clear()
             time_ids.clear()

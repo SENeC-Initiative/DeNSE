@@ -52,6 +52,7 @@ class RecordManager : public ManagerInterface
     std::unordered_map<size_t, std::shared_ptr<BaseRecorder>> c_recorders_;
     std::unordered_map<size_t, std::shared_ptr<BaseRecorder>> d_recorders_;
     std::unordered_map<size_t, std::vector<size_t>> neuron_to_d_recorder_;
+    std::unordered_map<size_t, std::vector<size_t>> neuron_to_c_recorder_;
     std::vector<std::vector<size_t>> omp_id_crec_;
     std::vector<std::vector<size_t>> omp_id_drec_;
     size_t last_omp_id_;

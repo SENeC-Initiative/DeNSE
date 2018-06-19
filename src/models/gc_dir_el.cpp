@@ -124,7 +124,10 @@ GrowthCone_Elongation_Direction<ElongationModel, DirectionModel>::get_state(
     double value = 0.;
 
     value = ElongationModel::get_state(observable);
-    value = DirectionModel::get_state(observable);
+    if (value == 0)
+    {
+        value = DirectionModel::get_state(observable);
+    }
 
     return value;
 }

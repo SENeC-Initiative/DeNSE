@@ -3,6 +3,7 @@
 // C++ includes
 #include <cmath>
 #include <functional>
+#include <memory>
 
 // kernel includes
 #include "kernel_manager.hpp"
@@ -11,6 +12,10 @@
 #include "GrowthCone.hpp"
 #include "Neurite.hpp"
 #include "Node.hpp"
+
+// models includes
+#include "gc_critical.hpp"
+
 
 // Integrate the differential equation
 // dA =  - (A_m-A)/tau
@@ -38,15 +43,6 @@ Branching::Branching(NeuritePtr neurite)
     , E_(VP_S)
     , S_(VP_E)
     , T_(VP_T)
-    , cr_neurite_{CRITICAL_GENERATED,
-                  CRITICAL_SPLIT_TH,
-                  CRITICAL_GEN_TAU,
-                  CRITICAL_DEL_TAU,
-                  CRITICAL_GEN_VAR,
-                  CRITICAL_GEN_CORR,
-                  0,0,0,0}
-    // parameters for critical_resource-driven growth
-    , use_critical_resource_(false)
     // parameters for uniform branching
     , use_uniform_branching_(false)
     , uniform_branching_rate_(UNIFORM_BRANCHING_RATE)
@@ -60,8 +56,6 @@ Branching::Branching(NeuritePtr neurite)
         std::exponential_distribution<double>(uniform_branching_rate_);
     exponential_flpl_ =
         std::exponential_distribution<double>(flpl_branching_rate_);
-    cr_normal_ =
-        std::normal_distribution<> (0, CRITICAL_GEN_VAR);
 }
 
 
@@ -209,37 +203,6 @@ void Branching::set_branching_event(Event &ev, double duration)
 
 
 /**
- * @brief Update each growth cone as the user defined in the branching model
- * @details Each model of neurite, like critical_resource has it's own
- * parameters to update, this function will be overriden by neurite's models
- *
- * @param rnd_engine
- */
-void Branching::update_growth_cones(mtPtr rnd_engine)
-{
-    // if using critical_resource model it's necessary to recompute the amount
-    // of critical_resource
-    // required from each growth cone.
-    //
-    if (use_critical_resource_)
-    {
-        cr_neurite_.tot_demand = 0;
-        for (auto &gc : neurite_->growth_cones_)
-        {
-            //@TODO move this into the neurite
-            gc.second->compute_CR_demand(rnd_engine);
-            cr_neurite_.tot_demand += gc.second->get_CR_demand();
-        }
-        if (cr_neurite_.tot_demand != 0)
-        {
-            cr_neurite_.tot_demand = 1. / cr_neurite_.tot_demand;
-        }
-        /*cr_neurite_.available = 1.*/;
-    }
-}
-
-
-/**
  * @brief Verify and actuate if a branching event is scheduled for the present
  * step
  *
@@ -276,25 +239,10 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
     {
         return vanpelt_new_branch(rnd_engine);
     }
-    // verify CR for each growth cone
-    if (use_critical_resource_)
-    {
-        update_critical_resource(rnd_engine);
 
-        for (auto &gc : neurite_->growth_cones_)
-        {
-            if (gc.second->get_CR_received() > cr_neurite_.split_th)
-            {
-                gc.second->reset_CR_demand();
-                CR_new_branch(rnd_engine, gc.second);
-                return true;
-            }
+    // note that critical resource splitting is instantaneous and unplanned
+    // thus it is never communicated through branching events
 
-            // no new growth cone was created
-            return false;
-        }
-    }
-    assert(-1);
     return false;
 }
 
@@ -516,39 +464,6 @@ bool Branching::uniform_new_branch(mtPtr rnd_engine)
 }
 
 
-
-//#######################################################
-//              Critical Resource
-//#######################################################
-//
-
-void Branching::update_critical_resource(mtPtr rnd_engine)
-{
-    timestep_ = kernel().simulation_manager.get_resolution();
-    cr_neurite_.stochastic_tmp =cr_normal_(*(rnd_engine).get())*sqrt(timestep_);
-
-    euler_step_ = cr_neurite_.available+
-                                    f_deterministic(cr_neurite_.available,
-                                                  cr_neurite_.generated,
-                                                  cr_neurite_.tau,
-                                                  timestep_,
-                                                  cr_neurite_.stochastic_tmp);
-
-    cr_neurite_.available = cr_neurite_.available + timestep_* 0.5*
-                                    (f_deterministic(cr_neurite_.available,
-                                                  cr_neurite_.generated,
-                                                  cr_neurite_.tau,
-                                                  timestep_,
-                                                  cr_neurite_.stochastic_tmp)
-                                    +
-                                    f_deterministic(euler_step_,
-                                                  cr_neurite_.generated,
-                                                  cr_neurite_.tau,
-                                                  timestep_,
-                                                  cr_neurite_.stochastic_tmp));
-    //cr_neurite_.available += cr_normal_(*(rnd_engine).get());
-
-}
 //###################################################
 //                 Van Pelt Model
 //###################################################
@@ -672,8 +587,11 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
  */
 void Branching::CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone)
 {
-    double new_length = splitting_cone->get_CR_speed_factor() *
-                        splitting_cone->get_CR_received();
+    std::shared_ptr<GrowthCone_Critical> gcc =
+        std::dynamic_pointer_cast<GrowthCone_Critical>(splitting_cone);
+
+    double new_length = gcc->get_CR_speed_factor() *
+                        gcc->get_CR_received();
     double new_angle, old_angle;
     double old_diameter = splitting_cone->get_diameter();
     double new_diameter = old_diameter;
@@ -688,50 +606,8 @@ void Branching::CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone)
 }
 
 
-double Branching::get_CR_quotient() const { return cr_neurite_.tot_demand; }
-
-
-double Branching::get_CR_available() const { return cr_neurite_.available/  cr_neurite_.tau_delivery; }
-
-
 void Branching::set_status(const statusMap &status)
 {
-
-
-    //                 Critical Resource Params
-    //###################################################
-    get_param(status, names::use_critical_resource, use_critical_resource_);
-    if (use_critical_resource_)
-
-    {
-        get_param(status, names::CR_neurite_generated, cr_neurite_.generated);
-        get_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
-        get_param(status, names::CR_neurite_variance, cr_neurite_.var);
-        get_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
-        get_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
-        //get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
-        //
-        // optimize variable for less computation:
-        cr_neurite_.tau = 1./(1./cr_neurite_.tau_delivery + 1./cr_neurite_.tau_generation);
-        cr_neurite_.generated = (cr_neurite_.tau/cr_neurite_.tau_generation)* cr_neurite_.generated;
-        // @TODO this is not obvious!!
-        cr_neurite_.available = cr_neurite_.generated;
-
-        cr_normal_ = std::normal_distribution<> (0, cr_neurite_.var);
-#ifndef NDEBUG
-        printf("\n"
-               " CRITICAL RESOURCE BRANCHING \n"
-               "%s : %f \n"
-               "%s : %f \n"
-               "%s : %f \n"
-               "%s : %f \n",
-               names::CR_neurite_available.c_str(), cr_neurite_.available, names::CR_neurite_split_th.c_str(),
-               cr_neurite_.split_th, names::gc_split_angle_mean.c_str(),
-               neurite_->gc_split_angle_mean_ * 180 / M_PI,
-               names::gc_split_angle_std.c_str(),
-               neurite_->gc_split_angle_std_ * 180 / M_PI);
-#endif
-    }
 
     //                 Van Pelt Params
     //###################################################
@@ -814,16 +690,6 @@ void Branching::set_status(const statusMap &status)
 
 void Branching::get_status(statusMap &status) const
 {
-    set_param(status, names::use_critical_resource, use_critical_resource_);
-    if (use_critical_resource_)
-    {
-        set_param(status, names::CR_neurite_generated, cr_neurite_.generated);
-        set_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
-        set_param(status, names::CR_neurite_variance, cr_neurite_.var);
-        set_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
-        set_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
-    }
-
     set_param(status, names::use_van_pelt, use_van_pelt_);
     if (use_van_pelt_)
     {
@@ -847,10 +713,4 @@ void Branching::get_status(statusMap &status) const
                   flpl_branching_rate_);
     }
 }
-}
-
-// dA =  - (A_m-A)/tau dt
-double f_deterministic(double A_m, double A, double tau, double dt, double stochastic_tmp)
-{
-    return - (A_m - A)/tau *dt + stochastic_tmp;
 }

@@ -529,12 +529,35 @@ void GrowthCone::retraction(size_t cone_n, int omp_id)
     turned_ = 0.;
 
     // remove the points
+    double distance;
+
     while (to_retract > 0)
     {
-        if (biology_.branch->size() > 0)
+        if (biology_.branch->size() > 1)
         {
-            to_retract -= biology_.branch->points[2].back();
-            biology_.branch->retract();
+            distance = biology_.branch->points[2].back()
+                       - biology_.branch->points[2][biology_.branch->size()-2];
+
+            if (distance < to_retract)
+            {
+                to_retract -= distance;
+                biology_.branch->retract();
+            }
+            else
+            {
+                double diff = distance - to_retract;
+                Point p1 = biology_.branch->xy_at(biology_.branch->size() - 1);
+                Point p2 = biology_.branch->get_last_xy();
+
+                double new_x = (p2[0]*diff + p1[0]*(distance-diff))/distance;
+                double new_y = (p2[1]*diff + p1[1]*(distance-diff))/distance;
+                Point new_p  = Point(new_x, new_y);
+
+                biology_.branch->retract();
+                biology_.branch->add_point(new_p, diff);
+
+                to_retract = 0.;
+            }
         }
         else
         {
@@ -570,7 +593,7 @@ void GrowthCone::retraction(size_t cone_n, int omp_id)
     geometry_.position = biology_.branch->get_last_xy();
 
     // prune growth cone if necessary
-    if (biology_.branch->size() == 0)
+    if (biology_.branch->size() == 1)
     {
         prune(cone_n);
     }
@@ -889,10 +912,6 @@ void GrowthCone::init_filopodia()
 //              Interface functions
 // ###########################################################
 
-
-void GrowthCone::compute_CR_demand(mtPtr rnd_engine) { }
-
-
 void GrowthCone::compute_speed(mtPtr rnd_engine, double substep)
 {
     if (speed_variance_ > 0)
@@ -915,21 +934,6 @@ void GrowthCone::after_split() {}
 
 
 double GrowthCone::get_growth_cone_speed() const { return move_.speed; }
-
-
-double GrowthCone::get_CR_received() const { return -1; }
-
-
-double GrowthCone::get_CR_demand() const { return -1; }
-
-
-void GrowthCone::reset_CR_demand() {}
-
-
-double GrowthCone::get_CR_speed_factor() const { return -1; }
-
-
-double GrowthCone::get_CR_topo_coeff() const { return 0; }
 
 
 double GrowthCone::get_module() const { return move_.module; }
@@ -1172,6 +1176,10 @@ void GrowthCone::update_kernel_variables()
     // check change in resolution
     double old_resol   = resol_;
     resol_             = kernel().simulation_manager.get_resolution();
+
+    // check adaptive timestep
+    adaptive_timestep_ = kernel().get_adaptive_timestep();
+    timestep_divider_  = 1. / adaptive_timestep_;
 
     // check adaptive timestep
     adaptive_timestep_ = kernel().get_adaptive_timestep();

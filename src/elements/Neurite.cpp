@@ -3,6 +3,7 @@
 // c++ includes
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <sstream>
 #define _USE_MATH_DEFINES
 
@@ -19,6 +20,7 @@
 #include "ActinWave.hpp"
 #include "Node.hpp"
 #include "growth_names.hpp"
+#include "gc_critical.hpp"
 
 // debug
 #include <assert.h>
@@ -41,7 +43,8 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     : parent_(p)
     , branching_model_(Branching())
     , name_(name)
-    , observables_({"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
+    , observables_(
+        {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , num_created_nodes_(0)
     , num_created_cones_(0)
     , growth_cone_model_("")
@@ -53,10 +56,21 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , gc_split_angle_std_(GC_SPLIT_ANGLE_STD)
     , diameter_eta_exp_(DIAMETER_ETA_EXP)
     , diameter_variance_(DIAMETER_VARIANCE)
+    // parameters for critical_resource-driven growth
+    , use_critical_resource_(false)
+    , cr_neurite_{CRITICAL_GENERATED,
+                  CRITICAL_GENERATED,
+                  CRITICAL_SPLIT_TH,
+                  CRITICAL_GEN_TAU,
+                  CRITICAL_DEL_TAU,
+                  CRITICAL_GEN_VAR,
+                  CRITICAL_GEN_CORR,
+                  0,0,0,0}
 {
-    uniform_ = std::uniform_real_distribution<double>(0., 1.);
-    poisson_ = std::poisson_distribution<>(0);
-    normal_  = std::normal_distribution<double>(0, 1);
+    uniform_   = std::uniform_real_distribution<double>(0., 1.);
+    poisson_   = std::poisson_distribution<>(0);
+    normal_    = std::normal_distribution<double>(0, 1);
+    cr_normal_ = std::normal_distribution<double>(0, CRITICAL_GEN_VAR);
     //~ #ifndef NDEBUG
     //~ printf(" the neurite %s model is %s \n", neurite_type_.c_str(),
     //~ parent_.lock()->get_gc_model().c_str());
@@ -180,7 +194,7 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     growth_cones_tmp_.clear();
 
     // call the branching model specific update
-    branching_model_.update_growth_cones(rnd_engine);
+    update_growth_cones(rnd_engine, substep);
 
     // grow all the growth cones
     for (auto &gc : growth_cones_)
@@ -200,6 +214,101 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     }
 
     dead_cones_.clear();
+}
+
+
+/**
+ * @brief Update the growth cones depending on their model
+ * @details Each model of neurite, like critical_resource has it's own
+ * parameters to update, this function will be overriden by neurite's models
+ *
+ * @param rnd_engine
+ */
+void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
+{
+    // if using critical_resource model it's necessary to recompute the amount
+    // of critical_resource required from each growth cone.
+    if (use_critical_resource_)
+    {
+        std::shared_ptr<GrowthCone_Critical> gcc;
+        cr_neurite_.tot_demand = 0;
+
+        size_t i(0), j(0);
+        double ministep = 0.1;
+        double elapsed  = 0.;
+        double norm     = 1./substep;
+        std::vector<double> avg_speed(growth_cones_.size(), 0);
+
+        while (elapsed < substep)
+        {
+            i += 1;
+            j = 0;
+
+            if (elapsed + ministep > substep)
+            {
+                ministep = substep - elapsed;
+                elapsed  = substep;
+            }
+            else
+            {
+                elapsed += ministep;
+            }
+
+            // compute the total demand
+            for (auto &gc : growth_cones_)
+            {
+                gcc = std::dynamic_pointer_cast<GrowthCone_Critical>(gc.second);
+                cr_neurite_.tot_demand += gcc->get_CR_demand();
+            }
+
+            assert(cr_neurite_.tot_demand >= 0.);
+
+            if (cr_neurite_.tot_demand != 0)
+            {
+                cr_neurite_.tot_demand = 1. / cr_neurite_.tot_demand;
+            }
+
+            // compute the evolution of the resource
+            for (auto &gc : growth_cones_)
+            {
+                gcc = std::dynamic_pointer_cast<GrowthCone_Critical>(gc.second);
+                gcc->compute_CR(rnd_engine, ministep);
+                avg_speed[j] += gcc->compute_cr_speed(rnd_engine, ministep)*ministep;
+                j++;
+            }
+
+            // update the total resource
+            cr_neurite_.available =
+                cr_neurite_.available +
+                ministep*(cr_neurite_.eq_cr - cr_neurite_.available)/cr_neurite_.tau +
+                sqrt(ministep)*cr_normal_(*(rnd_engine).get());
+        }
+
+        // set the gcs' speed to the average value
+        j = 0;
+
+        for (auto &gc : growth_cones_)
+        {
+            gc.second->move_.speed = avg_speed[j]*norm;
+            j++;
+        }
+    }
+}
+
+
+/**
+ * Return the inverse of the total demand
+ * (precomputed and inversed despite the misleading name)
+ */
+double Neurite::get_quotient_cr() const { return cr_neurite_.tot_demand; }
+
+
+/**
+ * Returns maximum amount of CR that can be delivered to a GC.
+ */
+double Neurite::get_available_cr() const
+{
+    return cr_neurite_.available / cr_neurite_.tau_delivery;
 }
 
 
@@ -392,6 +501,7 @@ void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
     new_node->topology_.nodeID = num_created_nodes_;
 
     // update parent node
+    assert(new_node->get_parent().lock() == branching->get_parent().lock());
     NodePtr parent_node = nodes_[new_node->get_parent().lock()->get_nodeID()];
     assert(parent_node->get_nodeID() >= 0);
     assert(parent_node->has_child() == true);
@@ -440,10 +550,12 @@ GCPtr Neurite::create_branching_cone(
     new_node->children_.push_back(sibling);
 
     double parent_to_soma = new_node->get_distance_to_soma();
-    sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
-    sibling->biology_.branch    = std::make_shared<Branch>(xy, parent_to_soma);
+    BranchPtr b                 = std::make_shared<Branch>(xy, parent_to_soma);
     sibling->move_.angle        = new_cone_angle;
     sibling->biology_.diameter  = new_diameter;
+
+    sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
+    sibling->set_position(xy, parent_to_soma + dist_to_parent, b);
 
     add_cone(sibling);
 
@@ -478,11 +590,13 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         Point xy;
         locate_from_idx(xy, branch_direction, distance_to_soma,
                         branching_node->get_branch(), branch_point);
+
         char branching_side = 1;
         if (uniform_(*(rnd_engine).get()) < 0.5)
         {
             branching_side = -1;
         }
+
         double angle =
             branching_side * (lateral_branching_angle_mean_) +
             lateral_branching_angle_std_ * normal_(*(rnd_engine).get());
@@ -498,7 +612,8 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         branching_node->set_first_point(xy, distance_to_soma);
 
         // update the new node
-        new_node->get_branch()->resize_tail(branch_point + 1);
+        new_node->get_branch()->resize_tail(branch_point+1);
+        new_node->set_position(xy, distance_to_soma, new_node->get_branch());
 
         // create the new growth cone
         auto sibling = create_branching_cone(
@@ -861,18 +976,54 @@ void Neurite::set_status(const statusMap &status)
     {
         branching_model_ = Branching(shared_from_this());
     }
-    bool use_cr;
-    if (get_param(status, names::use_critical_resource, use_cr))
+
+
+    //                 Critical Resource Params
+    //###################################################
+    get_param(status, names::use_critical_resource, use_critical_resource_);
+    if (use_critical_resource_)
+
     {
-        if (use_cr)
-        {
-            observables_.push_back("A"); // add A as observable
-        }
-        else
-        {
-            observables_.pop_back(); // delete A as observable (last)
-        }
+        get_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
+        get_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
+        get_param(status, names::CR_neurite_variance, cr_neurite_.var);
+        get_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
+        get_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
+        //get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
+        //
+        // optimize variable for less computation:
+        cr_neurite_.tau = 1./(1./cr_neurite_.tau_delivery + 1./cr_neurite_.tau_generation);
+        cr_neurite_.eq_cr = (cr_neurite_.tau/cr_neurite_.tau_generation)* cr_neurite_.target_cr;
+        // @TODO this is not obvious!!
+        cr_neurite_.available = cr_neurite_.eq_cr;
+
+        cr_normal_ = std::normal_distribution<>(0, cr_neurite_.var);
+#ifndef NDEBUG
+        printf("\n"
+               " CRITICAL RESOURCE BRANCHING \n"
+               "%s : %f \n"
+               "%s : %f \n"
+               "%s : %f \n"
+               "%s : %f \n",
+               names::CR_neurite_available.c_str(), cr_neurite_.available, names::CR_neurite_split_th.c_str(),
+               cr_neurite_.split_th, names::gc_split_angle_mean.c_str(),
+               gc_split_angle_mean_ * 180 / M_PI,
+               names::gc_split_angle_std.c_str(),
+               gc_split_angle_std_ * 180 / M_PI);
+#endif
     }
+
+    get_param(status, names::use_critical_resource, use_critical_resource_);
+
+    if (use_critical_resource_)
+    {
+        observables_.push_back("A"); // add A as observable
+    }
+    else
+    {
+        observables_.pop_back(); // delete A as observable (last)
+    }
+
     branching_model_.set_status(status);
 
     for (auto &gc : growth_cones_)
@@ -898,6 +1049,17 @@ void Neurite::get_status(statusMap &status, const std::string& level) const
         set_param(status, names::observables, observables_);
         // branching properties
         branching_model_.get_status(status);
+
+        // critical resource properties
+        set_param(status, names::use_critical_resource, use_critical_resource_);
+        if (use_critical_resource_)
+        {
+            set_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
+            set_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
+            set_param(status, names::CR_neurite_variance, cr_neurite_.var);
+            set_param(status, names::CR_neurite_generated_tau, cr_neurite_.tau_generation);
+            set_param(status, names::CR_neurite_delivery_tau, cr_neurite_.tau_delivery);
+        }
     }
 
     // growth_cone properties
@@ -920,7 +1082,7 @@ double Neurite::get_state(const char *observable) const
         value += gc.second->get_state(observable);
     }
     CASE("A")
-    value = branching_model_.cr_neurite_.available;
+    value = cr_neurite_.available;
     ENDTRIE;
 
     return value;
@@ -948,4 +1110,3 @@ double Neurite::get_max_resol() const
 }
 
 } // namespace
-

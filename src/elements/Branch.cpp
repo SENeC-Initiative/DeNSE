@@ -86,6 +86,8 @@ void Branch::retract()
 
 void Branch::resize_tail(size_t new_size)
 {
+    assert(new_size <= size());
+
     points[0].resize(new_size);
     points[1].resize(new_size);
     points[2].resize(new_size);
@@ -141,10 +143,6 @@ Point Branch::get_last_xy() const
 {
     if (points[0].size() == 0)
     {
-        if (initial_point.at(0) == 0 and initial_point.at(1) == 0)
-        {
-            printf("\n\nget_last_xy initial point in (0, 0)!!\n\n");
-        }
         return initial_point;
     }
     else
@@ -162,10 +160,12 @@ PointArray Branch::at(size_t idx) const
     return {{points[0].at(idx), points[1].at(idx), points[2].at(idx)}};
 }
 
+
 Point Branch::xy_at(size_t idx) const
 {
     return Point(points[0].at(idx), points[1].at(idx));
 }
+
 
 size_t Branch::size() const { return points[0].size(); }
 

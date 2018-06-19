@@ -13,7 +13,9 @@ Main parameters
 S = 0.901
 E = 0.3
 gc_model = "run_tumble_critical"
-num_neurons = 30
+num_neurons = 1
+
+resolution = 10.
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
@@ -73,7 +75,7 @@ axon_params = {
 
     # Cr model
     "CR_retraction_factor": 0.010,
-    "CR_elongation_factor": 0.10,
+    "CR_elongation_factor": 0.30,
     # "CR_weight": -.0,
     "CR_retraction_th": 0.10,
     "CR_elongation_th": 0.3,
@@ -112,8 +114,7 @@ def step(n, loop_n, save_path, plot=True):
 def run_netgrowth(neuron_params):
     """
     """
-    resolution = 1.
-    np.random.seed(kernel['seeds'])
+    #~ np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution
     kernel["angles_in_radians"] = True
     NetGrowth.SetKernelStatus(kernel, simulation_ID="case_neuron")
@@ -125,14 +126,15 @@ def run_netgrowth(neuron_params):
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
-                                  num_neurites=4,
-                                  position=[]
+                                  num_neurites=1,
                                   )
+    # ~ rec = NetGrowth.CreateRecorders(gid, ["speed", "resource"], levels="growth_cone")
+    rec = NetGrowth.CreateRecorders(gid, ["resource"], levels="growth_cone")
 
     # NetGrowth.SetStatus(gid, params=neuron_params,
     # axon_params=neuron_params)
-    step(3./resolution, 1, False, True)
-    step(300./resolution, 1, False, True)
+    step(3./resolution, 1, False, False)
+    step(500./resolution, 1, False, False)
 
     neuron_params['use_van_pelt'] = True
     dendrite_params['use_van_pelt'] = True
@@ -142,13 +144,13 @@ def run_netgrowth(neuron_params):
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
-    step(6000./resolution, 1, False, True)
+    step(2000./resolution, 1, False, True)
     axon_migated = {
         # 'use_flpl_branching' : True,
         # "flpl_branching_rate" : 0.004,
         "CR_retraction_th": 0.4,
         "CR_elongation_th": 0.15,
-        "CR_elongation_factor": 0.6,
+        "CR_elongation_factor": 0.4,
         # 'use_van_pelt' : True,
         "CR_neurite_generated": 4500.,
         "CR_neurite_delivery_tau": 50.,
@@ -184,8 +186,9 @@ def run_netgrowth(neuron_params):
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    #~ NetGrowth.SaveSwc(swc_resolution=5)
+    #~ NetGrowth.SaveJson()
+    NetGrowth.plot.PlotRecording(rec, show=False)
 
     swc_file = NetGrowth.GetSimulationID()
     # print(swc_file)
@@ -196,69 +199,22 @@ def run_netgrowth(neuron_params):
 
 if __name__ == '__main__':
     kernel = {
-        "seeds": [33, 345, 17, 193, 177],
-        "num_local_threads": 5,
+        #~ "seeds": [33, 345, 17, 193, 177],
+        #~ "num_local_threads": 5,
+        "seeds": [0],
+        "num_local_threads": 1,
         "environment_required": False
     }
     swc_file = run_netgrowth(neuron_params)
-    import btmorph2
+    # ~ import btmorph2
     import matplotlib.pyplot as plt
-    neuron1 = btmorph2.NeuronMorphology(
-        os.path.join(swc_file, "morphology.swc"))
+    #~ neuron1 = btmorph2.NeuronMorphology(
+        #~ os.path.join(swc_file, "morphology.swc"))
     # total_length = neuron1.total_length()
     # print( 'Total neurite length=%f', total_length)
 
-    no_terminals = neuron1.no_terminals()
+    #~ no_terminals = neuron1.no_terminals()
     # print( 'Number of terminals=%f',  no_terminals)
 
-    neuron1.plot_dendrogram()
-    plt.show(block=True)
-    # plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S),
-    # format="pdf", ppi =300)
-    # plt.show()
-
-    # # bif_nodes = neuron1._bif_points
-    # # term_nodes = neuron1._end_points
-    # # all_nodes = bif_nodes + term_nodes
-    # # total_length = 0
-    # # all_segment_lengths = []
-    # # for node in all_nodes:
-    # # all_segment_lengths.append(neuron1.get_segment_pathlength(node))
-    # # total_length = total_length + all_segment_lengths[-1]
-# # print('total_length=', total_length)
-
-# # plt.hist(all_segment_lengths)
-# # plt.xlabel('Segment length (micron)')
-# # plt.ylabel('count')
-
-# bif_path_lengths = []
-# bif_euclidean_lengths = []
-# bif_contractions = []
-# for node in neuron1._bif_points:
-    # bif_path_lengths.append(neuron1.get_pathlength_to_root(node))
-    # bif_euclidean_lengths.append(neuron1.get_Euclidean_length_to_root(node))
-    # bif_contractions.append(bif_euclidean_lengths[-1] / bif_path_lengths[-1])
-
-# # plt.hist(bif_euclidean_lengths)
-# # plt.title('(Almost) Sholl analysis')
-# # plt.xlabel('euclidean distance (micron)')
-# # plt.ylabel('count / crossings')
-
-
-# p_bifs = neuron1.get_points_of_interest()[1]  # soma, bifurcations, terminals
-# p_eucl = []
-# for node in p_bifs:
-    # p_eucl.append(neuron1.get_Euclidean_length_to_root(node))
-# # plt.hist(p_eucl)
-# plt.title('(Almost) Sholl analysis')
-# plt.xlabel('euclidean distance (micron)')
-# plt.ylabel('count / crossings')
-
-# p_eucl = [neuron1.get_Euclidean_length_to_root(node)
-    # for node in neuron1.get_points_of_interest()[1]]
-
-# # plt.figure()
-# # neuron1.plot_2D()
-# plt.figure()
-# plt.show(block=True)
-# # sleep(1000)
+    #~ neuron1.plot_dendrogram()
+    plt.show()

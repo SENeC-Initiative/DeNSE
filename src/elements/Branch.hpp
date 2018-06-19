@@ -56,7 +56,6 @@ class Branch
      */
     void set_first_point(const Point &xy, double distanceToSoma);
 
-
     /**
      * @brief resize the head of the branch: first point invariate
      *

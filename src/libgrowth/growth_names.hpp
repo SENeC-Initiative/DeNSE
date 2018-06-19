@@ -75,15 +75,17 @@ extern const std::string substrate_affinity;
  * CRITICAL MODELS
  */
 
+extern const std::string resource;
+
 //! @param tub_topo_coefficient   0.1    [natural]
 extern const std::string use_critical_resource;
 #define USE_CRITICAL false
 extern const std::string CR_use_ratio;
-#define CRITICAL_USE_RATIO 1
+#define CRITICAL_USE_RATIO 1.
 extern const std::string CR_leakage;
-#define CRITICAL_LEAKAGE 6
+#define CRITICAL_LEAKAGE 6.
 extern const std::string CR_correlation;
-#define CRITICAL_CORRELATION 0.1
+#define CRITICAL_CORRELATION 0.
 extern const std::string CR_variance;
 #define CRITICAL_VARIANCE 0.1 //
 extern const std::string CR_weight_diameter;

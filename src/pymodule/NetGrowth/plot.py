@@ -12,6 +12,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 import matplotlib.gridspec as gridspec
+from matplotlib.cm import get_cmap
 
 from . import _pygrowth as _pg
 from .geometry import plot_shape
@@ -318,7 +319,8 @@ class Animate(_Animator, anim.FuncAnimation):
 # Plot recording #
 # -------------- #
 
-def PlotRecording(recorder, time_units="hours", display="overlay", show=True):
+def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
+                  legend=True, show=True):
     '''
     Plot the result of a recording.
 
@@ -333,67 +335,158 @@ def PlotRecording(recorder, time_units="hours", display="overlay", show=True):
         neurons are plotted on the same axes. For a reasonnable number of
         neurons, the "separate" options can be used instead, where the
         recordings of each neuron will be plotted on a separate subplot.
+    cmap : colormap, optional (default: matplotlib's default)
+        Colormap which should be use when plotting different neurons or
+        bservables simultaneously.
+    legend : bool, optional (default: True)
+        Whether to display the legend or not.
     show : bool, optional (default: True)
         Display the plot.
+
+    Returns
+    -------
+    axes : dict
+        The axes of the plots.
     '''
     import matplotlib.pyplot as plt
     status      = _pg.GetStatus(recorder, time_units=time_units)
-    num_neurons = len(status["targets"])
-    rec_type    = status["observable"]
-    level       = status["level"]
-    ev_type     = status["event_type"]
-    data        = _pg.GetRecording(recorder)
+
+    num_rec     = 1
+    num_neurons = 0
+    colors      = [[0.5]]
+    cmap        = get_cmap(cmap)
+
+    # check how many recorders we got and prepare data
+    if "targets" in status:
+        # only one recorder
+        num_neurons = len(status["targets"])
+        status      = {recorder: status}
+        if num_neurons > 1:
+            colors = [np.linspace(0, 1, num_neurons)]
+    else:
+        num_neurons = len(next(iter(status.values()))["targets"])
+        num_rec     = len(status)
+        colors      = []
+
+        for rec in range(num_rec):
+            c_tmp = (np.linspace(0, 1, num_neurons) if num_neurons > 1
+                     else np.array([1.]))
+            colors.append(float(rec+1) * c_tmp / num_rec)
 
     num_cols = num_rows = 1
     if display == "separate":
+        for rec_stat in status.values():
+            assert len(rec_stat["targets"]) == num_neurons, "All recorders " +\
+                "must record from the same neurons to be plotted together "  +\
+                "with `display='separate'`."
         num_cols = int(np.sqrt(num_neurons))
         num_rows = num_cols + 1 if num_cols**2 < num_neurons else num_cols
-    gs = gridspec.GridSpec(num_rows, num_cols)
+    fig = plt.figure()
+    gs   = gridspec.GridSpec(num_rows, num_cols)
 
-    i, j, k = 0, 0, 0
-    for neuron in range(num_neurons):
-        ax = plt.subplot(gs[i, j])
-        if level == "neuron":
-            if rec_type == "num_growth_cones":
-                # repeat the times and values to make sudden jumps
-                times  = np.repeat(data[rec_type]["times"][neuron], 2)
-                values = np.repeat(data[rec_type]["data"][neuron], 2)
-                ax.plot(times[1:], values[:-1])
-            else:
-                ax.plot(data[rec_type]["times"][neuron], data[rec_type]["data"][neuron])
-        else:
-            for neurite, values in data[rec_type]["data"][neuron].items():
-                if level == "neurite":
-                    if ev_type == "continuous":
-                        ax.plot(data[rec_type]["times"], values, label=neurite)
-                    else:
-                        if rec_type == "num_growth_cones":
-                            # repeat the times and values to make sudden jumps
-                            times  = np.repeat(
-                                data[rec_type]["times"][neuron][neurite], 2)
-                            values = np.repeat(values, 2)
-                            ax.plot(times[1:], values[:-1], label=neurite)
-                        else:
-                            ax.plot(
-                                data[rec_type]["times"][neuron][neurite], values[1:],
-                                label=neurite)
+    axes      = {rec: [] for rec in status}
+    first_rec = next(iter(status))
+    for i in range(num_rows):
+        for j in range(num_cols):
+            axes[first_rec].append(plt.subplot(gs[i, j]))
+            offset = 0.15
+            if (len(status) > 2):
+                fig.subplots_adjust(right=0.8)
+            for k, rec in enumerate(status):
+                if rec != first_rec:
+                    twinax = axes[first_rec][-1].twinx()
+                    axes[rec].append(twinax)
+                    # Offset the right spine (the ticks and label have already
+                    # been placed on the right by twinx)
+                    twinax.spines["right"].set_position((
+                        "axes", 1. + (k-1)*offset))
+                    # Having been created by twinx, par2 has its frame off, so
+                    # the line of its detached spine is invisible. First,
+                    # activate the frame but make the patch and spines
+                    # invisible.
+                    make_patch_spines_invisible(twinax)
+                    # Second, show the right spine.
+                    twinax.spines["right"].set_visible(True)
+
+    lines = []
+
+    for i, (rec, rec_status) in enumerate(status.items()):
+        rec_type    = rec_status["observable"]
+        level       = rec_status["level"]
+        ev_type     = rec_status["event_type"]
+        data        = _pg.GetRecording(rec)
+
+        k = 0
+
+        for neuron in range(num_neurons):
+            c = colors[i][neuron]
+            ax = axes[rec][neuron] if display == "separate" else axes[rec][0]
+
+            ax.set_ylabel(rec_type)
+            if i == 0:
+                ax.set_xlabel("Time")
+
+            if level == "neuron":
+                lbl = "{} of neuron {}".format(rec_type, neuron)
+                if rec_type == "num_growth_cones":
+                    # repeat the times and values to make sudden jumps
+                    times  = np.repeat(data[rec_type]["times"][neuron], 2)
+                    values = np.repeat(data[rec_type]["data"][neuron], 2)
+                    lines.extend(
+                        ax.plot(times[1:], values[:-1], label=lbl, c=cmap(c)))
                 else:
-                    for gc_data, gc_time in zip(values.values(), times.values()):
-                        lbl = "{}: gc {}".format(neuron, neurite, k)
-                        ax.plot(gc_time, gc_data, label=lbl)
-                        k += 1
-                    k = 0
-        j += 1
-        if j == num_cols:
-            j  = 0
-            if i+1 < num_rows:
-                i += 1
+                    # for neuron level, same times for everyone
+                    lines.extend(
+                        ax.plot(data[rec_type]["times"],
+                            data[rec_type]["data"][neuron], c=cmap(c),
+                            label=lbl))
             else:
-                i = 0
-        ax.legend()
+                num_neurites = len(data[rec_type]["data"][neuron])
+                subcolors = np.linspace(0, 1./float(num_neurons), num_neurites)
+                k = 0
+                for neurite, values in data[rec_type]["data"][neuron].items():
+                    sc = subcolors[k]
+                    if level == "neurite":
+                        lbl = "{} of ({}, {})".format(rec_type, neuron, neurite)
+                        if ev_type == "continuous":
+                            lines.extend(
+                                ax.plot(data[rec_type]["times"], values,
+                                    c=cmap(c+sc), label=lbl))
+                        else:
+                            if rec_type == "num_growth_cones":
+                                # repeat the times and values to make sudden
+                                # jumps
+                                times  = np.repeat(
+                                    data[rec_type]["times"][neuron][neurite], 2)
+                                values = np.repeat(values, 2)
+                                lines.extend(
+                                    ax.plot(times[1:], values[:-1],
+                                        c=cmap(c+sc), label=lbl))
+                            else:
+                                lines.extend(ax.plot(
+                                    data[rec_type]["times"][neuron][neurite],
+                                    values[1:], c=cmap(c+sc), label=neurite))
+                    else:
+                        times = data[rec_type]["times"][neuron][neurite]
+                        print(times.keys(), [len(v) for v in times.values()])
+                        print(values.keys(), [len(v) for v in values.values()])
+                        l = 0
+                        for gc_d, gc_t in zip(values.values(), times.values()):
+                            lbl = "{} of ({}, {}, gc {})".format(
+                                rec_type, neuron, neurite, l)
+                            lines.extend(
+                                ax.plot(gc_t, gc_d, c=cmap(c+sc), label=lbl))
+                            l += 1
+                    k += 1
+
+    if legend:
+        labels = [l.get_label() for l in lines]
+        ax.legend(lines, labels)
 
     if show:
         plt.show()
+
+    return axes
 
 
 # ---------- #
@@ -640,11 +733,20 @@ def _set_ax_lim(ax, xdata, ydata, xlims=None, ylims=None, offset=0.):
         ax.set_xlim(*xlims)
     else:
         x_min, x_max = np.nanmin(xdata) - offset, np.nanmax(xdata) + offset
-        width = x_max - x_min
-        ax.set_xlim(x_min - 0.05*width, x_max + 0.05*width)
+        if not np.isnan(x_min) and np.isnan(x_max):
+            width = x_max - x_min
+            ax.set_xlim(x_min - 0.05*width, x_max + 0.05*width)
     if ylims is not None:
         ax.set_ylim(*ylims)
     else:
         y_min, y_max = np.nanmin(ydata) - offset, np.nanmax(ydata) + offset
-        height = y_max - y_min
-        ax.set_ylim(y_min - 0.05*height, y_max + 0.05*height)
+        if not np.isnan(y_min) and np.isnan(y_max):
+            height = y_max - y_min
+            ax.set_ylim(y_min - 0.05*height, y_max + 0.05*height)
+
+
+def make_patch_spines_invisible(ax):
+    ax.set_frame_on(True)
+    ax.patch.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)

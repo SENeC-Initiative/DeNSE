@@ -25,8 +25,8 @@ typedef void (*ptRecorder)(GCPtr, std::ofstream &);
 
 typedef std::unordered_map<std::string, std::vector<double>> mapNameVecDouble;
 typedef std::unordered_map<std::string, std::vector<Time>> mapNameVecTime;
-typedef std::vector<std::vector<double>> vVecDouble;
-typedef std::vector<std::array<Time, 2>> vArrayTime;
+typedef std::unordered_map<size_t, std::vector<double>> mapNumVecDouble;
+typedef std::unordered_map<size_t, std::array<Time, 2>> mapNumArrayTime;
 
 typedef std::unordered_map<size_t, std::vector<double>> neuronRec;
 typedef std::unordered_map<size_t, std::vector<Time>> neuronTimeRec;
@@ -34,16 +34,16 @@ typedef std::unordered_map<size_t, std::vector<Time>> neuronTimeRec;
 typedef std::unordered_map<size_t, mapNameVecDouble> neuriteRec;
 typedef std::unordered_map<size_t, mapNameVecTime> neuriteTimeRec;
 
-typedef std::unordered_map<size_t, std::unordered_map<std::string, vVecDouble>>
+typedef std::unordered_map<size_t, std::unordered_map<std::string, mapNumVecDouble>>
     gcRec;
-typedef std::unordered_map<size_t, std::unordered_map<std::string, vArrayTime>>
+typedef std::unordered_map<size_t, std::unordered_map<std::string, mapNumArrayTime>>
     gcContinuousTimes;
 typedef std::unordered_map<
-    size_t, std::unordered_map<std::string, std::vector<std::vector<Time>>>>
-    gcDiscreteTimes;
-typedef std::unordered_map<size_t,
-                           std::unordered_map<std::string, std::vector<size_t>>>
-    gcNumTimes;
+    size_t, std::unordered_map<
+        std::string, std::unordered_map<size_t, std::vector<Time>>>> gcDiscreteTimes;
+typedef std::unordered_map<
+    size_t, std::unordered_map<std::string,
+                               std::unordered_map<size_t, size_t>>> gcNumTimes;
 
 
 /*
@@ -201,6 +201,7 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     GrowthConeContinuousRecorder();
 
     virtual void record() override;
+    virtual void record(const Event &ev) override;
     virtual void final_timestep(size_t step) override;
 
     virtual unsigned int get_event_type() const override;
@@ -218,18 +219,18 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     gcNumTimes num_times_;
     // value iterators
     gcRec::const_iterator v_neuron_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator v_neurite_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator
+    std::unordered_map<std::string, mapNumVecDouble>::const_iterator v_neurite_it_;
+    std::unordered_map<std::string, mapNumVecDouble>::const_iterator
         v_neurite_endit_;
-    size_t v_gc_pos_;
-    size_t v_gc_endpos_;
+    mapNumVecDouble::const_iterator v_gc_pos_;
+    mapNumVecDouble::const_iterator v_gc_endpos_;
     // time iterators
     gcContinuousTimes::const_iterator t_neuron_it_;
-    std::unordered_map<std::string, vArrayTime>::const_iterator t_neurite_it_;
-    std::unordered_map<std::string, vArrayTime>::const_iterator
+    std::unordered_map<std::string, mapNumArrayTime>::const_iterator t_neurite_it_;
+    std::unordered_map<std::string, mapNumArrayTime>::const_iterator
         t_neurite_endit_;
-    size_t t_gc_pos_;
-    size_t t_gc_endpos_;
+    mapNumArrayTime::const_iterator t_gc_pos_;
+    mapNumArrayTime::const_iterator t_gc_endpos_;
 };
 
 
@@ -254,21 +255,21 @@ class GrowthConeDiscreteRecorder : public BaseRecorder
     gcDiscreteTimes times_;
     // value iterators
     gcRec::const_iterator v_neuron_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator v_neurite_it_;
-    std::unordered_map<std::string, vVecDouble>::const_iterator
+    std::unordered_map<std::string, mapNumVecDouble>::const_iterator v_neurite_it_;
+    std::unordered_map<std::string, mapNumVecDouble>::const_iterator
         v_neurite_endit_;
-    size_t v_gc_pos_;
-    size_t v_gc_endpos_;
+    mapNumVecDouble::const_iterator v_gc_pos_;
+    mapNumVecDouble::const_iterator v_gc_endpos_;
     // time iterators
     gcDiscreteTimes::const_iterator t_neuron_it_;
     std::unordered_map<std::string,
-                       std::vector<std::vector<Time>>>::const_iterator
+                       std::unordered_map<size_t, std::vector<Time>>>::const_iterator
         t_neurite_it_;
     std::unordered_map<std::string,
-                       std::vector<std::vector<Time>>>::const_iterator
+                       std::unordered_map<size_t, std::vector<Time>>>::const_iterator
         t_neurite_endit_;
-    size_t t_gc_pos_;
-    size_t t_gc_endpos_;
+    std::unordered_map<size_t, std::vector<Time>>::const_iterator t_gc_pos_;
+    std::unordered_map<size_t, std::vector<Time>>::const_iterator t_gc_endpos_;
 };
 
 

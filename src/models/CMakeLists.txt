@@ -13,7 +13,7 @@ add_library( models STATIC ${models_sources} )
 
 set_target_properties( models PROPERTIES POSITION_INDEPENDENT_CODE ON )
 
-target_include_directories( models PRIVATE
+target_include_directories( models PUBLIC
     ${PROJECT_SOURCE_DIR}/elements
     ${PROJECT_SOURCE_DIR}/kernel
     ${PROJECT_SOURCE_DIR}/libgrowth

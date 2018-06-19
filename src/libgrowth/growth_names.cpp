@@ -31,7 +31,7 @@ const std::string CR_retraction_factor("CR_retraction_factor");
 const std::string CR_retraction_th("CR_retraction_th");
 const std::string CR_neurite_split_th("CR_neurite_split_th");
 const std::string CR_neurite_available("CR_neurite_available");
-const std::string CR_neurite_variance("CR_neurite_varia");
+const std::string CR_neurite_variance("CR_neurite_variance");
 const std::string CR_neurite_generated("CR_neurite_generated");
 const std::string CR_neurite_generated_tau("CR_neurite_generated_tau");
 const std::string CR_neurite_delivery_tau("CR_neurite_delivery_tau");

@@ -14,7 +14,6 @@ import numpy as np
 cimport numpy as np
 
 from .geometry import Shape
-from .structure import Node, Tree, Population
 from ._helpers import *
 from ._pygrowth cimport *
 
@@ -513,6 +512,7 @@ def GetNeurons(as_ints=False):
     if as_ints:
         return np.array(get_neurons(), dtype=int)
     else:
+        from .structure import Population
         return Population.from_gids(get_neurons())
 
 
@@ -1084,12 +1084,12 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     if return_ints:
         return tuple(i for i in range(num_objects, num_objects + n))
     else:
-        from .structure import Neuron
+        from .structure import Neuron, Population
         neurons = []
         for i in range(n):
             pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
             neurons.append(Neuron(pos, num_objects + i))
-        return tuple(neurons)
+        return Population(neurons)
 
 
 def _get_pyskeleton(gid):
@@ -1142,6 +1142,7 @@ def _get_tree(neuron, neurite):
     '''
     Return a tree describing a neurite.
     '''
+    from .structure import Node, Tree
     pos  = GetStatus(neuron, property_name="position")
     tree = Tree(neuron, neurite)
 
@@ -1669,6 +1670,8 @@ def _check_params(params, object_name):
 
     py_defaults = _statusMap_to_dict(default_params)
 
+    print(params.get("growth_cone_model", "no model"))
+    print(py_defaults)
     for key, val in params.items():
         if key in py_defaults:
             prop = default_params[_to_bytes(key)]

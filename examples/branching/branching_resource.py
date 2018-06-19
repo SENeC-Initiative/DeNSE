@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-plt.ion()
+#~ plt.ion()
 
 
 '''
@@ -44,19 +44,31 @@ neuron_params = {
 Check for optional parameters
 '''
 
+b_th = 20.
+
 if use_critical_resource:
     cr_params = {
-        "CR_speed_factor": 0.10,
-        "CR_amount": 1.,
-        "CR_leakage": 0.05,
-        "CR_retraction_th": 0.30,
-        "CR_elongation_th": 0.50,
-        "CR_split_th": 0.80,
-        "CR_demand_correlation": 0.9910,
-        "CR_demand_stddev": 0.2,
-        "CR_demand_mean": 1.,
-        "CR_use_ratio": 0.7,
-        "CR_branching_th": 50.,
+        #~ "CR_retraction_factor": 0.10,
+        #~ "CR_elongation_factor": 0.10,
+        #~ "CR_leakage": 0.05,
+        #~ "CR_retraction_th": 0.30,
+        #~ "CR_elongation_th": 0.50,
+        #~ "CR_variance": 0.01,
+        #~ "CR_use_ratio": 0.7,
+        #~ "CR_branching_th": b_th,
+        #~ "CR_neurite_generated": 2500.,
+        # Cr model
+        "CR_retraction_factor": 0.10,
+        "CR_elongation_factor": 0.10,
+        # "CR_leakage": 0.05,
+        "CR_retraction_th": 0.01,
+        "CR_elongation_th": 0.3,
+        "CR_leakage": 10.0,
+        "CR_neurite_generated": 2500.,
+        "CR_correlation": 0.2,
+        "CR_variance": 0.01,
+        "CR_use_ratio": 0.16,
+        "CR_branching_th": b_th,
     }
     neuron_params.update(cr_params)
 
@@ -80,23 +92,20 @@ def resource_branching(neuron_params):
     NetGrowth.ResetKernel()
     np.random.seed(kernel['seeds'])
     NetGrowth.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
-    neuron_params['growth_cone_model'] = 'run_tumble'
-    neuron_params['use_van_pelt'] = False
+    neuron_params['growth_cone_model'] = 'run_tumble_critical'
+    neuron_params['CR_branching_th'] = np.inf
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
-                            params=neuron_params,
-                            axon_params=neuron_params,
-                            num_neurites=1,
-                            position=[]
-                            )
+    gid = NetGrowth.CreateNeurons(
+        n=num_neurons, params=neuron_params, axon_params=neuron_params,
+        num_neurites=1, position=[])
 
     step(10, 1, False, False)
-    neuron_params['use_van_pelt'] = True
+    neuron_params['CR_branching_th'] = b_th
     NetGrowth.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(100, 1, False, False)
+    step(100, 1, False, True)
     # neuron_params['use_lateral_branching'] = True
     NetGrowth.SaveSwc(swc_resolution=5)
     NetGrowth.SaveJson()
@@ -111,7 +120,8 @@ if __name__ == '__main__':
     kernel = {
         "seeds": np.random.randint(0, 10000, num_omp).tolist(),
         "num_local_threads": num_omp,
-        "environment_required": False
+        "environment_required": False,
+        "resolution": 1.,
     }
 
     swc_file=resource_branching(neuron_params)

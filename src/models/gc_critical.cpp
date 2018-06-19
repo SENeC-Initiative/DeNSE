@@ -223,19 +223,34 @@ double GrowthCone_Critical::compute_CR(mtPtr rnd_engine, double substep)
                                / (stored_ + branching_th_);
             if (rnd_throw < substep*threshold)
             {
-                size_t step = kernel().simulation_manager.get_current_step();
-                double current_substep =
-                    kernel().simulation_manager.get_current_substep();
+                //~ size_t step = kernel().simulation_manager.get_current_step();
+                //~ double current_substep =
+                    //~ kernel().simulation_manager.get_current_substep();
 
-                size_t ev_step = current_substep < resol_ ? step : step + 1;
-                double ev_substep = ev_step == step
-                                    ? min(current_substep + 0.1, resol_)
-                                    : 0.1;
+                //~ size_t ev_step = current_substep < resol_ ? step : step + 1;
+                //~ double ev_substep = ev_step == step
+                                    //~ ? std::min(current_substep + 0.1, resol_)
+                                    //~ : 0.1;
 
-                Event ev = std::make_tuple(ev_step, ev_substep, neuron_,
-                                           neurite_, names::gc_splitting);
+                //~ std::string neurite = biology_.own_neurite->get_name();
+                //~ size_t neuron       =
+                    //~ biology_.own_neurite->get_parent_neuron().lock()->get_gid();
+                //~ printf("resource branching at %lu - %f!\n", ev_step, ev_substep);
 
-                kernel().simulation_manager.new_branching_event(ev);
+                //~ Event ev = std::make_tuple(ev_step, ev_substep, neuron,
+                                           //~ neurite, names::gc_splitting);
+
+                //~ kernel().simulation_manager.new_branching_event(ev);
+                double new_length = get_module();
+                double new_angle, old_angle;
+                double old_diameter = get_diameter();
+                double new_diameter = old_diameter;
+                biology_.own_neurite->gc_split_angles_diameter(
+                    rnd_engine, new_angle, old_angle, new_diameter,
+                    old_diameter);
+                biology_.own_neurite->growth_cone_split(
+                    shared_from_this(), new_length, new_angle, old_angle,
+                    new_diameter, old_diameter);
             }
         }
     }

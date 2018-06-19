@@ -5,13 +5,22 @@ import NetGrowth
 import numpy as np
 import os
 
+import matplotlib.pyplot as plt
+# ~ plt.ion()
+
 
 '''
 Main parameters
 '''
 
 rate = 0.005
-num_neurons = 1
+num_neurons = 1000
+
+# ~ branching_type = "flpl"
+branching_type = "uniform"
+use_type       = "use_" + branching_type + "_branching"
+branching_rate = branching_type + "_branching_rate"
+
 neuron_params = {
     "axon_angle":3.14/2,
     # "growth_cone_model": "self_referential_forces",
@@ -25,8 +34,8 @@ neuron_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
 
-    "use_flpl_branching": True,
-    "flpl_branching_rate": rate,
+    use_type: True,
+    branching_rate: rate,
 
     "use_van_pelt": False,
     "use_critical_resource": False,
@@ -66,7 +75,7 @@ def lateral_branching(neuron_params):
     np.random.seed(kernel['seeds'])
     NetGrowth.SetKernelStatus(kernel, simulation_ID="uniform_branching")
     neuron_params['growth_cone_model'] = 'run_tumble'
-    neuron_params['use_uniform_branching'] = False
+    neuron_params[use_type] = False
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
@@ -77,10 +86,10 @@ def lateral_branching(neuron_params):
                             )
 
     step(10, 1, False, False)
-    neuron_params['use_flpl_branching'] = True
+    neuron_params[use_type] = True
     NetGrowth.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(1000, 1, False, True)
+    step(2000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     NetGrowth.SaveSwc(swc_resolution=5)
     NetGrowth.SaveJson()
@@ -91,18 +100,38 @@ def lateral_branching(neuron_params):
 
 
 if __name__ == '__main__':
+    num_omp = 12
     kernel = {
-        "seeds": [33, 345],
-        "num_local_threads": 2,
+        "seeds": np.random.randint(0, 10000, num_omp).tolist(),
+        "num_local_threads": num_omp,
         "environment_required": False
     }
     swc_file=lateral_branching(neuron_params)
 
-    n = NetGrowth.GetNeurons()[0]
+    pop = NetGrowth.GetNeurons()
+    n   = pop[0]
 
     tree = n.axon.get_tree()
+    # ~ tree.show_dendrogram()
 
-    tree.show_dendrogram()
+    import neurom
+    from neurom import viewer
+    asym = []
+    num_tips = []
+    for n in pop:
+        tree = n.axon.get_tree()
+        num_tips.append(len(tree.tips))
+        nrn = tree.neurom_tree()
+        asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
+        # ~ if np.isclose(asym[-1], 0):
+            # ~ tree.show_dendrogram()
+
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.hist(asym)
+    print(np.average(num_tips), np.median(num_tips))
+    ax2.hist(num_tips)
+    plt.show()
+
 
     # ~ import btmorph2
     # ~ import matplotlib.pyplot as plt

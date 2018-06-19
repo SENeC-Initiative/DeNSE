@@ -43,7 +43,6 @@ class GrowthCone : public TopologicalNode,
     double sqrt_resol_;
     double adaptive_timestep_;
     double timestep_divider_;
-    size_t gc_ID_;             // unique number for growth cones
     std::string current_area_; // name of the area where the GC is
     bool stuck_;
     bool stopped_;
@@ -128,8 +127,6 @@ class GrowthCone : public TopologicalNode,
     virtual void compute_speed(mtPtr rnd_engine, double substep);
 
     void init_filopodia();
-    void set_cone_ID();
-    size_t get_cone_ID() const;
 
     void set_angle(double angle);
     virtual void prepare_for_split();

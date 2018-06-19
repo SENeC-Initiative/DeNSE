@@ -112,8 +112,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::string get_name() const;
     double get_max_resol() const;
     void update_kernel_variables();
-    size_t get_and_increment_gc_ID();
     void add_cone(GCPtr);
+    void add_node(NodePtr);
 
     bool walk_tree(NodeProp& np) const;
     std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
@@ -128,7 +128,6 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::string name_;
     // keep track of how many nodes were created to set the ids
     size_t num_created_nodes_;
-    size_t num_created_cones_;
     // observables for recorders
     std::vector<std::string> observables_;
 

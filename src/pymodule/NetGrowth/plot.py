@@ -468,8 +468,6 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
                                     values[1:], c=cmap(c+sc), label=neurite))
                     else:
                         times = data[rec_type]["times"][neuron][neurite]
-                        print(times.keys(), [len(v) for v in times.values()])
-                        print(values.keys(), [len(v) for v in values.values()])
                         l = 0
                         for gc_d, gc_t in zip(values.values(), times.values()):
                             lbl = "{} of ({}, {}, gc {})".format(

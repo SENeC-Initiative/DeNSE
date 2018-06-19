@@ -267,8 +267,6 @@ class Node(int):
         self.children       = []
         self.parent         = (tree.get(int(parent), parent)
                                if parent is not None else None)
-        if parent is not None and node_id not in parent.children:
-            parent.add_child(self)
 
     def add_child(self, child):
         self.children.append(child)
@@ -303,7 +301,6 @@ class Tree(dict):
         return self._tips
 
     def __setitem__(self, key, value):
-        print("Tree setitem", key, value, value.parent)
         super(Tree, self).__setitem__(key, value)
         if value.parent is None or value.parent:
             self._root = value
@@ -317,6 +314,31 @@ class Tree(dict):
                 self._tips.append(val)
         self._tips_set = True
 
+    def neurom_tree(self):
+        from neurom.core import Neuron, Neurite, Section, Soma
+        from collections import deque
+
+        root = Section(np.array([[0, 0, 0, 0]]))
+        queue  = deque(self._root.children)
+        edict  = {int(self._root): root}
+
+        sections = []
+
+        while queue:
+            node   = queue.popleft()
+            parent = edict[node.parent]
+            enode  = Section(np.array([[0, 0, 0, 0]]))
+            parent.add_child(enode)
+            edict[node] = enode
+            queue.extend(node.children)
+            sections.append(enode)
+
+        neurite = Neurite(root)
+        soma    = Soma(self._root.position)
+        neuron  = Neuron(soma, [neurite], [sections])
+
+        return neuron
+
     def show_dendrogram(self):
         '''
         Make and display the dendrogram using ETE3
@@ -329,23 +351,25 @@ class Tree(dict):
         from ete3 import TreeStyle, NodeStyle
         from collections import deque
 
-        # make the tree
-        t      = Ete3Tree()
-        elt    = t
-        queue  = deque([self._root])
-        edict  = {None: t}
+        # make the tree from the root
+        t      = Ete3Tree(dist=0, name=int(self._root))
+        ns = NodeStyle()
+        ns["hz_line_width"] = self._root.diameter
+        ns["size"]          = 0
+        t.set_style(ns)
 
-        # ~ print(self)
+        queue  = deque(self._root.children)
+        edict  = {int(self._root): t}
 
         while queue:
             node   = queue.popleft()
-            # ~ print(node, node.parent, edict)
             parent = edict[node.parent]
             enode  = parent.add_child(name=int(node), dist=node.dist_to_parent)
 
             ns = NodeStyle()
-            ns["vt_line_width"] = node.diameter
+            # ~ ns["vt_line_width"] = node.diameter
             ns["hz_line_width"] = node.diameter
+            ns["size"]          = 0
             enode.set_style(ns)
 
             edict[node] = enode
@@ -354,6 +378,7 @@ class Tree(dict):
         # set style
         ts = TreeStyle()
         ts.show_leaf_name = False
+        ts.branch_vertical_margin = self._root.diameter
 
         # show
         t.show(tree_style=ts)

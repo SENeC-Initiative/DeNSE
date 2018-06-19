@@ -152,7 +152,13 @@ Point Branch::get_last_xy() const
 }
 
 
-double Branch::get_distance_to_soma() const { return points[2].back(); }
+double Branch::get_distance_to_soma() const { return points[2].front(); }
+
+
+double Branch::get_length() const
+{
+    return points[2].back() - points[2].front();
+}
 
 
 PointArray Branch::at(size_t idx) const

@@ -184,8 +184,6 @@ def msd_1D(array, first=1):
     -------
     2D array, the percentile distribution with [50%, 75%, 25%]
     """
-
-    print (array.shape)
     theta = (array[:, :].transpose() - array[:, first]).transpose()
     max_len = theta.shape[1]
     msd = np.zeros((max_len, 3))

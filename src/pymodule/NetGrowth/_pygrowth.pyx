@@ -1154,7 +1154,7 @@ def _get_tree(neuron, neurite):
     while keep_going:
         keep_going = walk_neurite_tree(neuron, cneurite, nprop)
 
-        node      = Node(nprop.n_id, tree, parent=tree.get(nprop.p_id, None),
+        node      = Node(nprop.n_id, tree, parent=nprop.p_id,
                          diameter=nprop.diameter,
                          dist_to_parent=nprop.dist_to_parent,
                          pos=tuple(nprop.position))

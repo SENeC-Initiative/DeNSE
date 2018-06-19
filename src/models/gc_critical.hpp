@@ -41,6 +41,8 @@ class GrowthCone_Critical : public virtual GrowthCone
     double elongation_th_;
     double retraction_factor_;
     double retraction_th_;
+    double branching_th_;
+    double branching_proba_;
 
   public:
     GrowthCone_Critical();

@@ -947,15 +947,6 @@ double GrowthCone::get_module() const { return move_.module; }
 void GrowthCone::set_angle(double angle) { move_.angle = angle; }
 
 
-void GrowthCone::set_cone_ID()
-{
-    gc_ID_ = biology_.own_neurite->get_and_increment_gc_ID();
-}
-
-
-size_t GrowthCone::get_cone_ID() const { return gc_ID_; }
-
-
 // ###########################################################
 //              Set Get status
 // ###########################################################
@@ -1119,7 +1110,7 @@ double GrowthCone::get_state(const char *observable) const
 
     TRIE(observable)
     CASE("length")
-    value = biology_.branch->get_distance_to_soma();
+    value = biology_.branch->get_length();
     CASE("speed")
     value = move_.speed;
     CASE("angle")

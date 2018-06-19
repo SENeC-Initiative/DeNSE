@@ -22,6 +22,8 @@ GrowthCone_Critical::GrowthCone_Critical()
     , elongation_th_(CRITICAL_ELONGATION_TH)
     , retraction_factor_(CRITICAL_RETRACTION_FACTOR)
     , retraction_th_(CRITICAL_RETRACTION_TH)
+    , branching_th_(CRITICAL_BRANCHING_TH)
+    , branching_proba_(CRITICAL_BRANCHING_PROBA)
     , weight_diameter_(CRITICAL_WEIGHT_DIAMETER)
     , weight_centrifugal_(CRITICAL_WEIGHT_CENTRIFUGAL)
 {
@@ -46,6 +48,8 @@ GrowthCone_Critical::GrowthCone_Critical(const GrowthCone_Critical &copy)
     , elongation_th_(copy.elongation_th_)
     , retraction_factor_(copy.retraction_factor_)
     , retraction_th_(copy.retraction_th_)
+    , branching_th_(copy.branching_th_)
+    , branching_proba_(copy.branching_proba_)
     , weight_diameter_(copy.weight_diameter_)
     , weight_centrifugal_(copy.weight_centrifugal_)
 {
@@ -212,6 +216,28 @@ double GrowthCone_Critical::compute_CR(mtPtr rnd_engine, double substep)
         {
             stored_ = 0.;
         }
+        else if (stored_ > branching_th_)
+        {
+            double rnd_throw = uniform_(*(rnd_engine).get());
+            double threshold = branching_proba_ * (stored_ - branching_th_)
+                               / (stored_ + branching_th_);
+            if (rnd_throw < substep*threshold)
+            {
+                size_t step = kernel().simulation_manager.get_current_step();
+                double current_substep =
+                    kernel().simulation_manager.get_current_substep();
+
+                size_t ev_step = current_substep < resol_ ? step : step + 1;
+                double ev_substep = ev_step == step
+                                    ? min(current_substep + 0.1, resol_)
+                                    : 0.1;
+
+                Event ev = std::make_tuple(ev_step, ev_substep, neuron_,
+                                           neurite_, names::gc_splitting);
+
+                kernel().simulation_manager.new_branching_event(ev);
+            }
+        }
     }
 
     return stored_;
@@ -262,6 +288,9 @@ void GrowthCone_Critical::set_status(const statusMap &status)
     get_param(status, names::CR_elongation_th, elongation_th_);
     get_param(status, names::CR_retraction_th, retraction_th_);
 
+    get_param(status, names::CR_branching_th, branching_th_);
+    get_param(status, names::CR_branching_proba, branching_proba_);
+
     // use and leakage
     get_param(status, names::CR_use_ratio, use_ratio_);
     get_param(status, names::CR_leakage, leakage_);
@@ -292,6 +321,9 @@ void GrowthCone_Critical::get_status(statusMap &status) const
     set_param(status, names::CR_retraction_factor, retraction_factor_);
     set_param(status, names::CR_elongation_th, elongation_th_);
     set_param(status, names::CR_retraction_th, retraction_th_);
+
+    set_param(status, names::CR_branching_th, branching_th_);
+    set_param(status, names::CR_branching_proba, branching_proba_);
 
     // use and leakage
     set_param(status, names::CR_use_ratio, use_ratio_);

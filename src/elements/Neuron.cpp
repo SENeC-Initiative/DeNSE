@@ -332,8 +332,8 @@ std::string Neuron::new_neurite(const std::string &name,
                                      neurites_[name], details.soma_radius,
                                      name + "0", cone_start_point, angle);
 
-    neurites_[name]->growth_cones_[0] = first_gc;
-    first_gc->set_cone_ID();
+    neurites_[name]->add_cone(first_gc);
+
     first_gc->set_diameter(
         neurites_[name]->get_first_node()->biology_.diameter);
 

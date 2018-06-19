@@ -23,6 +23,8 @@ const std::string CR_variance("CR_variance");
 const std::string CR_weight_centrifugal("CR_weight_centrifugal");
 const std::string CR_weight_diameter("CR_weight_diameter");
 
+const std::string CR_branching_th("CR_branching_th");
+const std::string CR_branching_proba("CR_branching_proba");
 const std::string CR_elongation_factor("CR_elongation_factor");
 const std::string CR_elongation_th("CR_elongation_th");
 const std::string CR_retraction_factor("CR_retraction_factor");

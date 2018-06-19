@@ -46,7 +46,6 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , observables_(
           {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
     , num_created_nodes_(0)
-    , num_created_cones_(0)
     , growth_cone_model_("")
     , neurite_type_(neurite_type)
     // parameters for van Pelt branching
@@ -116,9 +115,7 @@ void Neurite::init_first_node(BaseWeakNodePtr soma, Point pos, std::string name,
     firstNode->topology_.has_child         = true;
     firstNode->topology_.centrifugal_order = 0;
     firstNode->geometry_.dis_to_soma       = soma_radius;
-    nodes_.insert({num_created_nodes_, firstNode});
-    assert(firstNode->get_branch()->size() == 0);
-    num_created_nodes_++;
+    add_node(firstNode);
 
     // also initialize branching model
     if (branching_model_.neurite_ == nullptr)
@@ -496,9 +493,6 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
 
 void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
 {
-    // neurites_[name]->growth_cones_.back()->set_first_point(pos,soma_radius);
-    new_node->topology_.nodeID = num_created_nodes_;
-
     // update parent node
     assert(new_node->get_parent().lock() == branching->get_parent().lock());
     NodePtr parent_node = nodes_[new_node->get_parent().lock()->get_nodeID()];
@@ -517,8 +511,8 @@ void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
     }
     branching->topology_.parent   = new_node;
     new_node->topology_.has_child = true;
-    nodes_.insert({new_node->get_nodeID(), new_node});
-    num_created_nodes_++;
+
+    add_node(new_node);
 }
 
 
@@ -536,8 +530,6 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     GCPtr sibling = growth_cones_.begin()->second->clone(
         new_node, shared_from_this(), dist_to_parent,
         branching_node->get_treeID() + "1", xy, -3.14);
-
-    sibling->set_cone_ID();
 
     // Here we copy model and status from a random growth cone
     // in the neurite since all the growth cones have same status and
@@ -823,8 +815,32 @@ unsigned int Neurite::num_growth_cones() const
  */
 void Neurite::add_cone(GCPtr cone)
 {
-    growth_cones_tmp_[num_created_cones_] = cone;
-    num_created_cones_++;
+    cone->topology_.nodeID = num_created_nodes_;
+
+    // first gc is added directly
+    if (growth_cones_.empty())
+    {
+        growth_cones_[num_created_nodes_] = cone;
+    }
+    else
+    {
+        growth_cones_tmp_[num_created_nodes_] = cone;
+    }
+
+    num_created_nodes_++;
+}
+
+
+/**
+ * @brief Add a node to the neurite
+ *
+ * @param NodePtr pointer to the Node
+ */
+void Neurite::add_node(NodePtr node)
+{
+    node->topology_.nodeID = num_created_nodes_;
+    nodes_[num_created_nodes_] = node;
+    num_created_nodes_++;
 }
 
 
@@ -850,8 +866,6 @@ bool Neurite::walk_tree(NodeProp& np) const
         Point p = n_it->second->get_position();
         std::vector<double> coords({p.at(0), p.at(1)});
 
-        printf("node %lu, parend %lu\n", nid, pid);
-
         np = NodeProp(nid, pid, diam, dtp, coords);
 
         n_it++;
@@ -867,12 +881,10 @@ bool Neurite::walk_tree(NodeProp& np) const
         // get diameter
         diam = gc_it->second->get_diameter();
         // get distance to parent
-        dtp = gc_it->second->get_distance_parent();
+        dtp = gc_it->second->get_branch()->get_length();
         // get position
         Point p = gc_it->second->get_position();
         std::vector<double> coords({p.at(0), p.at(1)});
-
-        printf("gc %lu, parend %lu\n", nid, pid);
 
         np = NodeProp(nid, pid, diam, dtp, coords);
 
@@ -921,12 +933,6 @@ NeuronWeakPtr Neurite::get_parent_neuron() const { return parent_; }
 
 std::string Neurite::get_name() const { return name_; }
 
-
-size_t Neurite::get_and_increment_gc_ID()
-{
-    num_created_cones_ += 1;
-    return num_created_cones_;
-}
 
 //###################################################
 //                  get/set status

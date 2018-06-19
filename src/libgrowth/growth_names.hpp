@@ -101,6 +101,10 @@ extern const std::string CR_retraction_factor;
 #define CRITICAL_RETRACTION_FACTOR 0.1
 extern const std::string CR_retraction_th;
 #define CRITICAL_RETRACTION_TH 0.15
+extern const std::string CR_branching_th;
+#define CRITICAL_BRANCHING_TH 5.
+extern const std::string CR_branching_proba;
+#define CRITICAL_BRANCHING_PROBA 0.1
 
 
 extern const std::string CR_neurite_split_th;

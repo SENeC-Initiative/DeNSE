@@ -110,17 +110,9 @@ double GrowthCone_RunTumble::get_state(const char *observable) const
 {
     double value = 0.;
 
+    value = GrowthCone::get_state(observable);
+
     TRIE(observable)
-    CASE("length")
-    value = biology_.branch->get_distance_to_soma();
-    CASE("speed")
-    value = move_.speed;
-    CASE("angle")
-    value = move_.angle;
-    CASE("stopped")
-    value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
-    CASE("retraction_time")
-    value = retraction_time_;
     CASE("num_tumbles")
     value = num_tumbles_;
     ENDTRIE;

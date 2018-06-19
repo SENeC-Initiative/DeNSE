@@ -91,6 +91,7 @@ class Branch
 
     // Getter Functions
     double get_distance_to_soma() const;
+    double get_length() const;
     //! return a Point object from last point of the Branch
     PointArray get_last_point() const;
     //! return the last xy

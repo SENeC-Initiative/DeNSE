@@ -731,7 +731,9 @@ bool Neurite::walk_tree(NodeProp& np) const
         dtp = n_it->second->get_distance_parent();
         // get position
         Point p = n_it->second->get_position();
-        std::vector<double> coords(p.at(0), p.at(1));
+        std::vector<double> coords({p.at(0), p.at(1)});
+
+        printf("node %lu, parend %lu\n", nid, pid);
 
         np = NodeProp(nid, pid, diam, dtp, coords);
 
@@ -751,7 +753,9 @@ bool Neurite::walk_tree(NodeProp& np) const
         dtp = gc_it->second->get_distance_parent();
         // get position
         Point p = gc_it->second->get_position();
-        std::vector<double> coords(p.at(0), p.at(1));
+        std::vector<double> coords({p.at(0), p.at(1)});
+
+        printf("gc %lu, parend %lu\n", nid, pid);
 
         np = NodeProp(nid, pid, diam, dtp, coords);
 
@@ -761,12 +765,10 @@ bool Neurite::walk_tree(NodeProp& np) const
     }
 
     gc_it = gc_cbegin();
-    n_it  = nodes_.cbegin();    
+    n_it  = nodes_.cbegin();
 
     return false;
 }
-        
-    
 
 
 std::unordered_map<size_t, GCPtr>::const_iterator Neurite::gc_cbegin() const

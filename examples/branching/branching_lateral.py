@@ -62,6 +62,7 @@ def step(n, loop_n, save_path, plot=True):
 
 
 def lateral_branching(neuron_params):
+    NetGrowth.ResetKernel()
     np.random.seed(kernel['seeds'])
     NetGrowth.SetKernelStatus(kernel, simulation_ID="uniform_branching")
     neuron_params['growth_cone_model'] = 'run_tumble'
@@ -86,8 +87,6 @@ def lateral_branching(neuron_params):
 
     swc_file =NetGrowth.GetSimulationID()
     # print(swc_file)
-
-    NetGrowth.ResetKernel()
     return swc_file
 
 
@@ -98,17 +97,24 @@ if __name__ == '__main__':
         "environment_required": False
     }
     swc_file=lateral_branching(neuron_params)
-    import btmorph2
-    import matplotlib.pyplot as plt
-    neuron1 = btmorph2.NeuronMorphology(os.path.join(swc_file,"morphology.swc"))
-    total_length = neuron1.total_length()
-    print( 'Total neurite length=%f', total_length)
 
-    no_terminals = neuron1.no_terminals()
-    print( 'Number of terminals=%f',  no_terminals)
+    n = NetGrowth.GetNeurons()[0]
 
-    neuron1.plot_dendrogram()
-    # plt.show()
-    plt.savefig("dendrogram-rate{}.pdf".format(rate), format="pdf", ppi =300)
-    plt.show(block = True)
+    tree = n.axon.get_tree()
+
+    tree.show_dendrogram()
+
+    # ~ import btmorph2
+    # ~ import matplotlib.pyplot as plt
+    # ~ neuron1 = btmorph2.NeuronMorphology(os.path.join(swc_file,"morphology.swc"))
+    # ~ total_length = neuron1.total_length()
+    # ~ print( 'Total neurite length=%f', total_length)
+
+    # ~ no_terminals = neuron1.no_terminals()
+    # ~ print( 'Number of terminals=%f',  no_terminals)
+
+    # ~ neuron1.plot_dendrogram()
+    # ~ # plt.show()
+    # ~ plt.savefig("dendrogram-rate{}.pdf".format(rate), format="pdf", ppi =300)
+    # ~ plt.show(block = True)
 

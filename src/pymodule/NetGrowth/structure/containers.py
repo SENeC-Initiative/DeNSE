@@ -112,12 +112,15 @@ class Neurite(str):
         else:
             self._update_time = None
 
+    def get_tree(self):
+        return _pg._get_tree(self._parent, str(self))
+
     def remove_shorter(self, threshold):
         popper=[]
         for enum, branch in enumerate(self.branches):
             if branch.xy.shape[0]< threshold:
                 popper.append(enum)
-        for n in sorted(popper,reverse=True):
+        for n in sorted(popper, reverse=True):
             self.branches.pop(n)
 
     @property
@@ -253,20 +256,21 @@ class Node(int):
 
     def __new__(cls, node_id, tree=None, parent=None, diameter=None,
                 dist_to_parent=None, pos=None):
-        return super(Neuron, cls).__new__(cls, node_id)
+        return super(Node, cls).__new__(cls, node_id)
 
     def __init__(self, node_id, tree=None, parent=None, diameter=None,
                  dist_to_parent=None, pos=None):
         self._tree          = tree
-        self.parent         = parent
         self.diameter       = diameter
         self.position       = pos
         self.dist_to_parent = dist_to_parent
         self.children       = []
+        self.parent         = (tree.get(int(parent), parent)
+                               if parent is not None else None)
         if parent is not None and node_id not in parent.children:
             parent.add_child(self)
 
-    def add_child(child):
+    def add_child(self, child):
         self.children.append(child)
         self._tree[int(child)] = child
         child.parent           = self
@@ -274,12 +278,12 @@ class Node(int):
 
 class Tree(dict):
 
-    def __init__(self, neuron, neurite, root):
+    def __init__(self, neuron, neurite):
         super(Tree, self).__init__()
         self._neuron    = neuron
         self._neurite   = neurite
-        self._root      = root
-        self[int(root)] = root
+        self._root      = None
+        self._tips_set  = False
 
     @property
     def neuron(self):
@@ -293,9 +297,79 @@ class Tree(dict):
     def root(self):
         return self._root
 
+    @property
+    def tips(self):
+        assert self._tips_set, "Use `update_tips` first."
+        return self._tips
+
     def __setitem__(self, key, value):
+        print("Tree setitem", key, value, value.parent)
         super(Tree, self).__setitem__(key, value)
-        value._tree = self
+        if value.parent is None or value.parent:
+            self._root = value
+        value._tree    = self
+        self._tips_set = False
+
+    def update_tips(self):
+        self._tips = []
+        for key, val in self.items():
+            if not val.children:
+                self._tips.append(val)
+        self._tips_set = True
+
+    def show_dendrogram(self):
+        '''
+        Make and display the dendrogram using ETE3
+
+        Returns
+        -------
+        t, ts : ete3.Tree, ete3.TreeStyle
+        '''
+        from ete3 import Tree as Ete3Tree
+        from ete3 import TreeStyle, NodeStyle
+        from collections import deque
+
+        # make the tree
+        t      = Ete3Tree()
+        elt    = t
+        queue  = deque([self._root])
+        edict  = {None: t}
+
+        # ~ print(self)
+
+        while queue:
+            node   = queue.popleft()
+            # ~ print(node, node.parent, edict)
+            parent = edict[node.parent]
+            enode  = parent.add_child(name=int(node), dist=node.dist_to_parent)
+
+            ns = NodeStyle()
+            ns["vt_line_width"] = node.diameter
+            ns["hz_line_width"] = node.diameter
+            enode.set_style(ns)
+
+            edict[node] = enode
+            queue.extend(node.children)
+
+        # set style
+        ts = TreeStyle()
+        ts.show_leaf_name = False
+
+        # show
+        t.show(tree_style=ts)
+
+        return t, ts
+
+    def _cleanup(self):
+        for val in self.values():
+            val.children = []
+        for key, val in self.items():
+            if val.parent is None or val.parent == val:
+                self._root = val
+                val.parent = None
+            else:
+                self[int(val.parent)].children.append(val)
+        self.update_tips()
 
 
 def _norm_angle_from_vectors(vectors):

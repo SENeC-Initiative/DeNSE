@@ -22,13 +22,13 @@ cdef extern from "../libgrowth/elements_types.hpp" namespace "growth":
     ctypedef vector[vector[double]] SkelSomas
 
     ctypedef struct NodeProp:
+        NodeProp() except +
+
         size_t n_id
         size_t p_id
         double diameter
         double dist_to_parent
         vector[double] position
-        NodeProp(size_t n, size_t p, double diam, double dtp,
-                 vector[double] pos) except +
 
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":

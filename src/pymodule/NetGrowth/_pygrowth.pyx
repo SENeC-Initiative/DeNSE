@@ -14,7 +14,7 @@ import numpy as np
 cimport numpy as np
 
 from .geometry import Shape
-from .structure import Node, Tree
+from .structure import Node, Tree, Population
 from ._helpers import *
 from ._pygrowth cimport *
 
@@ -508,9 +508,12 @@ def GetObjectType(gid):
     return _to_string(object_type(gid))
 
 
-def GetNeurons():
+def GetNeurons(as_ints=False):
     ''' Return the neuron ids. '''
-    return get_neurons()
+    if as_ints:
+        return np.array(get_neurons(), dtype=int)
+    else:
+        return Population.from_gids(get_neurons())
 
 
 def GetDefaults(object_name, settables=False):
@@ -1140,24 +1143,25 @@ def _get_tree(neuron, neurite):
     Return a tree describing a neurite.
     '''
     pos  = GetStatus(neuron, property_name="position")
-    d0   = GetStatus(neuron, property_name="diameter", neurite=neurite)
-    root = Node(0, diameter=d0, pos=pos)
-    tree = Tree(neuron, neurite, root)
+    tree = Tree(neuron, neurite)
 
     keep_going = True
 
     cdef:
-        NodeProp nprop = NodeProp(0, 0, 0, 0, [])
-        string cneurite = _to_string(neurite)
+        NodeProp nprop
+        string cneurite = _to_bytes(neurite)
 
     while keep_going:
         keep_going = walk_neurite_tree(neuron, cneurite, nprop)
 
-        node      = Node(nprop.n_id, tree, parent=tree[nprop.p_id],
+        node      = Node(nprop.n_id, tree, parent=tree.get(nprop.p_id, None),
                          diameter=nprop.diameter,
                          dist_to_parent=nprop.dist_to_parent,
                          pos=tuple(nprop.position))
-        tree[nid] = node
+
+        tree[int(node)] = node
+
+    tree._cleanup()
 
     return tree
 

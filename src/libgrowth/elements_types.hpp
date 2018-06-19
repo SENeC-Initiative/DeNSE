@@ -41,16 +41,17 @@ typedef std::tuple<size_t, double, size_t, std::string, signed char> Event;
 
 typedef struct NodeProp
 {
+    NodeProp() : n_id(0), p_id(0), diameter(0), dist_to_parent(0) {};
+    NodeProp(size_t n, size_t p, double diam, double dtp,
+             std::vector<double> pos)
+        : n_id(n), p_id(p), diameter(diam), dist_to_parent(dtp), position(pos)
+    {};
+
     size_t n_id;
     size_t p_id;
     double diameter;
     double dist_to_parent;
     std::vector<double> position;
-
-    NodeProp(size_t n, size_t p, double diam, double dtp,
-             std::vector<double> pos)
-        : n_id(n), p_id(p), diameter(diam), dist_to_parent(dtp), position(pos)
-    {};
 } NodeProp;
 
 

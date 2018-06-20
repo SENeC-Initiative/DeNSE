@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 import matplotlib.pyplot as plt
-# ~ plt.ion()
+plt.ion()
 
 
 '''
@@ -14,7 +14,7 @@ Main parameters
 '''
 
 rate = 0.005
-num_neurons = 1000
+num_neurons = 1
 
 # ~ branching_type = "flpl"
 branching_type = "uniform"
@@ -28,7 +28,7 @@ neuron_params = {
     "persistence_length": 10000.0,
 
     "filopodia_min_number": 30,
-    "speed_growth_cone": 9.,
+    "speed_growth_cone": 0.9,
     "sensing_angle": 0.1495,
 
     "filopodia_wall_affinity": 2.,
@@ -58,6 +58,7 @@ Analyse
 def article_distribution():
     hours_ev = [13, 19, 6, 8, 5, 3, 1, 1]
     hours = range(20,100,10)
+
 
 def step(n, loop_n, save_path, plot=True):
     NetGrowth.Simulate(n)
@@ -100,7 +101,7 @@ def lateral_branching(neuron_params):
 
 
 if __name__ == '__main__':
-    num_omp = 12
+    num_omp = 1
     kernel = {
         "seeds": np.random.randint(0, 10000, num_omp).tolist(),
         "num_local_threads": num_omp,
@@ -112,25 +113,23 @@ if __name__ == '__main__':
     n   = pop[0]
 
     tree = n.axon.get_tree()
-    # ~ tree.show_dendrogram()
+    tree.show_dendrogram()
 
-    import neurom
-    from neurom import viewer
-    asym = []
-    num_tips = []
-    for n in pop:
-        tree = n.axon.get_tree()
-        num_tips.append(len(tree.tips))
-        nrn = tree.neurom_tree()
-        asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
-        # ~ if np.isclose(asym[-1], 0):
-            # ~ tree.show_dendrogram()
+    # ~ import neurom
+    # ~ from neurom import viewer
+    # ~ asym = []
+    # ~ num_tips = []
+    # ~ for n in pop:
+        # ~ tree = n.axon.get_tree()
+        # ~ num_tips.append(len(tree.tips))
+        # ~ nrn = tree.neurom_tree()
+        # ~ asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
 
-    fig, (ax1, ax2) = plt.subplots(2)
-    ax1.hist(asym)
-    print(np.average(num_tips), np.median(num_tips))
-    ax2.hist(num_tips)
-    plt.show()
+    # ~ fig, (ax1, ax2) = plt.subplots(2)
+    # ~ ax1.hist(asym)
+    # ~ print(np.average(num_tips), np.median(num_tips))
+    # ~ ax2.hist(num_tips)
+    # ~ plt.show()
 
 
     # ~ import btmorph2

@@ -152,7 +152,10 @@ Point Branch::get_last_xy() const
 }
 
 
-double Branch::get_distance_to_soma() const { return points[2].front(); }
+double Branch::initial_distance_to_soma() const { return points[2].front(); }
+
+
+double Branch::final_distance_to_soma() const { return points[2].back(); }
 
 
 double Branch::get_length() const

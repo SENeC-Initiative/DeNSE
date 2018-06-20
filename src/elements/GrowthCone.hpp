@@ -73,6 +73,7 @@ class GrowthCone : public TopologicalNode,
     size_t num_filopodia_; // minimal number of filopodia
 
     double persistence_length_; // persistence length of the neurite l_p
+    double current_diameter_;
 
     Filopodia filopodia_;
     Move move_;
@@ -136,8 +137,10 @@ class GrowthCone : public TopologicalNode,
     double get_module() const;
     virtual double get_state(const char *observable) const;
     virtual double get_growth_cone_speed() const;
+    virtual double get_diameter() const override;
 
     // status and kernel-related functions
+    virtual void set_diameter(double diameter) override;
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();

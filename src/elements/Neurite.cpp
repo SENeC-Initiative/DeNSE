@@ -55,19 +55,14 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , gc_split_angle_std_(GC_SPLIT_ANGLE_STD)
     , diameter_eta_exp_(DIAMETER_ETA_EXP)
     , diameter_variance_(DIAMETER_VARIANCE)
+    , thinning_ratio_(THINNING_RATIO)
+    , min_diameter_(MIN_DIAMETER)
     // parameters for critical_resource-driven growth
     , use_critical_resource_(false)
-    , cr_neurite_{CRITICAL_GENERATED,
-                  CRITICAL_GENERATED,
-                  CRITICAL_SPLIT_TH,
-                  CRITICAL_GEN_TAU,
-                  CRITICAL_DEL_TAU,
-                  CRITICAL_GEN_VAR,
-                  CRITICAL_GEN_CORR,
-                  0,
-                  0,
-                  0,
-                  0}
+    , cr_neurite_{
+        CRITICAL_GENERATED, CRITICAL_GENERATED, CRITICAL_GEN_TAU,
+        CRITICAL_DEL_TAU, CRITICAL_GEN_VAR, CRITICAL_GEN_CORR,
+        CRITICAL_GC_SUPPORT, CRITICAL_SLOPE, 0, 0, 0, 0}
 {
     uniform_   = std::uniform_real_distribution<double>(0., 1.);
     poisson_   = std::poisson_distribution<>(0);
@@ -80,13 +75,15 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
 }
 
 
-//! default destructor
+//! destructor
 Neurite::~Neurite()
 {
     // it's important to clear actinwaves and growthcones
     // to use properly the SmartPointers
     growth_cones_.clear();
     growth_cones_tmp_.clear();
+    growth_cones_inactive_.clear();
+    growth_cones_inactive_tmp_.clear();
     dead_cones_.clear();
     actinDeck_.clear();
 }
@@ -179,7 +176,7 @@ void Neurite::update_kernel_variables()
 void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
 {
     // include the growth cones that were created during the previous substep
-    if (growth_cones_tmp_.size() > 0)
+    if (not growth_cones_tmp_.empty())
     {
         growth_cones_.insert(growth_cones_tmp_.begin(),
                              growth_cones_tmp_.end());
@@ -191,11 +188,36 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     update_growth_cones(rnd_engine, substep);
 
     // grow all the growth cones
+    double diameter, b_length;
+
     for (auto &gc : growth_cones_)
     {
         assert(gc.second.use_count() == 2);
         gc.second->grow(rnd_engine, gc.first, substep);
+
+        // compute and check growth cones' diameters for stop
+        b_length = gc.second->get_branch()->get_length();
+        diameter = gc.second->TopologicalNode::get_diameter() - thinning_ratio_*b_length;
+        gc.second->set_diameter(diameter);
+
+        if (diameter < min_diameter_)
+        {
+            growth_cones_inactive_tmp_.insert(gc);
+        }
     }
+
+    // move gc that are too thin to inactive
+    if (not growth_cones_inactive_tmp_.empty())
+    {
+        for (auto &gc : growth_cones_inactive_tmp_)
+        {
+            growth_cones_inactive_.insert(gc);
+            growth_cones_.erase(gc.first);
+        }
+    }
+
+    growth_cones_inactive_tmp_.clear();
+
 
     // We remove the growth cones afterwards because death occurs while looping
     // on growth_cones_, hence we cannot modify it.
@@ -544,7 +566,8 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     double parent_to_soma      = new_node->get_distance_to_soma();
     BranchPtr b                = std::make_shared<Branch>(xy, parent_to_soma);
     sibling->move_.angle       = new_cone_angle;
-    sibling->biology_.diameter = new_diameter;
+    sibling->TopologicalNode::set_diameter(new_diameter);
+    sibling->set_diameter(new_diameter);
 
     sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
     sibling->set_position(xy, parent_to_soma + dist_to_parent, b);
@@ -596,21 +619,32 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         // create the new node at position xy, which is at a distance_to_soma,
         // create a new node and update the node counter
         NodePtr new_node = std::make_shared<Node>(*branching_node);
+        double distance  =
+            distance_to_soma -
+            branching_node->get_branch()->initial_distance_to_soma();
+        // compute the local diameter on the branch
+        double new_diam  = branching_node->TopologicalNode::get_diameter() -
+                           thinning_ratio_*distance;
+
+        // update topology
         update_parent_nodes(new_node, branching_node);
 
         // update the existing growth cone
         branching_node->biology_.branch =
             new_node->biology_.branch->resize_head(branch_point);
         branching_node->set_first_point(xy, distance_to_soma);
+        branching_node->TopologicalNode::set_diameter(new_diam);
 
         // update the new node
+        // NB: it's diameter is the one at the root of the branch!
         new_node->get_branch()->resize_tail(branch_point + 1);
         new_node->set_position(xy, distance_to_soma, new_node->get_branch());
 
-        // create the new growth cone
+        // create the new growth cone @todo set diameter fraction
+        double new_cone_diam = 0.5*new_diam;
         auto sibling = create_branching_cone(
-            branching_node, new_node, 0., 0.5 * branching_node->get_diameter(),
-            xy, branch_direction + angle);
+            branching_node, new_node, 0., new_cone_diam, xy,
+            branch_direction + angle);
 
         // modify sequent nodes
         update_tree_structure(new_node);
@@ -682,14 +716,21 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
         // create new node as branching point
         NodePtr new_node = std::make_shared<Node>(*branching_cone);
         update_parent_nodes(new_node, branching_cone);
+        // set diameter (value at the root of the branch) and position
+        new_node->set_diameter(branching_cone->TopologicalNode::get_diameter());
+        new_node->set_position(
+            branching_cone->get_position(),
+            branching_cone->get_branch()->final_distance_to_soma(),
+            new_node->get_branch());
 
         // move the old growth cone --> growth cone split specific
         branching_cone->move_.angle       = direction + old_angle;
-        branching_cone->biology_.diameter = old_diameter;
+        branching_cone->TopologicalNode::set_diameter(old_diameter);
+        branching_cone->set_diameter(old_diameter);
         branching_cone->topological_advance();
         branching_cone->biology_.branch = std::make_shared<Branch>(
             branching_cone->get_position(),
-            branching_cone->get_branch()->get_distance_to_soma());
+            branching_cone->get_branch()->final_distance_to_soma());
 
         // create the new growth cone from the parent node
         auto sibling = create_branching_cone(
@@ -817,8 +858,8 @@ void Neurite::add_cone(GCPtr cone)
 {
     cone->topology_.nodeID = num_created_nodes_;
 
-    // first gc is added directly
-    if (growth_cones_.empty())
+    // first gc (only soma node exists) is added directly
+    if (num_created_nodes_ == 1)
     {
         growth_cones_[num_created_nodes_] = cone;
     }
@@ -828,6 +869,17 @@ void Neurite::add_cone(GCPtr cone)
     }
 
     num_created_nodes_++;
+
+    // if using critical resource model, update total production
+    if (use_critical_resource_)
+    {
+        double ratio  = num_created_nodes_ / cr_neurite_.typical_gc_support;
+        double factor = cr_neurite_.increase_slope *
+                        cr_neurite_.typical_gc_support * cr_neurite_.target_cr;
+
+        cr_neurite_.eq_cr = (cr_neurite_.tau / cr_neurite_.tau_generation) *
+                            factor * std::tanh(ratio);
+    }
 }
 
 
@@ -846,8 +898,9 @@ void Neurite::add_node(NodePtr node)
 
 bool Neurite::walk_tree(NodeProp& np) const
 {
-    static auto gc_it = gc_cbegin();
-    static auto n_it  = nodes_.cbegin();
+    static auto gc_it      = gc_cbegin();
+    static auto gc_iact_it = growth_cones_inactive_.cbegin();
+    static auto n_it       = nodes_.cbegin();
 
     size_t nid, pid;
     double diam, dtp;
@@ -858,8 +911,12 @@ bool Neurite::walk_tree(NodeProp& np) const
         nid = n_it->second->get_nodeID();
         // get parent id
         pid = n_it->second->get_parent().lock()->get_nodeID();
-        // get diameter
+        // get diameter (average between parent and current node)
         diam = n_it->second->get_diameter();
+        if (n_it->first != 0)
+        {
+            diam -= 0.5*thinning_ratio_*n_it->second->get_branch()->get_length();
+        }
         // get distance to parent
         dtp = n_it->second->get_distance_parent();
         // get position
@@ -878,8 +935,9 @@ bool Neurite::walk_tree(NodeProp& np) const
         nid = gc_it->second->get_nodeID();
         // get parent id
         pid = gc_it->second->get_parent().lock()->get_nodeID();
-        // get diameter
-        diam = gc_it->second->get_diameter();
+        // get diameter (average between root and tip)
+        diam = 0.5*(gc_it->second->TopologicalNode::get_diameter()
+                    + gc_it->second->get_diameter());
         // get distance to parent
         dtp = gc_it->second->get_branch()->get_length();
         // get position
@@ -892,9 +950,31 @@ bool Neurite::walk_tree(NodeProp& np) const
 
         return true;
     }
+    else if (gc_iact_it != growth_cones_inactive_.cend())
+    {
+        // get node id
+        nid = gc_iact_it->second->get_nodeID();
+        // get parent id
+        pid = gc_iact_it->second->get_parent().lock()->get_nodeID();
+        // get diameter (average between root and tip)
+        diam = 0.5*(gc_iact_it->second->TopologicalNode::get_diameter()
+                    + gc_iact_it->second->get_diameter());
+        // get distance to parent
+        dtp = gc_iact_it->second->get_branch()->get_length();
+        // get position
+        Point p = gc_iact_it->second->get_position();
+        std::vector<double> coords({p.at(0), p.at(1)});
 
-    gc_it = gc_cbegin();
-    n_it  = nodes_.cbegin();
+        np = NodeProp(nid, pid, diam, dtp, coords);
+
+        gc_iact_it++;
+
+        return true;
+    }
+
+    gc_it      = gc_cbegin();
+    gc_iact_it = growth_cones_inactive_.cbegin();
+    n_it       = nodes_.cbegin();
 
     return false;
 }
@@ -963,6 +1043,7 @@ void Neurite::set_status(const statusMap &status)
         gc_split_angle_std_ = _rad_from_deg(gc_split_angle_std_);
     }
 
+    get_param(status, names::thinning_ratio, thinning_ratio_);
 
     is_rad_std = false;
     is_rad     = false;
@@ -993,24 +1074,32 @@ void Neurite::set_status(const statusMap &status)
 
     //                 Critical Resource Params
     //###################################################
-    get_param(status, names::use_critical_resource, use_critical_resource_);
-    if (use_critical_resource_)
 
+    get_param(status, names::use_critical_resource, use_critical_resource_);
+
+    if (use_critical_resource_)
     {
         get_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
-        get_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
         get_param(status, names::CR_neurite_variance, cr_neurite_.var);
         get_param(status, names::CR_neurite_generated_tau,
                   cr_neurite_.tau_generation);
         get_param(status, names::CR_neurite_delivery_tau,
                   cr_neurite_.tau_delivery);
+        get_param(status, names::CR_typical_gc_support,
+                  cr_neurite_.typical_gc_support);
+        get_param(status, names::CR_increase_slope,
+                  cr_neurite_.increase_slope);
         // get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
         //
         // optimize variable for less computation:
         cr_neurite_.tau   = 1. / (1. / cr_neurite_.tau_delivery +
                                 1. / cr_neurite_.tau_generation);
+        double ratio  = num_created_nodes_ / cr_neurite_.typical_gc_support;
+        double factor = cr_neurite_.increase_slope *
+                        cr_neurite_.typical_gc_support * cr_neurite_.target_cr;
+
         cr_neurite_.eq_cr = (cr_neurite_.tau / cr_neurite_.tau_generation) *
-                            cr_neurite_.target_cr;
+                            factor * std::tanh(ratio);
         // @TODO this is not obvious!!
         cr_neurite_.available = cr_neurite_.eq_cr;
 
@@ -1065,6 +1154,9 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
         set_param(status, names::lateral_branching_angle_mean,
                   _deg_from_rad(lateral_branching_angle_std_));
         set_param(status, names::observables, observables_);
+
+        set_param(status, names::thinning_ratio, thinning_ratio_);
+
         // branching properties
         branching_model_.get_status(status);
 
@@ -1074,18 +1166,29 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
         {
             set_param(status, names::CR_neurite_generated,
                       cr_neurite_.target_cr);
-            set_param(status, names::CR_neurite_split_th, cr_neurite_.split_th);
             set_param(status, names::CR_neurite_variance, cr_neurite_.var);
             set_param(status, names::CR_neurite_generated_tau,
                       cr_neurite_.tau_generation);
             set_param(status, names::CR_neurite_delivery_tau,
                       cr_neurite_.tau_delivery);
+            set_param(status, names::CR_typical_gc_support,
+                      cr_neurite_.typical_gc_support);
+            set_param(status, names::CR_increase_slope,
+                      cr_neurite_.increase_slope);
         }
     }
 
     // growth_cone properties
     set_param(status, names::growth_cone_model, growth_cone_model_);
-    growth_cones_.begin()->second->get_status(status);
+
+    if (not growth_cones_.empty())
+    {
+        growth_cones_.begin()->second->get_status(status);
+    }
+    else
+    {
+        growth_cones_inactive_.begin()->second->get_status(status);
+    }
 }
 
 
@@ -1112,23 +1215,28 @@ double Neurite::get_state(const char *observable) const
 double Neurite::get_max_resol() const
 {
     // check speed limit
-    double max_speed = growth_cones_.begin()->second->avg_speed_ +
-                       5 * growth_cones_.begin()->second->speed_variance_;
-    double length = growth_cones_.begin()->second->filopodia_.finger_length;
-
-    // check angle limit for simple random walk (sigma depends on resolution)
-    if (growth_cone_model_ == "simple_random_walk")
+    if (not growth_cones_.empty())
     {
-        double sigma_sqrd = growth_cones_.begin()->second->sensing_angle_ *
-                            growth_cones_.begin()->second->sensing_angle_;
-        // max angle should contain at least 3 sigma
-        double max_angle =
-            0.5 * growth_cones_.begin()->second->max_sensing_angle_;
-        double dt_angle_max = max_angle * max_angle / (9 * sigma_sqrd);
-        return std::min(length / max_speed, dt_angle_max);
+        double max_speed = growth_cones_.begin()->second->avg_speed_ +
+                           5 * growth_cones_.begin()->second->speed_variance_;
+        double length = growth_cones_.begin()->second->filopodia_.finger_length;
+
+        // check angle limit for simple random walk (sigma depends on resolution)
+        if (growth_cone_model_ == "simple_random_walk")
+        {
+            double sigma_sqrd = growth_cones_.begin()->second->sensing_angle_ *
+                                growth_cones_.begin()->second->sensing_angle_;
+            // max angle should contain at least 3 sigma
+            double max_angle =
+                0.5 * growth_cones_.begin()->second->max_sensing_angle_;
+            double dt_angle_max = max_angle * max_angle / (9 * sigma_sqrd);
+            return std::min(length / max_speed, dt_angle_max);
+        }
+
+        return length / max_speed;
     }
 
-    return length / max_speed;
+    return std::numeric_limits<double>::infinity();
 }
 
 } // namespace growth

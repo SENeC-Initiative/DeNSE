@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-plt.ion()
+# ~ plt.ion()
 
 
 '''
 Main parameters
 '''
 
-S = 0.1
+S = -18.
 E = 0.00
 # ~ S = 4.
 # ~ E = 0.3
@@ -71,9 +71,10 @@ if use_vp:
     vp_params = {
         # ~ "B": 100.8,
         "B": 84000.,
+        # ~ "B": 100000.,
         "E": E,
         "S": S,
-        "T": 800000.,
+        "T": 700000.,
     }
     neuron_params.update(vp_params)
 
@@ -117,7 +118,7 @@ def vp_branching(neuron_params):
     neuron_params['use_van_pelt'] = True
     NetGrowth.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(100, 1, False, False)
+    step(50, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     NetGrowth.SaveSwc(swc_resolution=5)
     NetGrowth.SaveJson()
@@ -142,21 +143,25 @@ if __name__ == '__main__':
     tree = n.axon.get_tree()
     tree.show_dendrogram()
 
-    # ~ import neurom
-    # ~ from neurom import viewer
-    # ~ asym = []
-    # ~ num_tips = []
-    # ~ for n in pop:
-        # ~ tree = n.axon.get_tree()
-        # ~ num_tips.append(len(tree.tips))
-        # ~ nrn = tree.neurom_tree()
-        # ~ asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
+    import neurom
+    from neurom import viewer
+    asym = []
+    num_tips = []
+    for n in pop:
+        tree = n.axon.get_tree()
+        num_tips.append(len(tree.tips))
+        nrn = tree.neurom_tree()
+        asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
 
-    # ~ fig, (ax1, ax2) = plt.subplots(2)
-    # ~ ax1.hist(asym)
-    # ~ print(np.average(num_tips), np.median(num_tips))
-    # ~ ax2.hist(num_tips)
-    # ~ plt.show()
+    fig, (ax1, ax2) = plt.subplots(2)
+    nann = np.where(np.isnan(asym))[0]
+    print(np.min(asym), np.max(asym), nann)
+    if len(nann):
+        NetGrowth.plot.PlotNeuron(nann, show=True)
+    ax1.hist(np.array(asym)[~np.isnan(asym)], bins="auto")
+    print(np.average(num_tips), np.median(num_tips))
+    ax2.hist(num_tips)
+    plt.show()
 
     # ~ import btmorph2
     # ~ import matplotlib.pyplot as plt

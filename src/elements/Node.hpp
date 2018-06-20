@@ -142,7 +142,7 @@ class TopologicalNode : public BaseNode
      */
     void topological_advance();
     void set_first_point(const Point p, double length);
-    void set_diameter(double diameter);
+    virtual void set_diameter(double diameter);
     void set_position(const Point &) override;
     void set_position(const Point &pos, double dist_to_soma, BranchPtr b);
 
@@ -174,10 +174,11 @@ class TopologicalNode : public BaseNode
     inline bool is_dead() const { return biology_.dead; }
     inline BranchPtr get_branch() const { return biology_.branch; }
     size_t get_branch_size() const;
-    inline double get_diameter() const { return biology_.diameter; }
+    inline virtual double get_diameter() const { return biology_.diameter; }
 
     bool support_AW() const;
 };
+
 
 class Node : public TopologicalNode
 {

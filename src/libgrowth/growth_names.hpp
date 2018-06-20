@@ -32,10 +32,14 @@ extern const std::string initial_branch_lenght;
 //! default branching probability
 extern const std::string branching_proba_default;
 
+extern const std::string thinning_ratio;
+
 #define BRANCHING_PROBA_DEFAULT 0.05
 #define AXON_DIAMETER 6.
 #define DENDRITE_DIAMETER 6.
 #define SOMA_RADIUS 20.
+#define THINNING_RATIO 0.005  // lose 1 micrometer every 200 micrometers
+#define MIN_DIAMETER 0.1      // diameter when a gc stops growing [micrometers]
 
 
 /*
@@ -106,9 +110,6 @@ extern const std::string CR_branching_th;
 extern const std::string CR_branching_proba;
 #define CRITICAL_BRANCHING_PROBA 0.1
 
-
-extern const std::string CR_neurite_split_th;
-#define CRITICAL_SPLIT_TH 250.
 extern const std::string CR_neurite_available;
 #define CRITICAL_AVAILABLE .
 extern const std::string CR_neurite_variance;
@@ -120,6 +121,10 @@ extern const std::string CR_neurite_generated_tau;
 extern const std::string CR_neurite_delivery_tau;
 #define CRITICAL_DEL_TAU 50.
 #define CRITICAL_GEN_CORR 0.
+extern const std::string CR_increase_slope;
+#define CRITICAL_SLOPE 1.
+extern const std::string CR_typical_gc_support;
+#define CRITICAL_GC_SUPPORT 8.
 
 
 /*

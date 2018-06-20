@@ -87,7 +87,8 @@ GrowthCone::GrowthCone(const std::string &model)
     update_kernel_variables();
 
     // initialize speed (sensing is initialized by filopodia)
-    move_.speed = local_avg_speed_;
+    move_.speed       = local_avg_speed_;
+    current_diameter_ = get_diameter();
 
     // only 'initial models' are directly created, other are cloned, so
     // we don't need to get the area.
@@ -126,6 +127,7 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , max_sensing_angle_(copy.max_sensing_angle_)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
+    , current_diameter_(copy.current_diameter_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -947,6 +949,12 @@ double GrowthCone::get_module() const { return move_.module; }
 void GrowthCone::set_angle(double angle) { move_.angle = angle; }
 
 
+void GrowthCone::set_diameter(double diameter)
+{
+    current_diameter_ = diameter;
+}
+
+
 // ###########################################################
 //              Set Get status
 // ###########################################################
@@ -978,6 +986,7 @@ void GrowthCone::set_status(const statusMap &status)
     }
 
     get_param(status, names::proba_retraction, proba_retraction_);
+
     // update exponential distribution
     exponential_ = std::exponential_distribution<double>(proba_retraction_);
 
@@ -1119,9 +1128,17 @@ double GrowthCone::get_state(const char *observable) const
     value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
     CASE("retraction_time")
     value = retraction_time_;
+    CASE("diameter")
+    value = current_diameter_;
     ENDTRIE;
 
     return value;
+}
+
+
+double GrowthCone::get_diameter() const
+{
+    return current_diameter_;
 }
 
 

@@ -493,10 +493,10 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
 
 def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
                show_culture=True, aspect=1., soma_radius=None,
-               active_gc="d", inactiv_gc="x", gc_size=2., soma_color='k',
-               axon_color="r", dendrite_color="b", save_path=None, title=None,
-               axis=None, show_density=False, dstep=20., dmin=None, dmax=None,
-               show=True, **kwargs):
+               active_gc="d", gc_size=2., soma_color='k', axon_color="r",
+               dendrite_color="b", save_path=None, title=None, axis=None,
+               show_density=False, dstep=20., dmin=None, dmax=None, show=True,
+               **kwargs):
     '''
     Plot neurons in the network.
 

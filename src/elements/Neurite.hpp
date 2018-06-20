@@ -31,11 +31,14 @@ typedef struct CR_Neurite
     // CR_params
     double target_cr;
     double eq_cr;
-    double split_th;
     double tau_generation;
     double tau_delivery;
     double var;
     double correlation;
+
+    // evolution with number of growth cones
+    double typical_gc_support;
+    double increase_slope;
 
     // CR_run time variable
     double available;
@@ -142,6 +145,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::string growth_cone_model_;
     std::unordered_map<size_t, GCPtr> growth_cones_;
     std::unordered_map<size_t, GCPtr> growth_cones_tmp_;
+    std::unordered_map<size_t, GCPtr> growth_cones_inactive_;
+    std::unordered_map<size_t, GCPtr> growth_cones_inactive_tmp_;
     std::vector<size_t> dead_cones_;
     std::deque<ActinPtr> actinDeck_;
     std::unordered_map<size_t, NodePtr> nodes_;
@@ -149,6 +154,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;
+    double thinning_ratio_;     // diameter thinning with distance
+    double min_diameter_;
 
     // competition
     bool use_critical_resource_;

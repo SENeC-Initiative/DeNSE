@@ -138,7 +138,7 @@ Point GrowthCone_SelfReferentialForces::compute_target_position(
 
     // printf("force is %f %f\n",inertial_.force, inertial_.decay );
     // get neurite information to compute self referential forces
-    double distanceToSoma = biology_.branch->get_distance_to_soma();
+    double distanceToSoma = biology_.branch->final_distance_to_soma();
     double soma_angle     = biology_.own_neurite->get_soma_angle();
 
     // apply drift from previous points

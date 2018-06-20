@@ -6,14 +6,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-#~ plt.ion()
+# ~ plt.ion()
 
 
 '''
 Main parameters
 '''
 
-num_neurons = 1
+num_neurons = 100
 
 use_vp                = False
 use_uniform_branching = False
@@ -44,7 +44,7 @@ neuron_params = {
 Check for optional parameters
 '''
 
-b_th = 20.
+b_th = 45.
 
 if use_critical_resource:
     cr_params = {
@@ -58,8 +58,8 @@ if use_critical_resource:
         #~ "CR_branching_th": b_th,
         #~ "CR_neurite_generated": 2500.,
         # Cr model
-        "CR_retraction_factor": 0.10,
-        "CR_elongation_factor": 0.10,
+        "CR_retraction_factor": 1.,
+        "CR_elongation_factor": 2.,
         # "CR_leakage": 0.05,
         "CR_retraction_th": 0.01,
         "CR_elongation_th": 0.3,
@@ -69,6 +69,7 @@ if use_critical_resource:
         "CR_variance": 0.01,
         "CR_use_ratio": 0.16,
         "CR_branching_th": b_th,
+        "CR_branching_proba": 0.1,
     }
     neuron_params.update(cr_params)
 
@@ -105,7 +106,7 @@ def resource_branching(neuron_params):
     neuron_params['CR_branching_th'] = b_th
     NetGrowth.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(100, 1, False, True)
+    step(200, 1, False, True)
     # neuron_params['use_lateral_branching'] = True
     NetGrowth.SaveSwc(swc_resolution=5)
     NetGrowth.SaveJson()
@@ -118,7 +119,7 @@ def resource_branching(neuron_params):
 if __name__ == '__main__':
     num_omp = 12
     kernel = {
-        "seeds": np.random.randint(0, 10000, num_omp).tolist(),
+        "seeds": [18+i for i in range(num_omp)],
         "num_local_threads": num_omp,
         "environment_required": False,
         "resolution": 1.,
@@ -132,18 +133,18 @@ if __name__ == '__main__':
     tree = n.axon.get_tree()
     tree.show_dendrogram()
 
-    # ~ import neurom
-    # ~ from neurom import viewer
-    # ~ asym = []
-    # ~ num_tips = []
-    # ~ for n in pop:
-        # ~ tree = n.axon.get_tree()
-        # ~ num_tips.append(len(tree.tips))
-        # ~ nrn = tree.neurom_tree()
-        # ~ asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
+    import neurom
+    from neurom import viewer
+    asym = []
+    num_tips = []
+    for n in pop:
+        tree = n.axon.get_tree()
+        num_tips.append(len(tree.tips))
+        nrn = tree.neurom_tree()
+        asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
 
-    # ~ fig, (ax1, ax2) = plt.subplots(2)
-    # ~ ax1.hist(asym)
-    # ~ print(np.average(num_tips), np.median(num_tips))
-    # ~ ax2.hist(num_tips)
-    # ~ plt.show()
+    fig, (ax1, ax2) = plt.subplots(2)
+    ax1.hist(asym)
+    print(np.average(num_tips), np.median(num_tips))
+    ax2.hist(num_tips)
+    plt.show()

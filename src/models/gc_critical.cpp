@@ -211,36 +211,20 @@ double GrowthCone_Critical::compute_CR(mtPtr rnd_engine, double substep)
                   substep * (received_ - stored_ * consumption_rate_) +
                   sqrt(substep) * variance_ * noise_;
 
+        double branch_length = get_branch()->get_length();
+
         // amount of molecule cannot be negative
         if (stored_ < 0.)
         {
             stored_ = 0.;
         }
-        else if (stored_ > branching_th_)
+        else if (stored_ > branching_th_ and branch_length > move_.module)
         {
             double rnd_throw = uniform_(*(rnd_engine).get());
             double threshold = branching_proba_ * (stored_ - branching_th_)
                                / (stored_ + branching_th_);
             if (rnd_throw < substep*threshold)
             {
-                //~ size_t step = kernel().simulation_manager.get_current_step();
-                //~ double current_substep =
-                    //~ kernel().simulation_manager.get_current_substep();
-
-                //~ size_t ev_step = current_substep < resol_ ? step : step + 1;
-                //~ double ev_substep = ev_step == step
-                                    //~ ? std::min(current_substep + 0.1, resol_)
-                                    //~ : 0.1;
-
-                //~ std::string neurite = biology_.own_neurite->get_name();
-                //~ size_t neuron       =
-                    //~ biology_.own_neurite->get_parent_neuron().lock()->get_gid();
-                //~ printf("resource branching at %lu - %f!\n", ev_step, ev_substep);
-
-                //~ Event ev = std::make_tuple(ev_step, ev_substep, neuron,
-                                           //~ neurite, names::gc_splitting);
-
-                //~ kernel().simulation_manager.new_branching_event(ev);
                 double new_length = get_module();
                 double new_angle, old_angle;
                 double old_diameter = get_diameter();

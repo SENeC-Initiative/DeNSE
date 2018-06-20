@@ -16,25 +16,26 @@ const std::string axon_diameter("axon_diameter");
 const std::string B("B");
 const std::string branching_proba_default("branching_proba_default");
 
-const std::string CR_correlation("CR_correlation");
-const std::string CR_leakage("CR_leakage");
-const std::string CR_use_ratio("CR_use_ratio");
-const std::string CR_variance("CR_variance");
-const std::string CR_weight_centrifugal("CR_weight_centrifugal");
-const std::string CR_weight_diameter("CR_weight_diameter");
-
-const std::string CR_branching_th("CR_branching_th");
 const std::string CR_branching_proba("CR_branching_proba");
+const std::string CR_branching_th("CR_branching_th");
+const std::string CR_correlation("CR_correlation");
 const std::string CR_elongation_factor("CR_elongation_factor");
 const std::string CR_elongation_th("CR_elongation_th");
-const std::string CR_retraction_factor("CR_retraction_factor");
-const std::string CR_retraction_th("CR_retraction_th");
+const std::string CR_increase_slope("CR_increase_slope");
+const std::string CR_leakage("CR_leakage");
 const std::string CR_neurite_split_th("CR_neurite_split_th");
 const std::string CR_neurite_available("CR_neurite_available");
 const std::string CR_neurite_variance("CR_neurite_variance");
 const std::string CR_neurite_generated("CR_neurite_generated");
 const std::string CR_neurite_generated_tau("CR_neurite_generated_tau");
 const std::string CR_neurite_delivery_tau("CR_neurite_delivery_tau");
+const std::string CR_retraction_factor("CR_retraction_factor");
+const std::string CR_retraction_th("CR_retraction_th");
+const std::string CR_typical_gc_support("CR_typical_gc_support");
+const std::string CR_use_ratio("CR_use_ratio");
+const std::string CR_variance("CR_variance");
+const std::string CR_weight_centrifugal("CR_weight_centrifugal");
+const std::string CR_weight_diameter("CR_weight_diameter");
 
 const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
@@ -91,6 +92,7 @@ const std::string srf_somatropic_decay("srf_somatropic_decay");
 const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
+const std::string thinning_ratio("thinning_ratio");
 
 const std::string uniform_branching_rate("uniform_branching_rate");
 const std::string use_actin_waves("use_actin_waves");

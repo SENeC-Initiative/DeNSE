@@ -1670,8 +1670,6 @@ def _check_params(params, object_name):
 
     py_defaults = _statusMap_to_dict(default_params)
 
-    print(params.get("growth_cone_model", "no model"))
-    print(py_defaults)
     for key, val in params.items():
         if key in py_defaults:
             prop = default_params[_to_bytes(key)]

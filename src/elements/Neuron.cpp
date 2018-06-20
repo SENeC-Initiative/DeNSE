@@ -334,6 +334,9 @@ std::string Neuron::new_neurite(const std::string &name,
 
     neurites_[name]->add_cone(first_gc);
 
+    // set initial and current diameter
+    first_gc->TopologicalNode::set_diameter(
+        neurites_[name]->get_first_node()->biology_.diameter);
     first_gc->set_diameter(
         neurites_[name]->get_first_node()->biology_.diameter);
 

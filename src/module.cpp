@@ -521,4 +521,13 @@ void _fill_swc(const SkelNeurite &source_container,
     }
 }
 
-} // namespace growth
+
+bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np)
+{
+    NeuronPtr n                = kernel().neuron_manager.get_neuron(neuron);
+    NeuriteWeakPtr neurite_ptr = n->get_neurite(neurite);
+
+    return neurite_ptr.lock()->walk_tree(np);
+}
+
+} /* namespace */

@@ -11,15 +11,14 @@ Requirements
 
 Main library:
 
-* cmake_
-* python_
-* numpy_, scipy_
+* cmake_, python_, GEOS_ (install both binary and header/dev files via apt on debian/ubuntu or rpm/pacman on other linux distributions)
+* numpy_, scipy_, shapely_, pint_ (install via ``pip install --user numpy scipy shapely pint``)
 
 Optional:
 
-* cython_
+* cython_ (``pip install --user cython``)
 * doxygen_ (other than 1.8.13), sphinx_, and breathe_ for local documentation,
-* matplotlib_ for graphical representation.
+* matplotlib_ for graphical representation (``pip install --user matplotlib``).
 
 
 Install
@@ -34,7 +33,7 @@ I will consider that you downloaded the sources into a folder called
     cd DeNSE
     mkdir build
     cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/abolute/path/to/dense_install
+    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/absolute/path/to/dense_install
     make && make install
 
 .. warning::
@@ -62,6 +61,9 @@ You can provide the following options to cmake using ``-Doption_name``, where
 .. _cmake: https://cmake.org/
 .. _numpy: http://www.numpy.org/
 .. _scipy: http://www.scipy.org/
+.. _GEOS: https://trac.osgeo.org/geos/
+.. _shapely: http://toblerity.org/shapely/manual.html
+.. _pint: https://pint.readthedocs.io/en/latest/
 .. _cython: http://cython.org/
 .. _doxygen: http://www.stack.nl/~dimitri/doxygen/
 .. _sphinx: http://www.sphinx-doc.org/

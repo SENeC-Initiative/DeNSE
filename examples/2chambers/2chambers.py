@@ -13,8 +13,16 @@ import random, shutil
 import os
 
 import nngt
+nngt.set_config("palette", "Spectral")
+#~ nngt.set_config("palette", "viridis")
 
-import NetGrowth as ng
+import dense as ds
+
+try:
+    import seaborn as sns
+    sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)}, font_scale=1.5)
+except:
+    pass
 
 
 def CleanFolder(tmp_dir, make=True):
@@ -33,23 +41,27 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-soma_radius = 10.
+soma_radius = 8.
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 use_critical_resource=False
 
-gc_model = 'persistent_random_walk'
+gc_model = 'run_tumble'
 
 neuron_params = {
+    "dendrite_diameter": 3.,
+    "axon_diameter": 4.,
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 0.08,
-    "speed_growth_cone": 0.95,
-    "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 30.,
+    "speed_growth_cone": 0.5,
+    "filopodia_wall_affinity": 500.,
+    "filopodia_finger_length": 5.,
     "filopodia_min_number": 30,
+    "persistence_length" : 600.,
+    "thinning_ratio": 2./1000.,
 
     "soma_radius": soma_radius,
     'B' : 10.,
@@ -61,8 +73,9 @@ dendrite_params = {
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.2,
-    "filopodia_wall_affinity": 0.00,
-    "persistence_length" : 2.
+    "filopodia_wall_affinity": 10.,
+    "persistence_length" : 200.,
+    "thinning_ratio": 3./250.,
 }
 
 
@@ -88,9 +101,9 @@ Simulation
 '''
 
 def step(n, loop_n, plot=True):
-    ng.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        ng.PlotNeuron(show_nodes=True, show=True)
+        ds.PlotNeuron(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -99,32 +112,33 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 10.}
-    # ~ kernel={"seeds":[33],
-    # ~ "num_local_threads": 1,
-    # ~ "resolution": 30.}
+              "resolution": 10.,
+              "adaptive_timestep": -1.}
+    #~ kernel={"seeds":[33],
+     #~ "num_local_threads": 1,
+    #~ "resolution": 10.}
     #~ kernel={"seeds":[23, 68],
     #~ "num_local_threads": 2,
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/2chamber_culture_sharpen.svg"
-    ng.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ng.SetEnvironment(culture_file, min_x=0, max_x=1800)
+        culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1500)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=100, xmax=540, soma_radius=soma_radius)
+            neurons=100, xmax=440, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
-            neurons=100, xmin=1260, soma_radius=soma_radius)
+            neurons=100, xmin=1000, soma_radius=soma_radius)
         neuron_params['position'] = np.concatenate((pos_right, pos_left))
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
 
     print("Creating neurons")
-    gids = ng.CreateNeurons(n=200, growth_cone_model="persistent_rw_critical",
+    gids = ds.CreateNeurons(n=200, growth_cone_model=gc_model,
                             culture=culture, params=neuron_params,
                             dendrites_params=dendrite_params, num_neurites=2)
 
@@ -132,31 +146,40 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     # ~ for _ in range(10):
         # ~ step(200, 0, True)
-    step(200, 0, False)
+    step(4000, 0, False)
     duration = time.time() - start
 
     # prepare the plot
-    ng.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+    ds.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ng.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+    ds.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       show=True)
+                       show=False)
+    plt.tight_layout()
+    ax.set_xlabel("x ($\mu$m)")
+    ax.set_ylabel("y ($\mu$m)")
+    ax.grid(False)
+    plt.show()
     # ~ plt.show(block=True)
     print("SIMULATION ENDED")
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
-    ng.SaveJson(filepath=save_path)
-    ng.SaveSwc(filepath=save_path, swc_resolution = 10)
+    ds.SaveJson(filepath=save_path)
+    ds.SaveSwc(filepath=save_path, swc_resolution=10)
 
-    graph = ng.CreateGraph(method="spine_based", connection_proba=0.5)
+    #~ graph = ds.CreateGraph(method="spine_based", connection_proba=0.5)
+    print("\nmaking graph\n")
+    graph = ds.CreateGraph(connection_proba=1)
     population = nngt.NeuralPop(with_models=False)
     population.create_group("chamber_1", range(100))
     population.create_group("chamber_2", range(100, 200))
+    
     nngt.Graph.make_network(graph, population)
+    print(graph.node_nb(), graph.edge_nb())
 
 
     graph.to_file("diode.el")
 
-    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group", decimate=5,
+    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",# decimate=5,
                            show_environment=False, colorbar=False, show=True)

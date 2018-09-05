@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 
@@ -61,26 +61,26 @@ def article_distribution():
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
 def lateral_branching(neuron_params):
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="uniform_branching")
+    ds.SetKernelStatus(kernel, simulation_ID="uniform_branching")
     neuron_params['growth_cone_model'] = 'run_tumble'
     neuron_params[use_type] = False
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                             params=neuron_params,
                             num_neurites=1,
                             position=[]
@@ -88,14 +88,14 @@ def lateral_branching(neuron_params):
 
     step(10, 1, False, False)
     neuron_params[use_type] = True
-    NetGrowth.SetStatus(gid,params = neuron_params,
+    ds.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
     step(2000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=5)
+    ds.SaveJson()
 
-    swc_file =NetGrowth.GetSimulationID()
+    swc_file =ds.GetSimulationID()
     # print(swc_file)
     return swc_file
 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     }
     swc_file=lateral_branching(neuron_params)
 
-    pop = NetGrowth.GetNeurons()
+    pop = ds.GetNeurons()
     n   = pop[0]
 
     tree = n.axon.get_tree()

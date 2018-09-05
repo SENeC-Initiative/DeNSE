@@ -129,7 +129,6 @@ class TopologicalNode : public BaseNode
     NodeGeometry geometry_;
     NodeBiology biology_;
 
-
   public:
     TopologicalNode();
     TopologicalNode(const TopologicalNode &tnode);

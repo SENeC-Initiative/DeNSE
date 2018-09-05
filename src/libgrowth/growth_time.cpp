@@ -9,9 +9,8 @@
 namespace growth
 {
 
-const double Time::DEFAULT_RESOLUTION(1.);   // in seconds
-double Time::RESOLUTION(DEFAULT_RESOLUTION); // in seconds
-const unsigned int Time::MAX_SEC_HMS(86399); // 23 h 59 min 59 s (in seconds)
+const double Time::DEFAULT_RESOLUTION(1.);   // in minutes
+double Time::RESOLUTION(DEFAULT_RESOLUTION); // in minutes
 
 void Time::reset_resolution() { RESOLUTION = DEFAULT_RESOLUTION; }
 
@@ -23,7 +22,7 @@ Time Time::from_steps(size_t step, double substep)
 {
     Time t = Time();
     t.update(step);
-    t.set_sec(substep / RESOLUTION);
+    t.add_seconds(substep / RESOLUTION * 60.);
 
     return t;
 }
@@ -68,22 +67,27 @@ void Time::update(Time::timeStep steps)
 {
     if (steps != 0L)
     {
+        // prepare the quotient and remainder struct for integer division
         std::ldiv_t dv{};
-        Time::timeStep int_resolution = (Time::timeStep)std::floor(RESOLUTION);
-        float fraction_of_seconds     = (RESOLUTION - int_resolution) * steps;
-        Time::timeStep total_steps =
-            int_resolution * steps +
-            (Time::timeStep)std::floor(fraction_of_seconds);
-        fraction_of_seconds -= std::floor(fraction_of_seconds);
+
+        // number of minutes in the resolution
+        Time::timeStep res_min = static_cast<Time::timeStep>(
+            std::floor(RESOLUTION));
+        // total minutes in the step duration
+        Time::timeStep total_min = steps*RESOLUTION;
+        Time::timeStep int_sec   = (steps*RESOLUTION - total_min)*60.;
+        float frac_sec           = (steps*RESOLUTION - total_min)*60. - int_sec;
+
+        //~ fraction_of_min -= std::floor(fraction_of_min);
         // seconds
-        dv = std::div(total_steps, 60L);
-        sec_ += (float)dv.rem + fraction_of_seconds;
+        dv   = std::div(sec_ + int_sec, 60L);
+        sec_ = (float)dv.rem + frac_sec;
         // minutes
-        dv = std::div(dv.quot, 60L);
-        min_ += (char)dv.rem;
+        dv   = std::div(min_ + total_min + dv.quot, 60L);
+        min_ = (char)dv.rem;
         // hours
-        dv = std::div(dv.quot, 24L);
-        hour_ += (char)dv.rem;
+        dv    = std::div(hour_ + dv.quot, 24L);
+        hour_ = (char)dv.rem;
         // day
         day_ += (char)dv.quot;
     }
@@ -129,14 +133,26 @@ unsigned char Time::get_day() const { return day_; }
 
 // setters
 
+void Time::add_seconds(float seconds)
+{
+    sec_ += seconds;
+    if (sec_ >= 60.)
+    {
+        int int_part = ((int)std::floor(sec_)) / 60;
+        sec_ -= int_part * 60.;
+        set_min(min_ + int_part);
+    }
+}
+
+
 void Time::set_sec(float seconds)
 {
     sec_ = seconds;
     if (seconds >= 60.)
     {
         int int_part = ((int)std::floor(seconds)) / 60;
-        min_ += int_part;
         sec_ -= int_part * 60.;
+        set_min(min_ + int_part);
     }
 }
 
@@ -148,7 +164,7 @@ void Time::set_min(unsigned char minutes)
     {
         minutes /= 60;
         min_ -= minutes * 60;
-        hour_ += minutes;
+        set_hour(hour_ + minutes);
     }
 }
 
@@ -160,7 +176,7 @@ void Time::set_hour(unsigned char hours)
     {
         hours /= 24;
         hour_ -= hours * 24;
-        day_ += hours;
+        set_day(day_ + hours);
     }
 }
 

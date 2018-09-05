@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import nngt
-import NetGrowth as ng
+import dense as ds
 
 
 neuron_params = {
@@ -41,9 +41,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ng.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        ng.PlotNeuron(show_nodes=True, show=False)
+        ds.PlotNeuron(show_nodes=True, show=False)
 
 
 if __name__ =='__main__':
@@ -55,7 +55,7 @@ if __name__ =='__main__':
             "resolution": 10.}
     kernel["environment_required"] = False
 
-    ng.SetKernelStatus(kernel)
+    ds.SetKernelStatus(kernel)
 
     '''
     Create neurons
@@ -71,7 +71,7 @@ if __name__ =='__main__':
 
     neuron_params['position'] = np.random.uniform(-10000, 10000, (num_neurons, 2))
 
-    gids = ng.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
+    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
@@ -80,8 +80,8 @@ if __name__ =='__main__':
     Create recorders
     '''
 
-    gids_rec = ng.CreateRecorders(gids, "length", levels="growth_cone")
-    rec_ngc  = ng.CreateRecorders(
+    gids_rec = ds.CreateRecorders(gids, "length", levels="growth_cone")
+    rec_ngc  = ds.CreateRecorders(
         gids, "num_growth_cones", levels="neuron")
 
     #~ step(6000, 0, True)
@@ -92,7 +92,7 @@ if __name__ =='__main__':
         print("\nNew step block")
         step(2000, 0, False)
 
-    ng.PlotNeuron(show_nodes=True, show=True)
+    ds.PlotNeuron(show_nodes=True, show=True)
 
-    #~ pprint(ng.GetStatus(gids_rec))
-    ng.PlotRecording(rec_ngc, time_units="minutes")
+    #~ pprint(ds.GetStatus(gids_rec))
+    ds.PlotRecording(rec_ngc, time_units="minutes")

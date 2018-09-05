@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -13,10 +13,8 @@ import os
 Main parameters
 '''
 
-num_neurons = 100
+num_neurons = 1000
 
-use_vp                = False
-use_uniform_branching = False
 use_critical_resource = True
 
 neuron_params = {
@@ -29,10 +27,14 @@ neuron_params = {
     "sensing_angle": 0.1495,
 
     "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0,
-    "use_uniform_branching": use_uniform_branching,
+    "filopodia_finger_length": 30.0,
 
-    "use_van_pelt": use_vp,
+    "use_uniform_branching": False,
+    "use_van_pelt": False,
+
+    "diameter_eta_exp": 2.67,
+    "diameter_ratio_std": 0.,
+    "diameter_ratio_avg": 1.,
 
     "gc_split_angle_mean": 10.3,
 
@@ -44,19 +46,10 @@ neuron_params = {
 Check for optional parameters
 '''
 
-b_th = 45.
+b_th = 100.
 
 if use_critical_resource:
     cr_params = {
-        #~ "CR_retraction_factor": 0.10,
-        #~ "CR_elongation_factor": 0.10,
-        #~ "CR_leakage": 0.05,
-        #~ "CR_retraction_th": 0.30,
-        #~ "CR_elongation_th": 0.50,
-        #~ "CR_variance": 0.01,
-        #~ "CR_use_ratio": 0.7,
-        #~ "CR_branching_th": b_th,
-        #~ "CR_neurite_generated": 2500.,
         # Cr model
         "CR_retraction_factor": 1.,
         "CR_elongation_factor": 2.,
@@ -70,6 +63,8 @@ if use_critical_resource:
         "CR_use_ratio": 0.16,
         "CR_branching_th": b_th,
         "CR_branching_proba": 0.1,
+        "CR_weight_centrifugal": 0.,
+        "CR_weight_diameter": 0.5,
     }
     neuron_params.update(cr_params)
 
@@ -79,45 +74,45 @@ Analysis
 '''
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
 def resource_branching(neuron_params):
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
+    ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
     neuron_params['growth_cone_model'] = 'run_tumble_critical'
     neuron_params['CR_branching_th'] = np.inf
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(
+    gid = ds.CreateNeurons(
         n=num_neurons, params=neuron_params, axon_params=neuron_params,
         num_neurites=1, position=[])
 
     step(10, 1, False, False)
     neuron_params['CR_branching_th'] = b_th
-    NetGrowth.SetStatus(gid,params = neuron_params,
+    ds.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(200, 1, False, True)
+    step(5000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=5)
+    ds.SaveJson()
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     # print(swc_file)
     return swc_file
 
 
 if __name__ == '__main__':
-    num_omp = 12
+    num_omp = 7
     kernel = {
         "seeds": [18+i for i in range(num_omp)],
         "num_local_threads": num_omp,
@@ -127,7 +122,7 @@ if __name__ == '__main__':
 
     swc_file=resource_branching(neuron_params)
 
-    pop = NetGrowth.GetNeurons()
+    pop = ds.GetNeurons()
     n   = pop[0]
 
     tree = n.axon.get_tree()
@@ -144,7 +139,12 @@ if __name__ == '__main__':
         asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
 
     fig, (ax1, ax2) = plt.subplots(2)
-    ax1.hist(asym)
-    print(np.average(num_tips), np.median(num_tips))
+    nann = np.where(np.isnan(asym))[0]
+    idxmax = np.nanargmax(asym)
+    print(np.min(asym), np.max(asym), nann)
+    if len(nann):
+        ds.plot.PlotNeuron(nann, show=False)
+    nonan_asym = np.array(asym)[~np.isnan(asym)]
+    ax1.hist(nonan_asym, bins="auto")
     ax2.hist(num_tips)
     plt.show()

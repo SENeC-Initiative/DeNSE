@@ -150,57 +150,87 @@ bool get_param(const statusMap &map, const std::string &key,
 }
 
 
+bool get_param(const statusMap &map, const std::string &key,
+               std::unordered_map<std::string, double> &result)
+{
+    auto res = map.find(key);
+    if (res != map.end())
+    {
+        result = std::unordered_map<std::string, double>(res->second.md);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 // implementation set_param (write to statusMap to show it to the user)
 
-void set_param(statusMap &map, const std::string &key, const bool &value)
+void set_param(statusMap &map, const std::string &key, const bool &value,
+               const std::string& dim)
 {
-    map[key] = Property(value);
+    map[key] = Property(value, dim);
 }
 
 
-void set_param(statusMap &map, const std::string &key, const double &value)
+void set_param(statusMap &map, const std::string &key, const double &value,
+               const std::string& dim)
 {
-    map[key] = Property(value);
+    map[key] = Property(value, dim);
 }
 
 
-void set_param(statusMap &map, const std::string &key, const int &value)
+void set_param(statusMap &map, const std::string &key, const int &value,
+               const std::string& dim)
 {
-    map[key] = Property(value);
+    map[key] = Property(value, dim);
 }
 
 
-void set_param(statusMap &map, const std::string &key, const size_t &value)
+void set_param(statusMap &map, const std::string &key, const size_t &value,
+               const std::string& dim)
 {
-    map[key] = Property(value);
-}
-
-
-void set_param(statusMap &map, const std::string &key,
-               const std::vector<size_t> &value)
-{
-    map[key] = Property(value);
-}
-
-
-void set_param(statusMap &map, const std::string &key,
-               const std::vector<long> &value)
-{
-    map[key] = Property(value);
-}
-
-
-void set_param(statusMap &map, const std::string &key, const std::string &value)
-{
-    map[key] = Property(value);
+    map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key,
-               const std::vector<std::string> &value)
+               const std::vector<size_t> &value, const std::string& dim)
 {
-    map[key] = Property(value);
+    map[key] = Property(value, dim);
 }
+
+
+void set_param(statusMap &map, const std::string &key,
+               const std::vector<long> &value, const std::string& dim)
+{
+    map[key] = Property(value, dim);
+}
+
+
+void set_param(statusMap &map, const std::string &key, const std::string &value,
+               const std::string& dim)
+{
+    map[key] = Property(value, dim);
+}
+
+
+void set_param(statusMap &map, const std::string &key,
+               const std::vector<std::string> &value, const std::string& dim)
+{
+    map[key] = Property(value, dim);
+}
+
+
+void set_param(statusMap &map, const std::string &key,
+               const std::unordered_map<std::string, double> &value,
+               const std::string& dim)
+{
+    map[key] = Property(value, dim);
+}
+
 } // namespace growth
 
 #endif /* CONFIG_H_IMPL */

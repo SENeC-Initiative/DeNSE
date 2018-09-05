@@ -1,11 +1,12 @@
-import NetGrowth as ng
+import dense as ds
 import nngt
 import matplotlib.pyplot as plt
 
-pop = ng.structure.Population.from_swc_population\
-        (ng.NeuronsFromSimulation("2culture_swc"))
 
-graph, intersections = ng.CreateGraph(pop)
+pop = ds.structure.Population.from_swc_population\
+        (ds.NeuronsFromSimulation("2culture_swc"))
+
+graph, intersections = ds.CreateGraph(pop)
 
 for key in intersections:
     intersections[key]=list(set(intersections[key]))

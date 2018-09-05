@@ -37,8 +37,6 @@ GrowthCone_RunTumble::GrowthCone_RunTumble()
     /* Model variables:: will be passed to statusMap
      defaults are initialized:
     */
-    , deterministic_angle_(0)
-    , persistence_length_(PERSISTENCE_LENGTH)
     , tumbling_(false)
     , num_tumbles_(0)
 {
@@ -49,13 +47,16 @@ GrowthCone_RunTumble::GrowthCone_RunTumble()
 
 GrowthCone_RunTumble::GrowthCone_RunTumble(const GrowthCone_RunTumble &copy)
     : GrowthCone(copy)
-    , deterministic_angle_(copy.deterministic_angle_)
-    , persistence_length_(copy.persistence_length_)
     , tau_(copy.tau_)
     , tumbling_(false)
     , num_tumbles_(0)
 {
-    initialize_RT();
+    exponential_rt_ = std::exponential_distribution<double>(tau_);
+
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+    mtPtr rng  = kernel().rng_manager.get_rng(omp_id);
+
+    next_tumble_ = exponential_rt_(*(rng).get());
 }
 
 
@@ -65,9 +66,6 @@ GCPtr GrowthCone_RunTumble::clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                                   double distanceToParent, std::string binaryID,
                                   const Point &position, double angle)
 {
-#ifndef NDEBUG
-    printf(" It's calling RunTumble->clone! with direction %f\n", angle);
-#endif
     auto newCone = std::make_shared<GrowthCone_RunTumble>(*this);
     int omp_id   = kernel().parallelism_manager.get_thread_local_id();
     newCone->update_topology(parent, neurite, distanceToParent, binaryID,
@@ -166,7 +164,7 @@ Point GrowthCone_RunTumble::compute_target_position(
         {
             // take the pull into account: just scale delta_angle by the substep
             //~ delta_angle_ /=  sqrt(substep);
-            delta_angle_ = 0.;
+            //~ delta_angle_ = 0.;
         }
         else
         {
@@ -181,6 +179,7 @@ Point GrowthCone_RunTumble::compute_target_position(
         double distance_done = next_tumble_;
         // compute how much time remains until tumble and update the current
         // substep accordingly.
+        //~ printf("distance done: %f, module %f\n", distance_done, move_.module);
         substep = substep * (distance_done / move_.module);
         // we are still running, so set delta_angle_ to zero
 

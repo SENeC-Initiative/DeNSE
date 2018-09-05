@@ -1,11 +1,11 @@
-import NetGrowth as ng
+import dense as ds
 import nngt
 import matplotlib.pyplot as plt
 
-pop = ng.structure.Population.from_swc_population\
-        (ng.NeuronsFromSimulation("circular_swc"))
+pop = ds.structure.Population.from_swc_population\
+        (ds.NeuronsFromSimulation("circular_swc"))
 
-graph, intersections, synapses = ng.CreateGraph(pop, intersection_positions=True)
+graph, intersections, synapses = ds.CreateGraph(pop, intersection_positions=True)
 
 
 ### Plot the graph in 2 subplots:

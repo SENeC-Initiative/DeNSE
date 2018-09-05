@@ -1,7 +1,7 @@
 #! /usr/bin/env bash
 
 # With this script you can easily format all C/C++ files contained in
-# any (sub)directory of NetGrowth. Internally it uses clang-format to do
+# any (sub)directory of DeNSE. Internally it uses clang-format to do
 # the actual formatting. You can give a different clang-format command,
 # e.g. by executing `CLANG_FORMAT=clang-format-3.X ./format_cpp.sh`.
 # Note that this requires a version of clang-format greater or equal to 3.8.
@@ -42,7 +42,7 @@ function help_output {
 }
 
 if [[ ! -f $CLANG_FORMAT_FILE ]]; then
-  echo "Cannot find $CLANG_FORMAT_FILE file. Please start '`basename $0`' from the NetGrowth base source directory."
+  echo "Cannot find $CLANG_FORMAT_FILE file. Please start '`basename $0`' from the DeNSE base source directory."
   help_output
 fi
 

@@ -9,7 +9,7 @@ from matplotlib.transforms import Affine2D
 import mpl_toolkits.axisartist.floating_axes as floating_axes
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-import NetGrowth as ng
+import dense as ds
 
 
 '''
@@ -96,24 +96,24 @@ if __name__ == '__main__':
         "angles_in_radians": True
     }
 
-    ng.SetKernelStatus(kernel, simulation_ID="case_neuron")
+    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2))
-    gid = ng.CreateNeurons(
+    gid = ds.CreateNeurons(
         n=num_neurons, params=neuron_params, axon_params=axon_params,
         num_neurites=1)
 
-    rec = ng.CreateRecorders(gid, ["length", "resource"], levels="growth_cone")
+    rec = ds.CreateRecorders(gid, ["length", "resource"], levels="growth_cone")
 
-    ng.Simulate(5000)
+    ds.Simulate(5000)
 
     '''
     Get recording
     '''
 
-    data = ng.GetRecording(rec, "compact")
+    data = ds.GetRecording(rec, "compact")
     times = data["resource"]["times"][(0, "axon", 0)]
     resc  = data["resource"]["data"][(0, "axon", 0)]
     leng  = data["length"]["data"][(0, "axon", 0)]

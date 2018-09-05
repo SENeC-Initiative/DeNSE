@@ -100,7 +100,7 @@ class GrowthCone : public TopologicalNode,
 
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);
-    void retraction(size_t cone_n, int omp_id);
+    void retraction(double distance, size_t cone_n, int omp_id);
     void prune(size_t cone_n);
 
     // compute direction

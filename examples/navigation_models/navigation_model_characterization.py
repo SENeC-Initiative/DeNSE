@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -10,34 +10,34 @@ num_neurons = 400
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        NetGrowth.PlotNeuron(
+        ds.PlotNeuron(
             show_nodes=True, save_path=save_path)
 
-def run_netgrowth(neuron_params,letter,length_simulation,single=False):
+def run_dense(neuron_params,letter,length_simulation,single=False):
 
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
     neuron_params["position"]=np.zeros((num_neurons,2))
     simulated_neurons = num_neurons
-    gids = NetGrowth.CreateNeurons(n=simulated_neurons,
+    gids = ds.CreateNeurons(n=simulated_neurons,
                                    params=neuron_params,
                                    num_neurites=1,
                                    position=[]
                                    )
 
     step(length_simulation, 1, False ,plot=False)
-    neurons    = NetGrowth.GetNeurons()
-    structure  = NetGrowth.NeuronStructure(neurons)
-    population = NetGrowth.Population.from_structure(structure)
-    ens =  NetGrowth.EnsembleRW(population)
+    neurons    = ds.GetNeurons()
+    structure  = ds.NeuronStructure(neurons)
+    population = ds.Population.from_structure(structure)
+    ens =  ds.EnsembleRW(population)
     ens.characterizeRW("axon")
     ens.name = neuron_params["growth_cone_model"]
     fits = ens.fit()
     # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
     return ens
     # population.__class__ = EnsembleRW
 
@@ -93,9 +93,9 @@ if __name__ == '__main__':
         print("####################"
               "model is {}".format(model))
         neuron_params["growth_cone_model"]= model
-        ensembles.append(run_netgrowth(neuron_params, letter, \
+        ensembles.append(run_dense(neuron_params, letter, \
                                        length_simulation=length))
-    NetGrowth.PlotRWAnalysis(ensembles, plot=True, error_every=length/100.)
+    ds.PlotRWAnalysis(ensembles, plot=True, error_every=length/100.)
     plt.show(block=True)
     # fig.tight_layout()
     # plt.show()

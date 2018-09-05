@@ -29,12 +29,12 @@ Commands
 --------
 
 I will consider that you downloaded the sources into a folder called
-``NetGrowth`` and that you created an ``ng_install`` folder somewhere.::
+``DeNSE`` and that you created a ``dense_install`` folder somewhere.::
 
-    cd NetGrowth
+    cd DeNSE
     mkdir build
     cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/abolute/path/to/ng_install
+    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/abolute/path/to/dense_install
     make && make install
 
 .. warning::

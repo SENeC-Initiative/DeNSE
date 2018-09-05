@@ -48,15 +48,20 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     , num_created_nodes_(0)
     , growth_cone_model_("")
     , neurite_type_(neurite_type)
+    , active_(true)
+    , max_gc_num_(MAX_GC_NUM)
+    , max_arbor_len_(MAX_ARBOR_LENGTH)
+    , fixed_arbor_len_(0.)
     // parameters for van Pelt branching
     , lateral_branching_angle_mean_(LATERAL_BRANCHING_ANGLE_MEAN)
     , lateral_branching_angle_std_(LATERAL_BRANCHING_ANGLE_STD)
     , gc_split_angle_mean_(GC_SPLIT_ANGLE_MEAN)
     , gc_split_angle_std_(GC_SPLIT_ANGLE_STD)
     , diameter_eta_exp_(DIAMETER_ETA_EXP)
-    , diameter_variance_(DIAMETER_VARIANCE)
     , thinning_ratio_(THINNING_RATIO)
     , min_diameter_(MIN_DIAMETER)
+    , diameter_ratio_std_(DIAM_RATIO_STD)
+    , diameter_ratio_avg_(DIAMETER_RATIO_AVG)
     // parameters for critical_resource-driven growth
     , use_critical_resource_(false)
     , cr_neurite_{
@@ -68,10 +73,6 @@ Neurite::Neurite(std::string name, const std::string &neurite_type,
     poisson_   = std::poisson_distribution<>(0);
     normal_    = std::normal_distribution<double>(0, 1);
     cr_normal_ = std::normal_distribution<double>(0, CRITICAL_GEN_VAR);
-    //~ #ifndef NDEBUG
-    //~ printf(" the neurite %s model is %s \n", neurite_type_.c_str(),
-    //~ parent_.lock()->get_gc_model().c_str());
-    //~ #endif
 }
 
 
@@ -188,19 +189,42 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     update_growth_cones(rnd_engine, substep);
 
     // grow all the growth cones
-    double diameter, b_length;
+    double diameter, b_length, total_b_length(0.);
 
     for (auto &gc : growth_cones_)
     {
         assert(gc.second.use_count() == 2);
-        gc.second->grow(rnd_engine, gc.first, substep);
+
+        diameter = gc.second->get_diameter();
 
         // compute and check growth cones' diameters for stop
-        b_length = gc.second->get_branch()->get_length();
-        diameter = gc.second->TopologicalNode::get_diameter() - thinning_ratio_*b_length;
-        gc.second->set_diameter(diameter);
+        if (diameter > min_diameter_)
+        {
+            gc.second->grow(rnd_engine, gc.first, substep);
 
-        if (diameter < min_diameter_)
+            b_length        = gc.second->get_branch()->get_length();
+            total_b_length += b_length;
+
+            diameter = gc.second->TopologicalNode::get_diameter() - thinning_ratio_*b_length;
+
+            if (diameter < 0)
+            {
+                double old_length = gc.second->get_branch()->points[2].at(gc.second->get_branch()->size() - 2) - gc.second->get_branch()->initial_distance_to_soma();
+                printf("grew %f, to length %f, new diam %f; Delta diam %f - old length %f - computed old diam %f\n", gc.second->move_.module, b_length, diameter, thinning_ratio_*gc.second->move_.module, old_length, gc.second->TopologicalNode::get_diameter() - thinning_ratio_*old_length);
+                printf("current diam %f vs topological %f, branch dts %f and final %f\n", gc.second->get_diameter(), gc.second->TopologicalNode::get_diameter(), gc.second->get_branch()->initial_distance_to_soma(),gc.second->get_branch()->final_distance_to_soma());
+                // compute where min_diameter was reached and retract up to
+                // that position
+                double retract = (min_diameter_ - diameter) / thinning_ratio_;
+                printf("%s: length %f, retract %f\n", get_name().c_str(), b_length, retract);
+                int omp_id     = kernel().parallelism_manager.get_thread_local_id();
+                gc.second->retraction(retract, gc.first, omp_id);
+                diameter = min_diameter_;
+            }
+
+            gc.second->set_diameter(diameter);
+        }
+
+        if (diameter <= min_diameter_)
         {
             growth_cones_inactive_tmp_.insert(gc);
         }
@@ -230,6 +254,12 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
     }
 
     dead_cones_.clear();
+
+    // check total length
+    if (fixed_arbor_len_ + total_b_length >= max_arbor_len_)
+    {
+        active_ = false;
+    }
 }
 
 
@@ -343,30 +373,22 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
     size_t grand_parent_ID = parent->get_parent().lock()->get_nodeID();
     NodePtr grand_parent   = nodes_[grand_parent_ID];
 
-#ifndef NDEBUG
-    int omp_id = kernel().parallelism_manager.get_thread_local_id();
-    printf("deleting on OMP %i\n", omp_id);
-    TNodePtr other = parent->children_[1 - living_child_id];
-    printf("     size        @@@        size       \n"
-           "      %lu         %s         %lu       \n"
-           "                  ||                   \n "
-           "    (%s)==========(%s)========> %s     \n "
-           "     %i            %i           %i     \n \n",
-           parent->get_branch()->size(), other->get_treeID().c_str(),
-           child->get_branch()->size(), grand_parent->get_treeID().c_str(),
-           parent->get_treeID().c_str(), child->get_treeID().c_str(),
-           grand_parent->get_centrifugal_order(),
-           parent->get_centrifugal_order(), child->get_centrifugal_order());
-    printf("deleting on OMP %i\n", omp_id);
-    printf("positions are:\n"
-           "  - (%f; %f)\n  - (%f; %f)\n  - (%f; %f)\n",
-           parent->get_position()[0], parent->get_position()[1],
-           child->get_position()[0], child->get_position()[1],
-           other->get_position()[0], other->get_position()[1]);
-#endif
-    // reconcile the branch
+    // reconcile the branch (remove parent length from fixed length)
+    fixed_arbor_len_ -= parent->get_branch()->get_length();
     parent->biology_.branch->append_branch(child->get_branch());
-    child->biology_.branch = parent->biology_.branch;
+
+    // check if child is growth cone or node
+    if (child->has_child())
+    {
+        // if child is node, just leg it the total branch
+        child->biology_.branch = parent->biology_.branch;
+    }
+    else
+    {
+        // if gc, set its TNode properties with that of the grand-parent
+        child->TopologicalNode::set_position(grand_parent->get_position(), grand_parent->get_distance_to_soma(), parent->biology_.branch);
+        child->TopologicalNode::set_diameter(grand_parent->get_diameter());
+    }
 
     // change parental relations
     for (size_t i = 0; i < grand_parent->children_.size(); i++)
@@ -379,25 +401,11 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
         }
     }
 
-    /*    printf("Old size: %lu ; new_size: %lu. Id was %lu\n", old_nodes_num,*/
-    /*nodes_.size(), parent->get_nodeID());*/
     // update tree structure
     update_tree_structure(grand_parent);
 
-#ifndef NDEBUG
-    size_t old_nodes_num = nodes_.size();
-    printf("           size: %lu                   \n "
-           "    (%s)======================> %s     \n "
-           "    A                           C      \n"
-           "     %i                         %i     \n",
-           child->get_branch()->size(), grand_parent->get_treeID().c_str(),
-           child->get_treeID().c_str(), grand_parent->get_centrifugal_order(),
-           child->get_centrifugal_order());
-#endif
-
     nodes_.erase(parent->get_nodeID());
     assert(nodes_.size() == old_nodes_num - 1);
-    //~ dead_nodes_.push_back(parent->get_nodeID());
 }
 
 
@@ -418,7 +426,7 @@ void Neurite::delete_cone(size_t cone_n)
 #endif
         dead_cone->biology_.dead = true;
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
-        assert(dead_cone->get_branch()->size() == 0);
+        assert(dead_cone->get_branch()->size() == 1);
 #ifndef NDEBUG
         if (dead_cone->topology_.parent.expired())
         {
@@ -429,15 +437,17 @@ void Neurite::delete_cone(size_t cone_n)
         auto parent_node = nodes_[parent_ID];
         dead_cones_.push_back(cone_n);
 
-        for (size_t i = 0; i < parent_node->children_.size(); i++)
-        {
-            if (parent_node->get_child(i)->is_dead() == false)
-            {
-                delete_parent_node(parent_node, i);
-            }
-        }
+        // @todo: error in delete_parent_node (incorrect distances or diameters)
 
-        assert(parent_node.use_count() == 1);
+        //~ for (size_t i = 0; i < parent_node->children_.size(); i++)
+        //~ {
+            //~ if (parent_node->get_child(i)->is_dead() == false)
+            //~ {
+                //~ delete_parent_node(parent_node, i);
+            //~ }
+        //~ }
+
+        //~ assert(parent_node.use_count() == 1);
     }
 }
 
@@ -476,9 +486,12 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
 
     // ratio between the diameters of the two neurites,
     // it's a gaussian distributed value arround 1.
-    double diameter_variance_ = 0.02; //@TODO here the variance was fixed,
-                                      // requires to be set by the user!
-    double ratio = 1 + diameter_variance_ * normal_(*(rnd_engine).get());
+    double ratio;
+    do
+    {
+        ratio = diameter_ratio_avg_ + diameter_ratio_std_ * normal_(*(rnd_engine).get());
+    }
+    while (ratio <= 0);
     // The diameters are computed on the base of: d^eta = d_1^eta + d_2^eta
     // looks weird but it's a simple optimization, next two lines compute the
     // new diameter
@@ -499,17 +512,17 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
     new_angle = -branching_angle / 2. - half_tang;
     old_angle = +branching_angle / 2. - half_tang;
 
-#ifndef NDEBUG
-    printf("@@@@@  Growth cone split @@@@@ \n"
-           "gc_split angle distribution: %f, +- %f, eta_expo: %f, "
-           "diam_variance: %f \n"
-           "the branching angle is %f, new_angle: %f, old_angle %f \n"
-           "the new diameters are: %f , %f, ratio: %f\n,",
-           gc_split_angle_mean_ * 180 / M_PI, gc_split_angle_std_ * 180 / M_PI,
-           diameter_eta_exp_, diameter_variance_, branching_angle * 180 / M_PI,
-           new_angle * 180 / M_PI, old_angle * 180 / M_PI, new_diameter,
-           old_diameter, ratio);
-#endif
+//~ #ifndef NDEBUG
+    //~ printf("@@@@@  Growth cone split @@@@@ \n"
+           //~ "gc_split angle distribution: %f, +- %f, eta_expo: %f, "
+           //~ "diam_variance: %f \n"
+           //~ "the branching angle is %f, new_angle: %f, old_angle %f \n"
+           //~ "the new diameters are: %f , %f, ratio: %f\n,",
+           //~ gc_split_angle_mean_ * 180 / M_PI, gc_split_angle_std_ * 180 / M_PI,
+           //~ diameter_eta_exp_, diameter_variance_, branching_angle * 180 / M_PI,
+           //~ new_angle * 180 / M_PI, old_angle * 180 / M_PI, new_diameter,
+           //~ old_diameter, ratio);
+//~ #endif
 }
 
 
@@ -598,7 +611,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
                                 double new_length, mtPtr rnd_engine)
 {
-    if (not branching_node->is_dead())
+    if (not branching_node->is_dead() and active_)
     {
         // Locate the event and the event parameters
         double branch_direction(0), distance_to_soma(0);
@@ -620,11 +633,12 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         // create a new node and update the node counter
         NodePtr new_node = std::make_shared<Node>(*branching_node);
         double distance  =
-            distance_to_soma -
-            branching_node->get_branch()->initial_distance_to_soma();
+            branching_node->get_branch()->final_distance_to_soma()
+            - distance_to_soma;
         // compute the local diameter on the branch
-        double new_diam  = branching_node->TopologicalNode::get_diameter() -
+        double new_diam  = branching_node->get_diameter() +
                            thinning_ratio_*distance;
+        //~ printf("new_diam on %s at bp %f vs init %f and tip %f, branch dts %f and final %f\n", get_name().c_str(), new_diam, branching_node->get_diameter() + thinning_ratio_*branching_node->get_branch()->get_length(), branching_node->get_diameter(), branching_node->get_branch()->initial_distance_to_soma(), branching_node->get_branch()->final_distance_to_soma());
 
         // update topology
         update_parent_nodes(new_node, branching_node);
@@ -639,6 +653,7 @@ void Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         // NB: it's diameter is the one at the root of the branch!
         new_node->get_branch()->resize_tail(branch_point + 1);
         new_node->set_position(xy, distance_to_soma, new_node->get_branch());
+        new_node->set_diameter(new_diam);
 
         // create the new growth cone @todo set diameter fraction
         double new_cone_diam = 0.5*new_diam;
@@ -701,14 +716,9 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
                                 double new_angle, double old_angle,
                                 double new_diameter, double old_diameter)
 {
-    if (not branching_cone->is_dead())
+    if (not branching_cone->is_dead() and active_)
     {
         auto direction = branching_cone->move_.angle;
-#ifndef NDEBUG
-        printf("splitting cone %s \n", branching_cone->get_treeID().c_str());
-        printf("angles: %f %f, \n", (direction + new_angle) * 180 / 3.13,
-               (direction + old_angle) * 180 / 3.14);
-#endif
 
         // prepare growth cone variables for split
         branching_cone->prepare_for_split();
@@ -717,51 +727,52 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
         NodePtr new_node = std::make_shared<Node>(*branching_cone);
         update_parent_nodes(new_node, branching_cone);
         // set diameter (value at the root of the branch) and position
-        new_node->set_diameter(branching_cone->TopologicalNode::get_diameter());
+        new_node->set_diameter(branching_cone->get_diameter());
         new_node->set_position(
             branching_cone->get_position(),
             branching_cone->get_branch()->final_distance_to_soma(),
             new_node->get_branch());
 
+
+        // create the new growth cone from the parent node
+        auto sibling = create_branching_cone(
+            branching_cone, new_node, new_length, new_diameter,
+            branching_cone->geometry_.position, direction + new_angle);
+        sibling->TopologicalNode::set_diameter(branching_cone->get_diameter());
         // move the old growth cone --> growth cone split specific
         branching_cone->move_.angle       = direction + old_angle;
-        branching_cone->TopologicalNode::set_diameter(old_diameter);
+        branching_cone->TopologicalNode::set_diameter(branching_cone->get_diameter());
         branching_cone->set_diameter(old_diameter);
         branching_cone->topological_advance();
         branching_cone->biology_.branch = std::make_shared<Branch>(
             branching_cone->get_position(),
             branching_cone->get_branch()->final_distance_to_soma());
 
-        // create the new growth cone from the parent node
-        auto sibling = create_branching_cone(
-            branching_cone, new_node, new_length, new_diameter,
-            branching_cone->geometry_.position, direction + new_angle);
-
         // update growth cones' variables after split
         branching_cone->after_split();
         sibling->after_split();
 
-#ifndef NDEBUG
-        printf(""
-               "                      +%.2f ->(%s)    \n"
-               " %f                    //                \n"
-               " ->(%s)    ==>  (%s)                    \n "
-               "                      \\                \n"
-               "                      -%.2f ->(%s)    \n"
-               "the centrifugal order of new cone is %i \n"
-               "the centrifugal order of old cone is %i \n",
-               (sibling->move_.angle) * 180 / M_PI,
-               branching_cone->get_treeID().c_str(),
+//~ #ifndef NDEBUG
+        //~ printf(""
+               //~ "                      +%.2f ->(%s)    \n"
+               //~ " %f                    //                \n"
+               //~ " ->(%s)    ==>  (%s)                    \n "
+               //~ "                      \\                \n"
+               //~ "                      -%.2f ->(%s)    \n"
+               //~ "the centrifugal order of new cone is %i \n"
+               //~ "the centrifugal order of old cone is %i \n",
+               //~ (sibling->move_.angle) * 180 / M_PI,
+               //~ branching_cone->get_treeID().c_str(),
 
-               direction * 180 / M_PI, new_node->get_treeID().c_str(),
-               new_node->get_treeID().c_str(),
+               //~ direction * 180 / M_PI, new_node->get_treeID().c_str(),
+               //~ new_node->get_treeID().c_str(),
 
-               (branching_cone->move_.angle) * 180 / M_PI,
-               sibling->topology_.binaryID.c_str(),
+               //~ (branching_cone->move_.angle) * 180 / M_PI,
+               //~ sibling->topology_.binaryID.c_str(),
 
-               sibling->get_centrifugal_order(),
-               branching_cone->get_centrifugal_order());
-#endif /* NDEBUG */
+               //~ sibling->get_centrifugal_order(),
+               //~ branching_cone->get_centrifugal_order());
+//~ #endif /* NDEBUG */
         assert(sibling->get_centrifugal_order() ==
                branching_cone->get_centrifugal_order());
         assert(new_node->get_child(0) == branching_cone);
@@ -880,6 +891,12 @@ void Neurite::add_cone(GCPtr cone)
         cr_neurite_.eq_cr = (cr_neurite_.tau / cr_neurite_.tau_generation) *
                             factor * std::tanh(ratio);
     }
+
+    // check if we do not reach the growth cone number limit
+    if (growth_cones_.size() >= max_gc_num_)
+    {
+        active_ = false;
+    }
 }
 
 
@@ -893,6 +910,22 @@ void Neurite::add_node(NodePtr node)
     node->topology_.nodeID = num_created_nodes_;
     nodes_[num_created_nodes_] = node;
     num_created_nodes_++;
+
+    // update the fixed arbor length (add only if all children are GCs)
+    bool all_gcs = true;
+
+    for (auto child : node->children_)
+    {
+        if (child->has_child())
+        {
+            all_gcs = false;
+        }
+    }
+
+    if (all_gcs)
+    {
+        fixed_arbor_len_ += node->get_branch()->get_length();
+    }
 }
 
 
@@ -909,13 +942,18 @@ bool Neurite::walk_tree(NodeProp& np) const
     {
         // get node id
         nid = n_it->second->get_nodeID();
-        // get parent id
-        pid = n_it->second->get_parent().lock()->get_nodeID();
         // get diameter (average between parent and current node)
         diam = n_it->second->get_diameter();
         if (n_it->first != 0)
         {
             diam -= 0.5*thinning_ratio_*n_it->second->get_branch()->get_length();
+            // get parent id
+            pid = n_it->second->get_parent().lock()->get_nodeID();
+        }
+        else
+        {
+            // no real parent for soma
+            pid = 0;
         }
         // get distance to parent
         dtp = n_it->second->get_distance_parent();
@@ -955,7 +993,15 @@ bool Neurite::walk_tree(NodeProp& np) const
         // get node id
         nid = gc_iact_it->second->get_nodeID();
         // get parent id
-        pid = gc_iact_it->second->get_parent().lock()->get_nodeID();
+        // @todo check for nullptr error
+        if (gc_iact_it->second->get_parent().lock() != nullptr)
+        {
+            pid = gc_iact_it->second->get_parent().lock()->get_nodeID();
+        }
+        else
+        {
+            pid = nid;
+        }
         // get diameter (average between root and tip)
         diam = 0.5*(gc_iact_it->second->TopologicalNode::get_diameter()
                     + gc_iact_it->second->get_diameter());
@@ -1021,17 +1067,15 @@ std::string Neurite::get_name() const { return name_; }
 
 void Neurite::set_status(const statusMap &status)
 {
-    //~ #ifndef NDEBUG
-    //~ printf("\nNEURITE SET STATUS\n");
-    //~ #endif
+    get_param(status, names::max_gc_number, max_gc_num_);
+    get_param(status, names::max_arbor_length, max_arbor_len_);
+
     get_param(status, names::diameter_eta_exp, diameter_eta_exp_);
-    get_param(status, names::diameter_variance, diameter_variance_);
 
     bool is_rad =
         get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
     bool is_rad_std =
         get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
-    // printf("angle %f, std %f \n", gc_split_angle_mean_, gc_split_angle_std_);
 
     if (is_rad and not kernel().angles_in_radians())
     {
@@ -1044,6 +1088,22 @@ void Neurite::set_status(const statusMap &status)
     }
 
     get_param(status, names::thinning_ratio, thinning_ratio_);
+
+    double sd_std(diameter_ratio_std_), sd_avg(diameter_ratio_avg_);
+    get_param(status, names::diameter_ratio_std, sd_std);
+    if (sd_std < 0)
+    {
+        throw InvalidArg("`diameter_ratio_std` must be positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+    diameter_ratio_std_ = sd_std;
+    get_param(status, names::diameter_ratio_avg, sd_avg);
+    if (sd_avg < 0)
+    {
+        throw InvalidArg("`diameter_ratio_avg` must be positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+    diameter_ratio_avg_ = sd_avg;
 
     is_rad_std = false;
     is_rad     = false;
@@ -1065,12 +1125,10 @@ void Neurite::set_status(const statusMap &status)
     }
     is_rad = false;
 
-
     if (branching_model_.neurite_ == nullptr)
     {
         branching_model_ = Branching(shared_from_this());
     }
-
 
     //                 Critical Resource Params
     //###################################################
@@ -1109,10 +1167,8 @@ void Neurite::set_status(const statusMap &status)
                " CRITICAL RESOURCE BRANCHING \n"
                "%s : %f \n"
                "%s : %f \n"
-               "%s : %f \n"
                "%s : %f \n",
                names::CR_neurite_available.c_str(), cr_neurite_.available,
-               names::CR_neurite_split_th.c_str(), cr_neurite_.split_th,
                names::gc_split_angle_mean.c_str(),
                gc_split_angle_mean_ * 180 / M_PI,
                names::gc_split_angle_std.c_str(),
@@ -1126,7 +1182,7 @@ void Neurite::set_status(const statusMap &status)
     {
         observables_.push_back("A"); // add A as observable
     }
-    else
+    else if (observables_.back() == "A")
     {
         observables_.pop_back(); // delete A as observable (last)
     }
@@ -1134,6 +1190,10 @@ void Neurite::set_status(const statusMap &status)
     branching_model_.set_status(status);
 
     for (auto &gc : growth_cones_)
+    {
+        gc.second->set_status(status);
+    }
+    for (auto &gc : growth_cones_inactive_)
     {
         gc.second->set_status(status);
     }
@@ -1146,40 +1206,51 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
     if (level == "neurite")
     {
         set_param(status, names::gc_split_angle_mean,
-                  _deg_from_rad(gc_split_angle_mean_));
+                  _deg_from_rad(gc_split_angle_mean_), "rad");
         set_param(status, names::gc_split_angle_std,
-                  _deg_from_rad(gc_split_angle_std_));
+                  _deg_from_rad(gc_split_angle_std_), "rad");
         set_param(status, names::lateral_branching_angle_std,
-                  _deg_from_rad(lateral_branching_angle_mean_));
+                  _deg_from_rad(lateral_branching_angle_mean_), "rad");
         set_param(status, names::lateral_branching_angle_mean,
-                  _deg_from_rad(lateral_branching_angle_std_));
-        set_param(status, names::observables, observables_);
+                  _deg_from_rad(lateral_branching_angle_std_), "rad");
+        set_param(status, names::observables, observables_, "");
 
-        set_param(status, names::thinning_ratio, thinning_ratio_);
+        set_param(status, names::thinning_ratio, thinning_ratio_,
+                  "1 / micrometer");
+        set_param(status, names::diameter_ratio_std, diameter_ratio_std_, "");
+        set_param(status, names::diameter_ratio_avg, diameter_ratio_avg_, "");
+        set_param(status, names::diameter_eta_exp, diameter_eta_exp_, "");
+
+        set_param(status, names::max_gc_number, max_gc_num_, "");
+        set_param(status, names::max_arbor_length, max_arbor_len_, "micrometer");
+        set_param(status, names::active, active_, "");
 
         // branching properties
         branching_model_.get_status(status);
 
         // critical resource properties
-        set_param(status, names::use_critical_resource, use_critical_resource_);
+        set_param(status, names::use_critical_resource, use_critical_resource_,
+                  "");
         if (use_critical_resource_)
         {
             set_param(status, names::CR_neurite_generated,
-                      cr_neurite_.target_cr);
-            set_param(status, names::CR_neurite_variance, cr_neurite_.var);
+                      cr_neurite_.target_cr, "micromole / liter");
+            set_param(status, names::CR_neurite_variance, cr_neurite_.var,
+                      "micromole / liter / minute**0.5");
             set_param(status, names::CR_neurite_generated_tau,
-                      cr_neurite_.tau_generation);
+                      cr_neurite_.tau_generation, "minute");
             set_param(status, names::CR_neurite_delivery_tau,
-                      cr_neurite_.tau_delivery);
+                      cr_neurite_.tau_delivery, "minute");
             set_param(status, names::CR_typical_gc_support,
-                      cr_neurite_.typical_gc_support);
+                      cr_neurite_.typical_gc_support, "");
             set_param(status, names::CR_increase_slope,
-                      cr_neurite_.increase_slope);
+                      cr_neurite_.increase_slope, "");
         }
     }
 
     // growth_cone properties
-    set_param(status, names::growth_cone_model, growth_cone_model_);
+    set_param(status, names::growth_cone_model, growth_cone_model_, "");
+    set_param(status, names::thinning_ratio, thinning_ratio_, "");
 
     if (not growth_cones_.empty())
     {
@@ -1205,12 +1276,23 @@ double Neurite::get_state(const char *observable) const
     {
         value += gc.second->get_state(observable);
     }
+    for (const auto &gc : growth_cones_inactive_)
+    {
+        value += gc.second->get_state(observable);
+    }
     CASE("A")
     value = cr_neurite_.available;
     ENDTRIE;
 
     return value;
 }
+
+
+double Neurite::get_taper_rate() const
+{
+    return thinning_ratio_;
+}
+
 
 double Neurite::get_max_resol() const
 {

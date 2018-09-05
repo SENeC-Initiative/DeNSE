@@ -36,7 +36,7 @@ void growth::RNGManager::seed(const std::vector<long> &seeds)
 
 void growth::RNGManager::get_status(statusMap &status) const
 {
-    set_param(status, "seeds", rng_seeds_);
+    set_param(status, "seeds", rng_seeds_, "");
 }
 
 void growth::RNGManager::create_rngs_()

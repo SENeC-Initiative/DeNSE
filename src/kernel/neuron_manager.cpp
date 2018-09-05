@@ -21,10 +21,10 @@ void NeuronManager::initialize()
 {
     // create default neuron with two neurites (axon + dendrite)
     statusMap empty_params;
-    statusMap params({{names::num_neurites, Property(2)},
-                      {names::growth_cone_model, ""},
-                      {"x", Property(0.)},
-                      {"y", Property(0.)}});
+    statusMap params({{names::num_neurites, Property(2, "")},
+                      {names::growth_cone_model, Property("", "")},
+                      {"x", Property(0., "micrometer")},
+                      {"y", Property(0., "micrometer")}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
@@ -34,7 +34,7 @@ void NeuronManager::initialize()
 
     for (std::string opt : options)
     {
-        Property p  = Property(true);
+        Property p  = Property(true, "");
         params[opt] = p;
     }
 
@@ -44,6 +44,8 @@ void NeuronManager::initialize()
     // create default neuron
     model_neuron_ = std::make_shared<Neuron>(0);
     model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
+    // remove information about angles
+    model_neuron_->neurite_angles_.clear();
 }
 
 
@@ -273,11 +275,11 @@ std::vector<size_t> NeuronManager::get_gids() const
 
 
 const statusMap
-NeuronManager::get_neurite_status(size_t gid, const std::string &type,
+NeuronManager::get_neurite_status(size_t gid, const std::string &neurite,
                                   const std::string &level) const
 {
     statusMap status;
-    neurons_.at(gid)->get_neurite_status(status, type, level);
+    neurons_.at(gid)->get_neurite_status(status, neurite, level);
     return status;
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 
@@ -73,20 +73,20 @@ Simulation
 '''
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        NetGrowth.PlotNeuron(
+        ds.PlotNeuron(
             show_nodes=False, save_path=save_path)
 
 
 def random_walk_axon(neuron_params):
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
     neuron_params['growth_cone_model'] = 'random_walk'
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    NetGrowth.CreateNeurons(n=num_neurons,
+    ds.CreateNeurons(n=num_neurons,
                             params=neuron_params,
                             num_neurites=1,
                             position=[]
@@ -94,7 +94,7 @@ def random_walk_axon(neuron_params):
     name = str (neuron_params["persistence_length"])
     step(1000, 1, os.path.join(os.getcwd(),"random_walk_axon_"+name))
 
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
 
 
 if __name__ == '__main__':

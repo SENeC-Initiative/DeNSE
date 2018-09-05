@@ -29,7 +29,7 @@ class Skeleton
     //! Default constructor
     Skeleton();
     //! Constructor to make the representation of a neuron
-    Skeleton(const Neuron *);
+    Skeleton(const Neuron *, unsigned int resolution);
 };
 } // namespace growth
 

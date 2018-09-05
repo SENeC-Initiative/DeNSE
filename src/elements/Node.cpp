@@ -66,7 +66,6 @@ TopologicalNode::TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
                 parent.lock()->get_distance_parent() +
                     parent.lock()->get_distance_to_soma()}
     , biology_{false, std::make_shared<Branch>(), nullptr, 1}
-
 {
 }
 

@@ -3,10 +3,11 @@
 .. _Shapely: http://toblerity.org/shapely/manual.html
 .. _'C wrapper interface': https://geos.osgeo.org/doxygen/geos__c_8h_source.html
 
-
+========
 Geometry
 ========
-It refers to the spatially embedded side of NetGrowth simulator. Neurons are set in a real space with dimensions and proper distances.
+
+It refers to the spatially embedded side of the DeNSE simulator. Neurons are set in a real space with dimensions and proper distances.
 This feature allows to implement models and parameters with spatial relevance.
 
 The tasks of the geometry are:
@@ -17,9 +18,9 @@ The tasks of the geometry are:
 
 A hint of GEOS
 ==============
-The Geos_ library was elected to be the geometry enginer of NetGrowth. Tha basic reasons for it follow:
+The Geos_ library was elected to be the geometry enginer of DeNSE. Tha basic reasons for it follow:
 - Geos is Open Source and it's extensively used from affirmed project
-- Geos has a python interface, Shapely_ . It can be accessed by the Python side of NetGrowth making easier for the user (and the developer) to create geometry and manage it.
+- Geos has a python interface, Shapely_ . It can be accessed by the Python side of DeNSE making easier for the user (and the developer) to create geometry and manage it.
 - Geos is less complex of other geometry libraries, like CGAL
 
 

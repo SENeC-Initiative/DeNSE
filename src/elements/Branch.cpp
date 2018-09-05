@@ -112,14 +112,18 @@ BranchPtr Branch::resize_head(size_t id_x) const
                                  points[1].cbegin() + id_x, points[1].cend());
     new_branch->points[2].insert(new_branch->points[2].end(),
                                  points[2].cbegin() + id_x, points[2].cend());
+
+    // done in neurite branching
+    //~ Point new_init_point = Point(points[0].at(id_x), points[1].at(id_x));
+    //~ new_branch->set_first_point(new_init_point, points[2].at(id_x));
+
     return new_branch;
 }
 
 
 void Branch::append_branch(BranchPtr appended_branch)
 {
-    size_t total_size = 0;
-    total_size += appended_branch->size() + size();
+    size_t total_size = points[0].size() + appended_branch->size();
 
     // auto id_end = appended_branch->size();
     points[0].insert(points[0].end(), appended_branch->points[0].cbegin(),
@@ -160,7 +164,12 @@ double Branch::final_distance_to_soma() const { return points[2].back(); }
 
 double Branch::get_length() const
 {
-    return points[2].back() - points[2].front();
+    if (not points[2].empty())
+    {
+        return points[2].back() - points[2].front();
+    }
+
+    return 0.;
 }
 
 

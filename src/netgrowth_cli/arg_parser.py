@@ -6,7 +6,7 @@ import numpy
 
 
 def getparser():
-        parser = argparse.ArgumentParser(description='test Netgrowth simulator,set Simulation, Neurons, Record data, Process, Environment')
+        parser = argparse.ArgumentParser(description='test DeNSE simulator,set Simulation, Neurons, Record data, Process, Environment')
 
         ##Simulation
         parser.add_argument('-S','--simulate', action='store_true',default=False,

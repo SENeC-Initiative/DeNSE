@@ -270,12 +270,12 @@ void GrowthCone_RandomWalk::get_status(statusMap &status) const
 {
     GrowthCone::get_status(status);
 
-    set_param(status, names::rw_delta_corr, corr_rw_.tau);
-    set_param(status, names::rw_memory_tau, memory_.tau);
+    set_param(status, names::rw_delta_corr, corr_rw_.tau, "");
+    set_param(status, names::rw_memory_tau, memory_.tau, "");
 
     if (not _persistence_set_)
     {
-        set_param(status, names::persistence_length, -1.);
+        set_param(status, names::persistence_length, -1., "micrometer");
     }
 }
 

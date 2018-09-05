@@ -124,7 +124,7 @@ Set & Get Status
 ================
 
 The possibility to set & get the status of each neuron during the simulation is
-a key feature of NetGrowth.
+a key feature of DeNSE.
 The set status follows this schema.
 
 .. doxygenfunction:: growth::GrowthCone::set_status

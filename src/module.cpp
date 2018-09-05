@@ -102,13 +102,30 @@ statusMap get_status(size_t gid)
 }
 
 
+double get_state(size_t gid, const std::string& level,
+                 const std::string& variable)
+{
+    const char* cvar = variable.c_str();
+
+    if (level == "neuron")
+    {
+        return kernel().neuron_manager.get_neuron(gid)->get_state(cvar);
+    }
+    else
+    {
+        return kernel().neuron_manager.get_neuron(gid)->get_neurite(level)
+                   .lock()->get_state(cvar);
+    }
+}
+
+
 size_t get_num_objects() { return kernel().get_num_objects(); }
 
 
-statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
+statusMap get_neurite_status(size_t gid, const std::string &neurite,
                              const std::string &level)
 {
-    return kernel().neuron_manager.get_neurite_status(gid, neurite_type, level);
+    return kernel().neuron_manager.get_neurite_status(gid, neurite, level);
 }
 
 
@@ -142,6 +159,12 @@ void get_models(std::vector<std::string> &models,
     {
         kernel().neuron_manager.get_models(models);
     }
+}
+
+
+bool is_neurite(size_t gid, const std::string& neurite)
+{
+    return kernel().neuron_manager.get_neuron(gid)->is_neurite(neurite);
 }
 
 
@@ -250,9 +273,7 @@ void test_random_generator(Random_vecs &values, size_t size)
 
 void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
                   SkelNeurite &growth_cones, SkelSomas &somas,
-                  std::vector<size_t> gids)
-
-
+                  std::vector<size_t> gids, unsigned int resolution)
 {
 #ifndef NDEBUG
     printf("Getting skeleton\n");
@@ -266,7 +287,7 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
 
     for (auto const &neuron : neurons_vector)
     {
-        Skeleton neuron_skel = Skeleton(neuron.get());
+        Skeleton neuron_skel = Skeleton(neuron.get(), resolution);
 
         // fill the neurites
         _fill_skel(neuron_skel.axon, axon, true);
@@ -403,23 +424,37 @@ std::vector<std::string> get_neurites(size_t gid)
 
 void get_branches_data(size_t neuron, const std::string &neurite_name,
                        std::vector<std::vector<std::vector<double>>> &points,
-                       std::vector<double> &diameters, size_t start_point)
+                       std::vector<double> &diameters,
+                       std::vector<int> &parents, std::vector<size_t> &nodes,
+                       size_t start_point)
 {
     NeuronPtr n            = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
+
+    //~ std::unordered_map<size_t, int> ids;
+    size_t idx = 0;
 
     auto node_it  = neurite.lock()->nodes_cbegin();
     auto node_end = neurite.lock()->nodes_cend();
     auto gc_it    = neurite.lock()->gc_cbegin();
     auto gc_end   = neurite.lock()->gc_cend();
 
+    //~ printf("so far so good\n");
+
     while (node_it != node_end)
     {
+        //~ printf("node %lu\n", node_it->first);
         std::vector<std::vector<double>> points_tmp;
         BranchPtr b = node_it->second->get_branch();
 
+        //~ printf("got branch; null = %i\n", b == nullptr);
+        //~ printf("branch size %lu\n", b->size());
+        //~ ids[node_it->second->get_nodeID()] = idx;
+        //~ idx++;
+
         if (b->size() != 0)
         {
+            //~ printf("nonzero branch size\n");
             switch (start_point)
             {
             case 0:
@@ -440,6 +475,13 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
                 points_tmp.push_back(row_y);
             }
 
+            // assign the id to a vector index
+            //~ printf("updated idx, looking for parent (null is %i)\n", node_it->second->get_parent().lock() == nullptr);
+
+            parents.push_back(node_it->second->get_parent().lock()->get_nodeID());
+            //~ nodes.push_back(node_it->first);
+            nodes.push_back(node_it->second->get_nodeID());
+
             points.push_back(points_tmp);
             diameters.push_back(node_it->second->get_diameter());
         }
@@ -447,16 +489,51 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
         node_it++;
     }
 
+    //~ printf("correcting parent ids\n");
+
+    // correct the parent ids to their vector index
+    
+    //~ for (size_t i=0; i < parents.size(); i++)
+    //~ {
+        //~ size_t parent_id = parents[i];
+
+        //~ if (ids.find(parent_id) == ids.end() or parent_id == ids[parent_id])
+        //~ {
+            //~ parents[i] = -1;
+        //~ }
+        //~ else
+        //~ {
+            //~ parents[i] = ids[parent_id];
+        //~ }
+    //~ }
+
+    //~ printf("doing gcs\n");
+
     while (gc_it != gc_end)
     {
         std::vector<std::vector<double>> points_tmp;
         BranchPtr b = gc_it->second->get_branch();
-        points_tmp.push_back(b->points.at(0));
-        points_tmp.push_back(b->points.at(1));
+        //~ printf("got gc branch, null %i\n", b == nullptr);
+        if (b->size() != 0)
+        {
+            points_tmp.push_back(b->points.at(0));
+            points_tmp.push_back(b->points.at(1));
 
-        points.push_back(points_tmp);
+            //~ printf("pushed back, parent is null %i\n", gc_it->second->get_parent().expired());
 
-        diameters.push_back(gc_it->second->get_diameter());
+            size_t parent_id = gc_it->second->get_parent().lock()->get_nodeID();
+
+            //~ printf("getting parent\n");
+            //~ parents.push_back(ids[parent_id]);
+            parents.push_back(parent_id);
+            //~ nodes.push_back(gc_it->first);
+            nodes.push_back(gc_it->second->get_nodeID());
+            //~ printf("got parent\n");
+
+            points.push_back(points_tmp);
+
+            diameters.push_back(gc_it->second->get_diameter());
+        }
 
         gc_it++;
     }

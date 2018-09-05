@@ -4,12 +4,16 @@
 
 project ( cgrowth )
 
-set( PY_NAME NetGrowth )
+set( PY_NAME dense PARENT_SCOPE)
 
 # Version number.
 set (cgrowth_VERSION_MAJOR 0)
 set (cgrowth_VERSION_MINOR 1)
-set( cgrowth_VERSION_PATCHLEVEL 0 )
+set (cgrowth_VERSION_PATCHLEVEL 0)
+
+set (cgrowth_VERSION_MAJOR ${cgrowth_VERSION_MAJOR} PARENT_SCOPE)
+set (cgrowth_VERSION_MINOR ${cgrowth_VERSION_MINOR} PARENT_SCOPE)
+set( cgrowth_VERSION_PATCHLEVEL ${cgrowth_VERSION_PATCHLEVEL} PARENT_SCOPE)
 
 set( cgrowth_VERSION_VERSION "${cgrowth_VERSION_MAJOR}.${cgrowth_VERSION_MINOR}.${cgrowth_VERSION_PATCHLEVEL}" )
 

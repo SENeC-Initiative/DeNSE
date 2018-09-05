@@ -113,7 +113,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;
     std::string get_name() const;
+    double get_taper_rate() const;
     double get_max_resol() const;
+
     void update_kernel_variables();
     void add_cone(GCPtr);
     void add_node(NodePtr);
@@ -129,6 +131,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     NeuronWeakPtr parent_;
     Branching branching_model_;
     std::string name_;
+    bool active_;
+    double max_arbor_len_;
+    double fixed_arbor_len_;
     // keep track of how many nodes were created to set the ids
     size_t num_created_nodes_;
     // observables for recorders
@@ -151,6 +156,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::deque<ActinPtr> actinDeck_;
     std::unordered_map<size_t, NodePtr> nodes_;
     std::vector<size_t> dead_nodes_;
+    size_t max_gc_num_;
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;
@@ -162,8 +168,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     CR_Neurite cr_neurite_;
 
     //! branch direction parameters
+    double diameter_ratio_avg_;
     double diameter_eta_exp_;
-    double diameter_variance_;
+    double diameter_ratio_std_;
     double soma_angle_;
     double lateral_branching_angle_mean_;
     double lateral_branching_angle_std_;

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+
+from scipy.special import digamma
 
 # ~ plt.ion()
 
@@ -13,7 +15,7 @@ import os
 Main parameters
 '''
 
-S = -18.
+S = -2.
 E = 0.00
 # ~ S = 4.
 # ~ E = 0.3
@@ -32,6 +34,11 @@ neuron_params = {
     "filopodia_min_number": 30,
     "speed_growth_cone": 9.,
     "sensing_angle": 0.1495,
+
+    #~ "diameter_eta_exp": 50.,
+    "diameter_eta_exp": 2.67,
+    "diameter_ratio_std": 0.,
+    "diameter_ratio_avg": 1.,
 
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
@@ -69,12 +76,12 @@ if use_uniform_branching:
 
 if use_vp:
     vp_params = {
-        # ~ "B": 100.8,
-        "B": 84000.,
-        # ~ "B": 100000.,
+        "B": 10.8,
+        "T": 200.,
+        # ~ "B": 84000.,
+        # ~ "T": 700000.,
         "E": E,
         "S": S,
-        "T": 700000.,
     }
     neuron_params.update(vp_params)
 
@@ -87,27 +94,32 @@ def article_distribution():
     hours_ev = [13, 19, 6, 8, 5, 3, 1, 1]
     hours = range(20,100,10)
 
+
+def max_asym(n):
+    return 1. - (digamma(n) - digamma(1.))/(n-1.)
+
+
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
 def vp_branching(neuron_params):
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
+    ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
     neuron_params['growth_cone_model'] = 'run_tumble'
     neuron_params['use_van_pelt'] = False
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                             params=neuron_params,
                             axon_params=neuron_params,
                             num_neurites=1,
@@ -116,28 +128,32 @@ def vp_branching(neuron_params):
 
     step(10, 1, False, False)
     neuron_params['use_van_pelt'] = True
-    NetGrowth.SetStatus(gid,params = neuron_params,
+    ds.SetStatus(gid,params = neuron_params,
                         axon_params=neuron_params)
-    step(50, 1, False, False)
+    step(500, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=5)
+    ds.SaveJson()
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     # print(swc_file)
     return swc_file
 
 
 if __name__ == '__main__':
     num_omp = 12
+    seeds = np.random.randint(0, 10000, num_omp).tolist()
     kernel = {
-        "seeds": np.random.randint(0, 10000, num_omp).tolist(),
+        "seeds": seeds,
         "num_local_threads": num_omp,
         "environment_required": False
     }
+    print(seeds)
     swc_file=vp_branching(neuron_params)
 
-    pop = NetGrowth.GetNeurons()
+    print("done")
+
+    pop = ds.GetNeurons()
     n   = pop[0]
 
     tree = n.axon.get_tree()
@@ -147,20 +163,30 @@ if __name__ == '__main__':
     from neurom import viewer
     asym = []
     num_tips = []
+    gids = []
+    lgth = []
     for n in pop:
         tree = n.axon.get_tree()
+        lgth.append(n.axon.total_length)
         num_tips.append(len(tree.tips))
         nrn = tree.neurom_tree()
-        asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
+        gids.append(int(n))
+        print(lgth[-1])
+        asym.append(
+            np.average(neurom.fst.get("partition_asymmetry", nrn))
+            / max_asym(num_tips[-1]))
 
     fig, (ax1, ax2) = plt.subplots(2)
     nann = np.where(np.isnan(asym))[0]
+    idxmax = np.nanargmax(asym)
     print(np.min(asym), np.max(asym), nann)
     if len(nann):
-        NetGrowth.plot.PlotNeuron(nann, show=True)
-    ax1.hist(np.array(asym)[~np.isnan(asym)], bins="auto")
-    print(np.average(num_tips), np.median(num_tips))
-    ax2.hist(num_tips)
+        ds.plot.PlotNeuron(nann, show=False)
+    nonan_asym = np.array(asym)[~np.isnan(asym)]
+    ax1.hist(nonan_asym, bins="auto")
+    # ~ ax2.hist(num_tips)
+    ax2.hist(lgth)
+
     plt.show()
 
     # ~ import btmorph2

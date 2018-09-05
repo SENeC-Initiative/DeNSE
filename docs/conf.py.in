@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# NetGrowth documentation build configuration file, created by
+# DeNSE documentation build configuration file, created by
 # sphinx-quickstart on Fri Feb 17 11:54:10 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -26,6 +26,84 @@ try:
 except:
     with_bootstrap = False
 
+
+# -- Setup all autosum then start --------------------------------------------
+
+import fnmatch
+import importlib
+import inspect
+
+def gen_autosum(source, target, module, autotype, dtype="all", ignore=None):
+    '''
+    Automatically write a sphinx-parsable file, adding a list of functions or
+    classes to the autosummary method of sphinx, in place of the @autosum@
+    keyword.
+
+    Parameters
+    ----------
+    source : str
+        Name of the input file, usually of the form "source.rst.in".
+    target : str
+        Name of the output file, usually "source.rst".
+    module : str
+        Name of the module on which autosummary should be performed.
+    autotype : str
+        Type of summary (normal for all, 'autofunction' or 'autoclass').
+    dtype : str, optional (default: all)
+        Type of object that should be kept ('func' or 'class'), depending on
+        `autotype`.
+    ignore : list, optional (default: None)
+        Names of the objects that should not be included in the summary.
+    '''
+    # load module and get content
+    mod = importlib.import_module(module)
+    mod_dir = dir(mod)
+    # set ignored classes
+    ignore = [] if ignore is None else ignore
+    # list classes and functions
+    str_autosum = ''
+    for member in mod_dir:
+        if not member.startswith('_') and not member in ignore:
+            m = getattr(mod, member)
+            keep = 1
+            if dtype == "func":
+                keep *= inspect.isfunction(m)
+            elif dtype == "class":
+                keep *= inspect.isclass(m)
+            else:
+                keep *= inspect.isfunction(m) + inspect.isclass(m)
+            if keep:
+                if autotype == "summary":
+                    str_autosum += '    ' + module + '.' + member + '\n'
+                else:
+                    str_autosum += '\n.. ' + autotype + ':: ' + member + '\n'
+    # write to file
+    with open(source, "r") as rst_input:
+        with open(target, "w") as main_rst:
+            for line in rst_input:
+                if line.find("%autosum%") != -1:
+                    main_rst.write(str_autosum)
+                else:
+                    main_rst.write(line)
+
+# find all *.in files
+
+inputs = []
+for root, dirnames, filenames in os.walk("@CMAKE_CURRENT_SOURCE_DIR@"):
+    for filename in fnmatch.filter(filenames, '*.rst.in'):
+        inputs.append(os.path.join(root, filename))
+
+for f in inputs:
+    target = f[:-3]  # remove '.in'
+    # find the module (what will come after dense, it is the name of the file)
+    last_dot = target.rfind('.')
+    last_slash = target.rfind('/')
+    module = target[last_slash + 1:last_dot]
+    if module != 'dense':
+        module = 'dense.' + module
+    gen_autosum(f, target, module, 'summary')
+
+
 # -- Set doxygen/breathe --------------------------------------------------
 
 root_path = os.path.abspath("..")
@@ -38,9 +116,9 @@ sys.path.insert(0, "@PYTHON_INSTALL_DIR@")
 
 # mock _growth if not compiled
 try:
-    import NetGrowth
+    import dense
 except:
-    autodoc_mock_imports = ["NetGrowth._pygrowth"]
+    autodoc_mock_imports = ["dense._pygrowth"]
 
 # run doxygen
 call(["doxygen", "Doxyfile"])
@@ -61,7 +139,7 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
-    #~ 'sphinx.ext.githubpages',
+    'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'breathe'
@@ -131,7 +209,7 @@ html_theme_options = {}
 html_use_smartypants = False
 
 if with_bootstrap:
-    html_theme = 'netgrowth_theme'
+    html_theme = 'dense_theme'
     html_theme_path = ['@CMAKE_CURRENT_SOURCE_DIR@/'] + \
                       sphinx_bootstrap_theme.get_html_theme_path()
 

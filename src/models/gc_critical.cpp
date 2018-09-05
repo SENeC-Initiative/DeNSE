@@ -135,8 +135,14 @@ double GrowthCone_Critical::get_CR_demand()
 {
     double current_demand = stored_ * consumption_rate_;
     // weight by centrifugal order and diameter if required
-    //~ +(1+weight_centrifugal_*get_centrifugal_order())
-    //~ +(1+weight_diameter_*get_diameter());
+    if (weight_centrifugal_ > 0)
+    {
+        current_demand *= powf(2, -weight_centrifugal_*get_centrifugal_order());
+    }
+    if (weight_diameter_ > 0)
+    {
+        current_demand *= (1 + weight_diameter_*get_diameter()*get_diameter());
+    }
 
     return current_demand;
 }
@@ -313,24 +319,24 @@ void GrowthCone_Critical::get_status(statusMap &status) const
     GrowthCone::get_status(status);
 
     // state parameters
-    set_param(status, names::resource, stored_);
+    set_param(status, names::resource, stored_, "micromole / liter");
 
     // speed-related
-    set_param(status, names::CR_elongation_factor, elongation_factor_);
-    set_param(status, names::CR_retraction_factor, retraction_factor_);
-    set_param(status, names::CR_elongation_th, elongation_th_);
-    set_param(status, names::CR_retraction_th, retraction_th_);
+    set_param(status, names::CR_elongation_factor, elongation_factor_, "micrometer / minute");
+    set_param(status, names::CR_retraction_factor, retraction_factor_, "micrometer / minute");
+    set_param(status, names::CR_elongation_th, elongation_th_, "micromole / liter");
+    set_param(status, names::CR_retraction_th, retraction_th_, "micromole / liter");
 
-    set_param(status, names::CR_branching_th, branching_th_);
-    set_param(status, names::CR_branching_proba, branching_proba_);
+    set_param(status, names::CR_branching_th, branching_th_, "micromole / liter");
+    set_param(status, names::CR_branching_proba, branching_proba_, "");
 
     // use and leakage
-    set_param(status, names::CR_use_ratio, use_ratio_);
-    set_param(status, names::CR_leakage, leakage_);
-    set_param(status, names::CR_correlation, correlation_);
-    set_param(status, names::CR_variance, variance_);
-    set_param(status, names::CR_weight_diameter, weight_diameter_);
-    set_param(status, names::CR_weight_centrifugal, weight_centrifugal_);
+    set_param(status, names::CR_use_ratio, use_ratio_, "1 / minute");
+    set_param(status, names::CR_leakage, leakage_, "minute");
+    set_param(status, names::CR_correlation, correlation_, "");
+    set_param(status, names::CR_variance, variance_, "micromole / liter / minute**0.5");
+    set_param(status, names::CR_weight_diameter, weight_diameter_, "");
+    set_param(status, names::CR_weight_centrifugal, weight_centrifugal_, "");
 }
 
 

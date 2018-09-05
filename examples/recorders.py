@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import nngt
-import NetGrowth as ng
+import dense as ds
 
 
 neuron_params = {
@@ -54,9 +54,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ng.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        ng.PlotNeuron(show_nodes=True, show=True)
+        ds.PlotNeuron(show_nodes=True, show=True)
 
 
 if __name__ =='__main__':
@@ -68,7 +68,7 @@ if __name__ =='__main__':
             "resolution": 30.}
     kernel["environment_required"] = False
 
-    ng.SetKernelStatus(kernel)
+    ds.SetKernelStatus(kernel)
 
     '''
     Create neurons
@@ -84,24 +84,24 @@ if __name__ =='__main__':
     neuron_params['position'] = np.random.uniform(-1000, 1000, (5, 2))
 
     num_neurons = 5
-    gids = ng.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
+    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
 
     pprint("neuron status")
-    pprint(ng.GetStatus(gids[0]))
+    pprint(ds.GetStatus(gids[0]))
 
     '''
     Create recorders
     '''
 
-    gids_rec = ng.CreateRecorders(gids, "length", levels="neurite")
+    gids_rec = ds.CreateRecorders(gids, "length", levels="neurite")
 
-    print(gids_rec, ng.GetStatus(gids_rec))
+    print(gids_rec, ds.GetStatus(gids_rec))
 
     print("start simu")
 
     step(100, 0, False)
 
-    ng.PlotRecording(gids_rec, show=True)
+    ds.PlotRecording(gids_rec, show=True)

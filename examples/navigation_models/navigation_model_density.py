@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -10,31 +10,31 @@ num_neurons = 40
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
-        NetGrowth.PlotNeuron(
+        ds.PlotNeuron(
             show_nodes=True, save_path=save_path)
 
-def run_netgrowth(neuron_params,axes,letter,single=False):
+def run_dense(neuron_params,axes,letter,single=False):
 
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
     neuron_params["position"]=np.zeros((num_neurons,2))
     simulated_neurons = num_neurons
     if single:
         simulated_neurons = 1.
         neuron_params["position"]=np.array([0,0])
-    gids = NetGrowth.CreateNeurons(n=simulated_neurons,
+    gids = ds.CreateNeurons(n=simulated_neurons,
                                    params=neuron_params,
                                    num_neurites=1,
                                    position=[]
                                    )
 
     step(1000, 1, os.path.join(os.getcwd(), "primo"),plot=False)
-    neurons    = NetGrowth.GetNeurons()
-    structure  = NetGrowth.NeuronStructure(neurons)
-    population = NetGrowth.Population.from_structure(structure)
+    neurons    = ds.GetNeurons()
+    structure  = ds.NeuronStructure(neurons)
+    population = ds.Population.from_structure(structure)
     axons= population.axon_all_points()
     from matplotlib.colors import LogNorm
     import matplotlib
@@ -54,7 +54,7 @@ def run_netgrowth(neuron_params,axes,letter,single=False):
         axes.set_title("path density for\n {}".format(neuron_params["growth_cone_model"]))
     else:
         axes.plot(axons[:,0],axons[:,1],c='r')
-    NetGrowth.ResetKernel()
+    ds.ResetKernel()
 
 if __name__ == '__main__':
     kernel = {
@@ -96,7 +96,7 @@ if __name__ == '__main__':
             neuron_params["srf_inertial_force"]=1.
             print("model is {}".format(model))
         neuron_params["growth_cone_model"]= model
-        run_netgrowth(neuron_params,axe,letter)
-        run_netgrowth(neuron_params,axe,letter,single=True)
+        run_dense(neuron_params,axe,letter)
+        run_dense(neuron_params,axe,letter,single=True)
     fig.tight_layout()
     plt.show()

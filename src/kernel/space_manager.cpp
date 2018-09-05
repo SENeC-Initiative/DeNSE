@@ -688,7 +688,7 @@ void SpaceManager::set_status(const statusMap &config)
 
 void SpaceManager::get_status(statusMap &status) const
 {
-    set_param(status, "environment_initialized", environment_initialized_);
+    set_param(status, "environment_initialized", environment_initialized_, "");
     // set_param(status, "dimension", Space::get_dimension());
 }
 

@@ -13,7 +13,7 @@ In the first case the author offered a compartimental model which satisfies two 
 
 Envioronmental model of pulling:
 --------------------------------
-Since in the free space case there is no active pulling of the dendrite, Netgrowth will
+Since in the free space case there is no active pulling of the dendrite, DeNSE will
 model a general pulling with a correlated gaussian where the user can choose the variance, the mean and the correlation
 factor. For a better understanding of this distribution we remind to: [correlatedgaussian]_
 

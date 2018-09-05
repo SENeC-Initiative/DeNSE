@@ -1,7 +1,10 @@
 #ifndef NAMES_MODELS_H
 #define NAMES_MODELS_H
-#include "config.hpp"
+
 #include <string>
+#include <limits>
+
+#include "config.hpp"
 
 
 namespace growth
@@ -22,6 +25,16 @@ extern const std::string growth_cone_model;
 extern const std::string num_neurites;
 //! radius of soma for neurite starts  1    [micrometers]
 extern const std::string soma_radius;
+extern const std::string has_axon;
+extern const std::string axon_polarization_weight;
+extern const std::string neurite_angles;
+extern const std::string polarization_strength;
+extern const std::string random_rotation_angles;
+
+extern const std::string max_gc_number;
+extern const std::string max_arbor_length;
+
+extern const std::string active;
 
 extern const std::string axon_diameter;
 extern const std::string dendrite_diameter;
@@ -33,13 +46,24 @@ extern const std::string initial_branch_lenght;
 extern const std::string branching_proba_default;
 
 extern const std::string thinning_ratio;
+extern const std::string diameter_ratio_avg;
+extern const std::string diameter_ratio_std;
+extern const std::string diameter_eta_exp;
+
 
 #define BRANCHING_PROBA_DEFAULT 0.05
 #define AXON_DIAMETER 6.
 #define DENDRITE_DIAMETER 6.
-#define SOMA_RADIUS 20.
+#define SOMA_RADIUS 8.
 #define THINNING_RATIO 0.005  // lose 1 micrometer every 200 micrometers
 #define MIN_DIAMETER 0.1      // diameter when a gc stops growing [micrometers]
+#define DIAMETER_RATIO_AVG 1.
+#define DIAM_RATIO_STD 0.02   // deviation from identical diameters on split
+#define DIAMETER_ETA_EXP 2.67
+#define POLA_STRENGTH 5.
+#define AXON_POLA_WEIGHT 2.
+#define MAX_GC_NUM 500
+#define MAX_ARBOR_LENGTH 5000.
 
 
 /*
@@ -95,7 +119,7 @@ extern const std::string CR_variance;
 extern const std::string CR_weight_diameter;
 #define CRITICAL_WEIGHT_DIAMETER 1.
 extern const std::string CR_weight_centrifugal;
-#define CRITICAL_WEIGHT_CENTRIFUGAL 1.
+#define CRITICAL_WEIGHT_CENTRIFUGAL 0.
 
 extern const std::string CR_elongation_factor;
 #define CRITICAL_ELONGATION_FACTOR 0.5
@@ -106,7 +130,7 @@ extern const std::string CR_retraction_factor;
 extern const std::string CR_retraction_th;
 #define CRITICAL_RETRACTION_TH 0.15
 extern const std::string CR_branching_th;
-#define CRITICAL_BRANCHING_TH 5.
+#define CRITICAL_BRANCHING_TH std::numeric_limits<double>::infinity()
 extern const std::string CR_branching_proba;
 #define CRITICAL_BRANCHING_PROBA 0.1
 
@@ -196,12 +220,8 @@ extern const std::string use_uniform_branching;
 extern const std::string uniform_branching_rate;
 extern const std::string lateral_branching_angle_mean;
 extern const std::string lateral_branching_angle_std;
-extern const std::string diameter_variance;
-extern const std::string diameter_eta_exp;
 
 #define ANGLE_IN_DEGREES true
-#define DIAMETER_ETA_EXP 1.5
-#define DIAMETER_VARIANCE 0.1
 #define LATERAL_BRANCHING_ANGLE_MEAN 90 * 3.14 / 180
 #define LATERAL_BRANCHING_ANGLE_STD 1. / 180 * 3.14
 #define UNIFORM_BRANCHING_RATE 0.001

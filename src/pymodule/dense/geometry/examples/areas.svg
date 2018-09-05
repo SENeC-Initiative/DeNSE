@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 69.188538 69.188538"
+   height="69.188538mm"
+   width="69.188538mm">
+  <defs
+     id="defs2" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-58.009895,-53.384887)"
+     id="layer1">
+    <circle
+       r="34.395832"
+       cy="87.979156"
+       cx="92.604164"
+       id="path871"
+       style="fill:#00ffff;fill-opacity:1;stroke:#000000;stroke-width:0.39687499;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path4508"
+       transform="matrix(0.26458333,0,0,0.26458333,58.009895,53.336145)"
+       d="m 90.75,7.4082031 a 130,130 0 0 0 -60,40.5273439 l 0,12.998047 30,0 0,30 -30,0 -23.6152344,0 A 130,130 0 0 0 1.2519531,120.93359 l 29.4980469,0 0,30 30,0 0,-30 30,0 0,-59.999996 30,0 0,-30 -30,0 0,-23.5253909 z"
+       style="fill:#ff0000;stroke:#000000;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       id="path4510"
+       transform="matrix(0.26458333,0,0,0.26458333,58.009895,53.336145)"
+       d="m 200.75,21.552734 0,19.38086 -30,0 0,30 -30,0 0,29.999996 -30,0 0,30 60,0 0,-30 30,0 0,60 -30,0 0,30 30,0 30,0 0,-60 0,-49.999996 0,-20 0,-12.894532 a 130,130 0 0 0 -30,-26.486328 z"
+       style="fill:#ff0000;stroke:#000000;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       id="path4512"
+       transform="matrix(0.26458333,0,0,0.26458333,58.009895,53.336145)"
+       d="m 80.75,156.93359 0,30 -30,0 0,30 30,0 0,33.9668 a 130,130 0 0 0 30,8.32422 l 0,-12.29102 60,0 0,-30 -30,0 0,-30 -30,0 0,-30 -30,0 z"
+       style="fill:#ff0000;stroke:#000000;stroke-width:0.99999994px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>

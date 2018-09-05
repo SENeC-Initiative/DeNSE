@@ -128,6 +128,7 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
     , current_diameter_(copy.current_diameter_)
+    , persistence_length_(copy.persistence_length_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -290,11 +291,8 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             compute_speed(rnd_engine, local_substep);
             compute_module(local_substep);
 
-            // make sure module is negative
-            move_.module = -std::abs(move_.module);
-
             // retract
-            retraction(cone_n, omp_id);
+            retraction(std::abs(move_.module), cone_n, omp_id);
         }
         else
         {
@@ -407,7 +405,9 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 // =========== //
                 // Back we go! //
                 // =========== //
-                retraction(cone_n, omp_id);
+
+                // retracting distance is the opposite of the (negative module)
+                retraction(-move_.module, cone_n, omp_id);
             }
         }
 
@@ -517,10 +517,9 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 }
 
 
-void GrowthCone::retraction(size_t cone_n, int omp_id)
+void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 {
-    // retracting implies negative module, we want a positive distance
-    double to_retract = -move_.module;
+    assert(distance >= 0.);
 
     // cannot be stuck_ or on low proba mode when retracting, so reset all
     stuck_       = false;
@@ -530,36 +529,37 @@ void GrowthCone::retraction(size_t cone_n, int omp_id)
     turned_  = 0.;
 
     // remove the points
-    double distance;
+    double distance_done;
+    //~ printf("distance to retract %f vs length %f\n", distance, get_branch()->get_length());
 
-    while (to_retract > 0)
+    while (distance > 0)
     {
         if (biology_.branch->size() > 1)
         {
-            distance = biology_.branch->points[2].back() -
+            distance_done = biology_.branch->points[2].back() -
                        biology_.branch->points[2][biology_.branch->size() - 2];
 
-            if (distance < to_retract)
+            if (distance_done < distance)
             {
-                to_retract -= distance;
+                distance -= distance_done;
                 biology_.branch->retract();
             }
             else
             {
-                double diff = distance - to_retract;
-                Point p1 = biology_.branch->xy_at(biology_.branch->size() - 1);
+                double remaining = distance_done - distance;
+                Point p1 = biology_.branch->xy_at(biology_.branch->size() - 2);
                 Point p2 = biology_.branch->get_last_xy();
 
                 double new_x =
-                    (p2[0] * diff + p1[0] * (distance - diff)) / distance;
+                    (p2[0] * remaining + p1[0] * (distance_done - remaining)) / distance_done;
                 double new_y =
-                    (p2[1] * diff + p1[1] * (distance - diff)) / distance;
+                    (p2[1] * remaining + p1[1] * (distance_done - remaining)) / distance_done;
                 Point new_p = Point(new_x, new_y);
 
                 biology_.branch->retract();
-                biology_.branch->add_point(new_p, diff);
+                biology_.branch->add_point(new_p, remaining);
 
-                to_retract = 0.;
+                distance = 0.;
             }
         }
         else
@@ -585,7 +585,7 @@ void GrowthCone::retraction(size_t cone_n, int omp_id)
         }
         else
         {
-            Point p = get_parent().lock()->get_position();
+            Point p = TopologicalNode::get_position();
             x0      = p[0];
             y0      = p[1];
         }
@@ -1021,7 +1021,6 @@ void GrowthCone::set_status(const statusMap &status)
     else
     {
         sensing_angle_      = sa_tmp;
-        persistence_length_ = lp;
     }
 
     update_filo += set_sa;
@@ -1051,7 +1050,7 @@ void GrowthCone::set_status(const statusMap &status)
     // IMPORTANT: MUST COME AFTER local_avg_speed_ HAS BEEN SET!
     if (set_lp)
     {
-        if (lp < resol_ * move_.speed)
+        if (lp < resol_ * local_avg_speed_)
         {
             persistence_length_ = old_lp;
 
@@ -1082,21 +1081,21 @@ void GrowthCone::set_status(const statusMap &status)
 
 void GrowthCone::get_status(statusMap &status) const
 {
-    set_param(status, names::filopodia_wall_affinity, filopodia_.wall_affinity);
-    set_param(status, names::filopodia_finger_length, filopodia_.finger_length);
-    set_param(status, names::filopodia_min_number, min_filopodia_);
-    set_param(status, names::speed_growth_cone, avg_speed_);
+    set_param(status, names::filopodia_wall_affinity, filopodia_.wall_affinity,"");
+    set_param(status, names::filopodia_finger_length, filopodia_.finger_length, "micrometer");
+    set_param(status, names::filopodia_min_number, min_filopodia_, "");
+    set_param(status, names::speed_growth_cone, avg_speed_, "micrometer / minute");
 
     // @todo change behavior of sensing_angle and max_sensing angle:
     // sensing angle set the min/max of the filopodia angle and is limited by
     // max_sensing_angle
-    set_param(status, names::sensing_angle, sensing_angle_);
-    set_param(status, names::max_sensing_angle, max_sensing_angle_);
+    set_param(status, names::sensing_angle, sensing_angle_, "rad");
+    set_param(status, names::max_sensing_angle, max_sensing_angle_, "rad");
 
-    set_param(status, names::scale_up_move, scale_up_move_);
-    set_param(status, names::proba_down_move, proba_down_move_);
+    set_param(status, names::scale_up_move, scale_up_move_, "micrometer");
+    set_param(status, names::proba_down_move, proba_down_move_, "");
 
-    set_param(status, names::persistence_length, persistence_length_);
+    set_param(status, names::persistence_length, persistence_length_, "micrometer");
 
     // update observables
     std::vector<std::string> tmp;
@@ -1106,7 +1105,7 @@ void GrowthCone::get_status(statusMap &status) const
     obs.insert(observables_.cbegin(), observables_.cend());
     // set the full vector and update status
     tmp = std::vector<std::string>(obs.begin(), obs.end());
-    set_param(status, names::observables, tmp);
+    set_param(status, names::observables, tmp, "");
 }
 
 
@@ -1150,27 +1149,23 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
     // test because first "model" growth cones are not in any Area
     if (area != nullptr)
     {
-        // set area name
-        if (current_area_ != area_name)
+        current_area_ = area_name;
+        // speed and sensing angle may vary
+        if (model_ == "simple_random_walk" and not sensing_angle_set_)
         {
-            current_area_ = area_name;
-            // speed and sensing angle may vary
-            if (model_ == "simple_random_walk" and not sensing_angle_set_)
-            {
-                sensing_angle_ = std::sqrt(2 * local_avg_speed_ * resol_ /
-                                           persistence_length_);
-            }
-            move_.sigma_angle =
-                sensing_angle_ * area->get_property(names::sensing_angle);
-            local_avg_speed_ =
-                avg_speed_ * area->get_property(names::speed_growth_cone);
-            local_speed_variance_ =
-                speed_variance_ * area->get_property(names::speed_growth_cone);
-
-            // substrate affinity depends on the area
-            filopodia_.substrate_affinity =
-                area->get_property(names::substrate_affinity);
+            sensing_angle_ = std::sqrt(2 * local_avg_speed_ * resol_ /
+                                       persistence_length_);
         }
+        move_.sigma_angle =
+            sensing_angle_ * area->get_property(names::sensing_angle);
+        local_avg_speed_ =
+            avg_speed_ * area->get_property(names::speed_growth_cone);
+        local_speed_variance_ =
+            speed_variance_ * area->get_property(names::speed_growth_cone);
+
+        // substrate affinity depends on the area
+        filopodia_.substrate_affinity =
+            area->get_property(names::substrate_affinity);
     }
     else
     {
@@ -1228,9 +1223,7 @@ void GrowthCone::change_sensing_angle(double angle)
         // when not moving, start turning
         if (turning_ != 0 and turned_ < 0.39269908169872414)
         {
-            //~ printf("turning from %f", move_.angle);
             move_.angle += turning_ * angle;
-            //~ printf(" to %f\n", move_.angle);
             turned_ += angle;
         }
     }

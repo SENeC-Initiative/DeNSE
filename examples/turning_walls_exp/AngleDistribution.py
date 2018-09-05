@@ -1,4 +1,4 @@
-import NetGrowth
+import dense as ds
 import warnings
 from NetGrowthRwBenchmark import AnalyseNetgrowthRW, CleanFolder
 import numpy as np
@@ -28,8 +28,8 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params,
     experiment_params = {}
     experiment_params["num_neurons"] = n_samples
     np.random.seed(kernel['seeds'])
-    NetGrowth.SetKernelStatus(kernel, NetGrowth.GenerateSimulationID())
-    culture = NetGrowth.CreateEnvironment(
+    ds.SetKernelStatus(kernel, ds.GenerateSimulationID())
+    culture = ds.CreateEnvironment(
         culture_file, min_x=0, max_x=cavity_x_max)
     pos_left = culture.seed_neurons(
         neurons=experiment_params["num_neurons"], xmax=neuron_x_max,
@@ -39,29 +39,29 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params,
     neuron_params['position'] = pos_left
 
     gids = None
-    gids = NetGrowth.CreateNeurons(experiment_params["num_neurons"],
+    gids = ds.CreateNeurons(experiment_params["num_neurons"],
                                    "random_walk",
                                    culture=culture,
                                    params=neuron_params,
                                    num_neurites=1
                                    )
-    NetGrowth.Simulate(sim_length)
+    ds.Simulate(sim_length)
     # fig, ax = plt.subplots()
-    # NetGrowth.plot.PlotNeuron(gid=range(experiment_params["num_neurons"]),
+    # ds.plot.PlotNeuron(gid=range(experiment_params["num_neurons"]),
                               # culture = culture, soma_color="k",
                               # axon_color='g', axis=ax, show=True)
-    NetGrowth.SaveJson(filepath=save_path)
-    NetGrowth.SaveSwc(filepath=save_path, swc_resolution=1)
-    # NetGrowth.SaveJson(filepath=tmp_dir)
-    # NetGrowth.PlotNeuron(show_nodes=True)
-    NetGrowth.ResetKernel()
+    ds.SaveJson(filepath=save_path)
+    ds.SaveSwc(filepath=save_path, swc_resolution=1)
+    # ds.SaveJson(filepath=tmp_dir)
+    # ds.PlotNeuron(show_nodes=True)
+    ds.ResetKernel()
 
 
 def Test(neuron_params, sim_length=300, n_samples=10, plot=False):
     swc_folder = os.path.join(os.getcwd(), "tmp_measure")
     CleanFolder(swc_folder)
     RunNetGrowth(n_samples, sim_length, 5,  neuron_params, swc_folder)
-    population, _ = NetGrowth.PopulationFromSwc(swc_folder)
+    population, _ = ds.PopulationFromSwc(swc_folder)
     # # return ensembles
     # # rw_corr.plot_results(ensembles, plot=True)
     # info =InfoFromJson(os.path.join(folder,"info.json"))

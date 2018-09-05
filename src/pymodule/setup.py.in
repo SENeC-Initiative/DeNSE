@@ -76,7 +76,7 @@ class CustomBuildExt(build_ext):
 # Extension to link C++ files to python #
 # ------------------------------------- #
 
-mod_name = 'NetGrowth'
+mod_name = 'dense'
 
 ext = '.pyx' if with_cython else '.cpp'
 

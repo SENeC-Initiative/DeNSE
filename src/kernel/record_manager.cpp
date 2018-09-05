@@ -102,7 +102,7 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                     local_status[status_it.first] = Property(status_it.second);
                 }
             }
-            local_status[names::targets] = Property(local_targets);
+            local_status[names::targets] = Property(local_targets, "");
 
             // get recorder type
             get_param(local_status, names::level, level);
@@ -378,7 +378,7 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
     rec->get_status(status);
 
     // set status with level and event type
-    set_param(status, names::event_type, event_type);
+    set_param(status, names::event_type, event_type, "");
 
     unsigned int level = rec->get_level();
     std::string s;
@@ -387,15 +387,15 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
     {
     case 0:
         s = "neuron";
-        set_param(status, names::level, s);
+        set_param(status, names::level, s, "");
         break;
     case 1:
         s = "neurite";
-        set_param(status, names::level, s);
+        set_param(status, names::level, s, "");
         break;
     case 2:
         s = "growth_cone";
-        set_param(status, names::level, s);
+        set_param(status, names::level, s, "");
         break;
     default:
         throw InvalidParameter("Invalid level '" + std::to_string(level) + "'.",

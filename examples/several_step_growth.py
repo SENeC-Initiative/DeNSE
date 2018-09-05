@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import nngt
-import NetGrowth as ng
+import dense as ds
 
 
 neuron_params = {
@@ -43,7 +43,7 @@ if __name__ =='__main__':
         "environment_required": False
     }
 
-    ng.SetKernelStatus(kernel)
+    ds.SetKernelStatus(kernel)
 
     '''
     Create neurons
@@ -51,7 +51,7 @@ if __name__ =='__main__':
 
     neuron_params['position'] = (0, 0)
 
-    gids = ng.CreateNeurons(n=1, growth_cone_model='random_walk',
+    gids = ds.CreateNeurons(n=1, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=3)
@@ -60,14 +60,14 @@ if __name__ =='__main__':
     Create recorders
     '''
 
-    gids_rec = ng.CreateRecorders(gids, "length", levels="growth_cone")
+    gids_rec = ds.CreateRecorders(gids, "length", levels="growth_cone")
 
     '''
     Simulate first non-branching period
     '''
 
-    ng.Simulate(hours=20)
-    ng.PlotNeuron(show_nodes=True, show=True)
+    ds.Simulate(hours=20)
+    ds.PlotNeuron(show_nodes=True, show=True)
 
 
     '''
@@ -89,12 +89,12 @@ if __name__ =='__main__':
     dend_params = vp_params.copy()
     #~ dend_params["T"] = 1e-8
 
-    ng.SetStatus(gids, params=vp_params, dendrites_params=dend_params)
-    # pprint(ng.GetStatus(gids))
+    ds.SetStatus(gids, params=vp_params, dendrites_params=dend_params)
+    # pprint(ds.GetStatus(gids))
 
-    ng.Simulate(hours=12, days=1)
+    ds.Simulate(hours=12, days=1)
     print("Simulation done")
-    ng.PlotNeuron(show_nodes=True, show=True)
+    ds.PlotNeuron(show_nodes=True, show=True)
 
 
     '''
@@ -119,9 +119,9 @@ if __name__ =='__main__':
     })
 
 
-    ng.SetStatus(gids, params=lat_params, dendrites_params=dlat_params)
+    ds.SetStatus(gids, params=lat_params, dendrites_params=dlat_params)
 
-    ng.Simulate(days=1)
-    ng.PlotNeuron(show_nodes=True, show=True)
+    ds.Simulate(days=1)
+    ds.PlotNeuron(show_nodes=True, show=True)
 
-    #~ pprint(ng.GetStatus(gids_rec))
+    #~ pprint(ds.GetStatus(gids_rec))

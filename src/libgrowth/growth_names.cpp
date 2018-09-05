@@ -10,8 +10,10 @@ const std::string actin_content("actin_content");
 const std::string actin_content_tau("actin_content_tau");
 const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
+const std::string active("active");
 const std::string axon_angle("axon_angle");
 const std::string axon_diameter("axon_diameter");
+const std::string axon_polarization_weight("axon_polarization_weight");
 
 const std::string B("B");
 const std::string branching_proba_default("branching_proba_default");
@@ -41,7 +43,8 @@ const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
 const std::string diameter_eta_exp("diameter_eta_exp");
-const std::string diameter_variance("diameter_variance");
+const std::string diameter_ratio_avg("diameter_ratio_avg");
+const std::string diameter_ratio_std("diameter_ratio_std");
 const std::string duration_retraction("duration_of_retraction");
 
 const std::string E("E");
@@ -57,17 +60,23 @@ const std::string gc_split_angle_mean("gc_split_angle_mean");
 const std::string gc_split_angle_std("gc_split_angle_std");
 const std::string growth_cone_model("growth_cone_model");
 
+const std::string has_axon("has_axon");
+
 const std::string initial_branch_lenght("initial_branch_lenght");
 
 const std::string lateral_branching_angle_mean("lateral_branching_angle_mean");
 const std::string lateral_branching_angle_std("lateral_branching_angle_std");
 
+const std::string max_arbor_length("max_arbor_length");
+const std::string max_gc_number("max_gc_number");
 const std::string max_sensing_angle("max_sensing_angle");
 
+const std::string neurite_angles("neurite_angles");
 const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");
 
 const std::string persistence_length("persistence_length");
+const std::string polarization_strength("polarization_strength");
 const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 
@@ -93,6 +102,8 @@ const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
 const std::string thinning_ratio("thinning_ratio");
+
+const std::string random_rotation_angles("random_rotation_angles");
 
 const std::string uniform_branching_rate("uniform_branching_rate");
 const std::string use_actin_waves("use_actin_waves");

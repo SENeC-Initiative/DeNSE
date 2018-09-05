@@ -82,7 +82,7 @@ How this would change the Netgowth simulator?
 
 Since the compartimental simulator it's a really powerfull tootl to simulate
 diffusion and other active process on the neurite we should implement it on the
-existing netgrowth structure.
+existing DeNSE structure.
 This article is very interesting and should give us some ideas to introduce a
 dynamic structure regulated by compartments.
 The idea:
@@ -121,10 +121,13 @@ However, with the introduction of dumb node it could be easy and increase
 linearly with the distance from the soma.
 
 
-### Uniform branching
+### Lateral branching
 
-Decrease with time?
+Decrease with time? Probably not.
 
+For FLPL branching, change it: choose an active growth cone and generate the
+branch with a decaying power-law probability from the tip, make the exponent
+chosen by the user.
 
 ### Culture
 

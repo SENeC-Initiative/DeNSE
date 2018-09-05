@@ -17,7 +17,7 @@ src/pymodule/setup.py
 src/libgrowth/config.hpp
 local_install
 install_test
-src/pymodule/NetGrowth/_pygrowth.cpp
+src/pymodule/dense/_pygrowth.cpp
 
 
 # Libraries
@@ -33,13 +33,15 @@ src/pymodule/NetGrowth/_pygrowth.cpp
 
 docs/_build
 docs/doxyfiles/
+docs/conf.py
+docs/user/dense.rst
 
-# Netgrowth run files
+# DeNSE run files
 *.pdf
 *.swc
 *.json
-src/pymodule/NetGrowth/rw_in_env/ve
-src/pymodule/NetGrowth/ve
+src/pymodule/dense/rw_in_env/ve
+src/pymodule/dense/ve
 
 # Files Alessio
 **/tags

@@ -31,7 +31,7 @@ if ( WITH_DOCS )
 
   add_custom_target( doc
     COMMAND ${CMAKE_COMMAND} -E
-        make_directory $BINARY_BUILD_DIR
+        make_directory ${BINARY_BUILD_DIR}
     COMMAND ${SPHINX_EXECUTABLE}
         -q -b html
         -c ${CMAKE_CURRENT_BINARY_DIR}

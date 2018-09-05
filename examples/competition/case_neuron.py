@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 
@@ -101,37 +101,37 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
-def run_netgrowth(neuron_params):
+def run_dense(neuron_params):
     """
     """
     #~ np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution
     kernel["angles_in_radians"] = True
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="case_neuron")
+    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
                                   num_neurites=1,
                                   )
-    # ~ rec = NetGrowth.CreateRecorders(gid, ["speed", "resource"], levels="growth_cone")
-    rec = NetGrowth.CreateRecorders(gid, ["resource"], levels="growth_cone")
+    # ~ rec = ds.CreateRecorders(gid, ["speed", "resource"], levels="growth_cone")
+    rec = ds.CreateRecorders(gid, ["resource"], levels="growth_cone")
 
-    # NetGrowth.SetStatus(gid, params=neuron_params,
+    # ds.SetStatus(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3./resolution, 1, False, False)
     step(500./resolution, 1, False, False)
@@ -140,7 +140,7 @@ def run_netgrowth(neuron_params):
     dendrite_params['use_van_pelt'] = True
     axon_params['use_flpl_branching'] = True
     axon_params['flpl_branching_rate'] = 0.001
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -159,14 +159,14 @@ def run_netgrowth(neuron_params):
         "CR_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     step(3000./resolution, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    # NetGrowth.SetStatus(gid,params = neuron_params,
+    # ds.SetStatus(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -181,19 +181,19 @@ def run_netgrowth(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # NetGrowth.SetStatus(gid,params = neuron_params,
+    # ds.SetStatus(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    #~ NetGrowth.SaveSwc(swc_resolution=5)
-    #~ NetGrowth.SaveJson()
-    NetGrowth.plot.PlotRecording(rec, show=False)
+    #~ ds.SaveSwc(swc_resolution=5)
+    #~ ds.SaveJson()
+    ds.plot.PlotRecording(rec, show=False)
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     # print(swc_file)
 
-    # NetGrowth.ResetKernel()
+    # ds.ResetKernel()
     return swc_file
 
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
         "num_local_threads": 1,
         "environment_required": False
     }
-    swc_file = run_netgrowth(neuron_params)
+    swc_file = run_dense(neuron_params)
     # ~ import btmorph2
     import matplotlib.pyplot as plt
     #~ neuron1 = btmorph2.NeuronMorphology(

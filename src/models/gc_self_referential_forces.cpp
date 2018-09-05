@@ -199,13 +199,13 @@ void GrowthCone_SelfReferentialForces::get_status(statusMap &status) const
 {
 
     GrowthCone::get_status(status);
-    set_param(status, names::srf_avoidance_decay, selfavoidance_.decay);
-    set_param(status, names::srf_avoidance_force, selfavoidance_.force);
+    set_param(status, names::srf_avoidance_decay, selfavoidance_.decay, "");
+    set_param(status, names::srf_avoidance_force, selfavoidance_.force, "");
 
-    set_param(status, names::srf_inertial_force, inertial_.force);
-    set_param(status, names::srf_inertial_decay, inertial_.decay);
-    set_param(status, names::srf_somatropic_force, somatropic_.force);
-    set_param(status, names::srf_somatropic_decay, somatropic_.decay);
+    set_param(status, names::srf_inertial_force, inertial_.force, "");
+    set_param(status, names::srf_inertial_decay, inertial_.decay, "");
+    set_param(status, names::srf_somatropic_force, somatropic_.force, "");
+    set_param(status, names::srf_somatropic_decay, somatropic_.decay, "");
 }
 
 } // namespace growth

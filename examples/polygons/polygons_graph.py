@@ -1,4 +1,4 @@
-import NetGrowth as ng
+import DeNSE as ds
 import nngt
 import matplotlib.pyplot as plt
 import sys
@@ -8,10 +8,10 @@ try:
 except:
     raise("add culture folder as first argument")
 
-pop = ng.structure.Population.from_swc_population\
-        (ng.NeuronsFromSimulation(culture_folder))
+pop = ds.structure.Population.from_swc_population\
+        (ds.NeuronsFromSimulation(culture_folder))
 
-graph, intersections, synapses = ng.CreateGraph(pop,\
+graph, intersections, synapses = ds.CreateGraph(pop,\
                                                 intersection_positions=True)
 
 

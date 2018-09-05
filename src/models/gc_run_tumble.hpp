@@ -37,8 +37,6 @@ class GrowthCone_RunTumble : public virtual GrowthCone
     virtual void set_status(const statusMap &status) override;
 
   private:
-    double deterministic_angle_;
-    double persistence_length_;
     double tau_;
     double next_tumble_;
     double tumbling_;

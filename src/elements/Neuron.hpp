@@ -46,6 +46,7 @@ typedef struct NeuronDetails
 class GrowthConeContinuousRecorder;
 class NeuriteContinuousRecorder;
 class NeuriteDiscreteRecorder;
+class NeuronManager;
 class Skeleton;
 class Swc;
 
@@ -60,6 +61,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     friend class GrowthConeContinuousRecorder;
     friend class NeuriteContinuousRecorder;
     friend class NeuriteDiscreteRecorder;
+    friend class NeuronManager;
     friend class Skeleton;
     friend class Swc;
 
@@ -95,6 +97,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void get_status(statusMap &status) const;
     int get_num_neurites() const;
     double get_soma_radius() const;
+    bool is_neurite(const std::string& neurite);
 
     void set_status(const statusMap &status);
     void set_neurite_status(const std::string &neurite_type,
@@ -122,6 +125,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     //! Container for the ``NeuritePtr`` objects
     NeuriteMap neurites_;
     BaseNodePtr soma_;
+    bool has_axon_;
     //! Center of mass of the neuron's soma
     NeuronDetails details;
     // obserables for recorders
@@ -132,7 +136,12 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     double actin_content_;
     size_t next_actin_event_;
     double axon_angle_;
+    std::unordered_map<std::string, double> neurite_angles_;
+    double axon_polarization_weight_;
+    double polarization_strength_;
     bool axon_angle_set_;
+    bool random_rotation_angles_;
+    double rnd_angle_;
 
     //! Simulator space variables, passed with statusMap
     //!\param actin_waves_triggered is bool value to activate or not the actin

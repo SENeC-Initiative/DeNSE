@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 
@@ -81,28 +81,28 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
-def run_netgrowth(kernel, neuron_params, ID, plot=True ):
+def run_dense(kernel, neuron_params, ID, plot=True ):
     """
     """
     np.random.seed(kernel['seeds'])
     resolution=kernel["resolution"]
     kernel["angles_in_radians"] = True
-    NetGrowth.SetKernelStatus(kernel, simulation_ID=ID)
+    ds.SetKernelStatus(kernel, simulation_ID=ID)
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
@@ -123,7 +123,7 @@ def run_netgrowth(kernel, neuron_params, ID, plot=True ):
 
     dendrite_params.update(arborization)
     axon_params.update(arborization_axon)
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -133,7 +133,7 @@ def run_netgrowth(kernel, neuron_params, ID, plot=True ):
         "persistence_length":30.,
     }
     dendrite_params.update(elongation)
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -152,7 +152,7 @@ def run_netgrowth(kernel, neuron_params, ID, plot=True ):
 
     # dendrite_params.update(stortignation)
     # axon_params.update(stortignation_axon)
-    # NetGrowth.SetStatus(gid,
+    # ds.SetStatus(gid,
                         # params=neuron_params,
                         # dendrites_params=dendrite_params,
                         # axon_params=axon_params)
@@ -173,19 +173,19 @@ def run_netgrowth(kernel, neuron_params, ID, plot=True ):
 
     # dendrite_params.update(stortignation)
     # axon_params.update(stortignation_axon)
-    # NetGrowth.SetStatus(gid,
+    # ds.SetStatus(gid,
                         # params=neuron_params,
                         # dendrites_params=dendrite_params,
                         # axon_params=axon_params)
     # step(2000./resolution, 1, False, True)
     # step(2000./resolution, 1, False, True)
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=5)
+    ds.SaveJson()
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     # print(swc_file)
 
-    # NetGrowth.ResetKernel()
+    # ds.ResetKernel()
     return swc_file
 
 
@@ -196,9 +196,9 @@ if __name__ == '__main__':
         "environment_required": False,
         "resolution":1.
     }
-    run_netgrowth(kernel, neuron_params, "test", plot=True)
+    run_dense(kernel, neuron_params, "test", plot=True)
 
     for n in range(10):
         kernel["seeds"] = [int(x) for x in np.random.randint(10,1000,size=4)]
         ID = "granular"+str(n)
-        swc_file =    run_netgrowth(kernel, neuron_params, ID, plot=False)
+        swc_file =    run_dense(kernel, neuron_params, ID, plot=False)

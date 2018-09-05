@@ -260,6 +260,7 @@ void SimulationManager::finalize_simulation_()
 
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
     initial_time_.update(final_step_ - initial_step_);
+
     initial_step_ = final_step_;
 }
 
@@ -356,11 +357,6 @@ void SimulationManager::simulate(const Time &t)
                     new_step         = true;
                 }
 
-                if (substep_[omp_id] < 0)
-                {
-                    printf("current step %lu - new_step %i - substep %f\n",
-                           current_step, new_step, substep_[omp_id]);
-                }
                 assert(substep_[omp_id] >= 0.);
 
                 // update neurons
@@ -387,7 +383,12 @@ void SimulationManager::simulate(const Time &t)
                         {
                             kernel().record_manager.new_branching_event(ev);
                         }
+                    }
 
+                    // wait for everyone to check, then remove event
+#pragma omp barrier
+#pragma omp single
+                    {
                         branching_ev_.pop_back();
                     }
                 }
@@ -454,15 +455,14 @@ void SimulationManager::set_status(const statusMap &status)
 
 void SimulationManager::get_status(statusMap &status) const
 {
-    set_param(status, "resolution", Time::RESOLUTION);
-    set_param(status, "max_allowed_resolution", max_resol_);
+    set_param(status, "resolution", Time::RESOLUTION, "minute");
+    set_param(status, "max_allowed_resolution", max_resol_, "minute");
 
-    Time time = Time(initial_time_, final_step_);
-
-    set_param(status, "second", time.get_sec());
-    set_param(status, "minute", time.get_min());
-    set_param(status, "hour", time.get_hour());
-    set_param(status, "day", time.get_day());
+    // initial time is always up to date
+    set_param(status, "second", initial_time_.get_sec(), "second");
+    set_param(status, "minute", initial_time_.get_min(), "minute");
+    set_param(status, "hour", initial_time_.get_hour(), "hour");
+    set_param(status, "day", initial_time_.get_day(), "day");
 }
 
 
@@ -483,7 +483,7 @@ Time SimulationManager::get_time() const
 }
 
 
-//! Get the timestep in second
+//! Get the timestep in minutes
 double SimulationManager::get_resolution() const { return Time::RESOLUTION; }
 
 

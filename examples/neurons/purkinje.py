@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
+
+import matplotlib.pyplot as plt
 
 
 '''
@@ -17,8 +19,6 @@ num_neurons = 1
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
-
-
     "filopodia_min_number": 30,
     "speed_growth_cone": 1.,
     "sensing_angle": 0.1495,
@@ -38,15 +38,15 @@ dendrite_params = {
     "CR_retraction_factor": 0.010,
     "CR_elongation_factor": 0.0371,
     # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.001,
-    "CR_elongation_th": 0.3,
+    "CR_retraction_th": 10.,
+    "CR_elongation_th": 50.,
     "CR_leakage": 10.0,
     "CR_neurite_generated": 4500.,
-    "CR_correlation": 0.5,
+    "CR_correlation": 0.,
     "CR_variance": 0.1,
     "CR_use_ratio": 0.16,
 
-    "CR_weight_diameter": 60.,
+    "CR_weight_diameter": 0.,
 
     # Best model
     "gc_split_angle_mean": 1.,
@@ -72,29 +72,29 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
-def run_netgrowth(neuron_params):
+def run_dense(neuron_params):
     """
     """
     resolution = 1.
     np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution
     kernel["angles_in_radians"] = True
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="case_neuron")
+    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
@@ -109,63 +109,65 @@ def run_netgrowth(neuron_params):
     "gc_split_angle_mean": 1.,
     'use_flpl_branching' : True,
     "flpl_branching_rate" : 0.0036,
-    "B": 30.,
+    "B": 1.,
     "E": 0.9,
     "S": 1.0,
     "T": 10000.,
      }
+
     dendrite_params.update(splitting_dendrites)
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params)
     step(2000./resolution, 1, False, True)
+
     arborization =    {'use_van_pelt': False,
     'use_flpl_branching' : False,
     "persistence_length": 30.0,
-    "CR_weight_diameter": 0.1,
-    "CR_retraction_th": 0.01,
-    "CR_elongation_th": 0.12,
+    "CR_weight_diameter": 0.,
+    "CR_retraction_th": 10.,
+    "CR_elongation_th": 50.,
     "CR_elongation_factor": 0.0612,
-    "CR_retraction_factor": 10.,
+    "CR_retraction_factor": 0.1,
     # 'use_van_pelt' : True,
     "CR_neurite_generated": 9500.,
     "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.15,
+    "CR_correlation": 0.,
     "CR_variance": 0.02,
     "CR_use_ratio": 0.3,
      }
     dendrite_params.update(arborization)
-    NetGrowth.SetStatus(gid,
+    ds.SetStatus(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     step(2000./resolution, 1, False, True)
 
-    arborization =    {'use_van_pelt': True,
-    # 'use_flpl_branching' : True,
-    "flpl_branching_rate" : 0.00036,
-    "persistence_length":5.0,
-    "CR_retraction_th": 0.1,
-    "CR_weight_diameter": 0.001,
-    "CR_elongation_th": 0.14,
-    "CR_elongation_factor": 0.12,
-    # 'use_van_pelt' : True,
-    "CR_neurite_generated": 9500.,
-    "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.5,
-    "CR_variance": 0.2,
-    "CR_use_ratio": 0.4,
-     }
-    dendrite_params.update(arborization)
-    NetGrowth.SetStatus(gid,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params,
-                        axon_params=axon_params)
-    step(2000./resolution, 1, False, True)
-    step(2000./resolution, 1, False, True)
+    # ~ arborization =    {'use_van_pelt': True,
+    # ~ # 'use_flpl_branching' : True,
+    # ~ "flpl_branching_rate" : 0.00036,
+    # ~ "persistence_length":5.0,
+    # ~ "CR_retraction_th": 0.1,
+    # ~ "CR_weight_diameter": 0.001,
+    # ~ "CR_elongation_th": 0.14,
+    # ~ "CR_elongation_factor": 0.12,
+    # ~ # 'use_van_pelt' : True,
+    # ~ "CR_neurite_generated": 9500.,
+    # ~ "CR_neurite_delivery_tau": 50.,
+    # ~ "CR_correlation": 0.5,
+    # ~ "CR_variance": 0.2,
+    # ~ "CR_use_ratio": 0.4,
+     # ~ }
+    # ~ dendrite_params.update(arborization)
+    # ~ ds.SetStatus(gid,
+                        # ~ params=neuron_params,
+                        # ~ dendrites_params=dendrite_params,
+                        # ~ axon_params=axon_params)
+    # ~ step(2000./resolution, 1, False, True)
+    # ~ step(2000./resolution, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    # NetGrowth.SetStatus(gid,params = neuron_params,
+    # ds.SetStatus(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -180,18 +182,18 @@ def run_netgrowth(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # NetGrowth.SetStatus(gid,params = neuron_params,
+    # ds.SetStatus(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    NetGrowth.SaveSwc(swc_resolution=15)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=15)
+    ds.SaveJson()
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     # print(swc_file)
 
-    # NetGrowth.ResetKernel()
+    # ds.ResetKernel()
     return swc_file
 
 
@@ -201,18 +203,18 @@ if __name__ == '__main__':
         "num_local_threads": 5,
         "environment_required": False
     }
-    swc_file = run_netgrowth(neuron_params)
-    import btmorph2
-    import matplotlib.pyplot as plt
-    neuron1 = btmorph2.NeuronMorphology(
-        os.path.join(swc_file, "morphology.swc"))
-    # total_length = neuron1.total_length()
-    # print( 'Total neurite length=%f', total_length)
+    swc_file = run_dense(neuron_params)
+    # ~ import btmorph2
+    # ~ import matplotlib.pyplot as plt
+    # ~ neuron1 = btmorph2.NeuronMorphology(
+        # ~ os.path.join(swc_file, "morphology.swc"))
+    # ~ # total_length = neuron1.total_length()
+    # ~ # print( 'Total neurite length=%f', total_length)
 
-    no_terminals = neuron1.no_terminals()
-    # print( 'Number of terminals=%f',  no_terminals)
+    # ~ no_terminals = neuron1.no_terminals()
+    # ~ # print( 'Number of terminals=%f',  no_terminals)
 
-    neuron1.plot_dendrogram()
+    # ~ neuron1.plot_dendrogram()
     plt.show(block=True)
     # plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S),
     # format="pdf", ppi =300)

@@ -5,11 +5,16 @@ if ( HAVE_PYTHON )
   set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}${PYEXECDIR} PARENT_SCOPE)
   set( PYMODULE_DIR ${PROJECT_SOURCE_DIR}/pymodule )
 
+  # install required python packages
+  execute_process(COMMAND pip ["install --user cython numpy pint scipy shapely"]])
+
   # Check if files changed
-  set( cppfile "${PYMODULE_DIR}/${PY_NAME}/_pygrowth.cpp" )
+  set( cppfile "${PYMODULE_DIR}/dense/_pygrowth.cpp" )
   set( cmakefile "${PYMODULE_DIR}/CMakeLists.txt" )
   file( GLOB_RECURSE files "${PYMODULE_DIR}/*" )
+  file( GLOB_RECURSE dirs "${PYTHON_INSTALL_DIR}/*" )
   set( fileschanged 0 )
+  set( ngexists 0 )
 
   foreach(f ${files})
     string(FIND ${f} ".pyx" IS_PYX)
@@ -19,13 +24,22 @@ if ( HAVE_PYTHON )
     endif()
   endforeach(f)
 
+  foreach(f ${dirs})
+    string(FIND ${f} "dense" NG_INSTALLED)
+    if (NOT (NG_INSTALLED EQUAL -1))
+        set( ngexists 1 )
+    endif()
+  endforeach(f)
+
   # Compile only if files changed or first install
-  if ( fileschanged OR NOT EXISTS ${PYTHON_INSTALL_DIR} )
-      set( SKIP_BUILD 0 )
-  else()
+  if ( NOT fileschanged AND ngexists )
     # just move the files (skip the build)
     set( SKIP_BUILD 1 )
+  else()
+    set( SKIP_BUILD 0 )
   endif()
+
+  message( "Build status: ${fileschanged} + ${ngexists}" )
 
   configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
   if (PYTHON_DEVELOPER_MODE)

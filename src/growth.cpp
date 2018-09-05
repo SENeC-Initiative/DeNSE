@@ -12,25 +12,25 @@ int main(int argc, char **argv)
     growth::reset_kernel();
 
     growth::statusMap kernelMap;
-    kernelMap.insert({"seeds", growth::Property({33.})});
-    kernelMap.insert({"num_local_threads", growth::Property(1)});
+    kernelMap.insert({"seeds", growth::Property({33.}, "")});
+    kernelMap.insert({"num_local_threads", growth::Property(1, "")});
 
     growth::set_kernel_status(kernelMap, "ID");
 
 
     growth::statusMap mainMap;
-    mainMap.insert({"x", growth::Property(0.0)});
-    mainMap.insert({"y", growth::Property(0.0)});
-    mainMap.insert({"growth_cone_model", growth::Property("default")});
-    mainMap.insert({"use_uniform_branching", growth::Property(true)});
-    mainMap.insert({"use_van_pelt", growth::Property(true)});
-    mainMap.insert({"B", growth::Property(4.2)});
-    mainMap.insert({"E", growth::Property(0.05)});
-    mainMap.insert({"S", growth::Property(2.)});
-    mainMap.insert({"T", growth::Property(0.1)});
-    mainMap.insert({"use_critical_resource", growth::Property(false)});
-    mainMap.insert({"num_neurites", growth::Property(2)});
-    mainMap.insert({"speed_growth_cone", growth::Property(20.)});
+    mainMap.insert({"x", growth::Property(0.0, "micrometer")});
+    mainMap.insert({"y", growth::Property(0.0, "micrometer")});
+    mainMap.insert({"growth_cone_model", growth::Property("default", "")});
+    mainMap.insert({"use_uniform_branching", growth::Property(true, "")});
+    mainMap.insert({"use_van_pelt", growth::Property(true, "")});
+    mainMap.insert({"B", growth::Property(4.2, "count / minute")});
+    mainMap.insert({"E", growth::Property(0.05, "")});
+    mainMap.insert({"S", growth::Property(2., "")});
+    mainMap.insert({"T", growth::Property(0.1, "minute")});
+    mainMap.insert({"use_critical_resource", growth::Property(false, "")});
+    mainMap.insert({"num_neurites", growth::Property(2, "")});
+    mainMap.insert({"speed_growth_cone", growth::Property(20., "micrometer / minute")});
 
     vector<growth::statusMap> emptyMap = vector<growth::statusMap>(num_neurons);
     vector<growth::statusMap> mainVec =

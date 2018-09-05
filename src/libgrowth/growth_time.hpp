@@ -35,7 +35,6 @@ class Time
     // class members
     static const double DEFAULT_RESOLUTION;
     static double RESOLUTION;
-    static const unsigned int MAX_SEC_HMS;
     // instance members
     float sec_;
     unsigned char min_;
@@ -64,6 +63,8 @@ class Time
     double get_total_minutes() const;
     double get_total_hours() const;
     double get_total_days() const;
+
+    void add_seconds(float seconds);
 
     void set_sec(float seconds);
     void set_min(unsigned char minutes);

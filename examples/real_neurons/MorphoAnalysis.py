@@ -1,23 +1,24 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-# This program perform some measures on existing NetGrowth experiments
+# This program perform some measures on existing DeNSE experiments
 # it evaluates the random walk properties of a certain swc file.
 
-# This software is part of NetGrowth project and SENEC initiative.
+# This software is part of DeNSE project and SENEC initiative.
 
 import os, json
-import NetGrowth as ng
+import dense as ds
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
-parser = argparse.ArgumentParser(description='Evaluate Random Walk properties for SWC files. It can be used to evaluate file generated through NetGrowth or downloaded by the NeuroMorpho.org archive.')
+
+parser = argparse.ArgumentParser(description='Evaluate Random Walk properties for SWC files. It can be used to evaluate file generated through DeNSE or downloaded by the NeuroMorpho.org archive.')
 parser.add_argument('--fit', action='append', default =None,
                     help = 'Add `fit.json` file generated from the MorphAnlaysis to fit list to confront with other results, write --fit for each file')
 parser.add_argument('--fit_parameter',type=str, help = "the parameter in respect to perform the fit")
 parser.add_argument('--folder','-f', type=str, default=None,
-                    help='Folder with NetGrowth experiment, if folder contains a `morphology.swc` file analyze it, other way analyze all the subfolders')
+                    help='Folder with DeNSE experiment, if folder contains a `morphology.swc` file analyze it, other way analyze all the subfolders')
 parser.add_argument('--neuron','-n', type=str, default=None, action= 'append',
                     help='Folder with SWC files downloaded from NeuroMorpho')
 parser.add_argument('--max_len','-l', type=str, default=100,
@@ -33,13 +34,13 @@ if args.neuron:
     length_thresh=30
     ensembles =[]
     for neuron in args.neuron:
-        pop = ng.PopulationFromSwc(swc_file=neuron, info={})
-        ens = ng.EnsembleRW(pop)
+        pop = ds.PopulationFromSwc(swc_file=neuron, info={})
+        ens = ds.EnsembleRW(pop)
         pop[0].dendrites[0].remove_shorter(150)
         ens.characterizeRW("dendrite")
         ens.fit()
         ensembles.append(ens)
-    ng.PlotRWAnalysis(ensembles, plot=True)
+    ds.PlotRWAnalysis(ensembles, plot=True)
 
     after_reconciliation = 150
 def neurite_reconciliation(neuron, length_thresh):

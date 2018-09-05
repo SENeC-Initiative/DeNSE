@@ -1,12 +1,14 @@
 #include "Swc.hpp"
 
-
 #include "GrowthCone.hpp"
 #include "Neuron.hpp"
 #include "Node.hpp"
 
+
 namespace growth
 {
+
+typedef std::array<std::vector<double>, 3> PointsArray;
 
 /**
  * @brief Create a file with neuron in SWC format
@@ -17,7 +19,7 @@ namespace growth
  * The constructor will create the SWC class which is used to write all neurons,
  * each neuron is written separatly.
  * @param output_file swc format file
- * @param resolution swc point density respect to netgrowth branch point
+ * @param resolution swc point density respect to DeNSE branch point
  */
 Swc::Swc(std::string output_file, unsigned int resolution)
     : resolution_(resolution)
@@ -27,7 +29,10 @@ Swc::Swc(std::string output_file, unsigned int resolution)
     swc_file_ << "#sample element_ID X Y Z radius parent\n";
 }
 
+
 void Swc::close_file() { swc_file_.close(); }
+
+
 /**
  * @brief Write a neuron to swc
  *
@@ -55,11 +60,17 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
               << "\n";
     int neuriteID = -1;
     int ID        = -1;
+    size_t idxp;
+    double lgth, tap_r, final_diam;
+    PointsArray* p; // points and lengthof the branch
+
     for (const auto &neurite : neuron->neurites_)
     {
         // attach each neaurite to the soma.
         // the neurites are always starting there!
         last_sample = 1;
+        tap_r       = neurite.second->get_taper_rate();
+
         if (neurite.first == "axon")
         {
             neuriteID = axonID;
@@ -77,17 +88,21 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
         std::deque<std::pair<size_t, TNodePtr>> nodes{std::make_pair(1, node)};
         while (not nodes.empty())
         {
+            idxp               = 0;
             auto node          = nodes.back();
+            final_diam         = node.second->get_diameter();
             size_t branch_size = node.second->get_branch()->size();
+            p                  = &(node.second->get_branch()->points);
+            lgth               = p->at(2).back();
             ID                 = forkID;
             last_sample        = node.first;
+            
             for (size_t idx = 0; idx < branch_size; idx += resolution_)
             {
                 sample++;
-                swc_file_ << sample << " " << ID << " "
-                          << node.second->get_branch()->points[0].at(idx) << " "
-                          << node.second->get_branch()->points[1].at(idx) << " "
-                          << 0 << " " << node.second->get_diameter() * 0.5
+                swc_file_ << sample << " " << ID << " " << p->at(0).at(idx)
+                          << " " << p->at(1).at(idx) << " " << 0 << " "
+                          << 0.5*(final_diam + tap_r*(lgth - p->at(2).at(idx)))
                           << " " << last_sample << "\n";
                 ID          = neuriteID;
                 last_sample = sample;
@@ -113,7 +128,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 swc_file_ << sample << " " << endID << " "
                           << node.second->get_position().at(0) << " "
                           << node.second->get_position().at(1) << " " << 0
-                          << " " << 1 << " " << last_sample << "\n";
+                          << " " << 0.5*node.second->get_diameter() << " "
+                          << last_sample << "\n";
                 /*                if (not nodes.empty())*/
                 //{
                 // last_sample   = nodes.front().first;

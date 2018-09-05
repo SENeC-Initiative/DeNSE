@@ -83,7 +83,7 @@ std::string get_simulation_ID();
 
 void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
                   SkelNeurite &growth_cones, SkelSomas &somas,
-                  std::vector<size_t> gids);
+                  std::vector<size_t> gids, unsigned int resolution);
 
 
 void get_swc(std::string output_file, std::vector<size_t> gids,
@@ -99,11 +99,18 @@ Property get_kernel_status(const std::string &key);
 size_t get_num_objects();
 
 
+double get_state(size_t gid, const std::string& level,
+                 const std::string& variable);
+
+
 statusMap get_status(size_t gid);
 
 
 statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
                              const std::string &level);
+
+
+bool is_neurite(size_t gid, const std::string& neurite);
 
 
 // neuron- and structure-related
@@ -116,7 +123,9 @@ std::vector<std::string> get_neurites(size_t gid);
 
 void get_branches_data(size_t neuron, const std::string &neurite,
                        std::vector<std::vector<std::vector<double>>> &points,
-                       std::vector<double> &diameters, size_t start_point);
+                       std::vector<double> &diameters,
+                       std::vector<int> &parents, std::vector<size_t> &nodes,
+                       size_t start_point);
 
 
 // parameters and recordings

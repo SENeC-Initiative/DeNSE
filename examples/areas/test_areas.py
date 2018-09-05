@@ -6,9 +6,9 @@
 import numpy as np
 
 import nngt
-# ~ import nngt.geometry as geom
-import PyNCulture as geom
-import NetGrowth as ng
+
+import dense as ds
+from dense import geometry as geom
 
 
 '''
@@ -27,13 +27,13 @@ for i, m in enumerate(masks):
 
 
 '''
-Set the environment in NetGrowth, then create the neurons
+Set the environment in DeNSE, then create the neurons
 '''
 
 num_omp = 6
 resol   = 2.
 
-ng.SetKernelStatus({
+ds.SetKernelStatus({
     "resolution": resol, "num_local_threads": num_omp,
     "seeds": [2*i for i in range(num_omp)],
     # ~ "seeds": [11, 6, 7, 9],
@@ -41,9 +41,9 @@ ng.SetKernelStatus({
 
 np.random.seed(1)
 
-ng.SetEnvironment(shape)
+ds.SetEnvironment(shape)
 
-shape = ng.GetEnvironment()
+shape = ds.GetEnvironment()
 
 # ~ for a in shape.areas.values():
     # ~ geom.plot_shape(a, show=False)
@@ -64,16 +64,16 @@ params = {
 dend_params = params.copy()
 dend_params["speed_growth_cone"] = 0.001
 
-# ~ ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=2)
-# ~ gids = ng.CreateNeurons(n=100, on_area=top_areas, num_neurites=1, params=params)
-ng.CreateNeurons(n=1, on_area="default_area", num_neurites=1, params=params)
+# ~ ds.CreateNeurons(n=100, on_area=top_areas, num_neurites=2)
+# ~ gids = ds.CreateNeurons(n=100, on_area=top_areas, num_neurites=1, params=params)
+ds.CreateNeurons(n=1, on_area="default_area", num_neurites=1, params=params)
 
-# ~ ng.Simulate(2500)
-# ~ ng.Simulate(600)
+# ~ ds.Simulate(2500)
+# ~ ds.Simulate(600)
 for i in range(50):
-    ng.Simulate(300)
-    ng.PlotNeuron(show=True)
+    ds.Simulate(300)
+    ds.PlotNeuron(show=True)
 
-# ~ from NetGrowth.tools import fraction_neurites_near_walls
+# ~ from dense.tools import fraction_neurites_near_walls
 # ~ print(fraction_neurites_near_walls(gids, culture=shape))
-ng.PlotNeuron(show=True)
+ds.PlotNeuron(show=True)

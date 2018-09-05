@@ -10,7 +10,7 @@ namespace growth
 // TO BE EXPLAINED !
 Skeleton::Skeleton() {}
 
-Skeleton::Skeleton(const Neuron *neuron)
+Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
 {
     soma_position        = neuron->get_position();
     soma_radius          = neuron->get_soma_radius();
@@ -31,17 +31,27 @@ Skeleton::Skeleton(const Neuron *neuron)
             std::deque<TNodePtr> nodes{node->get_child(0)};
             while (not nodes.empty())
             {
-
                 TNodePtr node   = nodes.back();
-                const auto it_x = axon.first.end();
-                const auto it_y = axon.second.end();
-                axon.first.insert(it_x, node->get_branch()->points[0].begin(),
-                                  node->get_branch()->points[0].end());
-                axon.second.insert(it_y, node->get_branch()->points[1].begin(),
-                                   node->get_branch()->points[1].end());
+                size_t i, last(node->get_branch()->size());
+
+                PointsArray &pp = node->get_branch()->points;
+
+                for (i=0; i<last; i+=resolution)
+                {
+                    axon.first.push_back(pp[0].at(i));
+                    axon.second.push_back(pp[1].at(i));
+                }
+                if (i != last-1)
+                {
+                    axon.first.push_back(pp[0].back());
+                    axon.second.push_back(pp[1].back());
+                }
+
                 axon.first.push_back(NAN);
                 axon.second.push_back(NAN);
+
                 nodes.pop_back();
+
                 if (node->has_child())
                 {
                     branching_points.first.push_back(
@@ -69,17 +79,26 @@ Skeleton::Skeleton(const Neuron *neuron)
             {
 
                 TNodePtr node   = nodes.back();
-                const auto it_x = dendrites.first.end();
-                const auto it_y = dendrites.second.end();
-                dendrites.first.insert(it_x,
-                                       node->get_branch()->points[0].begin(),
-                                       node->get_branch()->points[0].end());
-                dendrites.second.insert(it_y,
-                                        node->get_branch()->points[1].begin(),
-                                        node->get_branch()->points[1].end());
+                size_t i, last(node->get_branch()->size());
+
+                PointsArray &pp = node->get_branch()->points;
+
+                for (i=0; i<last; i+=resolution)
+                {
+                    dendrites.first.push_back(pp[0].at(i));
+                    dendrites.second.push_back(pp[1].at(i));
+                }
+                if (i != last-1)
+                {
+                    dendrites.first.push_back(pp[0].back());
+                    dendrites.second.push_back(pp[1].back());
+                }
+
                 dendrites.first.push_back(NAN);
                 dendrites.second.push_back(NAN);
+
                 nodes.pop_back();
+
                 if (node->has_child())
                 {
                     branching_points.first.push_back(

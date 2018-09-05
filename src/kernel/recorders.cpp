@@ -33,10 +33,10 @@ BaseRecorder::BaseRecorder()
 
 void BaseRecorder::get_status(statusMap &status) const
 {
-    set_param(status, names::record_to, record_to_);
-    set_param(status, names::interval, interval_);
-    set_param(status, names::restrict_to, restrict_to_);
-    set_param(status, names::observable, observable_);
+    set_param(status, names::record_to, record_to_, "");
+    set_param(status, names::interval, interval_, "minute");
+    set_param(status, names::restrict_to, restrict_to_, "");
+    set_param(status, names::observable, observable_, "");
 
     // get the neuron ids
     std::vector<size_t> gids;
@@ -44,7 +44,7 @@ void BaseRecorder::get_status(statusMap &status) const
     {
         gids.push_back(neuron.first);
     }
-    set_param(status, names::targets, gids);
+    set_param(status, names::targets, gids, "");
 
     // @todo: find a way to bring the data back to Python
 }
@@ -221,7 +221,7 @@ bool NeuronContinuousRecorder::get_next_recording(std::vector<Property> &ids,
 
     if (neuron_it_ != recording_.cend())
     {
-        Property p = Property(neuron_it_->first);
+        Property p = Property(neuron_it_->first, "");
         ids.push_back(p);
         values.reserve(values.size() + neuron_it_->second.size());
         values.insert(values.end(), neuron_it_->second.cbegin(),
@@ -380,7 +380,7 @@ bool NeuronDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
     if (neuron_it_ != recording_.cend())
     {
         // set the values
-        Property p = Property(neuron_it_->first);
+        Property p = Property(neuron_it_->first, "");
         ids.push_back(p);
 
         // set the values
@@ -423,7 +423,7 @@ bool NeuronDiscreteRecorder::get_next_time(std::vector<Property> &ids,
     if (time_it_ != times_.cend())
     {
         // set the Property vector
-        Property p = Property(time_it_->first);
+        Property p = Property(time_it_->first, "");
         ids.push_back(p);
 
         // set the values
@@ -577,9 +577,9 @@ bool NeuriteContinuousRecorder::get_next_recording(std::vector<Property> &ids,
         if (neurite_it_ != neurite_endit_)
         {
             // make the Property vector
-            Property p_neuron = Property(neuron_it_->first);
+            Property p_neuron = Property(neuron_it_->first, "");
             ids.push_back(p_neuron);
-            Property p_neurite = Property(neurite_it_->first);
+            Property p_neurite = Property(neurite_it_->first, "");
             ids.push_back(p_neurite);
 
             // set the values
@@ -765,9 +765,9 @@ bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
         if (v_neurite_it_ != v_neurite_endit_)
         {
             // make the Property vector
-            Property p_neuron = Property(v_neuron_it_->first);
+            Property p_neuron = Property(v_neuron_it_->first, "");
             ids.push_back(p_neuron);
-            Property p_neurite = Property(v_neurite_it_->first);
+            Property p_neurite = Property(v_neurite_it_->first, "");
             ids.push_back(p_neurite);
 
             // set the values
@@ -828,9 +828,9 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
         if (t_neurite_it_ != t_neurite_endit_)
         {
             // make the Property vector
-            Property p_neuron = Property(t_neuron_it_->first);
+            Property p_neuron = Property(t_neuron_it_->first, "");
             ids.push_back(p_neuron);
-            Property p_neurite = Property(t_neurite_it_->first);
+            Property p_neurite = Property(t_neurite_it_->first, "");
             ids.push_back(p_neurite);
 
             // set the values
@@ -1080,11 +1080,11 @@ bool GrowthConeContinuousRecorder::get_next_recording(
             if (v_gc_pos_ != v_gc_endpos_)
             {
                 // make the Property vector
-                Property p_neuron = Property(v_neuron_it_->first);
+                Property p_neuron = Property(v_neuron_it_->first, "");
                 ids.push_back(p_neuron);
-                Property p_neurite = Property(v_neurite_it_->first);
+                Property p_neurite = Property(v_neurite_it_->first, "");
                 ids.push_back(p_neurite);
-                Property p_gc = Property(v_gc_pos_->first);
+                Property p_gc = Property(v_gc_pos_->first, "");
                 ids.push_back(p_gc);
 
                 // set the values
@@ -1174,11 +1174,11 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
             if (t_gc_pos_ != t_gc_endpos_)
             {
                 // make the Property vector
-                Property p_neuron = Property(t_neuron_it_->first);
+                Property p_neuron = Property(t_neuron_it_->first, "");
                 ids.push_back(p_neuron);
-                Property p_neurite = Property(t_neurite_it_->first);
+                Property p_neurite = Property(t_neurite_it_->first, "");
                 ids.push_back(p_neurite);
-                Property p_gc = Property(t_gc_pos_->first);
+                Property p_gc = Property(t_gc_pos_->first, "");
                 ids.push_back(p_gc);
 
                 // set the values
@@ -1353,11 +1353,11 @@ bool GrowthConeDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
             if (v_gc_pos_ != v_gc_endpos_)
             {
                 // make the Property vector
-                Property p_neuron = Property(v_neuron_it_->first);
+                Property p_neuron = Property(v_neuron_it_->first, "");
                 ids.push_back(p_neuron);
-                Property p_neurite = Property(v_neurite_it_->first);
+                Property p_neurite = Property(v_neurite_it_->first, "");
                 ids.push_back(p_neurite);
-                Property p_gc = Property(v_gc_pos_->first);
+                Property p_gc = Property(v_gc_pos_->first, "");
                 ids.push_back(p_gc);
 
                 // set the values
@@ -1447,11 +1447,11 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
             if (t_gc_pos_ != t_gc_endpos_)
             {
                 // make the Property vector
-                Property p_neuron = Property(t_neuron_it_->first);
+                Property p_neuron = Property(t_neuron_it_->first, "");
                 ids.push_back(p_neuron);
-                Property p_neurite = Property(t_neurite_it_->first);
+                Property p_neurite = Property(t_neurite_it_->first, "");
                 ids.push_back(p_neurite);
-                Property p_gc = Property(t_gc_pos_->first);
+                Property p_gc = Property(t_gc_pos_->first, "");
                 ids.push_back(p_gc);
 
                 // set the values

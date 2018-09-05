@@ -25,22 +25,25 @@ typedef enum
     VEC_SIZE,
     VEC_LONG,
     STRING,
-    VEC_STRING
+    VEC_STRING,
+    MAP_DOUBLE
 } dtype;
 
 class Property
 {
   public:
     Property();
-    Property(int i_);
-    Property(size_t ul_);
-    Property(bool b_);
-    Property(char const arr[]);
-    Property(double d_);
-    Property(const std::vector<long> &v);
-    Property(const std::vector<size_t> &v);
-    Property(std::string s_);
-    Property(const std::vector<std::string> &v);
+    Property(int i_, const std::string& dim);
+    Property(size_t ul_, const std::string& dim);
+    Property(bool b_, const std::string& dim);
+    Property(char const arr[], const std::string& dim);
+    Property(double d_, const std::string& dim);
+    Property(const std::vector<long> &v, const std::string& dim);
+    Property(const std::vector<size_t> &v, const std::string& dim);
+    Property(std::string s_, const std::string& dim);
+    Property(const std::vector<std::string> &v, const std::string& dim);
+    Property(const std::unordered_map<std::string, double> &v,
+             const std::string& dim);
 
     Property(const Property &prop);
 
@@ -49,6 +52,7 @@ class Property
     ~Property();
 
     dtype data_type;
+    std::string dimension;
 
     union {
         bool b;
@@ -59,6 +63,7 @@ class Property
         std::vector<size_t> uu;
         std::string s;
         std::vector<std::string> ss;
+        std::unordered_map<std::string, double> md;
     };
 };
 
@@ -84,22 +89,29 @@ inline bool get_param(const statusMap &map, const std::string &key,
                       std::string &result);
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::vector<std::string> &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      std::unordered_map<std::string, double> &result);
 
 inline void set_param(statusMap &map, const std::string &key,
-                      const bool &value);
+                      const bool &value, const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const double &value);
-inline void set_param(statusMap &map, const std::string &key, const int &value);
+                      const double &value, const std::string& dim);
+inline void set_param(statusMap &map, const std::string &key, const int &value,
+                      const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const size_t &value);
+                      const size_t &value, const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::vector<size_t> &value);
+                      const std::vector<size_t> &value, const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::vector<long> &value);
+                      const std::vector<long> &value, const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::string &value);
+                      const std::string &value, const std::string& dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::vector<std::string> &value);
+                      const std::vector<std::string> &value,
+                      const std::string& dim);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::unordered_map<std::string, double> &value,
+                      const std::string& dim);
 } // namespace growth
 
 #endif // CONFIG_H

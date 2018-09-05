@@ -2,11 +2,11 @@
 Save simualtion results
 =======================
 
-The data generated from a NetGrowth simulation can be stored on your machine to be reused after.
+The data generated from a DeNSE simulation can be stored on your machine to be reused after.
 
 There are mainly two kinds of data you can save, those generated during the simulation, which we call `runtime_data` or those at the end of the simulation `static_data`.
 
-NetGrowth offers a set of functions to analyze these data too.
+DeNSE offers a set of functions to analyze these data too.
 
 All the `runtime_data` will pass by the
 .. doxygenclass::growth::RecordManager

@@ -122,11 +122,11 @@ const statusMap KernelManager::get_status() const
 
     statusMap status;
     // local
-    set_param(status, "version", version_);
-    set_param(status, "angles_in_radians", angles_in_radians_);
-    set_param(status, "environment_required", env_required_);
-    set_param(status, "record_enabled", record_enabled_);
-    set_param(status, "adaptive_timestep", adaptive_timestep_);
+    set_param(status, "version", version_, "");
+    set_param(status, "angles_in_radians", angles_in_radians_, "");
+    set_param(status, "environment_required", env_required_, "");
+    set_param(status, "record_enabled", record_enabled_, "");
+    set_param(status, "adaptive_timestep", adaptive_timestep_, "");
 
     // set_param(status, "simulation_ID", simulation_ID_);
     /*

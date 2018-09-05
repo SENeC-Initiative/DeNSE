@@ -1,13 +1,13 @@
-==================================
-Welcome to |name|'s documentation!
-==================================
+=================================
+Welcome to DeNSE's documentation!
+=================================
 
 .. toctree::
     :maxdepth: 2
     :caption: User documentation:
 
     user/install
-    user/main
+    user/dense
     user/neuron_models
     user/tools
 

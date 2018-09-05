@@ -2,7 +2,7 @@
 # !/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import NetGrowth
+import dense as ds
 import numpy as np
 import os
 
@@ -70,17 +70,17 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    NetGrowth.Simulate(n)
+    ds.Simulate(n)
     if plot:
         if save_path is False:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=True)
         else:
-            NetGrowth.PlotNeuron(
+            ds.PlotNeuron(
                 show_nodes=False, save_path=save_path)
 
 
-def run_netgrowth(neuron_params):
+def run_dense(neuron_params):
     """
     """
     resolution = 1.
@@ -91,25 +91,25 @@ def run_netgrowth(neuron_params):
     kernel["angles_in_radians"] = True
 
     # kernel["angles_in_radians"] = False
-    NetGrowth.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
+    ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -2500, 2500, (num_neurons, 2))
-    gid = NetGrowth.CreateNeurons(n=num_neurons,
+    gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   num_neurites=3,
                                   position=[]
                                   )
 
     step(6000./resolution, 1, False, True)
-    NetGrowth.SaveSwc(swc_resolution=5)
-    NetGrowth.SaveJson()
+    ds.SaveSwc(swc_resolution=5)
+    ds.SaveJson()
 
-    swc_file = NetGrowth.GetSimulationID()
+    swc_file = ds.GetSimulationID()
     print(swc_file)
 
-    # NetGrowth.ResetKernel()
+    # ds.ResetKernel()
     return swc_file
 
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         "num_local_threads": 5,
         "environment_required": False
     }
-    swc_file = run_netgrowth(neuron_params)
+    swc_file = run_dense(neuron_params)
     import btmorph2
     import matplotlib.pyplot as plt
     neuron1 = btmorph2.NeuronMorphology(

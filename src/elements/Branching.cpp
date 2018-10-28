@@ -511,7 +511,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
     {
         // get the current second to compute the time-dependent
         // exponential decreasing probability of having a branch.
-        double t_0     = kernel().get_current_seconds();
+        double t_0     = kernel().get_current_time();
         size_t num_gcs = neurite_->growth_cones_.size() +
                          neurite_->growth_cones_inactive_.size();
 

@@ -147,7 +147,7 @@ extensions = [
 
 # General information about the project.
 project = u'@PY_NAME@'
-copyright = u'2017, SENeC'
+copyright = u'2017--2018, SENeC'
 author = u'SENeC'
 
 breathe_projects = {project: doxypath}
@@ -167,7 +167,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 rst_epilog = """
-.. |name| replace:: @PY_NAME@
+.. |name| replace:: DeNSE
 """
 
 # The version info for the project you're documenting, acts as replacement for

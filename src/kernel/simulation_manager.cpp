@@ -5,7 +5,6 @@
 #include <cmath>
 #include <limits>
 #include <mutex>
-#include <sys/time.h>
 
 // Includes from kernel
 #include "GrowthCone.hpp"
@@ -21,12 +20,21 @@
 namespace growth
 {
 
+/**
+ * @brief compare the times of Events
+ */
+auto ev_greater = [](const Event &lhs, const Event &rhs) {
+    return std::tie(std::get<0>(lhs), std::get<1>(lhs)) >
+           std::tie(std::get<0>(rhs), std::get<1>(rhs));
+};
+
+
 SimulationManager::SimulationManager()
     : simulating_(false)    //!< true if simulation in progress
     , step_()               //!< Current step of the simulation
     , substep_()            //!< Precise time inside current step
-    , initial_step_(0)      //!< first step, updated once per slice
-    , final_step_(0)        //!< Last step, updated once per slice
+    , final_substep_(0.)    //!< Last substep, updated once per simulation call
+    , final_step_(0)        //!< Last step, updated once per simulation call
     , initial_time_(Time()) //!< Initial time (day, hour, min, sec)
     , final_time_(Time())   //!< Final time (day, hour, min, sec)
     , maximal_time_(Time()) //!< Maximal time (day, hour, min, sec)
@@ -52,11 +60,11 @@ void SimulationManager::finalize()
     step_.clear();
     substep_.clear();
 
-    initial_step_ = 0;
-    final_step_   = 0;
-    initial_time_ = Time();
-    final_time_   = Time();
-    max_resol_    = std::numeric_limits<double>::max();
+    final_step_    = 0;
+    final_substep_ = 0.;
+    initial_time_  = Time();
+    final_time_    = Time();
+    max_resol_     = std::numeric_limits<double>::max();
 }
 
 
@@ -140,11 +148,14 @@ void SimulationManager::initialize_simulation_(const Time &t)
     // @todo: remove final_step and reset step_ to zero everytime, use Time
     // objects for discrete events
     final_time_ = initial_time_ + t;
-    final_step_ += Time::to_steps(t);
+
+    Time::timeStep steps;
+    Time::to_steps(t, steps, final_substep_);
+    final_step_ += steps;
 
     // set the right number of step objects
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
-    step_       = std::vector<Time::timeStep>(num_omp, initial_step_);
+    step_       = std::vector<Time::timeStep>(num_omp, 0);
     substep_    = std::vector<double>(num_omp, 0.);
 
     // reset branching events
@@ -181,7 +192,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
             for (auto &neuron : local_neurons)
             {
                 neuron.second->initialize_next_event(
-                    rnd_engine, resolution_scale_factor_, initial_step_);
+                    rnd_engine, resolution_scale_factor_, 0);
             }
 
             // record the first step if time is zero
@@ -259,9 +270,9 @@ void SimulationManager::finalize_simulation_()
     kernel().record_manager.finalize_simulation(final_step_);
 
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
-    initial_time_.update(final_step_ - initial_step_);
+    initial_time_.update(final_step_, final_substep_);
 
-    initial_step_ = final_step_;
+    final_step_ = 0;
 }
 
 
@@ -315,11 +326,13 @@ void SimulationManager::simulate(const Time &t)
                 kernel().neuron_manager.get_local_neurons(omp_id);
 
             // then run the simulation
-            while (step_[omp_id] < final_step_)
+            while (step_[omp_id] <= final_step_)
             {
                 current_step     = step_[omp_id];
                 previous_substep = substep_[omp_id];
                 branched         = false;
+
+                //~ printf("current step %lu - substep %f\nfinal step %lu - final substep %f\n", current_step, previous_substep, final_step_, final_substep_);
 
 #pragma omp barrier
 
@@ -340,22 +353,53 @@ void SimulationManager::simulate(const Time &t)
 
 #pragma omp barrier
 
-                // check when the next event will occur
-                step_next_ev = branching_ev_.empty()
-                                   ? current_step + 1
-                                   : std::get<0>(branching_ev_.back());
-
-                // compute substep accordingly
-                if (step_next_ev == current_step)
+                // check when the next event will occur and set step/substep
+                if (branching_ev_.empty())
                 {
-                    substep_[omp_id] = std::get<1>(branching_ev_.back());
-                    new_step         = (substep_[omp_id] == Time::RESOLUTION);
+                    step_next_ev = current_step + 1;
+                    new_step     = true;
+
+                    if (step_next_ev == final_step_)
+                    {
+                        substep_[omp_id] = Time::RESOLUTION + final_substep_;
+                    }
+                    else
+                    {
+                        substep_[omp_id] = Time::RESOLUTION;
+                    }
                 }
                 else
                 {
-                    substep_[omp_id] = Time::RESOLUTION;
-                    new_step         = true;
+                    step_next_ev = std::get<0>(branching_ev_.back());
+
+                    if (step_next_ev == current_step)
+                    {
+                        substep_[omp_id] = std::get<1>(branching_ev_.back());
+                        new_step         = (substep_[omp_id] == Time::RESOLUTION);
+                    }
+                    else
+                    {
+                        substep_[omp_id] = Time::RESOLUTION;
+                        new_step         = true;
+                    }
                 }
+
+                //~ // check when the next event will occur
+                //~ step_next_ev = branching_ev_.empty()
+                                   //~ ? current_step + 1
+                                   //~ : std::get<0>(branching_ev_.back());
+
+                //~ // compute substep accordingly
+                //~ if (step_next_ev == current_step)
+                //~ {
+                    //~ substep_[omp_id] = std::get<1>(branching_ev_.back());
+                    //~ new_step         = (substep_[omp_id] == Time::RESOLUTION);
+                //~ }
+                //~ else
+                //~ {
+                    //~ substep_[omp_id] = Time::RESOLUTION;
+                    //~ new_step         = true;
+                //~ }
 
                 assert(substep_[omp_id] >= 0.);
 
@@ -406,8 +450,8 @@ void SimulationManager::simulate(const Time &t)
                 if (omp_id == 0 and step_[0] % 50 == 0)
                 {
                     printf("##simulation step is %lu \n", step_[omp_id]);
-                    printf("##simulation seconds is %f \n",
-                           get_current_seconds());
+                    printf("##simulated minutes: %f \n",
+                           get_current_time());
                 }
 #endif /* NDEBUG */
             }
@@ -466,11 +510,14 @@ void SimulationManager::get_status(statusMap &status) const
 }
 
 
-double SimulationManager::get_current_seconds() const
+/**
+ * Gives current time in minutes.
+ */
+double SimulationManager::get_current_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
-    return (step_.at(omp_id) - initial_step_) * Time::RESOLUTION +
-           initial_time_.get_total_seconds();
+    return (step_.at(omp_id)) * Time::RESOLUTION +
+           initial_time_.get_total_minutes();
 }
 
 
@@ -478,7 +525,7 @@ Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
-    t0.update(step_[omp_id] - initial_step_);
+    t0.update(step_[omp_id], substep_[omp_id]);
     return t0;
 }
 

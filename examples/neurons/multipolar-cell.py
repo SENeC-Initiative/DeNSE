@@ -105,7 +105,10 @@ ds.SetKernelStatus(kernel)
 
 n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
-                     num_neurites=6)
+                     #~ num_neurites=6)
+                     num_neurites=1)
+
+rec = ds.CreateRecorders(n, ["angle", "length"], levels="growth_cone")
 
 # Turn branching on
 
@@ -117,9 +120,11 @@ d_rsrc_branching = {'CR_branching_th': 60., 'CR_branching_proba': 0.0003}
 #~ ds.SetStatus(n, params=resource_branching)
 ds.SetStatus(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
-ds.Simulate(20000)
+for i in range(10):
+    ds.Simulate(2000)
+    ds.plot.PlotRecording(rec, show=False)
+    ds.plot.PlotNeuron(show=True)
 
-ds.plot.PlotNeuron(show=True)
 
 lb = {
     'CR_branching_th': np.inf, "use_flpl_branching": True,
@@ -133,6 +138,8 @@ lb_axon["flpl_branching_rate"] = 0.0008
 ds.SetStatus(n, axon_params=lb_axon, dendrites_params=lb)
 
 ds.Simulate(50000)
+ds.plot.PlotNeuron(show=True)
+
 
 end_branching = {"CR_branching_th": 500., 'CR_branching_proba': 0.0005}
 ds.SetStatus(n, axon_params=end_branching, dendrites_params=end_branching)

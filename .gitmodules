@@ -1,3 +1,6 @@
 [submodule "geometry"]
+	path = src/pymodule/dense/geometry/
+	url = https://github.com/SENeC-Initiative/PyNCulture.git
+[submodule "src/pymodule/dense/geometry"]
 	path = src/pymodule/dense/geometry
 	url = https://github.com/SENeC-Initiative/PyNCulture.git

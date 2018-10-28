@@ -36,7 +36,7 @@ class SimulationManager : public ManagerInterface
 
     Time get_time() const;
     double get_resolution() const;
-    double get_current_seconds() const;
+    double get_current_time() const;
     size_t get_current_step() const;
     double get_current_substep() const;
 
@@ -56,23 +56,14 @@ class SimulationManager : public ManagerInterface
     std::vector<double> substep_;
     std::vector<Event> branching_ev_;
     std::vector<Event> branching_ev_tmp_;
+    double final_substep_;
     Time::timeStep final_step_;
-    Time::timeStep initial_step_;
     Time initial_time_;
     Time final_time_;
     Time maximal_time_;
     bool terminate_;
     double resolution_scale_factor_;
     double max_resol_; // maximum allowed resolution
-};
-
-
-/**
- * @brief compare the times of Events
- */
-auto ev_greater = [](const Event &lhs, const Event &rhs) {
-    return std::tie(std::get<0>(lhs), std::get<1>(lhs)) >
-           std::tie(std::get<0>(rhs), std::get<1>(rhs));
 };
 
 

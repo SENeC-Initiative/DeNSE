@@ -1,0 +1,60 @@
+======
+|name|
+======
+
+This page provides an overview of the |name| package.
+
+For more information on the installation procedure, please see :ref:`install`.
+
+We suggest starting with the @TODO TUTORIAL, before coming back to this page.
+Once you are familiar with the basic function of |name|, additional details
+can be found on the following pages:
+
+* :ref:`units`
+* :ref:`pymodels`
+* :ref:`env_geom`
+
+Though the core of the simulator is written in C++ for efficiency, all relevant
+functions to create, configure and inspect objects are coded in python for
+convenience.
+
+
+.. toctree::
+   :hidden:
+   :glob:
+
+   analysis
+   core
+   generation
+   geometry
+   lib
+   plot
+   simulation
+
+
+Example
+=======
+
+::
+
+    import numpy as np
+    import dense as ds
+    from dense.units import *
+
+    neuron = ds.CreateNeurons(1, params={"position": (0, 1)*um})
+
+
+Content
+=======
+
+.. currentmodule:: dense
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense
+   :members:
+   :undoc-members:
+   :show-inheritance:

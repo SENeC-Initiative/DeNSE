@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import dense as ds
+from dense.units import *
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -20,18 +21,18 @@ def run_dense(neuron_params,axes,letter,single=False):
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
     ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
-    neuron_params["position"]=np.zeros((num_neurons,2))
+    neuron_params["position"]=np.zeros((num_neurons,2)) * um
     simulated_neurons = num_neurons
     if single:
         simulated_neurons = 1.
-        neuron_params["position"]=np.array([0,0])
+        neuron_params["position"]=np.array([0,0]) * um
     gids = ds.CreateNeurons(n=simulated_neurons,
                                    params=neuron_params,
                                    num_neurites=1,
                                    position=[]
                                    )
 
-    step(1000, 1, os.path.join(os.getcwd(), "primo"),plot=False)
+    step(1000*second, 1, os.path.join(os.getcwd(), "primo"),plot=False)
     neurons    = ds.GetNeurons()
     structure  = ds.NeuronStructure(neurons)
     population = ds.Population.from_structure(structure)
@@ -66,11 +67,11 @@ if __name__ == '__main__':
         # "growth_cone_model": "self_referential_forces",
         "axon_angle":0.,
         # "growth_cone_model": "persistent_random_walk",
-        "speed_growth_cone": 1.,
+        "speed_growth_cone": 1. * um/minute,
         "sensing_angle": 0.1195,
 
         "filopodia_wall_affinity": 2.,
-        "filopodia_finger_length": 50.0,
+        "filopodia_finger_length": 50.0 * um,
         "use_uniform_branching": False,
         "use_van_pelt": False,
     }
@@ -85,9 +86,9 @@ if __name__ == '__main__':
         neuron_params.update(base_params)
         print(neuron_params)
         if model is "run_tumble":
-            neuron_params["persistence_length"] = 50.
+            neuron_params["persistence_length"] = 50. * um
         if model is "persistent_random_walk":
-            neuron_params["persistence_length"] = 10.
+            neuron_params["persistence_length"] = 10. * um
             ciao="1"
         if model is "self_referential_forces":
             neuron_params["srf_somatropic_force"]=4.

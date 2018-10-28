@@ -18,6 +18,7 @@ src/libgrowth/config.hpp
 local_install
 install_test
 src/pymodule/dense/_pygrowth.cpp
+set_dense_vars.sh
 
 
 # Libraries
@@ -34,16 +35,21 @@ src/pymodule/dense/_pygrowth.cpp
 docs/_build
 docs/doxyfiles/
 docs/conf.py
-docs/user/dense.rst
+docs/modules/dense.rst
+docs/modules/geometry.rst
+
 
 # DeNSE run files
+
 *.pdf
 *.swc
 *.json
 src/pymodule/dense/rw_in_env/ve
 src/pymodule/dense/ve
+*.el
 
 # Files Alessio
+
 **/tags
 *.swo
 *.swp

@@ -21,8 +21,7 @@ void Time::set_resolution(double resolution) { RESOLUTION = resolution; }
 Time Time::from_steps(size_t step, double substep)
 {
     Time t = Time();
-    t.update(step);
-    t.add_seconds(substep / RESOLUTION * 60.);
+    t.update(step, substep);
 
     return t;
 }
@@ -59,13 +58,13 @@ Time::Time(const Time &initial_time, Time::timeStep steps = 0L)
     , hour_(initial_time.get_hour())
     , day_(initial_time.get_day())
 {
-    update(steps);
+    update(steps, 0.);
 }
 
 
-void Time::update(Time::timeStep steps)
+void Time::update(Time::timeStep steps, double substeps)
 {
-    if (steps != 0L)
+    if (steps != 0L or substeps != 0.)
     {
         // prepare the quotient and remainder struct for integer division
         std::ldiv_t dv{};
@@ -74,16 +73,15 @@ void Time::update(Time::timeStep steps)
         Time::timeStep res_min = static_cast<Time::timeStep>(
             std::floor(RESOLUTION));
         // total minutes in the step duration
-        Time::timeStep total_min = steps*RESOLUTION;
-        Time::timeStep int_sec   = (steps*RESOLUTION - total_min)*60.;
-        float frac_sec           = (steps*RESOLUTION - total_min)*60. - int_sec;
+        double total_min       = steps*RESOLUTION + substeps*RESOLUTION;
+        Time::timeStep int_min = std::floor(total_min);
+        double frac_min        = total_min - int_min;
 
-        //~ fraction_of_min -= std::floor(fraction_of_min);
         // seconds
-        dv   = std::div(sec_ + int_sec, 60L);
-        sec_ = (float)dv.rem + frac_sec;
+        dv   = std::div(sec_ + frac_min*60., 60L);
+        sec_ = (float)dv.rem;
         // minutes
-        dv   = std::div(min_ + total_min + dv.quot, 60L);
+        dv   = std::div(min_ + int_min + dv.quot, 60L);
         min_ = (char)dv.rem;
         // hours
         dv    = std::div(hour_ + dv.quot, 24L);
@@ -186,24 +184,21 @@ void Time::set_day(unsigned char days) { day_ = days; }
 
 // convert time to steps
 
-Time::timeStep Time::to_steps(const Time &t)
+void Time::to_steps(const Time &t, timeStep &steps, double &substep)
 {
-    timeStep steps = 0L;
-
-    timeStep L_MAX = std::numeric_limits<unsigned long>::max();
-    double DBL_MAX = std::numeric_limits<double>::max();
+    steps = 0L;
 
     // days are special (could get too large)
-    timeStep sec_in_days = t.get_day() * 86400;
-    steps += (timeStep)std::floor(sec_in_days / RESOLUTION);
-    double remainder = (double)sec_in_days - steps * RESOLUTION;
+    timeStep min_in_days = t.get_day() * 1440;
+    steps += (timeStep)std::floor(min_in_days / RESOLUTION);
+    double remainder = (double)min_in_days - steps * RESOLUTION;
 
     // steps in hours, min, sec
-    timeStep seconds = t.get_hour() * 3600 + t.get_min() * 60 + t.get_sec();
-    remainder += seconds / RESOLUTION;
-    steps += (timeStep)std::floor(remainder);
+    timeStep minutes = t.get_hour() * 60 + t.get_min() + t.get_sec() / 60.;
+    remainder += minutes;
+    steps += (timeStep)std::floor(remainder / RESOLUTION);
 
-    return steps;
+    substep = remainder/RESOLUTION - std::floor(remainder/RESOLUTION);
 }
 
 

@@ -47,7 +47,8 @@ class NeuronManager : public ManagerInterface
     void init_neurons_on_thread(unsigned int num_local_threads);
     void update_kernel_variables();
 
-    void get_defaults(statusMap &status, const std::string &object) const;
+    void get_defaults(statusMap &status, const std::string &object,
+                      bool detailed) const;
     const statusMap get_neuron_status(size_t gid) const;
     const statusMap get_neurite_status(size_t gid, const std::string &type,
                                        const std::string &level) const;

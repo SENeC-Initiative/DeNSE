@@ -76,8 +76,7 @@ class KernelManager
     void update_num_objects();
 
     std::string simulation_ID_;
-    bool angles_in_radians() const;
-    double get_current_seconds() const;
+    double get_current_time() const;
     double get_adaptive_timestep() const;
     bool using_environment() const;
     //! Returns true if kernel is initialized
@@ -91,7 +90,6 @@ class KernelManager
     NeuronManager neuron_manager;
 
   private:
-    bool angles_in_radians_; //!< true if angles should be passed in rad
     statusMap config_;       //!< configuration properties
     bool env_required_;      //!< true if a spatial environment is required
     bool record_enabled_;

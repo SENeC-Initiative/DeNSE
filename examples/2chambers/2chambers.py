@@ -7,7 +7,7 @@ import time
 
 import numpy as np
 import matplotlib
-matplotlib.use("Qt5Agg")
+# ~ matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import random, shutil
 import os
@@ -17,6 +17,7 @@ nngt.set_config("palette", "Spectral")
 #~ nngt.set_config("palette", "viridis")
 
 import dense as ds
+from dense.units import *
 
 try:
     import seaborn as sns
@@ -50,31 +51,31 @@ use_critical_resource=False
 gc_model = 'run_tumble'
 
 neuron_params = {
-    "dendrite_diameter": 3.,
-    "axon_diameter": 4.,
+    "dendrite_diameter": 3. * um,
+    "axon_diameter": 4. * um,
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 0.08,
-    "speed_growth_cone": 0.5,
+    "speed_growth_cone": 0.5 * um / minute,
     "filopodia_wall_affinity": 500.,
-    "filopodia_finger_length": 5.,
+    "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
-    "persistence_length" : 600.,
+    "persistence_length" : 600. * um,
     "thinning_ratio": 2./1000.,
 
-    "soma_radius": soma_radius,
-    'B' : 10.,
-    'T' : 10000.,
+    "soma_radius": soma_radius * um,
+    'B' : 10. * cpm,
+    'T' : 10000. * minute,
     'E' : 0.7,
 }
 
 dendrite_params = {
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.2,
+    "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
-    "persistence_length" : 200.,
+    "persistence_length" : 200. * um,
     "thinning_ratio": 3./250.,
 }
 
@@ -85,7 +86,7 @@ Check for optional parameters
 
 if use_run_tumble:
     neuron_params ={
-        "persistence_length": 12.
+        "persistence_length": 12. * um
     }
 
 if use_uniform_branching:
@@ -93,15 +94,15 @@ if use_uniform_branching:
 
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["persistence_length"] = 2.
+    neuron_params["persistence_length"] = 2. * um
 
 
 '''
 Simulation
 '''
 
-def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+def step(time, loop_n, plot=True):
+    ds.Simulate(time)
     if plot:
         ds.PlotNeuron(show_nodes=True, show=True)
 
@@ -112,7 +113,7 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 10.,
+              "resolution": 10. * minute,
               "adaptive_timestep": -1.}
     #~ kernel={"seeds":[33],
      #~ "num_local_threads": 1,
@@ -133,9 +134,9 @@ if __name__ == '__main__':
             neurons=100, xmax=440, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
             neurons=100, xmin=1000, soma_radius=soma_radius)
-        neuron_params['position'] = np.concatenate((pos_right, pos_left))
+        neuron_params['position'] = np.concatenate((pos_right, pos_left)) * um
     else:
-        neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
+        neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
     gids = ds.CreateNeurons(n=200, growth_cone_model=gc_model,
@@ -146,7 +147,7 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     # ~ for _ in range(10):
         # ~ step(200, 0, True)
-    step(4000, 0, False)
+    step(5 * day, 0, False)
     duration = time.time() - start
 
     # prepare the plot

@@ -4,12 +4,21 @@ Welcome to DeNSE's documentation!
 
 .. toctree::
     :maxdepth: 2
-    :caption: User documentation:
+    :caption: User documentation
 
     user/install
-    user/dense
+    user/tutorial
+    user/environment
     user/neuron_models
     user/tools
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Python modules
+
+    modules/dense
+    modules/units
+    modules/geometry
 
 .. toctree::
     :maxdepth: 3

@@ -3,6 +3,7 @@
 # -*- coding:utf-8 -*-
 
 import dense as ds
+from dense.units import *
 import numpy as np
 import os
 
@@ -21,7 +22,7 @@ neuron_params = {
 
 
     "filopodia_min_number": 30,
-    "speed_growth_cone": 1.,
+    "speed_growth_cone": 1. * um / minute,
     "sensing_angle": 0.1495,
 
 
@@ -35,32 +36,32 @@ neuron_params = {
     "use_flpl_branching": False,
 
     "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0,
+    "filopodia_finger_length": 50.0 * um ,
 
-    "persistence_length": 80.0,
+    "persistence_length": 80.0 * um,
     # "use_flpl_branching": use_uniform_branching,
     "gc_split_angle_mean": 1.,
     "gc_split_angle_std": 0.3,
 
     # Cr model
-    "CR_retraction_factor": 0.10,
-    "CR_elongation_factor": 0.10,
+    "CR_retraction_factor": 0.10 * um / minute,
+    "CR_elongation_factor": 0.10 * um / minute,
     "CR_weight_centrifugal": 0.,
-    "CR_weight_diameter": 0.01,
-    "CR_retraction_th": 0.010,
-    "CR_elongation_th": 0.4,
+    "CR_weight_diameter": 0.01 * um,
+    "CR_retraction_th": 0.010 * uM,
+    "CR_elongation_th": 0.4 * uM,
     # "CR_split_th": 0.80,
-    "CR_neurite_generated": 2000.,
-    "CR_neurite_delivery_tau": 50.,
+    "CR_neurite_generated": 2000. * uM,
+    "CR_neurite_delivery_tau": 50. * minute,
     "CR_correlation": 0.89,
-    "CR_variance": 0.331,
+    "CR_variance": 0.331 * uM / minute ** 0.5,
     "CR_use_ratio": 0.1,
 
     # Best model
-    "B": 30.,
+    "B": 30. * cpm,
     "E": 0.6,
     "S": 1.,
-    "T": 10000.,
+    "T": 10000. * minute,
 }
 
 
@@ -87,22 +88,21 @@ def run_dense(neuron_params):
     # np.random.seed(kernel['seeds'])
     np.random.seed(13)
 
-    kernel["resolution"] = resolution
-    kernel["angles_in_radians"] = True
+    kernel["resolution"] = resolution * minute
 
     # kernel["angles_in_radians"] = False
     ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
-        -2500, 2500, (num_neurons, 2))
+        -2500, 2500, (num_neurons, 2)) *  um
     gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
                                   num_neurites=3,
                                   position=[]
                                   )
 
-    step(6000./resolution, 1, False, True)
+    step(6000./resolution * hour, 1, False, True)
     ds.SaveSwc(swc_resolution=5)
     ds.SaveJson()
 

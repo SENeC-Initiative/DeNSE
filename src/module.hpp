@@ -131,7 +131,8 @@ void get_branches_data(size_t neuron, const std::string &neurite,
 // parameters and recordings
 
 void get_defaults(const std::string &object_name,
-                  const std::string &object_type, statusMap &status);
+                  const std::string &object_type, const std::string &gc_model,
+                  bool detailed, statusMap &status);
 
 
 void get_models(std::vector<std::string> &models,

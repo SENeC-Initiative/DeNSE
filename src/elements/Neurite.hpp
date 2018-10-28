@@ -59,7 +59,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
   public:
     Neurite() = delete;
     Neurite(std::string name, const std::string &neurite_type_,
-            NeuronWeakPtr neuron);
+            const std::string &gc_model, NeuronWeakPtr neuron);
     ~Neurite();
 
     // Init and finalize functions

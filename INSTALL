@@ -1,0 +1,458 @@
+
+                     ____       _   _ ____  _____ 
+                    |  _ \  ___| \ | / ___|| ____|
+                    | | | |/ _ \  \| \___ \|  _|  
+                    | |_| |  __/ |\  |___) | |___ 
+                    |____/ \___|_| \_|____/|_____|
+
+
+
+This file contains a brief summary or the steps needed to install DeNSE on
+various platforms.
+
+
+Requirements
+============
+
+Before installation, several tools must be pre-installed, including
+
+1. A set of software and libraries
+    * CMake
+    * A C and C++11-compliant compiler such as GCC (4.8.1+)
+    * Python (2.7 or 3.3+) and its header/development files
+    * GEOS (3.5+) and its header/development files
+    * Cython
+
+2. Some python modules
+    * setuptools
+    * numpy
+    * scipy
+    * shapely
+    * pint
+
+3. Doxygen, Sphinx, and Breathe to compile the documentation locally
+
+4. Optional python modules are also required to use DeNSE to full capability
+    * networkx, igraph, or graph-tool to analyze generated networks
+    * NNGT to interface the graph libraries with DeNSE
+    * matplotlib to plot neurons and results
+    * svg.path and dxfgrabber to load SVG and DXF files to create complex
+      environments
+    * PyOpenGL to efficiently seed neurons in complex environments
+
+
+Automatic installation
+======================
+
+Automatic installation files for several linux distributions are provided.
+Since these require you to have administrative rights and input your password,
+please check that they were not tampered with before executing them.
+
+Using automatic install files, DeNSE should be compiled and installed
+directly in local system directories (in ~/.local, i.e. in your home folder).
+The documentation should be viewable by opening ~/.local/dense_doc/index.html
+with your internet browser.
+
+
+Debian-based systems (Ubuntu, Mint...)
+--------------------------------------
+
+The whole procedure can be performed directly by running
+
+    ./install_debian.sh
+
+Once this is over, go to the "Launching" part.
+
+Otherwise, first install the required tools
+
+    sudo apt install cmake g++ python python-dev python-pip libgeos++-dev
+
+Then use pip to install the required python libraries
+
+    pip install --user setuptools
+    pip install --user cython
+    pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
+
+If you want to compile the documentation, also run
+
+    sudo apt install doxygen
+    pip install --user sphinx breathe sphinx-bootstrap-theme
+
+To install the optional modules run
+
+    pip install --user networkx nngt svg.path
+    sudo apt install python-matplotlib python-tk
+
+Once this is done, you can try to run the generic linux install.
+
+
+Arch-based systems
+------------------
+
+The whole procedure can be performed directly by running
+
+    ./install_arch.sh
+
+Once this is over, go to the "Launching" part.
+
+Otherwise, first install the required tools
+
+    sudo pacman -S cmake gcc python python-pip geos
+
+Then use pip to install the required python libraries
+
+    pip install --user setuptools
+    pip install --user cython
+    pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
+
+If you want to compile the documentation, also run
+
+    sudo pacman -S doxygen python-sphinx
+    pip install --user breathe sphinx-bootstrap-theme
+
+To install the optional modules run
+
+    pip install --user networkx nngt
+    sudo pacman -S python-matplotlib
+
+Once this is done, you can try to run the generic linux install.
+
+
+CentOS, Fedora, and RedHat systems
+----------------------------------
+
+Unfortunately, it seems that for most RedHat systems, the available versions
+of GEOS are still 3.4, which is not sufficient to build DeNSE.
+
+In case this changes, the whole procedure could be performed directly by running
+
+    ./install_centos.sh
+
+Once this is over, go to the "Launching" part.
+
+Still, if it gets updated to GEOS 3.5+, on CentOS, GEOS can be made available by
+getting the Fedora repositories first.
+
+    sudo yum install epel-release
+    sudo yum repolist
+
+Theoretically, you can then run ./install_fedora.sh.
+
+Otherwize, you can then install the required tools
+
+    sudo yum install gcc gcc-c++ cmake python python-devel python-pip
+
+However, you will then have to install GEOS yourself (see
+https://trac.osgeo.org/geos/ to get the source and find out about the
+installation)
+
+Then use pip to install the required python libraries
+
+    pip install --user setuptools
+    pip install --user cython
+    pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
+
+If you want to compile the documentation, also run
+
+    sudo yum install doxygen python-sphinx
+    pip install --user breathe sphinx-bootstrap-theme
+
+To install the optional modules run
+
+    pip install --user networkx nngt
+    sudo yum install python-matplotlib
+
+Once this is done, you can try to run the generic linux install.
+
+
+Generic installation of DeNSE on Linux
+----------------------------------------
+
+If you did not already run a complete install such as "install_debian.sh" but
+have installed all required software, you can directly run the generic
+installation of DeNSE through
+
+    ./install_linux.sh
+
+Otherwise, you can follow the step-by-step procedure in "Manual installation".
+
+
+MacOS
+-----
+
+The whole procedure can be performed directly by running
+
+    ./install_macos.sh
+
+If the automatic install fails with a message like:
+
+    curl: (35) error:XXX:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert protocol version
+
+then your cURL (and probably your mac) version is too old. You can try updating
+it from https://curl.haxx.se/download.html, however, at that point I don't
+promise anything regarding the possibility of a successful install.
+Once cURL is updated, try the automatic install again.
+
+Otherwise, check that you have all the things required to install homebrew on
+https://docs.brew.sh/Installation.
+
+
+Windows (Cygwin)
+----------------
+
+WARNING: only use with single-thread configuration! (1 OpenMP thread),
+multi-threaded configurations with Cygwin slow down the computation.
+
+This installation is not optimal for Windows because it works in some kind of
+separate environment.
+Note that this installation also requires roughly 2Gb of space.
+However, it works, so for the time being it is the preferred install procedure.
+
+First, install Cygwin and the necessary packages:
+* download Cygwin from https://www.cygwin.com/,
+* launch the installer and get to the package list.
+
+Once on the package list, make sure "View" is set to "Category", then install
+the following packages:
+
+* search for gcc and install (in Devel)
+   - gcc-core gcc-fortran gcc-g++
+   - mingw64-(x86_64/i686)- idem above depending on your platform (ignore)
+* search for make (in Devel)
+   - select cmake
+   - select make
+* search for python (in Python)
+   - select python3
+   - select python3-cairo
+   - select python3-cython
+   - select python3-devel
+   - select python3-ipython
+   - select python3-numpy
+   - select python3-opengl
+   - select python3-pip
+   - select python3-sphinx
+   - select python3-tkinter
+* search for gobject and select gobject-introspection
+* search for xorg (in X11) and select xorg-server
+* search for xinit (in X11) and select xinit
+* search for geos (in Devel) amd select libgeos-devel
+* search for doxygen (in Devel) and select it
+* search for lapack (in Libs) and select Liblapack-devel
+* search for blas (in Math) and select libopenblas
+* search for libpng and select libpng-devel
+* search for tcl-tk (in Tcl) and select tcl-tk and tcl-tk-devel
+* search for freetype (in Libs) and select libfreetype-devel
+* search for gtk3 (in Libs) and select libgtk3-devel and libgt3_0
+
+Click next, check the list of packages to install, then click next again.
+Once the Cygwin install is complete, open Cygwin terminal and type
+
+    pip3 install scipy pint breathe PyGObject matplotlib sphinx-bootstrap-theme shapely svg.path dxfgrabber
+
+Move to the DeNSE folder. If you do not know how to do it, first copy the DeNSE
+folder in Windows Explorer (select, then CTRL+C or right-click then "Copy"),
+then type "cd " in the Cygwin terminal, paste (it should write the path,
+something like "/cygdrive/c/Users/YourUserName/Documents/DeNSE/"), and press
+enter.
+You should see the correct path appearing at the beginning of the terminal line,
+if so, run:
+
+	./install_cygwin.sh
+
+Otherwise try again until the correct path appears.
+
+If the installation finished without error, you can now use DeNSE: go to the
+"Launching" section.
+
+
+Windows (Anaconda)
+------------------
+
+(Not working for the time being)
+
+This is the "simple" way, if you are not used to UNIX-like platforms.
+Note that Windows install is highly experimental and might very well not work,
+so I would advise against wasting too much time on it if troubles arise: install
+VirtualBox and a random Linux version like Mint, then use DeNSE on the virtual
+OS.
+
+First, you will need to install Anaconda: https://www.anaconda.com/download/.
+Once the installation is finished, launch Anaconda Navigator for the final
+installation steps, then, once it finishes, you can run the Anaconda Prompt from
+the startup menu.
+
+Make sure you have Visual Studio installed including Visual C++, otherwise get
+it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
+Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
+(include Linux tools to get C++ for CMake)
+
+Once in the Anaconda Prompt, run:
+
+    conda install cmake geos
+    pip install cython
+    pip install shapely pint
+
+Then
+
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder -DCMAKE_BUILD_TYPE=Release
+    cmake --build . --config Release --target INSTALL
+
+Note that for people using 32-bit architectures, you might have to force the
+64-bit compile by adding -DCMAKE_GENERATOR_PLATFORM=x64 to the first cmake
+command.
+
+
+Manual installation
+===================
+
+Note that manual installation requires that you already have installed all the
+dependencies of DeNSE listed in "Requirements".
+
+
+Making a build directory
+------------------------
+
+Open a terminal in the current folder, then type:
+
+    mkdir build
+    cd build
+
+this creates a "build" directory where the files will be generated.
+
+Once in the "build" folder, has been created and you moved to it, you must
+configure the installation to make it specific to your system and generate the
+Makefile, which will be used to compile DeNSE.
+This is done through CMake.
+
+
+Configuring with CMake
+----------------------
+
+!IMPORTANT! Before executing CMake, always make sure that the build folder is
+empty (i.e. that you are performing a "clean" install). This will avoid numerous
+problems linked to partial configurations including outdated paths, binaries, or
+libraries.
+
+Once you made sure the "build" directory is empy, run
+
+    cmake ..
+
+
+Additional CMake options
+------------------------
+
+The CMake script accepts several options to customize the installation; these options can be
+added after "cmake ..", separated by spaces, and include (do not copy the quotes):
+
+* a custom install path provided through
+  "-DCMAKE_INSTALL_PREFIX=/your/install/path", which MUST be provided as an
+  absolute path; this can be necessary to install DeNSE for several Python
+  versions or preventing unforeseen conflicts with other libraries such as NEST,
+* the path to the GEOS library through "-Dwith-geos=/path/to/libgeos",
+* the deactivation of OpenMP parallelism with "-Dwith-openmp=OFF",
+* the requirement of a specific Python version through "-Dwith-python=X" or
+  "-Dwith-python=X.Y",
+* local compilation of the documentation through "-Dwith-docs=ON",
+* any other valid CMake argument.
+
+As an example, the following command
+
+    cmake .. -DCMAKE_INSTALL_PREFIX=/home/me/Software/DeNSE_install -Dwith-python=3.7
+
+will configure DeNSE to be installed in "/home/me/Software/DeNSE_install" (in
+bin, and lib subfolders) and set to be run using python 3.7.
+
+
+Compiling
+---------
+
+Upon proper completion of the configuration step, you should see the lines
+
+    You can now build and install DeNSE with
+      make
+      make install
+
+    -- Configuring done
+    -- Generating done
+    -- Build files have been written to: /the/current/build/folder
+
+As advised, you can now compile by running
+
+    make && make install
+
+Depending on whether you specified a custom path or not, you can now either jump
+to the "Launching" section, or configure the paths.
+
+
+Configuring the paths
+=====================
+
+If all goes well, the installation should be in directories that are included by
+default in the system's path and should not require any additional work.
+
+However, if you have performed a manual install with a custom install path, you
+will need to add declare this path to the system; it may also happen that the
+automatic install picked a non-default folder, requiring you to manually edit
+the system's path to be able to launch DeNSE.
+
+In that case, just execute
+
+    ./set_dense_vars.sh
+
+In the unlikely event where this still does not solve the problem (even after
+rebooting the system) then open the "update_system_path.sh" file and copy the
+
+    export PYTHONPATH="path_to_python_install_dir:$PYTHONPATH"
+    export LD_LIBRARY_PATH="path_to_lib_install_dir:$LD_LIBRARY_PATH"
+    export PATH="path_to_bin_install_dir:$PATH"
+
+lines in the file, and search the web for the profile file you should put them
+in on your specific linux distribution (hint: this is usually ~/.bashrc,
+~/.bash_profile, ~/.profile, or /etc/profile).
+
+Note that if you compiled GEOS manually, you might have to add its installation
+folder to LD_LIBRARY_PATH also. To know what to add, look for libgeos_c.so
+(it is usually located in /usr/local/lib with the manual installation).
+
+
+Launching
+=========
+
+Once DeNSE is installed, you can test that it works correctly by launching it
+into a Python terminal.
+
+Linux and MacOs
+---------------
+
+Open a terminal and run
+
+    python
+
+then in the following console, input
+
+    import dense as ds
+
+If the command runs fine, then congratulations, you're done!
+If you get an error saying "ImportError: No module named dense", then go back up
+to the section on "Configuring the paths".
+
+To run scripts saved in a python file (e.g. in the examples), run
+
+    python the_script_name.py
+
+
+Windows (Cygwin)
+----------------
+
+To run DeNSE, first open a Cygwin terminal.
+
+If you want to run it with interactive plotting (matplotlib), then:
+   - type "startxwin >/dev/null 2>&1 &" and press enter, to start the initiate
+     the graphical interface
+   - type "export DISPLAY=:0.0" and press enter to select the screen
+
+Whether you want to plot or not:
+   - to run DeNSE interactively, run "ipython3", then "import dense as ds"
+   - to run a script, type "python3 the_script_name.py"

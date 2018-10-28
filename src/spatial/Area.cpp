@@ -21,8 +21,8 @@ Area::Area(GEOSGeom area, GEOSContextHandle_t handler, double height,
          i++)
     {
         shape_.push_back(GeomPtr(GEOSGeom_clone_r(handler, area)));
-        prepared_area_.push_back(GEOSPrepare_r(handler, area));
-        const GEOSGeom border = GEOSBoundary_r(handler, area);
+        prepared_area_.push_back(GEOSPrepare_r(handler, shape_[i].get()));
+        const GEOSGeom border = GEOSBoundary_r(handler, shape_[i].get());
         prepared_border_.push_back(GEOSPrepare_r(handler, border));
         assert(prepared_area_[i] != 0);
         assert(prepared_border_[i] != 0);

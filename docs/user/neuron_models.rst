@@ -1,3 +1,5 @@
+.. _pymodels:
+
 ======================
 Neuronal growth models
 ======================
@@ -18,8 +20,8 @@ responsible for the elongation.
 For the full list of implemented models and the way to enable them see the
 Models_Table_
 
-For more details on the precise implementation of the models, see the Models_
-page in the Developer space.
+For more details on the precise implementation of the models, see the
+:ref:`models` page in the Developer space.
 
 
 Neuron properties

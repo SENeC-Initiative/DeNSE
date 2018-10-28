@@ -2,7 +2,7 @@
 
 // C++ includes
 #define _USE_MATH_DEFINES
-#include <assert.h>
+#include <cassert>
 #include <cmath>
 #include <memory>
 #include <set>
@@ -56,6 +56,8 @@ GrowthCone::GrowthCone(const std::string &model)
     , turning_(0)
     , turned_(0.)
     , update_filopodia_(false)
+    , max_stop_(10)
+    , current_stop_(0)
     , filopodia_{{},
                  {},
                  FILOPODIA_MIN_NUM,
@@ -109,6 +111,8 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , stopped_(false)
     , turning_(0)
     , turned_(0.)
+    , max_stop_(copy.max_stop_)
+    , current_stop_(0)
     , interacting_(false)
     , update_filopodia_(false)
     , filopodia_(copy.filopodia_)
@@ -256,8 +260,17 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
     std::vector<bool> wall_presence;
 
     // we make local substeps until current time is equal to substep
+    int loop_index = 0;
+
     while (current_time < substep)
     {
+        loop_index++;
+        if (loop_index > 100)
+        {
+            printf("long loop for gc of neuron %lu on %i - substep %f - ctime %f - next %f\n", biology_.own_neurite->get_parent_neuron().lock()->get_gid(), omp_id, substep, current_time, local_substep);
+            throw std::runtime_error("Neuron stuck in an infinite loop");
+        }
+
         local_substep = substep - current_time;
 
         // reset stopped status
@@ -977,7 +990,7 @@ void GrowthCone::set_status(const statusMap &status)
     }
 
     // other models can set the average speed
-    get_param(status, names::speed_growth_cone, avg_speed_);
+    bool speed= get_param(status, names::speed_growth_cone, avg_speed_);
 
     get_param(status, names::speed_variance, speed_variance_);
     if (speed_variance_ < 0)

@@ -92,7 +92,7 @@ the recursive algorithm is:
 where :math:`\beta` is the angle of the growth cone before the elongation process
 
 
-References:
+References
 ==========
 .. [Memelli2013] Memelli, H., Torben-Nielsen, B. & Kozloski, J. Self-referential forces are sufficient to explain different dendritic morphologies. Front. Neuroinform. 7, 1 (2013).
 

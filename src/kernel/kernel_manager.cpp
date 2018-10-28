@@ -58,7 +58,6 @@ KernelManager::KernelManager()
     , initialized_(false)
     // settings
     , simulation_ID_("Kernel_ID_00000000")
-    , angles_in_radians_(false)
     , record_enabled_(false)
     , env_required_(true)
     , num_objects_(0)
@@ -123,7 +122,6 @@ const statusMap KernelManager::get_status() const
     statusMap status;
     // local
     set_param(status, "version", version_, "");
-    set_param(status, "angles_in_radians", angles_in_radians_, "");
     set_param(status, "environment_required", env_required_, "");
     set_param(status, "record_enabled", record_enabled_, "");
     set_param(status, "adaptive_timestep", adaptive_timestep_, "");
@@ -150,18 +148,18 @@ void KernelManager::set_simulation_ID(std::string simulation_ID)
 std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
 
 
-/*
- * Return number of objects
+/**
+ * Returns the number of objects
  */
 size_t KernelManager::get_num_objects() const { return num_objects_; }
 
 
-bool KernelManager::angles_in_radians() const { return angles_in_radians_; }
-
-
-double KernelManager::get_current_seconds() const
+/**
+ * Gives current time in minutes.
+ */
+double KernelManager::get_current_time() const
 {
-    return simulation_manager.get_current_seconds();
+    return simulation_manager.get_current_time();
 }
 
 
@@ -187,7 +185,6 @@ void KernelManager::set_status(const statusMap &status)
 {
     // local
     get_param(status, "version", version_);
-    get_param(status, "angles_in_radians", angles_in_radians_);
     get_param(status, "record_enabled", record_enabled_);
     get_param(status, "simulation_ID", simulation_ID_);
 

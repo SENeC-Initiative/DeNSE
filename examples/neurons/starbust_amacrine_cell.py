@@ -4,6 +4,7 @@
 """ Generate the morphology of a starburst amacrine cell """
 
 import dense as ds
+from dense.units import *
 import numpy as np
 import os
 
@@ -15,47 +16,46 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 1.5,
-    "position": np.random.uniform(-1000, 1000, (num_neurons, 2)),
+    "dendrite_diameter": 1.5 * um,
+    "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "has_axon": False,
     "polarization_strength": 2.,
 }
 
 #~ dend_params = {
     #~ "sensing_angle": 45.,
-    #~ "persistence_length": 300.,
-    #~ "speed_growth_cone": 0.01,
+    #~ "persistence_length": 300. * um,
+    #~ "speed_growth_cone": 0.01 * um / minute,
     #~ # diameter
     #~ "thinning_ratio": 0.5/200.,
     #~ # branching
     #~ "use_van_pelt": True,
-    #~ "B": 10.,
-    #~ "T": 20000.,
+    #~ "B": 10. * cpm,
+    #~ "T": 20000. * minute,
     #~ "E": 0.,
-    #~ "gc_split_angle_mean": 30.,
+    #~ "gc_split_angle_mean": 30. * deg,
 #~ }
 
 dend_params = {
     "sensing_angle": 45.,
-    "persistence_length": 200.,
-    "speed_growth_cone": 0.005,
+    "persistence_length": 200. * um,
+    "speed_growth_cone": 0.005 * um/minute,
     # diameter
     "thinning_ratio": 0.5/100.,
     # branching
     "use_uniform_branching": True,
-    "uniform_branching_rate": 0.0001,
-    "lateral_branching_angle_mean": 30.,
+    "uniform_branching_rate": 0.0001 * cpm,
+    "lateral_branching_angle_mean": 30. * deg,
 }
 
 kernel = {
-    "resolution": 50.,
+    "resolution": 50.* minute,
     "seeds": [5],
     "environment_required": False,
     "num_local_threads": num_omp,
 }
 
 ds.SetKernelStatus(kernel)
-
 
 # create neurons
 
@@ -68,7 +68,7 @@ n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
 
 
 #~ dend_params = {
-    #~ "speed_growth_cone": 0.005,
+    #~ "speed_growth_cone": 0.005 * um / minute,
     #~ # branching
     #~ "use_van_pelt": False,
     #~ "use_uniform_branching": True,
@@ -77,16 +77,16 @@ n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
 #~ }
 
 dend_params = {
-    "speed_growth_cone": 0.003,
+    "speed_growth_cone": 0.003 * um / minute,
     # branching
     "use_uniform_branching": False,
     "use_van_pelt": True,
-    "B": 40.,
-    "T": 100000.,
+    "B": 40. * cpm,
+    "T": 100000. * minute,
     "E": 0.,
     "S": 3.,
-    "gc_split_angle_mean": 20.,
-    "gc_split_angle_std": 3.,
+    "gc_split_angle_mean": 20. * deg,
+    "gc_split_angle_std": 3. * deg,
 }
 
 ds.SetStatus(n, dendrites_params=dend_params)

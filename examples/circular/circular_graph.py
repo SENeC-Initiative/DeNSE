@@ -1,4 +1,5 @@
 import dense as ds
+from dense.units import *
 import nngt
 import matplotlib.pyplot as plt
 

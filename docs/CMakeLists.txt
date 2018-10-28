@@ -44,7 +44,7 @@ if ( WITH_DOCS )
 
   install(CODE "execute_process(COMMAND
     ${SPHINX_EXECUTABLE}
-    -q -b html
+    -E -q -b html
     -c ${CMAKE_CURRENT_BINARY_DIR}
     -d ${SPHINX_CACHE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}

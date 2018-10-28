@@ -1,12 +1,31 @@
+import sys
 import pint
 from pint import UnitRegistry, set_application_registry
 
 import dense
 
 
-ureg = UnitRegistry()
-set_application_registry(ureg)
+# check for the registry
 
+ureg = pint._APP_REGISTRY
+
+if ureg == pint._DEFAULT_REGISTRY:
+    ureg = UnitRegistry()
+    set_application_registry(ureg)
+
+
+class FormattedQuantity(ureg.Quantity):
+
+    def _repr_pretty_(self, p, circle):
+        p.text(str(self))
+
+    def _repr_latex_(self):
+        return '{:L}'.format(self)
+
+    def _repr_html_(self):
+        return '{:H}'.format(self)
+
+ureg.Quantity = FormattedQuantity
 Q_   = ureg.Quantity
 
 
@@ -15,14 +34,23 @@ Q_   = ureg.Quantity
 m   = ureg.meter
 cm  = ureg.cm
 mm  = ureg.mm
-mum = ureg.micrometer
+um  = ureg.micrometer
 
 
 # time
 
-minute = ureg.min
+day    = ureg.day
 hour   = ureg.hour
+minute = ureg.min
 second = ureg.second
+
+
+# Volume
+
+L  = ureg.L
+mL = ureg.mL
+uL = ureg.uL
+nL = ureg.nL
 
 
 # frequency
@@ -34,9 +62,10 @@ cph = ureg.count / ureg.hour
 
 # concentration
 
-M   = ureg.mol / ureg.L
-mM  = ureg.millimol / ureg.L
-muM = ureg.micromol / ureg.L
+M  = ureg.mol / ureg.L
+mM = ureg.millimol / ureg.L
+uM = ureg.micromol / ureg.L
+nM = ureg.nanomol / ureg.L
 
 
 # angles
@@ -47,30 +76,30 @@ deg = ureg.deg
 
 # default units
 
-dense._cpp_units.update({
+_cpp_units = {
     # string definitions (differenciate dimensionless from angular)
-    "[length]": mum,
+    "[length]": um,
     "[time]": minute,
-    "[substance]": muM,
-    "[degree]": deg,
+    "[substance]": ureg.micromol,
+    "[degree]": rad,
     "[frequency]": cpm,
     # unit container definition
-    mum.dimensionality: mum,
+    um.dimensionality: um,
     minute.dimensionality: minute,
-    muM.dimensionality: muM,
+    uM.dimensionality: uM,
     cpm.dimensionality: cpm,
-})
+}
 
 dense._units.update({
     # string definitions (differenciate dimensionless from angular)
-    "[length]": mum,
+    "[length]": um,
     "[time]": minute,
-    "[substance]": muM,
+    "[substance]": ureg.micromol,
     "[angle]": deg,
     "[frequency]": cpm,
     # unit container definition
-    mum.dimensionality: mum,
+    um.dimensionality: um,
     minute.dimensionality: minute,
-    muM.dimensionality: muM,
+    uM.dimensionality: uM,
     cpm.dimensionality: cpm,
 })

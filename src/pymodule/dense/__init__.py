@@ -9,7 +9,6 @@ import atexit as _atexit
 
 # declare default units
 
-_cpp_units = {}
 _units     = {}
 
 from . import _pygrowth
@@ -25,14 +24,19 @@ from .dataIO_swc import *
 from .dataIO_dynamics import GrowthConeDynamicsAnalyzer
 from .graph import CreateGraph
 from .geometry import Shape, culture_from_file
-from .structure import NeuronStructure, Population, EnsembleRW, PlotRWAnalysis
+from .structure import NeuronStructure, Population, EnsembleRW
+
+
+# enable shapely speedups
+from shapely import speedups as _spdups
+if _spdups.available:
+    _spdups.enable()
 
 
 # update all
-
-__all__ = _pygrowth.__all__
+__all__ = ["geometry", "io", "structure", "tools", "units"]
+__all__.extend(_pygrowth.__all__)
 __all__.extend(("Shape", "culture_from_file"))
-__all__.extend("SaveToJson")
 
 
 try:

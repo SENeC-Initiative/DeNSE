@@ -4,7 +4,8 @@
 
 project ( cgrowth )
 
-set( PY_NAME dense PARENT_SCOPE)
+set( PY_NAME "dense" )
+set( PY_NAME "${PY_NAME}" PARENT_SCOPE )
 
 # Version number.
 set (cgrowth_VERSION_MAJOR 0)
@@ -41,8 +42,12 @@ IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 ENDIF()
 
+IF (WIN32 OR CYGWIN)
+	SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+ENDIF()
+
 add_library(cgrowth SHARED ${SOURCE_FILES})
-target_link_libraries( cgrowth kernel libgrowth elements spatial )
+target_link_libraries( cgrowth kernel libgrowth elements spatial ${GEOS_LIBRARY} ${GEOS_C_LIBRARY})
 target_include_directories( cgrowth PUBLIC
     ${PROJECT_SOURCE_DIR}/elements
     ${PROJECT_SOURCE_DIR}/kernel
@@ -57,6 +62,7 @@ target_include_directories( growth PRIVATE
      ${PROJECT_SOURCE_DIR}
      ${PROJECT_SOURCE_DIR}/kernel
 )
+
 target_link_libraries( growth cgrowth )
 install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -65,6 +71,8 @@ install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})
 if (python-develop)
     set(PYTHON_DEVELOPER_MODE "lib64")
 endif()
+
+set( PYEXECDIR "${PYEXECDIR}" PARENT_SCOPE )
 
 # install target
 install(
@@ -77,5 +85,5 @@ install(
 # install
 install(
   FILES README.md
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}${PYEXECDIR}"
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}"
 )

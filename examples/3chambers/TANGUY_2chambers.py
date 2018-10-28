@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import nngt
 
 import dense as ds
+from dense.units import *
 
 
 def CleanFolder(tmp_dir, make=True):
@@ -29,7 +30,7 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-soma_radius = 10.
+soma_radius = 10. * um
 use_uniform_branching = False
 use_vp = False
 use_run_tumble = False
@@ -41,9 +42,9 @@ neuron_params = {
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 0.08,
-    "speed_growth_cone": 0.95,
+    "speed_growth_cone": 0.95 * um / minute,
     "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 30.,
+    "filopodia_finger_length": 30. * um,
     "filopodia_min_number": 30,
 
     "soma_radius": soma_radius,
@@ -52,9 +53,9 @@ neuron_params = {
 dendrite_params = {
     "use_van_pelt": True,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.1,
+    "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.00,
-    "rw_persistence_length" : 2.
+    # ~ "persistence_length" : 10. * um
 }
 
 
@@ -64,7 +65,7 @@ Check for optional parameters
 
 if use_run_tumble:
     neuron_params ={
-        "rw_persistence_length":12.
+        "persistence_length":12. * um 
     }
 
 if use_uniform_branching:
@@ -72,14 +73,13 @@ if use_uniform_branching:
 
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 2.
+    # ~ neuron_params["persistence_length"] = 10. * um
     neuron_params["rw_memory_tau"] = 90.
 
 
 '''
 Simulation
 '''
-
 
 def step(n, loop_n, plot=True):
     ds.Simulate(n)
@@ -93,7 +93,7 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 10.}
+              "resolution": 10. * minute}
     # ~ kernel={"seeds":[33],
     # ~ "num_local_threads": 1,
     # ~ "resolution": 30.}
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     #~ "resolution": 30.}
     kernel["environment_required"] = True
 
-    culture_file = current_dir + "/2chamber_culture.svg"
+    culture_file = current_dir + "/3chamber_culture_sharpen.svg"
     ds.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
 
@@ -112,13 +112,13 @@ if __name__ == '__main__':
         culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=num_neurons, xmax=540, soma_radius=soma_radius)
+            neurons=num_neurons, xmax=540, soma_radius=soma_radius) 
         pos_right = culture.seed_neurons(
             neurons=num_neurons, xmin=1260, soma_radius=soma_radius)
-        neuron_params['position'] = np.concatenate((pos_right, pos_left))
+        neuron_params['position'] = np.concatenate((pos_right, pos_left)) * um
     else:
         neuron_params['position'] = np.random.uniform(
-            -1000, 1000, (int(2*num_neurons), 2))
+            -1000, 1000, (int(2*num_neurons), 2)) * um 
 
     print("Creating neurons")
     gids = ds.CreateNeurons(n=int(2*num_neurons),
@@ -129,15 +129,15 @@ if __name__ == '__main__':
                             num_neurites=2)
 
     start = time.time()
-    step(4000, 0, False)
+    step(4*day, 0, False)
 
-    dendrite_params.update({"speed_growth_cone" : 0.001,
+    dendrite_params.update({"speed_growth_cone" : 0.001 * um / minute,
                             "use_van_pelt" : False})
 
-    axon_params = {"speed_growth_cone" : 0.7,
+    axon_params = {"speed_growth_cone" : 0.7 * um / minute,
                             "use_van_pelt" : True,
-                   'B' : 10.,
-                   'T' : 10000.,
+                   'B' : 10. * cpm,
+                   'T' : 10000. * minute,
                    'E' : 0.7}
     print(time.time() - start)
     ds.SetStatus(gids, params=neuron_params, dendrites_params=dendrite_params,
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     print(time.time() - start)
 
     print("SIMULATION STARTED")
-    step(2000, 0, False)
+    step(2*day, 0, False)
     print("SIMULATION ENDED")
     # ~ for loop_n in range(5):
     # ~ step(500, loop_n, True)

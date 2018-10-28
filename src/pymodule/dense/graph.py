@@ -3,6 +3,8 @@
 
 import numpy as np
 
+from shapely.errors import TopologicalError
+
 from . import _pygrowth as _pg
 from .structure import NeuronStructure, Population
 
@@ -63,11 +65,13 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
     # Sort neurons
     idx_sort      = np.sort(neurons).tolist()
     gids, neurons = population.get_gid(idx_sort)
-    axons         = [neuron.axon  for neuron in neurons]
-    dendrites     = [neuron.dendrites  for neuron in neurons]
-    positions     = np.array([neuron.position for neuron in neurons])
+    axons         = [neuron.axon for neuron in neurons]
+    dendrites     = [neuron.dendrites for neuron in neurons]
 
     shape = _pg.GetEnvironment()
+    unit = "micrometer" if shape is None else shape.unit
+    positions     = np.array(
+        [neuron.position.to(unit).magnitude for neuron in neurons])
     graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions,
                               shape=shape)
 
@@ -131,7 +135,15 @@ def get_intersections(gids, axons, dendrites, connection_proba):
                 if dend_gid != axon_gid:
                     if axon_segment.intersects(dendrite_segment):
                         if np.random.random() < connection_proba:
-                            point = axon_segment.intersection(dendrite_segment)
+                            try:
+                                point = \
+                                    axon_segment.intersection(dendrite_segment)
+                            except TopologicalError as e:
+                                print("Could not perform intersection between:")
+                                print(axon_segment)
+                                print("and")
+                                print(dendrite_segment)
+                                raise e
                             if dend_gid in intersections[axon_gid]:
                                 intersections[axon_gid][dend_gid] += 1.
                                 synapses[axon_gid][dend_gid].append(point)

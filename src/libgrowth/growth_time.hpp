@@ -29,7 +29,7 @@ class Time
     static void set_resolution(double resolution);
 
     static Time from_steps(size_t step, double substep);
-    static timeStep to_steps(const Time &t);
+    static void to_steps(const Time &t, timeStep &steps, double &substep);
 
   private:
     // class members
@@ -47,7 +47,7 @@ class Time
     Time &operator-=(const Time &rhs);
     friend Time operator-(Time lhs, const Time &rhs);
 
-    void update(const unsigned long steps);
+    void update(const unsigned long steps, double substep);
 
     float get_sec() const;
     unsigned char get_min() const;

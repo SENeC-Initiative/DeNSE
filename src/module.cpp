@@ -130,7 +130,8 @@ statusMap get_neurite_status(size_t gid, const std::string &neurite,
 
 
 void get_defaults(const std::string &object_name,
-                  const std::string &object_type, statusMap &status)
+                  const std::string &object_type, const std::string &gc_model,
+                  bool detailed, statusMap &status)
 {
     GCPtr gc = nullptr;
 
@@ -138,11 +139,16 @@ void get_defaults(const std::string &object_name,
     {
         gc = kernel().neuron_manager.get_model(object_name);
         gc->get_status(status);
-        gc->get_status(status);
     }
     else if (object_type == "neuron" || object_type == "neurite")
     {
-        kernel().neuron_manager.get_defaults(status, object_name);
+        kernel().neuron_manager.get_defaults(status, object_name, detailed);
+        if (detailed)
+        {
+            std::string model = (gc_model == "") ? "default" : gc_model;
+            gc = kernel().neuron_manager.get_model(model);
+            gc->get_status(status);
+        }
     }
     else if (object_type == "recorder")
     {
@@ -439,11 +445,8 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
     auto gc_it    = neurite.lock()->gc_cbegin();
     auto gc_end   = neurite.lock()->gc_cend();
 
-    //~ printf("so far so good\n");
-
     while (node_it != node_end)
     {
-        //~ printf("node %lu\n", node_it->first);
         std::vector<std::vector<double>> points_tmp;
         BranchPtr b = node_it->second->get_branch();
 

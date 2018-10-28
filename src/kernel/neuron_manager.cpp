@@ -84,7 +84,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
             if (not kernel().space_manager.env_contains(Point(x, y), omp_id))
             {
                 throw std::runtime_error(
-                    " a Neuron was positioned outside the environment \n");
+                    " a Neuron was positioned outside the environment\n");
             }
         }
 
@@ -234,19 +234,23 @@ void NeuronManager::get_all_neurons(std::vector<NeuronPtr> &neuron_ptr_vec)
 
 
 void NeuronManager::get_defaults(statusMap &status,
-                                 const std::string &object) const
+                                 const std::string &object,
+                                 bool detailed) const
 {
     if (object == "neuron")
     {
-        model_neuron_->get_neurite_status(status, "dendrite", "neurite");
-        model_neuron_->get_neurite_status(status, "axon", "neurite");
+        if (detailed)
+        {
+            model_neuron_->get_neurite_status(status, "dendrite", "neurite");
+            model_neuron_->get_neurite_status(status, "axon", "neurite");
+        }
         model_neuron_->get_status(status);
     }
     else if (object == "axon")
     {
         model_neuron_->get_neurite_status(status, "axon", "neurite");
     }
-    else if (object == "dendrite" || object == "neurite", "neurite")
+    else if (object == "dendrite" || object == "neurite")
     {
         model_neuron_->get_neurite_status(status, "dendrite", "neurite");
     }

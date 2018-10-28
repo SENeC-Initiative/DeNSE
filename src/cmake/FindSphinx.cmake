@@ -1,6 +1,5 @@
 find_program(SPHINX_EXECUTABLE NAMES sphinx-build
-  HINTS
-  $ENV{SPHINX_DIR}
+  HINTS "$ENV{SPHINX_DIR}" "$ENV{HOME}/.local/"
   PATH_SUFFIXES bin
   DOC "Sphinx documentation generator"
 )

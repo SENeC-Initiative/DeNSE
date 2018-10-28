@@ -1,14 +1,9 @@
-import matplotlib.pyplot as plt
-# from uncertainties import unumpy
 import numpy as np
 from matplotlib import colors as mcolors
 import os
-from matplotlib import rc
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-## for Palatino and other serif fonts use:
-#rc('font',**{'family':'serif','serif':['Palatino']})
-rc('text', usetex=True)
+
 __all__=["PlotRWAnalysis"]
+
 colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
 by_hsv = sorted((tuple(mcolors.rgb_to_hsv(mcolors.to_rgba(color)[:3])), name)
                 for name, color in colors.items())
@@ -37,6 +32,7 @@ def PlotRWAnalysis(ensembles, save_path=None, plot=False, axes=None, error_every
     exps expect this format:
     [(path1, 'exp1_name'),...,(path2,'exp2_name')]
     """
+    import matplotlib.pyplot as plt
     ev = error_every
 
     # f, axarr = plt.subplots(2)

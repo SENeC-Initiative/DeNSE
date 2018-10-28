@@ -142,6 +142,8 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void get_defaults(const string& object_name,
                            const string& object_type,
+                           const string& gc_model,
+                           bool detailed,
                            statusMap &status) except +
 
     cdef void get_models(vector[string]& models,

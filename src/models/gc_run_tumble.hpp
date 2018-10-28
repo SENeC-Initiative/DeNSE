@@ -1,9 +1,11 @@
 #ifndef GC_RT_H
-
 #define GC_RT_H
+
 #include "GrowthCone.hpp"
 #include "elements_types.hpp"
 #include "kernel_manager.hpp"
+
+
 namespace growth
 {
 
@@ -43,5 +45,7 @@ class GrowthCone_RunTumble : public virtual GrowthCone
     size_t num_tumbles_;
     std::exponential_distribution<double> exponential_rt_;
 };
+
 } // namespace growth
+
 #endif

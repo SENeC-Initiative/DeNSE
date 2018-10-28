@@ -2,18 +2,19 @@
 # -*- coding:utf-8 -*-
 
 import dense as ds
+from dense.units import *
 import numpy as np
 import os
 
 import matplotlib.pyplot as plt
-plt.ion()
+# ~ plt.ion()
 
 
 '''
 Main parameters
 '''
 
-rate = 0.005
+rate = 0.005 * cpm
 num_neurons = 1
 
 # ~ branching_type = "flpl"
@@ -22,17 +23,18 @@ use_type       = "use_" + branching_type + "_branching"
 branching_rate = branching_type + "_branching_rate"
 
 neuron_params = {
-    "axon_angle":3.14/2,
+    "axon_angle": 90.*deg,
     # "growth_cone_model": "self_referential_forces",
 
-    "persistence_length": 10000.0,
+    "persistence_length": 10000.0 * um ,
 
     "filopodia_min_number": 30,
-    "speed_growth_cone": 0.9,
-    "sensing_angle": 0.1495,
+    "speed_growth_cone": 0.9 * um / minute,
+    "sensing_angle": 60.*deg,
 
-    "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0,
+    "filopodia_finger_length": 10.0 * um,
+    "lateral_branching_angle_mean": 45.*deg,
+    "lateral_branching_angle_std": 0.*deg,
 
     use_type: True,
     branching_rate: rate,
@@ -47,8 +49,8 @@ Optional parameters
 '''
 
 if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 1.8
-    neuron_params["rw_memory_tau"] = 4.
+    neuron_params["rw_persistence_length"] = 1.8 * um
+    neuron_params["rw_memory_tau"] = 4. * um
 
 
 '''
@@ -79,18 +81,16 @@ def lateral_branching(neuron_params):
     neuron_params[use_type] = False
 
     neuron_params["position"] = np.random.uniform(
-        -500, 500, (num_neurons, 2))
+        -500, 500, (num_neurons, 2)) * um
     gid = ds.CreateNeurons(n=num_neurons,
                             params=neuron_params,
-                            num_neurites=1,
-                            position=[]
-                            )
+                            num_neurites=2)
 
-    step(10, 1, False, False)
+    step(1*hour, 1, False, False)
     neuron_params[use_type] = True
-    ds.SetStatus(gid,params = neuron_params,
-                        axon_params=neuron_params)
-    step(2000, 1, False, False)
+    ds.SetStatus(gid,params = neuron_params)
+                        # ~ axon_params=neuron_params)
+    step(2 * day, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     ds.SaveSwc(swc_resolution=5)
     ds.SaveJson()
@@ -108,6 +108,8 @@ if __name__ == '__main__':
         "environment_required": False
     }
     swc_file=lateral_branching(neuron_params)
+
+    ds.PlotNeuron(show=True)
 
     pop = ds.GetNeurons()
     n   = pop[0]

@@ -15,7 +15,7 @@
    height="357"
    viewBox="0 0 707 357"
    sodipodi:docname="diode_2.svg"
-   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+   inkscape:version="0.92.3 (d244b95, 2018-08-02)">
   <metadata
      id="metadata8">
     <rdf:RDF>
@@ -24,7 +24,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -40,34 +40,18 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1920"
-     inkscape:window-height="969"
+     inkscape:window-height="1020"
      id="namedview4"
      showgrid="false"
-     inkscape:zoom="0.70710679"
-     inkscape:cx="-69.751797"
-     inkscape:cy="82.955742"
-     inkscape:window-x="0"
-     inkscape:window-y="38"
+     inkscape:zoom="1.8101934"
+     inkscape:cx="135.42104"
+     inkscape:cy="140.4842"
+     inkscape:window-x="1080"
+     inkscape:window-y="402"
      inkscape:window-maximized="1"
      inkscape:current-layer="g1397"
      showguides="true"
-     inkscape:guide-bbox="true">
-    <sodipodi:guide
-       position="98.994949,389.61583"
-       orientation="1,0"
-       id="guide1362"
-       inkscape:locked="false" />
-    <sodipodi:guide
-       position="399.51533,311.12698"
-       orientation="1,0"
-       id="guide1364"
-       inkscape:locked="false" />
-    <sodipodi:guide
-       position="499.92449,200.81833"
-       orientation="1,0"
-       id="guide1366"
-       inkscape:locked="false" />
-  </sodipodi:namedview>
+     inkscape:guide-bbox="true" />
   <g
      id="g1229"
      transform="matrix(0,0.87085448,-1.4187734,0,494.56033,-133.53881)">
@@ -76,15 +60,15 @@
        transform="matrix(0,-0.6142673,1.1270083,0,166.60963,393.15454)"
        style="stroke:none">
       <rect
-         style="opacity:0.98999999;fill:#808080;fill-opacity:1;stroke:none;stroke-width:2.34215736;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:7.55905533;stroke-opacity:1"
+         style="opacity:0.98999999;fill:#808080;fill-opacity:1;stroke:none;stroke-width:1.30459177;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:7.55905533;stroke-opacity:1"
          id="rect14"
-         width="370.42505"
-         height="314.577"
-         x="175.16006"
-         y="16.031918" />
+         width="113.70509"
+         height="317.95416"
+         x="275.94641"
+         y="5.9003921" />
       <g
          id="g1429"
-         transform="matrix(0.30878541,-0.00684463,0.02810365,0.99968854,254.20263,34.207095)">
+         transform="matrix(0.30887555,-0.00171755,0.00705217,0.99998036,221.67579,7.5535376)">
         <path
            sodipodi:nodetypes="ccccccscccc"
            inkscape:connector-curvature="0"

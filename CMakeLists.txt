@@ -1,28 +1,36 @@
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required( VERSION 2.6 )
-set( CMAKE_LEGACY_CYGWIN_WIN32 0 ) # for cygwin
 
 # add cmake modules: for all `include(...)` first look here
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/cmake )
 
 if ( COMMAND cmake_policy )
-
-#  cmake_policy( SET CMP0003 NEW )
-cmake_policy( SET CMP0012 NEW ) # accept "TRUE" "FALSE" in if statements
-
+  #  cmake_policy( SET CMP0003 NEW )
+  cmake_policy( SET CMP0012 NEW ) # accept "TRUE" "FALSE" in if statements
+  cmake_policy( SET CMP0054 NEW ) # Only interpret if() arguments as variables or
+                                  # keywords when unquoted.
 endif()
 
+
+project ( dense )
+
+
 set( SUCCESS 1 )
+
+IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+	set( CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" )
+ENDIF ()
 
 
 ###############################################################################
 #################            User-defined options             #################
 ###############################################################################
 
-set( with-geos ON CACHE STRING "Give directory to CGAL library. [default=ON]" )
+set( with-geos ON CACHE STRING "Give directory to GEOS library. [default=ON]" )
 set( with-mpi OFF CACHE STRING "Request compilation with MPI. Optionally give directory with MPI installation. [default=OFF]" )
 set( with-openmp ON CACHE STRING "Enable OpenMP multithreading. Optional: set OMP flag. [default=ON]" )
 set( with-python ON CACHE STRING "Build python bindings. To set a specific Python, set install path. [default=ON]" )
-option( cythonize-pybindings "Use Cython to cythonize `_growth.pyx`. If OFF, PyNEST has to be build from a pre-cythonized `_growth.pyx`. [default=ON]" ON )
+option( cythonize-pybindings "Use Cython to cythonize `_growth.pyx`. If OFF, DeNSE has to be build from a pre-cythonized `_growth.pyx`. [default=ON]" ON )
 option( with-docs OFF "Compile documentation (requires `doxygen`, `breathe` and `sphinx`. [default=OFF]" )
 option( with-debug OFF "Compile with debug symbols. [default=OFF]" )
 option( python-develop OFF "Python compiler allows to modify the code. [default=OFF]" )
@@ -36,8 +44,21 @@ include( ProcessOptions )
 get_host_triple( CGROWTH_HOST_TRIPLE CGROWTH_HOST_ARCH CGROWTH_HOST_VENDOR CGROWTH_HOST_OS )
 get_target_triple( CGROWTH_TARGET_TRIPLE CGROWTH_TARGET_ARCH CGROWTH_TARGET_VENDOR CGROWTH_TARGET_OS )
 
-# process options
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+# process compiler and options
+if (MSVC)
+   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase-" )
+else ()
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+
+    if (CYGWIN AND CMAKE_COMPILER_IS_GNUCC)
+       set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -U__STRICT_ANSI__" )
+    endif ()
+
+    if (CMAKE_BUILD_TYPE MATCHES RELEASE)
+       set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-cpp" )
+    endif ()
+endif ()
+
 cgrowth_process_with_optimize()
 cgrowth_process_with_debug()
 cgrowth_process_with_warning()
@@ -52,19 +73,15 @@ cgrowth_process_with_docs()
 cgrowth_get_color_flags()
 
 # check installation directory
-message( "${CMAKE_INSTALL_PREFIX}" )
-if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" )
-  # no prefix given?
-  message( FATAL_ERROR "Do not install into '${CMAKE_INSTALL_PREFIX}'. "
-                    "Please set -DCMAKE_INSTALL_PREFIX:PATH=<install prefix>." )
-endif ()
+
 if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
-  if ("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
-    set(CMAKE_INSTALL_LIBDIR "lib64")
+  if (UNIX)
+    include( GNUInstallDirs )
   else ()
     set(CMAKE_INSTALL_LIBDIR "lib")
   endif ()
 endif ()
+
 if (NOT DEFINED CMAKE_INSTALL_BINDIR)
   set(CMAKE_INSTALL_BINDIR "bin")
 endif ()
@@ -79,6 +96,11 @@ add_subdirectory( src )
 if ( WITH_DOCS )
   add_subdirectory( docs )
 endif ()
+
+configure_file(
+    "${PROJECT_SOURCE_DIR}/extra/set_dense_vars.sh.in"
+    "${PROJECT_SOURCE_DIR}/set_dense_vars.sh" @ONLY
+)
 
 
 ###############################################################################

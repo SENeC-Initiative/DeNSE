@@ -9,9 +9,10 @@ import errno
 import numpy as np
 
 from . import _pygrowth as _pg
-from ._helpers import HashID
+from ._helpers import HashID, nonstring_container
 from .dataIO_swc import ImportSwc
 from .structure.containers import Population
+from .units import *
 
 
 __all__ = [
@@ -40,11 +41,18 @@ def SaveJson(filepath="default", gid=None):
                 raise
     if gid is None:
         gid = _pg.GetNeurons()
-    kernel = _pg.GetKernelStatus()
+
+    kernel  = _pg.GetKernelStatus()
     neurons = _pg.GetStatus(gid)
-    experiment_dict ={}
-    experiment_dict['kernel'] = kernel
-    experiment_dict['neurons']= neurons
+
+    experiment_dict = {}
+
+    experiment_dict['kernel']  = kernel
+    experiment_dict['neurons'] = neurons
+
+    # convert the quantities to strings
+    _q_to_dict(experiment_dict)
+
     with open (os.path.join(filepath,"info.json"), "w") as dumper:
         json.dump(experiment_dict, dumper, sort_keys =True)
 
@@ -135,7 +143,7 @@ def SimulationsFromFolder(simulation_folder):
         simulations= NeuronsFromSimulation(simulation_folder)
     else:
         neuronfiles = [os.path.join(simulation_folder, f) for f in listdir(simulation_folder) if os.path.isdir(os.path.join(simulation_folder, f))]
-        simulations= map(NeuronsFromSimulation, neuronfiles)
+        simulations = map(NeuronsFromSimulation, neuronfiles)
     return simulations
 
 
@@ -191,6 +199,7 @@ def NeuronsFromSimulation(simulation_path):
 
     return neurons
 
+
 def NeuronFromSwcFile(_file, info=None):
     dense_format = {"gid": 0, "data":_file}
     neurons ={0: dense_format}
@@ -226,5 +235,12 @@ def PopulationFromSwc(swc_folder=None, swc_file=None, info=None):
             NeuronsFromSimulation(swc_folder))
 
 
-
-
+def _q_to_dict(dic):
+    for k, v in dic.items():
+        if isinstance(v, Q_):
+            dic[k] = str(v)
+        elif isinstance(v, dict):
+            _q_to_dict(v)
+            dic[k] = v
+        if nonstring_container(v):
+            dic[k] = [str(val) for val in v]

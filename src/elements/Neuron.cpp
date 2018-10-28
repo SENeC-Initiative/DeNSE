@@ -99,16 +99,6 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         gc_model = kernel().neuron_manager.get_default_model();
     }
 
-    //~ #ifndef NDEBUG
-    //~ // this neuron will be initialized with this property and nothing else
-    //~ printf("\n#########################\n"
-    //~ "Neuron initialization: \n"
-    //~ "soma radius: %f  \n",
-    //~ "growth cone model:  %s\n"
-    //~ "use actin waves: %d \n",
-    //~ "num_neurites: %d \n", "#########################\n",
-    //~ details.soma_radius, growth_cone_model_.c_str(), use_actin_waves_);
-    //~ #endif
     // initialize the soma giving the position of neuron
     //@TODO move the neuron in a new position with all the branches
     auto pos_x = status.find("x");
@@ -131,12 +121,14 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     GCPtr axon_gc     = gc_model;
     GCPtr dendrite_gc = gc_model;
     std::string model_name;
+
     auto it = astatus.find(names::growth_cone_model);
     if (it != astatus.end())
     {
         get_param(astatus, names::growth_cone_model, model_name);
         axon_gc = kernel().neuron_manager.get_model(model_name);
     }
+
     it = dstatus.find(names::growth_cone_model);
     if (it != dstatus.end())
     {
@@ -184,15 +176,11 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     {
         new_neurite("axon", "axon", axon_gc, rnd_engine);
         set_neurite_status("axon", local_axon_params);
-        //@TODO double neurite set status here
-        // printf("\n neurite axon: size %li", neurites_.size());
     }
     for (auto name : neurite_names)
     {
         new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
         set_neurite_status("dendrite", local_dendrites_params);
-        //@TODO double neurite set status here
-        // printf("\n neurite dendrite: size %li", neurites_.size());
     }
 }
 
@@ -306,7 +294,8 @@ std::string Neuron::new_neurite(const std::string &name,
     NeuronWeakPtr my_weak_ptr =
         std::dynamic_pointer_cast<Neuron>(shared_from_this());
     neurites_.insert(
-        {name, std::make_shared<Neurite>(name, neurite_type, my_weak_ptr)});
+        {name, std::make_shared<Neurite>(name, neurite_type, growth_cone_model_,
+                                         my_weak_ptr)});
 
     //#####################################
     // add first growth cone to the neurite
@@ -323,12 +312,28 @@ std::string Neuron::new_neurite(const std::string &name,
     {
         if (neurite_angles_.find(name) != neurite_angles_.end())
         {
-            printf("axon angle given\n");
             angle = neurite_angles_[name] + rnd_angle_;
             Point position = get_position();
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
+
+            contained =
+                kernel().space_manager.env_contains(cone_start_point, omp_id);
+
+            char sgn = uniform_(*(rnd_engine).get()) > 0.5 ? 1 : -1;
+
+            while (not contained)
+            {
+                angle         += sgn*0.1;
+                axon_angle_    = angle;
+                neurite_angles_["axon"] = axon_angle_;
+                cone_start_point =
+                    Point(position.at(0) + details.soma_radius * cos(angle),
+                          position.at(1) + details.soma_radius * sin(angle));
+                contained =
+                    kernel().space_manager.env_contains(cone_start_point, omp_id);
+            }
         }
         else
         {
@@ -372,6 +377,22 @@ std::string Neuron::new_neurite(const std::string &name,
             cone_start_point =
                 Point(position.at(0) + details.soma_radius * cos(angle),
                       position.at(1) + details.soma_radius * sin(angle));
+
+            contained =
+                kernel().space_manager.env_contains(cone_start_point, omp_id);
+
+            char sgn = uniform_(*(rnd_engine).get()) > 0.5 ? 1 : -1;
+
+            while (not contained)
+            {
+                angle                   += sgn*0.1;
+                neurite_angles_[name]    = angle;
+                cone_start_point =
+                    Point(position.at(0) + details.soma_radius * cos(angle),
+                          position.at(1) + details.soma_radius * sin(angle));
+                contained =
+                    kernel().space_manager.env_contains(cone_start_point, omp_id);
+            }
         }
         else
         {
@@ -491,15 +512,119 @@ void Neuron::next_actin_event(mtPtr rnd_engine)
 
 void Neuron::set_status(const statusMap &status)
 {
-    get_param(status, names::soma_radius, details.soma_radius);
-    get_param(status, names::axon_diameter, details.axon_diameter);
-    get_param(status, names::dendrite_diameter, details.dendrite_diameter);
-    //@TODO change the growth cone_model during the growth
-    get_param(status, names::growth_cone_model, growth_cone_model_);
-    get_param(status, names::random_rotation_angles, random_rotation_angles_);
-    if (get_param(status, names::axon_angle, axon_angle_))
+    double sr, ad, dd, aa;
+    bool bsr, bad, bdd, baa;
+
+    bool has_neurites = neurites_.size() > 0;
+    bool sim_started  = (kernel().simulation_manager.get_time() != Time());
+
+    bsr = get_param(status, names::soma_radius, sr);
+    if (bsr and sr != details.soma_radius)
     {
-        axon_angle_set_ = true;
+        if (has_neurites)
+        {
+            throw InvalidArg("Cannot change the soma size for neuron " +
+                             std::to_string(gid_) +
+                             " after neurites have been created.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            details.soma_radius = sr;
+        }
+    }
+
+    bad = get_param(status, names::axon_diameter, ad);
+    if (bad and ad != details.axon_diameter)
+    {
+        if (sim_started)
+        {
+            throw InvalidArg("Cannot change the axon diameter for neuron " +
+                             std::to_string(gid_) +
+                             " after simulation start.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            details.axon_diameter = ad;
+        }
+    }
+
+    bdd = get_param(status, names::dendrite_diameter, dd);
+    if (bdd and dd != details.dendrite_diameter)
+    {
+        if (sim_started)
+        {
+            throw InvalidArg("Cannot change the axon diameter for neuron " +
+                             std::to_string(gid_) +
+                             " after simulation start.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            details.dendrite_diameter = dd;
+        }
+    }
+
+    //@TODO change the growth cone_model during the growth
+    std::string gc_model;
+    bool gc_change = get_param(status, names::growth_cone_model, gc_model);
+    if (gc_change and gc_model != growth_cone_model_)
+    {
+        if (has_neurites)
+        {
+            throw InvalidArg("Cannot change the growth cone model for neuron " +
+                             std::to_string(gid_) +
+                             " after neurites have been created.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            growth_cone_model_ = gc_model;
+        }
+    }
+
+    get_param(status, names::random_rotation_angles, random_rotation_angles_);
+
+    auto nit = neurites_.find("axon");
+    baa      = get_param(status, names::axon_angle, aa);
+    baa     *= (aa != axon_angle_);
+    if (baa)
+    {
+        if (nit !=neurites_.end())
+        {
+            throw InvalidArg("Cannot change the axon angle for neuron " +
+                             std::to_string(gid_) +
+                             " after axon has been created.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            axon_angle_     = aa;
+            axon_angle_set_ = true;
+        }
+    }
+
+    auto it = status.find("x");
+    if (it != status.end())
+    {
+        double x, y;
+        get_param(status, "x", x);
+        get_param(status, "y", y);
+
+        Point p = Point(x, y);
+
+        if (has_neurites and p != get_position())
+        {
+            throw InvalidArg("Cannot change the position of neuron " +
+                             std::to_string(gid_) +
+                             " after neurites have been created.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            soma_->set_position(p);
+        }
     }
 
     //@TODO implement actin waves

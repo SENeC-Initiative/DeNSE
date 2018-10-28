@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import nngt
 
 import dense as ds
+from dense.units import *
 
 
 def CleanFolder(tmp_dir, make=True):
@@ -40,22 +41,22 @@ neuron_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-    "sensing_angle": 0.18,
-    "speed_growth_cone": .6,
+    "sensing_angle": 0.18 *rad,
+    "speed_growth_cone": .6 * um / minute,
     "filopodia_wall_affinity": 20.,
-    "filopodia_finger_length": 25.,
+    "filopodia_finger_length": 25. * um,
     "filopodia_min_number": 30,
-    "persistence_length" : 0.7,
+    "persistence_length" : 22. * um,
 
-    "soma_radius": soma_radius,
+    "soma_radius": soma_radius * um,
 }
 
 dendrite_params = {
     "use_van_pelt": True,
     "growth_cone_model": gc_model,
-    "speed_growth_cone": 0.06,
+    "speed_growth_cone": 0.06 * um / minute,
     "filopodia_wall_affinity": 0.00,
-    "persistence_length" : 0.1
+    "persistence_length" : 2. * um
 }
 
 
@@ -65,13 +66,11 @@ Check for optional parameters
 
 if use_run_tumble:
     neuron_params = {
-        "persistence_length":12.
+        "persistence_length":12. * um
     }
 
 if use_uniform_branching:
-    neuron_params["uniform_branching_rate"] = 0.001
-
-
+    neuron_params["uniform_branching_rate"] = 0.001 * cpm
 
 
 '''
@@ -91,7 +90,7 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 30.}
+              "resolution": 30. * minute}
     # ~ kernel={"seeds":[33],
     # ~ "num_local_threads": 1,
     # ~ "resolution": 30.}
@@ -108,32 +107,32 @@ if __name__ == '__main__':
         culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=300, soma_radius=soma_radius, ymax=-500)
+            neurons=50, soma_radius=soma_radius, ymax=-500)
         pos_right = culture.seed_neurons(
-            neurons=300, soma_radius=soma_radius, ymin=500)
-        neuron_params['position'] = np.concatenate((pos_right, pos_left))
+            neurons=50, soma_radius=soma_radius, ymin=500)
+        neuron_params['position'] = np.concatenate((pos_right, pos_left)) * um
         # neuron_params['position'] = pos_right
     else:
-        neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
+        neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=600, growth_cone_model="persistent_rw_critical",
+    gids = ds.CreateNeurons(n=100, growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=4)
 
     start = time.time()
-    step(10, 0, True)
-    step(4000, 0, False)
+    step(1* day, 0, True)
+    step(5 * day, 0, True)
 
-    dendrite_params.update({"speed_growth_cone" : 0.001,
+    dendrite_params.update({"speed_growth_cone" : 0.001 * um / minute,
                             "use_van_pelt" : False})
 
-    axon_params = {"speed_growth_cone" : 0.7,
+    axon_params = {"speed_growth_cone" : 0.7 * um /minute,
                             "use_van_pelt" : False,
-                   'B' : 10.,
-                   'T' : 1000.,
+                   'B' : 10. * cpm,
+                   'T' : 1000. * minute,
                    'E' : 0.7}
     ds.SetStatus(gids,
                         params=neuron_params,

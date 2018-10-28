@@ -6,18 +6,19 @@
 from libc.stdlib cimport malloc, free
 import ctypes
 
-import types
 from collections import Iterable, namedtuple
 import datetime
+import types
+import warnings
 
+import pint
 import numpy as np
 cimport numpy as np
 
 from .geometry import Shape
+from .units import ureg
 from ._helpers import *
 from ._pygrowth cimport *
-
-#~ include "_cgrowth.pxi"
 
 
 __all__ = [
@@ -96,9 +97,10 @@ def finalize():
 # Main functions #
 # -------------- #
 
-def CreateNeurons(n=1, growth_cone_model="default", params=None,
+def CreateNeurons(n=1, growth_cone_model=None, params=None,
                   axon_params=None, dendrites_params=None, num_neurites=0,
-                  culture=None, on_area=None, return_ints=False, **kwargs):
+                  culture=None, on_area=None, neurites_on_area=False,
+                  return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -122,13 +124,25 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
-        Restrict the space where neurons while be randomly seeded to an
+        Restrict the space where neurons will be randomly seeded to an
         area or a set of areas.
+    neurites_on_area : bool, str, area, or list, optional (default: False)
+        Restrict the points where neurites will extend from the soma. This is
+        typically used to account for the fact that when seeded on patterned
+        surfaces, neurons will extend their neurites only on the patterns.
+        If `True`, then `on_area` must be set and the same area will be used.
+        If `False`, neurite are not constrained.
     return_ints : bool, optional (default: False)
         Whether the neurons are returned as :class:`Neuron` objects or simply
         as integers (the neuron gids).
 
+    Returns
+    -------
+    neurons : tuple of :class:`Neuron` objects or of ints
+        GIDs of the objects created.
+
     Example
+    -------
     Creating one neuron: ::
 
         neuron_prop = {
@@ -140,25 +154,44 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
             params=neuron_prop, num_neurites=3, # axon + 2 dendrites
             axon_params=axon_prop)
 
-    Notes
-    -----
+    Note
+    ----
     When specifying `num_neurites`, the first neurite created is an axon, the
     subsequent neurites are dendrites.
-
-    Returns
-    -------
-    neurons : tuple of :class:`Neuron` objects or of ints
-        GIDs of the objects created.
     '''
-    params       = {} if params is None else params
-    ax_params    = {} if axon_params is None else axon_params
-    dend_params  = {} if dendrites_params is None else dendrites_params
+    params       = {} if params is None else params.copy()
+    ax_params    = {} if axon_params is None else axon_params.copy()
+    dend_params  = {} if dendrites_params is None else dendrites_params.copy()
     env_required = GetKernelStatus("environment_required")
     # num_neurites must go in kwargs because it can be a list or an int
     kwargs['num_neurites'] = num_neurites
+    # check kwargs for its values
+    authorized = {"num_neurites": None, "rnd_pos": None}
+    for k in kwargs:
+        if k not in authorized:
+            # turn off filter temporarily
+            warnings.simplefilter('always', RuntimeWarning)
+            message = "Unused keyword argument '" + k + "'."
+            warnings.warn(message, category=RuntimeWarning)
+            warnings.simplefilter('default', RuntimeWarning)
+
+    growth_cone_model = \
+        "default" if growth_cone_model is None else growth_cone_model
+
+    # set growth_cone_model for neurites if not present
+    if "growth_cone_model" not in params:
+        params["growth_cone_model"] = growth_cone_model
+    if "growth_cone_model" not in ax_params:
+        ax_params["growth_cone_model"] = \
+            params.get("growth_cone_model", growth_cone_model)
+    if "growth_cone_model" not in dend_params:
+        dend_params["growth_cone_model"] = \
+            params.get("growth_cone_model", growth_cone_model)
+
+    environment = GetEnvironment()
 
     if env_required:
-        culture = GetEnvironment() if culture is None else culture
+        culture = environment if culture is None else culture
     if culture is None:
         assert env_required is False, \
             "Environment is required but culture was not initialized. " + \
@@ -168,6 +201,9 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
         assert env_required is True, \
             "Provided culture but no environment is required. " + \
             "To use one, call `SetKernelStatus('environment_required', True)`."
+        assert environment.contains(culture), \
+            "The shape provided with `culture` is not contained is the " + \
+            "total environment."
 
     # seed neurons on random positions or get position from `params`?
     rnd_pos = kwargs.get("rnd_pos", False)
@@ -184,23 +220,71 @@ def CreateNeurons(n=1, growth_cone_model="default", params=None,
             else:
                 raise ArgumentError("'position' entry in `params` required.")
 
+    if neurites_on_area:
+        # neurite angles will have to be preseved
+        params["random_rotation_angles"] = False
+
+        if params.get("neurite_angles", []):
+            raise ValueError("Cannot use `neurites_on_area` together with "
+                             "`neurite_angles`, choose one or the other.")
+
     # check parameters
-    _check_params(params, "neuron")
-    _check_params(ax_params, "axon")
-    _check_params(dend_params, "dendrite")
+    _check_params(params, "neuron", gc_model=params["growth_cone_model"])
+    _check_params(ax_params, "axon", gc_model=ax_params["growth_cone_model"])
+    _check_params(dend_params, "dendrite",
+                  gc_model=dend_params["growth_cone_model"])
 
     if isinstance(params, dict):
-        params = _neuron_param_parser(
+        params = neuron_param_parser(
             params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
+
+        # check for specific neurite angles
+        if neurites_on_area:
+            area = get_area(
+                on_area if neurites_on_area is True else neurites_on_area,
+                culture)
+
+            pos = params["position"]
+
+            ssizes = params["soma_radius"]
+            if not nonstring_container(ssizes):
+                ssizes = [ssizes for _ in range(n)]
+
+            nangles      = []
+            num_neurites = []
+
+            for s, p in zip(ssizes, pos):
+                angles = get_neurite_angles(p, s, area)
+                nangles.append(angles)
+                num_neurites.append(len(angles))
+
+            params["neurite_angles"] = nangles
+            params["num_neurites"]   = num_neurites
+
         return _create_neurons(
             params, ax_params, dend_params, kwargs, n, return_ints)
     else:
         if len(params) != n:
             raise RuntimeError("`n` is different from params list size.")
         gids = []
+
+        # prepare area if neurites_on_area
+        area = get_area(
+            on_area if neurites_on_area is True else neurites_on_area,
+            culture)
+            
         for param in params:
-            param = _neuron_param_parser(
+            param = neuron_param_parser(
                 param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
+
+            # check for specific neurite angles
+            if neurites_on_area:
+                pos     = params["position"]
+                ssize   = params["soma_size"]
+
+                param["neurite_angles"] = get_neurite_angles(pos, ssize, area)
+                param["num_neurites"]   = len(param["neurite_angles"])
+
             gids.append(
                 _create_neurons(
                     param, ax_params, dend_params, kwargs, 1, return_ints))
@@ -391,6 +475,12 @@ def GetKernelStatus(property_name=None):
         statusMap c_status = get_kernel_status()
     if property_name is None:
         return _statusMap_to_dict(c_status, with_time=True)
+    elif property_name == "time":
+        dict_time = {}
+        for unit in time_units:
+            dict_time[unit] = _property_to_val(
+                c_status[_to_bytes(unit)]).magnitude
+        return Time(**dict_time)
     else:
         property_name = _to_bytes(property_name)
         return _property_to_val(c_status[property_name])
@@ -430,7 +520,7 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
     time_units : str, optional (default: hours)
         Unit for the time, among "seconds", "minutes", "hours", and "days".
     return_iterable : bool, optional (default: False)
-        If true, returns a dict or an array, even if only one gid is passed. 
+        If true, returns a dict or an array, even if only one gid is passed.
 
     Returns
     -------
@@ -448,7 +538,7 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
     '''
     cdef:
         statusMap c_status
-        string clevel, event_type, ctime_units
+        string clevel, cneurite, event_type, ctime_units
 
     valid_time_units = ("seconds", "minutes", "hours", "days")
     assert time_units in valid_time_units, \
@@ -461,24 +551,37 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
         gids = vector[size_t](1, <size_t>gids)
     for gid in gids:
         if GetObjectType(gid) == "neuron":
+            # get level
             if level is None and neurite is None:
                 clevel = _to_bytes("neuron")
             elif level is None and neurite is not None:
                 clevel = _to_bytes("neurite")
             else:
                 clevel = _to_bytes(level)
+
+            # combine with `neurite`
             if neurite in _get_neurites(gid) or level not in (None, "neuron"):
-                c_status = get_neurite_status(gid, neurite, clevel)
+                # if not specified, get first neurite
+                if neurite is None:
+                    neurite = _get_neurites(gid)[0]
+                cneurite    = _to_bytes(neurite)
+                c_status    = get_neurite_status(gid, cneurite, clevel)
                 status[gid] = _statusMap_to_dict(c_status)
             elif neurite == "dendrites":
-                c_status = get_neurite_status(gid, "dendrites", clevel)
+                cneurite    = _to_bytes("dendrites")
+                c_status    = get_neurite_status(gid, cneurite, clevel)
                 status[gid] = _statusMap_to_dict(c_status)
             else:
-                c_status = get_status(gid)
+                c_status      = get_status(gid)
                 neuron_status = _statusMap_to_dict(c_status)
-                pos = [neuron_status["x"], neuron_status["y"]]
+
+                x_mag = neuron_status["x"].magnitude
+                y_mag = neuron_status["y"].magnitude
+                unit  = neuron_status["x"].units
+                pos   = (x_mag, y_mag)*unit
                 del neuron_status["x"]
                 del neuron_status["y"]
+
                 neuron_status["position"] = tuple(pos)
                 neuron_status["axon_params"] = _statusMap_to_dict(
                     get_neurite_status(gid, "axon", "neurite"))
@@ -560,7 +663,7 @@ def GetNeurons(as_ints=False):
         return Population.from_gids(get_neurons())
 
 
-def GetDefaults(object_name, settables=False):
+def GetDefaults(object_name, settables=False, detailed=False):
     '''
     Returns the default status of an object.
 
@@ -570,6 +673,10 @@ def GetDefaults(object_name, settables=False):
         Name of the object, e.g. "recorder", or "persistant_random_walk".
     settables : bool, optional (default: False)
         Return only settable values; read-only values are hidden.
+    detailed : bool, optional (default: False)
+        If True, returns some of the options available for the substructures
+        (e.g. for a neuron, also returns the options of the neurite and growth
+        cone).
 
     Returns
     -------
@@ -593,7 +700,7 @@ def GetDefaults(object_name, settables=False):
                            "Candidates are 'recorder' and all entries in "
                            "GetModels.")
 
-    get_defaults(cname, ctype, default_params)
+    get_defaults(cname, ctype, "default", detailed, default_params)
     status = _statusMap_to_dict(default_params)
 
     py_type = _to_string(ctype)
@@ -604,7 +711,7 @@ def GetDefaults(object_name, settables=False):
                 del status[unset]
 
     if py_type == "neuron":
-        status["position"] = (0., 0.)
+        status["position"] = (0., 0.)*ureg.um
         del status["x"]
         del status["y"]
 
@@ -661,7 +768,7 @@ def GetRecording(recorder, record_format="detailed"):
     >>>     "times": [...]}}
     '''
     recording   = {}
-    ctime_units = "seconds"
+    ctime_units = "minutes"
 
     if not nonstring_container(recorder):
         recorder = [recorder]
@@ -769,8 +876,10 @@ def ResetKernel():
     reset_kernel()
 
 
-def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
-                   parent=None, interpolate_curve=50):
+def SetEnvironment(culture, min_x=None, max_x=None, unit='um',
+                   parent=None, interpolate_curve=50,
+                   internal_shapes_as="holes", default_properties=None,
+                   other_properties=None):
     """
     Create the culture environment
 
@@ -791,10 +900,25 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
     interpolate_curve : int, optional (default: 50)
         Number of points used to approximate a curve. Used only when
         loading the culture from a file.
+    internal_shapes_as : str, optional (default: "holes")
+        Defines how additional shapes contained in the main environment should
+        be processed. If "holes", then these shapes are substracted from the
+        main environment; if "areas", they are considered as areas.
+    default_properties : dict, optional (default: None)
+        Properties of the default area of the culture.
+    other_properties : dict, optional (default: None)
+        Properties of the non-default areas of the culture (internal shapes if
+        `internal_shapes_as` is set to "areas").
 
     Returns
     -------
-    culture
+    culture : :class:`~dense.geometry.Shape`
+
+    Note
+    ----
+    The `internal_shapes_as`, `default_properties`, and `other_properties`
+    keyword arguments are only used if `culture` refers to a file which will
+    be loaded through :func:`~dense.geometry.culture_from_file`.
     """
     # make sure that, if neurons exist, their growth cones are not using the
     # `simple_random_walk` model, which is not compatible.
@@ -806,11 +930,14 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
                 "The `simple_random_walk` model, is not compatible with " +\
                 "complex environments."
 
-    if _is_string(culture):
+    if is_string(culture):
         from .geometry import culture_from_file
         culture = culture_from_file(
             culture, min_x=min_x, max_x=max_x, unit=unit,
-            interpolate_curve=interpolate_curve)
+            interpolate_curve=interpolate_curve,
+            internal_shapes_as=internal_shapes_as,
+            default_properties=default_properties,
+            other_properties=other_properties)
     cdef:
         GEOSGeometry* geos_geom
         vector[GEOSGeometry*] c_areas
@@ -830,6 +957,8 @@ def SetEnvironment(culture, min_x=-5000., max_x=5000., unit='um',
     geos_geom = geos_from_shapely(culture)
 
     set_environment(geos_geom, c_areas, heights, names, properties)
+
+    culture._return_quantity = True
 
     return culture
 
@@ -871,21 +1000,35 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         string c_simulation_ID = _to_bytes(simulation_ID)
 
     if value is not None:
-        assert _is_string(status), "When using `value`, status must be the " +\
+        assert is_string(status), "When using `value`, status must be the " +\
             "name of the kernel property that will be set."
+        assert status in GetKernelStatus(), "`" + status + "` option unknown."
         if status == "environment_required" and value is True:
             # make sure that, if neurons exist, their growth cones are not using
             # the `simple_random_walk` model, which is not compatible.
             neurons = GetNeurons()
             if neurons:
                 for n in neurons:
-                    assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
-                        "The `simple_random_walk` model, is not compatible with " +\
-                        "complex environments."
+                    assert GetStatus(
+                        n, "growth_cone_model") != "simple_random_walk", \
+                        "The `simple_random_walk` model, is not compatible " +\
+                        "with complex environments."
+        elif status == "resolution":
+            assert isinstance(value, ureg.Quantity), \
+                "`resolution` must be a time quantity."
+            value = value.m_as("minute")
         key = _to_bytes(status)
         c_prop = _to_property(key, value)
         c_status.insert(pair[string, Property](key, c_prop))
     else:
+        for key, value in status.items():
+            assert key in GetKernelStatus(), \
+                "`" + key + "` option unknown."
+            if key == "resolution":
+                assert isinstance(value, ureg.Quantity), \
+                    "`resolution` must be a time quantity."
+                status[key] = value.m_as("minute")
+
         if status.get("environment_required", False):
             # make sure that, if neurons exist, their growth cones are not using
             # the `simple_random_walk` model, which is not compatible.
@@ -895,6 +1038,7 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
                     assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
                         "The `simple_random_walk` model, is not compatible with " +\
                         "complex environments."
+
         for key, value in status.items():
             key = _to_bytes(key)
             if c_status_old.find(key) == c_status.end():
@@ -947,9 +1091,43 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
         base_dend_status = _get_scalar_status(dendrites_params, num_objects)
 
     # check parameters
-    for gid, p in zip(gids, it_p):
-        object_name = GetObjectType(gid)
-        _check_params(p, object_name)
+    if it_a and it_d:
+        for gid, p, p_a, p_d in zip(gids, it_p, it_a, it_d):
+            object_name  = GetObjectType(gid)
+            def_model    = p.get("growth_cone_model", "default")
+            _check_params(p, object_name)
+
+            astat        = GetStatus(gid, neurite="axon")
+            old_gc_model = astat["growth_cone_model"] if astat else def_model
+            gc_model     = p.get("growth_cone_model", old_gc_model)
+            _check_params(p_a, "neurite", gc_model=gc_model)
+
+            dstat        = GetStatus(gid, neurite="dendrites")
+            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
+            gc_model     = p.get("growth_cone_model", old_gc_model)
+            _check_params(p_d, "neurite", gc_model=gc_model)
+    elif it_a:
+        for gid, p, p_a in zip(gids, it_p, it_a):
+            object_name  = GetObjectType(gid)
+            def_model    = p.get("growth_cone_model", "default")
+            astat        = GetStatus(gid, neurite="axon")
+            old_gc_model = astat["growth_cone_model"] if astat else def_model
+            gc_model     = p.get("growth_cone_model", old_gc_model)
+            _check_params(p, object_name)
+            _check_params(p_a, "neurite", gc_model=gc_model)
+    elif it_d:
+        for gid, p, p_d in zip(gids, it_p, it_d):
+            object_name  = GetObjectType(gid)
+            def_model    = p.get("growth_cone_model", "default")
+            dstat        = GetStatus(gid, neurite="dendrites")
+            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
+            gc_model     = p.get("growth_cone_model", old_gc_model)
+            _check_params(p, object_name)
+            _check_params(p_d, "neurite", gc_model=gc_model)
+    else:
+        for gid, p in zip(gids, it_p):
+            object_name = GetObjectType(gid)
+            _check_params(p, object_name)
 
     cdef:
         vector[statusMap] neuron_statuses = \
@@ -983,26 +1161,22 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
                    dendrites_statuses[i])
 
 
-def Simulate(seconds=0., minutes=0, hours=0, days=0, force_resol=False):
+def Simulate(time, force_resol=False):
     '''
     Simulate the growth of a culture.
 
     Parameters
     ----------
-    seconds : float or int, optional (default: 0.)
-        Number of seconds that should be simulated.
-    minutes : float or int, optional (default: 0)
-        Number of minutes that should be simulated.
-    hours : float or int, optional (default: 0)
-        Number of hours that should be simulated.
-    days : float or int, optional (default: 0)
-        Number of days that should be simulated.
+    time : float or int (dimensionned quantity)
+        Duration of the simulation.
 
     Notes
     -----
     All parameters are added, i.e. ``dense.Simulate(25.4, 2)`` will lead
     to a 145.4-second long simulation.
     '''
+    assert is_quantity(time), "`time` must have units."
+
     kernel_status = GetKernelStatus()
     max_resol     = kernel_status["max_allowed_resolution"]
     if kernel_status["resolution"] > max_resol and not force_resol:
@@ -1012,7 +1186,10 @@ def Simulate(seconds=0., minutes=0, hours=0, days=0, force_resol=False):
             + str(max_resol) + " s or change the speed/filopodia of your "
             "neurons.\nThis usually comes from a `speed_growth_cone` or a "
             "`sensing_angle` too high.")
-    s, m, h, d = format_time(seconds, minutes, hours, days)
+    # convert to day, hour, min, sec
+    total_seconds = time.to("seconds").magnitude
+    s, m, h, d = format_time(total_seconds, 0, 0, 0)
+
     # initialize the Time instance
     cdef CTime simtime = CTime(s, m, h, d)
     # launch simulation
@@ -1105,7 +1282,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     base_dendrites_status = _get_scalar_status(dend_params, n)
     # same for neurite number
     neurites = optional_args.get("num_neurites", 0)
-    if _is_scalar(neurites):
+    if is_scalar(neurites):
         if not isinstance(neurites, int) or neurites < 0:
             raise ValueError("`num_neurites` must be a non-negative integer.")
         base_neuron_status[b"num_neurites"] = _to_property(
@@ -1122,15 +1299,19 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     # specific neurite parameters
     _set_vector_status(axon_params, ax_params)
     _set_vector_status(dendrites_params, dend_params)
+
     # if neurites was a list
-    if not _is_scalar(neurites):
+    if not is_scalar(neurites):
         len_val = len(neurites)
         assert len_val == n, "`num_neurites` vector must be of size " + n + "."
         assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
             "be composed only of non-negative integers."
         for i, v in enumerate(neurites):
             neuron_params[i][b"num_neurites"] = _to_property("num_neurites", v)
+
+    # create neurons
     i = create_neurons(neuron_params, axon_params, dendrites_params)
+
     assert i == n, "Internal error: please file a bug report including a " \
                    "minimal working example leading to the bug and the full " \
                    "error message, as well as your Python configuration " \
@@ -1240,19 +1421,6 @@ cpdef str _to_string(byte_string):
     return byte_string
 
 
-def _is_string(value):
-    try:
-        return isinstance(value, (str, bytes, unicode))
-    except:
-        return isinstance(value, (str, bytes))
-
-
-def _is_scalar(value):
-    return (_is_string(value)
-            or isinstance(value, dict)
-            or not isinstance(value, Iterable))
-
-
 cdef Property _to_property(key, value) except *:
     ''' Convert a dict (key, value) pair to a c++ Property '''
     cdef:
@@ -1287,7 +1455,7 @@ cdef Property _to_property(key, value) except *:
         for k, v in value.items():
             c_map[_to_bytes(k)] = v
         cprop = Property(c_map, c_dim)
-    elif nonstring_container(value) and isinstance(value[0], int):
+    elif nonstring_container(value) and isinstance(value[0], (int, np.integer)):
         all_pos = False
         for val in value:
             all_pos *= val >= 0
@@ -1299,11 +1467,7 @@ cdef Property _to_property(key, value) except *:
             for val in value:
                 c_lvec.push_back(val)
             cprop = Property(c_lvec, c_dim)
-    elif isinstance(value, list) and isinstance(value[0], int):
-        for val in value:
-            c_long.push_back(val)
-        cprop = Property(c_lvec, c_dim)
-    elif isinstance(value, Iterable) and isinstance(value[0], str):
+    elif isinstance(value, Iterable) and isinstance(next(iter(value)), str):
         for val in value:
             c_svec.push_back(_to_bytes(val))
         cprop = Property(c_svec, c_dim)
@@ -1320,24 +1484,33 @@ cdef Property _to_property(key, value) except *:
 
 
 cdef _property_to_val(Property c_property):
+    dim = _to_string(c_property.dimension)
+    dim = ureg.parse_expression(dim)
+
+    # convert radians to degrees
+    if dim.units == 'radian':
+        dim = 180./np.pi*ureg.deg
+    elif dim.units == '':
+        dim = 1
+
     if c_property.data_type == BOOL:
         return False if c_property.b == 0 else True
     elif c_property.data_type == DOUBLE:
-        return float(c_property.d)
+        return float(c_property.d)*dim
     elif c_property.data_type == INT:
-        return int(c_property.i)
+        return int(c_property.i)*dim
     elif c_property.data_type == SIZE:
-        return int(c_property.ul)
+        return int(c_property.ul)*dim
     elif c_property.data_type == VEC_SIZE:
-        return list(c_property.uu)
+        return [val*dim for val in c_property.uu]
     elif c_property.data_type == VEC_LONG:
-        return list(c_property.ll)
+        return [val*dim for val in c_property.uu]
     elif c_property.data_type == STRING:
         return _to_string(c_property.s)
     elif c_property.data_type == VEC_STRING:
         return [_to_string(s) for s in c_property.ss]
     elif c_property.data_type == MAP_DOUBLE:
-        return {_to_string(v.first): v.second for v in c_property.md}
+        return {_to_string(v.first): v.second*dim for v in c_property.md}
     else:
         raise RuntimeError("Unknown property type", c_property.data_type)
 
@@ -1366,27 +1539,34 @@ cdef dict _statusMap_to_dict(statusMap& c_status, with_time=False):
 cdef statusMap _get_scalar_status(dict params, int n) except *:
     cdef:
         statusMap status
-        double x, y
+
     for key, val in params.items():
         key = _to_bytes(key)
         # check whether val is scalar
-        scalar = _is_scalar(val)
+        scalar = is_scalar(val)
         if key == b"position":
-            if _is_scalar(val[0]) and n != 1:
+            if is_scalar(val[0]) and n != 1:
                 raise ValueError("Neurons cannot have same position: "
                                  "`position` entry must be a (N,2) array.")
-            elif not _is_scalar(val[0]) and n == 1:
-                x = float(val[0][0])
-                y = float(val[0][1])
+            elif not is_scalar(val[0]) and n == 1:
+                assert is_quantity(val[0][0]), "Positions must have units."
+                x = float(val[0][0].to('micrometer').magnitude)
+                y = float(val[0][1].to('micrometer').magnitude)
                 status[b"x"] = _to_property("x", x)
                 status[b"y"] = _to_property("y", y)
             elif n == 1:
-                x = float(val[0])
-                y = float(val[1])
+                assert is_quantity(val[0]), "Positions must have units."
+                x = float(val[0].to('micrometer').magnitude)
+                y = float(val[1].to('micrometer').magnitude)
                 status[b"x"] = _to_property("x", x)
                 status[b"y"] = _to_property("y", y)
+        elif isinstance(val, dict) and is_scalar(next(iter(val))):
+            new_val = {}
+            for k, v in val.items():
+                new_val[k] = to_cppunit(v, k)
+            status[_to_bytes(key)] = _to_property(key, new_val)
         elif scalar:
-            status[_to_bytes(key)] = _to_property(key, val)
+            status[_to_bytes(key)] = _to_property(key, to_cppunit(val, key))
     return status
 
 
@@ -1394,59 +1574,45 @@ cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                              dict params) except *:
     cdef:
         size_t n = lst_statuses.size()
-        size_t len_val
+        size_t len_val, len_v, i
+
     for key, val in params.items():
         key = _to_bytes(key)
         if key == b"position":
-            if not _is_scalar(val[0]):
+            if not is_scalar(val[0]):
+                assert is_quantity(val), "Positions must have units."
                 # cast positions to floats (ints lead to undefined behavior)
-                val = np.array(val).astype(float, copy=False)
+                val = np.array(val.to('micrometer')).astype(float, copy=False)
                 assert val.shape == (n, 2), "Positions array must be of " +\
                                             "shape (N, 2)."
                 for i in range(n):
                     lst_statuses[i][b"x"] = _to_property("x", val[i][0])
                     lst_statuses[i][b"y"] = _to_property("y", val[i][1])
-        else:
-            if not _is_scalar(val):
-                len_val = len(val)
-                assert len_val == n, \
-                    "`{}` vector must be of size {}.".format(key.decode(), n)
-                for i, v in enumerate(val):
-                    lst_statuses[i][key] = _to_property(key, v)
-
-
-def _neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
-    if culture is None:
-        if rnd_pos:
-            raise RuntimeError("Cannot seed neurons randomly in space when "
-                               "no spatial environment exists.")
-        if "position" not in param:
-                raise RuntimeError("`position` entry required in `params` if "
-                                   "no `culture` is provided.")
-    elif rnd_pos:
-        container = culture
-        if on_area is not None:
-            if _is_scalar(on_area):
-                container = culture.areas[on_area]
+        elif isinstance(val, dict):
+            if not is_scalar(next(iter(val))):
+                for k, v in val.items():
+                    len_v = len(v)
+                    assert len_v == n, \
+                        "Vectors in `{}` dict must be of size {}.".format(
+                            key.decode(), n)
+                new_val = {}
+                for k, v in val.items():
+                    new_val[k] = to_cppunit(v, k)
+                di_keys = list(new_val.keys())
+                for i in range(n):
+                    new_dict = {k: new_val[k][i] for k in di_keys}
+                    lst_statuses[i][key] = _to_property(key, new_dict)
+        elif not is_scalar(val):
+            len_val = len(val)
+            assert len_val == n, \
+                "`{}` vector must be of size {}.".format(key.decode(), n)
+            if isinstance(val[0], dict):
+                for i, dic in enumerate(val):
+                    val[i] = {k: to_cppunit(v, k) for k, v in dic.items()}
             else:
-                from shapely.geometry import Point
-                container = Point()
-                for name in on_area:
-                    container = container.union(culture.areas[name])
-        sradius = 0.
-        if "soma_radius" in param:
-            if nonstring_container(param["soma_radius"]):
-                sradius = np.max(param["soma_radius"])
-            else:
-                sradius = param["soma_radius"]
-        xy = culture.seed_neurons(
-            container=container, neurons=n, soma_radius=sradius)
-        param["position"] = xy
-
-    if "description" not in param:
-        param["description"] = "generic_neuron"
-
-    return param
+                val = to_cppunit(val, key)
+            for i, v in enumerate(val):
+                lst_statuses[i][key] = _to_property(key, v)
 
 
 def _get_recorder_data(gid, recording, rec_status, time_units):
@@ -1463,7 +1629,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
     level      = rec_status["level"]
     ev_type    = rec_status["event_type"]
     observable = rec_status["observable"]
-    resolution = GetKernelStatus("resolution")
+    resolution = GetKernelStatus("resolution").m_as("minute")
 
     res_obs   = {}    # data for the observable
     res_times = None  # times (only one if "continuous", else dict)
@@ -1542,7 +1708,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                     res_obs[neuron][neurite]   = {}
                     res_times[neuron][neurite] = {}
                 # fill data
-                res_obs[neuron][neurite][gc] = data
+                res_obs[neuron][neurite][gc] = np.array(data)
                 if ev_type == "discrete":
                     res_times[neuron][neurite][gc] = times
                 else:
@@ -1632,23 +1798,78 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
     # valid_levels is defined in _helpers.py
     pos_auto  = []
     new_level = []
-    for i, (level, obs) in enumerate(zip(levels, observables)):
+    for i, (level, obs, rt) in enumerate(zip(levels, observables, restrict_to)):
         for n in targets:
-            if level == "auto":
+            if rt is not None:
+                # we work at neurite or gc level
+                if level == "auto":
+                    for new_lvl in ("neurite", "growth_cone"):
+                        valid_obs = GetStatus(n, "observables", neurite=rt,
+                                              level=new_lvl)
+                        if obs in valid_obs:
+                            pos_auto.append(i)
+                            new_level.append(new_lvl)
+                            break
+                else:
+                    valid_obs = GetStatus(n, "observables", neurite=rt,
+                                          level=level)
+                    if obs not in valid_obs:
+                        raise RuntimeError(
+                            "Valid observables for neurite `"
+                            "{}` at level `{}` are {}".format(
+                                rt, level, valid_obs))
+            elif level == "auto":
                 # we get the highest level to replace "auto"
                 for new_lvl in ("neuron", "neurite", "growth_cone"):
-                    valid_obs = GetStatus(n, "observables", level=new_lvl)
+                    valid_obs = []
+                    if new_lvl in ("neurite", "growth_cone"):
+                        neurites =  _get_neurites(n)
+                        if "axon" in neurites:
+                            valid_obs  = set(
+                                GetStatus(n, "observables", neurite="axon",
+                                          level=new_lvl))
+                            neurites = [nrt for nrt in neurites if nrt != "axon"]
+                            if neurites:
+                                valid_obs = valid_obs.intersection(
+                                    GetStatus(n, "observables",
+                                        neurite="dendrites", level=new_lvl))
+                        elif neurites:
+                            valid_obs = GetStatus(n, "observables",
+                                                  neurite="dendrites",
+                                                  level=new_lvl)
+                    else:
+                        valid_obs = GetStatus(n, "observables", level=new_lvl)
                     if obs in valid_obs:
                         pos_auto.append(i)
                         new_level.append(new_lvl)
                         break
-            elif obs not in GetStatus(n, "observables", level=level):
-                valid_lvl = []
-                for k, v in valid_levels.items():
-                    if obs in v:
-                        valid_lvl.append(k)
-                raise RuntimeError("Valid levels for observable "
-                                   "'{}' are {}.".format(obs, valid_lvl))
+            elif level in ("neurite", "growth_cone"):
+                valid_obs = []
+                neurites  =  _get_neurites(n)
+                if "axon" in neurites:
+                    valid_obs  = set(
+                        GetStatus(n, "observables", neurite="axon",
+                                  level=level))
+                    neurites = [nrt for nrt in neurites if nrt != "axon"]
+                    if neurites:
+                        valid_obs = valid_obs.intersection(GetStatus(
+                            n, "observables", neurite="dendrites",
+                            level=level))
+                elif neurites:
+                    valid_obs = GetStatus(n, "observables",
+                                          neurite="dendrites",
+                                          level=level)
+                if obs not in valid_obs:
+                    raise RuntimeError("Valid observables at level `"
+                                       "{}` are {}".format(level, valid_obs))
+            else:
+                if obs not in GetStatus(n, "observables", level=level):
+                    valid_lvl = []
+                    for k, v in valid_levels.items():
+                        if obs in v:
+                            valid_lvl.append(k)
+                    raise RuntimeError("Valid levels for observable "
+                                       "'{}' are {}.".format(obs, valid_lvl))
 
     # update the "auto" levels
     for pos, lvl in zip(pos_auto, new_level):
@@ -1696,13 +1917,14 @@ cdef void _set_recorder_status(
         status[b"restrict_to"] = _to_property("restrict_to", restrict_to)
 
 
-def _check_params(params, object_name):
+def _check_params(params, object_name, gc_model="default"):
     '''
     Check the types and validity of the parameters passed.
     '''
     cdef:
         string ctype
         string cname = _to_bytes(object_name)
+        string cgcmodel = _to_bytes(gc_model)
         statusMap default_params
         Property prop
 
@@ -1719,7 +1941,8 @@ def _check_params(params, object_name):
                            "Candidates are 'recorder' and all entries in "
                            "GetModels.")
 
-    get_defaults(cname, ctype, default_params)
+    get_defaults(cname, ctype, cgcmodel, True, default_params)
+    py_defaults = _statusMap_to_dict(default_params)
 
     if ("growth_cone_model" in params):
         # when trying to create simple random walkers, check that the
@@ -1729,50 +1952,92 @@ def _check_params(params, object_name):
                 "The `simple_random_walk` model cannot be used with a " +\
                 "complex environment."
         get_defaults(_to_bytes(params["growth_cone_model"]),
-                     _to_bytes("growth_cone"), default_params)
+                     _to_bytes("growth_cone"),
+                     _to_bytes(params["growth_cone_model"]), False,
+                     default_params)
 
     py_defaults = _statusMap_to_dict(default_params)
 
+    if "axon_params" in py_defaults:
+        py_defaults.update(py_defaults["axon_params"])
+    if "dendrites_params" in py_defaults:
+        py_defaults.update(py_defaults["dendrites_params"])
+
     for key, val in params.items():
         if key in py_defaults:
-            prop = default_params[_to_bytes(key)]
+            py_value = py_defaults[key]
+            prop     = default_params[_to_bytes(key)]
             if prop.data_type == BOOL:
                 assert val is True or val is False or val == 0 or val == 1, \
                     "'{}' should be boolean.".format(key)
-            elif prop.data_type == DOUBLE:
-                assert isinstance(val, (float, np.floating)), \
-                    "'{}' should be float.".format(key)
-            elif prop.data_type == INT:
-                assert isinstance(val, (int, np.integer)), \
-                    "'{}' should be integer.".format(key)
-            elif prop.data_type == SIZE:
-                assert isinstance(val, (int, np.integer)) and val >= 0, \
-                    "'{}' should be positive integer.".format(key)
-            elif prop.data_type in (VEC_SIZE, VEC_LONG):
-                assert nonstring_container(val), \
-                    "'{}' should be a list.".format(key)
-                if val:
-                    for v in val:
-                        assert isinstance(v, (int, np.integer)), \
-                            "'{}' values should be integers.".format(key)
             elif prop.data_type == STRING:
-                assert _is_string(val), "'{}' should be a string.".format(key)
+                assert is_string(val), "'{}' should be a string.".format(key)
             elif prop.data_type == VEC_STRING:
                 assert nonstring_container(val), \
                     "'{}' should be a list.".format(key)
                 if val:
                     for v in val:
-                        assert _is_string(v), \
+                        assert is_string(v), \
                             "'{}' values should be a string.".format(key)
             elif prop.data_type == MAP_DOUBLE:
                 assert isinstance(val, dict), \
                     "'{}' should be a dict.".format(key)
                 for k, v in val.items():
-                    assert _is_string(k), "dict keys must be strings."
+                    assert is_string(k), "dict keys must be strings."
+                    if isinstance(v, ureg.Quantity):
+                        v = v.magnitude
                     assert isinstance(v, (float, np.floating)), \
                         "dict values must be floats."
             else:
-                raise RuntimeError("Unknown property type", prop.data_type)
+                # check dimension
+                dim = ""
+                if isinstance(val, ureg.Quantity):
+                    if isinstance(py_value, ureg.Quantity):
+                        assert val.dimensionality == py_value.dimensionality, \
+                            "Expected unit compatible with " +\
+                            "{} but got {} for {}.".format(
+                                py_value.units, val, key)
+                        dim = py_value.units
+                        val = val.to(dim).m
+                    else:
+                        assert val.dimensionless, \
+                            "'{}' should be dimensionless.".format(key)
+                        val = val.m
+                elif isinstance(py_value, ureg.Quantity):
+                        assert not py_value.units in (ureg.deg, ureg.rad), \
+                            "`" + key + \
+                            "` unit must be provided ('deg' or 'rad')."
+                        assert py_value.dimensionless, \
+                            "Expected {}, not ".format(py_value.units) + \
+                            "dimensionless number for {}.".format(key)
+
+                if prop.data_type == DOUBLE:
+                    assert isinstance(val, (float, np.floating)), \
+                        "'{}' should be float.".format(key)
+                elif prop.data_type == INT:
+                    assert isinstance(val, (int, np.integer)), \
+                        "'{}' should be integer.".format(key)
+                elif prop.data_type == SIZE:
+                    assert isinstance(val, (int, np.integer)) and val >= 0, \
+                        "'{}' should be positive integer.".format(key)
+                elif prop.data_type in (VEC_SIZE, VEC_LONG):
+                    assert nonstring_container(val), \
+                        "'{}' should be a list.".format(key)
+                    if val:
+                        for v in val:
+                            assert isinstance(v, (int, np.integer)), \
+                                "'{}' values should be integers.".format(key)
+                elif prop.data_type == MAP_DOUBLE:
+                    assert isinstance(val, dict), \
+                        "'{}' should be a dict.".format(key)
+                    for k, v in val.items():
+                        assert is_string(k), "dict keys must be strings."
+                        if isinstance(v, ureg.Quantity):
+                            v = v.magnitude
+                        assert isinstance(v, (float, np.floating)), \
+                            "dict values must be floats."
+                else:
+                    raise RuntimeError("Unknown property type", prop.data_type)
         else:
             if key not in ("position",):
                 raise KeyError(

@@ -68,6 +68,7 @@ class Point
     Point(const Point &pt);
 
     bool operator==(const Point &other) const;
+    bool operator!=(const Point &other) const;
     Point operator-(const Point &point) const;
     double operator[](const int idx);
     void shift(const double module, const double direction);
@@ -110,22 +111,6 @@ typedef struct Move
     {
     }
 } Move;
-
-
-/*
- * Tools
- */
-
-inline double _rad_from_deg(double deg_angle)
-{
-    return deg_angle / 180. * M_PI;
-}
-
-
-inline double _deg_from_rad(double rad_angle)
-{
-    return rad_angle * 180. / M_PI;
-}
 
 
 /*

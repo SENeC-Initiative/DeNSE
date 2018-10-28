@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import os
+import platform
 import sysconfig
 from distutils.command.build_ext import build_ext
 from setuptools import setup, Extension, find_packages
@@ -27,7 +28,11 @@ except ImportError:
 # compiler options
 
 copt =  {
-    'msvc': ['/openmp', '/O2', '/fp:precise',],
+    'msvc': ['/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',],
+    'mingw': [
+        '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
+        '-ffast-math', '-msse', '-ftree-vectorize', '-O2', '-g', "-fPIC",
+    ],
     'unix': [
         '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
         '-ffast-math', '-msse', '-ftree-vectorize', '-O2', '-g', "-fPIC",
@@ -36,6 +41,8 @@ copt =  {
 
 lopt =  {
     'unix': ['-fopenmp'],
+    'mingw': ['-fopenmp'],
+	'msvc': ['/subsystem:windows', '/machine:x64'],
 }
 
 # custom class
@@ -55,6 +62,8 @@ class CustomBuildExt(build_ext):
         # normalize names
         if "msvc" in c:
             c = "msvc"
+        elif "mingw" in c:
+            c = "mingw"
         else:
             c = "unix"
 
@@ -67,6 +76,8 @@ class CustomBuildExt(build_ext):
         for e in self.extensions:
             e.extra_link_args.extend(lopt.get(c, []))
             e.extra_compile_args.extend(copt.get(c, []))
+            if "cygwin" in platform.system().lower() and c != "msvc":
+                e.extra_compile_args.append("-mdll")
 
         if not @SKIP_BUILD@:
             build_ext.build_extensions(self)
@@ -76,7 +87,7 @@ class CustomBuildExt(build_ext):
 # Extension to link C++ files to python #
 # ------------------------------------- #
 
-mod_name = 'dense'
+mod_name = "@PY_NAME@"
 
 ext = '.pyx' if with_cython else '.cpp'
 
@@ -91,17 +102,18 @@ extensions = Extension(
         '@PROJECT_SOURCE_DIR@/libgrowth',
         '@PROJECT_SOURCE_DIR@/spatial',
         '@PYMODULE_DIR@/' + mod_name,
+		'@GEOS_INCLUDE_DIR@',
         np.get_include()
     ],
     extra_compile_args = [],
     extra_link_args = [],
-    libraries = ['cgrowth'],
-    library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@'],
-    runtime_library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
+    libraries = ['cgrowth'] + (['libgrowth', 'kernel', 'elements', 'spatial'] if @MSVC@ else []),
+    library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@',],
+    runtime_library_dirs = [] if @MSVC@ else ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
 )
 
 if with_cython:
-    extensions = cythonize(extensions, gdb_debug=True)
+    extensions = cythonize(extensions, gdb_debug=(not @MSVC@))
     clean_cpp('@PYMODULE_DIR@/' + mod_name + '/_pygrowth.cpp')
 else:
     extensions = [extensions]
@@ -120,6 +132,7 @@ setup(
 
     # Include the non python files (c++ library):
     package_data = {mod_name: ['*.so', '*.dll', '*.a', '*.dylib', '*.pxd']},
+	include_package_data=False,
 
     ext_modules = extensions,
     cmdclass = {'build_ext': CustomBuildExt},

@@ -1,10 +1,10 @@
-import dense as ng
+import dense as ds
 import nngt
 import matplotlib.pyplot as plt
 
 
 pop = ds.structure.Population.from_swc_population\
-        (ds.NeuronsFromSimulation("2culture_swc_new"))
+        (ds.NeuronsFromSimulation("2culture_swc"))
 
 graph, intersections, synapses = ds.CreateGraph(pop)
 

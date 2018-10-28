@@ -44,6 +44,8 @@ class GrowthCone : public TopologicalNode,
     double adaptive_timestep_;
     double timestep_divider_;
     std::string current_area_; // name of the area where the GC is
+    unsigned char max_stop_;
+    unsigned char current_stop_;
     bool stuck_;
     bool stopped_;
     bool interacting_;

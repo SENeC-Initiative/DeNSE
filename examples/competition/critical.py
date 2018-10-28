@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import dense as ds
+from dense.units import *
 import numpy as np
 import os
 
@@ -22,14 +23,14 @@ gc_model = "run_tumble" if use_run_tumble else "simple_random_walk"
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
 
-    "persistence_length": 80.0,
+    "persistence_length": 80.0 * um,
 
     "filopodia_min_number": 30,
-    "speed_growth_cone": 1.,
+    "speed_growth_cone": 1. * um / minute,
     "sensing_angle": 0.1495,
 
     "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0,
+    "filopodia_finger_length": 50.0 * um,
     "use_flpl_branching": use_uniform_branching,
 
     "use_van_pelt": use_vp,
@@ -39,6 +40,25 @@ neuron_params = {
     "use_critical_resource": use_critical_resource,
 }
 
+axon_params = {
+    # "growth_cone_model": "self_referential_forces",
+
+    "persistence_length": 80.0 * um,
+
+    "filopodia_min_number": 30,
+    "speed_growth_cone": 1. * um / minute,
+    "sensing_angle": 0.1495,
+
+    "filopodia_wall_affinity": 2.,
+    "filopodia_finger_length": 50.0 * um,
+    "use_flpl_branching": use_uniform_branching,
+
+    "use_van_pelt": use_vp,
+
+    "gc_split_angle_mean": 10.3,
+
+    "use_critical_resource": use_critical_resource,
+}
 
 '''
 Check for optional parameters
@@ -47,25 +67,26 @@ Check for optional parameters
 if use_critical_resource:
     gc_model = gc_model+"_critical"
     cr_params = {
-        "CR_retraction_factor": 0.10,
-        # "CR_leakage": 0.05,
-        "CR_retraction_th": 0.30,
-        # "CR_elongation_th": 0.91,
-        # "CR_split_th": 0.80,
-        "CR_neurite_generated": 550.,
+        "CR_leakage": 0.05 * minute,
+        "CR_retraction_th": 0.30 * uM,
+        "CR_elongation_th": 0.91 * uM,
+        "CR_split_th": 0.80,
+        "CR_neurite_generated": 550. * uM,
         "CR_correlation": 0.,
-        "CR_variance": 0.01,
-        "CR_use_ratio": 0.26
+        "CR_variance": 0.01 * uM / minute ** 0.5,
+        "CR_use_ratio": 0.26 * cpm
     }
-    neuron_params.update(cr_params)
-
+    # ~ neuron_params.update(cr_params)
+    axon_params.update({"CR_retraction_factor": 0.10 * um / minute})
+    # ~ axon_params.update(cr_params) 
+    
 if use_vp:
     vp_params = {
         "gc_split_angle_mean": 20.,
-        "B": 40.,
+        "B": 40. * cpm,
         "E": E,
         "S": S,
-        "T": 10000.,
+        "T": 10000. * minute,
     }
     neuron_params.update(vp_params)
 
@@ -91,33 +112,34 @@ def run_dense(neuron_params):
     """
     resolution = 1.
     np.random.seed(kernel['seeds'])
-    kernel["resolution"] = resolution
+    kernel["resolution"] = resolution * minute
     ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
-        -500, 500, (num_neurons, 2))
+        -500, 500, (num_neurons, 2)) * um
     gid = ds.CreateNeurons(n=num_neurons,
                                   params=neuron_params,
-                                  axon_params=neuron_params,
+                                  axon_params=axon_params,
                                   num_neurites=3,
                                   position=[]
                                   )
 
     neuron_params['use_van_pelt'] = False
     neuron_params['use_flpl_branching'] = False
+
     ds.SetStatus(gid, params=neuron_params,
-                        axon_params=neuron_params)
-    step(200./resolution, 1, False, True)
+                        axon_params=axon_params)
+    step(200./resolution * minute, 1, False, True)
     neuron_params['use_van_pelt'] = True
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
     ds.SetStatus(gid, params=neuron_params,
                         axon_params=neuron_params)
-    step(1000./resolution, 1, False, True)
-    step(1000./resolution, 1, False, True)
-    step(1000./resolution, 1, False, True)
-    step(1000./resolution, 1, False, True)
+    step(1000./resolution * minute, 1, False, True)
+    step(1000./resolution * minute, 1, False, True)
+    step(1000./resolution * minute, 1, False, True)
+    step(1000./resolution * minute, 1, False, True)
     # step(180, 1, False, True)
     # step(1080, 1, False, True)
     # step(1080, 1, False, True)

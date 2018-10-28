@@ -1,9 +1,11 @@
 #include "Branch.hpp"
 
-#include <cmath>
 #define _USE_MATH_DEFINES
-#include <assert.h>
+
+#include <cmath>
+#include <cassert>
 #include <iostream>
+
 
 namespace growth
 {
@@ -121,6 +123,9 @@ BranchPtr Branch::resize_head(size_t id_x) const
 }
 
 
+/**
+ * Append branch (inplace operation)
+ */
 void Branch::append_branch(BranchPtr appended_branch)
 {
     size_t total_size = points[0].size() + appended_branch->size();

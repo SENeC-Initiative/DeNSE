@@ -126,15 +126,15 @@ endfunction()
 function( CGROWTH_PROCESS_WITH_PYTHON )
   # Find Python
   set( HAVE_PYTHON OFF PARENT_SCOPE )
-  if ( ${with-python} STREQUAL "ON" OR  ${with-python} STREQUAL "2" OR  ${with-python} STREQUAL "3" )
+  string(REGEX MATCH "^(2|3)([.][0-9])?" VALID_PYVERSION "${with-python}" )
+
+  if ( ${with-python} STREQUAL "ON" OR VALID_PYVERSION )
 
     # Localize the Python interpreter
     if ( ${with-python} STREQUAL "ON" )
       find_package( PythonInterp )
-    elseif ( ${with-python} STREQUAL "2" )
-      find_package( PythonInterp 2 REQUIRED )
-    elseif ( ${with-python} STREQUAL "3" )
-      find_package( PythonInterp 3 REQUIRED )
+    else ()
+      find_package( PythonInterp ${with-python} REQUIRED )
     endif ()
 
     if ( PYTHONINTERP_FOUND )
@@ -169,14 +169,24 @@ function( CGROWTH_PROCESS_WITH_PYTHON )
             set( CYTHON_VERSION "${CYTHON_VERSION}" PARENT_SCOPE )
           endif ()
         endif ()
-        set( PYEXECDIR "${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
+        set( PYEXECDIR "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
+      else ()
+        message(
+          FATAL_ERROR "Python libraries not found, you requested "
+          "${PYTHON_VERSION_STRING} but the associated library cannot be found."
+        )
       endif ()
+    else ()
+        message(
+          FATAL_ERROR "Python executable not found (you requested "
+          "Python ${with-python})."
+        )
     endif ()
   else ()
     message(
       FATAL_ERROR "Invalid option: -Dwith-python=" ${with-python}
-      ". Valid options are -Dwith-python=ON, -Dwith-python=2, or "
-      "-Dwith-python=3 to chose a specific version."
+      ". Valid options are -Dwith-python=ON, -Dwith-python=2, "
+      "-Dwith-python=3, or -Dwith-python=X.Y to chose a specific version."
     )
     set( SUCCESS 0 PARENT_SCOPE )
   endif ()

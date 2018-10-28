@@ -1,0 +1,16 @@
+=======================
+The ``geometry`` module
+=======================
+
+.. currentmodule:: geometry
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.geometry
+   :members:
+   :undoc-members:
+   :show-inheritance:

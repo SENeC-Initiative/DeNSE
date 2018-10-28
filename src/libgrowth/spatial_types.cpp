@@ -34,6 +34,12 @@ bool Point::operator==(const Point &other) const
 }
 
 
+bool Point::operator!=(const Point &other) const
+{
+    return (x_ != other.x_ or y_ != other.y_);
+}
+
+
 Point Point::operator-(const Point &point) const
 {
     double dx = x_ - point.x_;

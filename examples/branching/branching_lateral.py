@@ -83,8 +83,8 @@ def lateral_branching(neuron_params):
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2)) * um
     gid = ds.CreateNeurons(n=num_neurons,
-                            params=neuron_params,
-                            num_neurites=2)
+                           params=neuron_params,
+                           num_neurites=2)
 
     step(1*hour, 1, False, False)
     neuron_params[use_type] = True

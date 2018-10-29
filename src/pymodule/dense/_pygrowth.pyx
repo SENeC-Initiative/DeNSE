@@ -1358,10 +1358,13 @@ def _get_pyskeleton(gid, unsigned int resolution=10):
     if gid is None:
         gids = get_neurons()
     elif isinstance(gid, (int, np.integer)):
-        #creates a vector of size 1
+        # creates a vector of size 1
+        assert is_neuron(gid) == "neuron", \
+            "GID `{}` is not a neuron.".format(gid)
         gids =  vector[size_t](1, <size_t>gid)
     elif nonstring_container(gid):
         for n in gid:
+            assert is_neuron(n), "GID `{}` is not a neuron.".format(n)
             gids.push_back(<size_t>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")

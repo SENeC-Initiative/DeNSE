@@ -110,6 +110,8 @@ statusMap get_neurite_status(size_t gid, const std::string &neurite_type,
                              const std::string &level);
 
 
+bool is_neuron(size_t gid);
+
 bool is_neurite(size_t gid, const std::string& neurite);
 
 

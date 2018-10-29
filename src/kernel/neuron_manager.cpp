@@ -293,7 +293,10 @@ bool NeuronManager::is_neuron(size_t gid) const
     auto it = neurons_.find(gid);
 
     if (it != neurons_.end())
+    {
         return true;
+    }
+
     return false;
 }
 

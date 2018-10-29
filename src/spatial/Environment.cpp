@@ -16,8 +16,8 @@ Environment::Environment(GEOSGeom environment,
          i++)
     {
         environment_.push_back(GEOSGeom_clone_r(context_handler, environment));
-        prepared_env_.push_back(GEOSPrepare_r(context_handler, environment));
-        const GEOSGeom border = GEOSBoundary_r(context_handler, environment);
+        prepared_env_.push_back(GEOSPrepare_r(context_handler, environment_.back()));
+        const GEOSGeom border = GEOSBoundary_r(context_handler, environment_.back());
         prepared_border_.push_back(GEOSPrepare_r(context_handler, border));
         assert(prepared_env_[i] != 0);
         assert(prepared_border_[i] != 0);

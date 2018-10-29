@@ -18,30 +18,6 @@ from ..geometry import Shape
 from ..structure import NeuronStructure
 from .._helpers import nonstring_container
 from .._helpers_geom import _get_wall_area
-from .decorator import decorate
-
-
-def deprecated(version, reason=None, alternative=None):
-    '''
-    Decorator to mark deprecated functions.
-    '''
-    def decorator(func):
-        def wrapper(func, *args, **kwargs):
-            # turn off filter temporarily
-            warnings.simplefilter('always', DeprecationWarning)
-            message = "Function {} is deprecated since version {}"
-            message = message.format(func.__name__, version)
-            if reason is not None:
-                message += " because " + reason + "."
-            else:
-                message += "."
-            if alternative is not None:
-                message += " Use " + alternative + " instead."
-            warnings.warn(message, category=DeprecationWarning)
-            warnings.simplefilter('default', DeprecationWarning)
-            return func(*args, **kwargs)
-        return decorate(func, wrapper)
-    return decorator
 
 
 def neurite_length(neurons, neurite="all", percentiles=None):

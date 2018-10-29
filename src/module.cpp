@@ -168,6 +168,12 @@ void get_models(std::vector<std::string> &models,
 }
 
 
+bool is_neuron(size_t gid)
+{
+    return kernel().neuron_manager.is_neuron(gid);
+}
+
+
 bool is_neurite(size_t gid, const std::string& neurite)
 {
     return kernel().neuron_manager.get_neuron(gid)->is_neurite(neurite);

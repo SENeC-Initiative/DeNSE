@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import dense as ds
 from dense.units import *
 
-import PyNCulture as pnc
-
 
 '''
 Main parameters
@@ -36,7 +34,7 @@ neuron_params = {
 dendrite_params = {
     "use_van_pelt": False,
     "growth_cone_model": gc_model,
-    "sensing_angle": 0.14,
+    "sensing_angle": 30.*deg,
     "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
     "persistence_length" : 50. * um,

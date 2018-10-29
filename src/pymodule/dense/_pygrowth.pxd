@@ -129,7 +129,8 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef vector[size_t] get_neurons() except +
 
-    bool is_neurite(size_t gid, const string& neurite)
+    bool is_neuron(size_t gid) except +
+    bool is_neurite(size_t gid, const string& neurite) except +
 
     cdef vector[string] get_neurites(size_t gid) except +
 

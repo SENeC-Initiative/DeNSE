@@ -3,6 +3,9 @@
 #ifndef GEOS_USE_ONLY_R_API
 #define GEOS_USE_ONLY_R_API
 #endif
+#ifndef USE_UNSTABLE_GEOS_CPP_API
+#define USE_UNSTABLE_GEOS_CPP_API
+#endif
 
 // C++ include
 #include <cmath>

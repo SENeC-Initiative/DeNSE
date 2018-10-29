@@ -705,6 +705,7 @@ void Neuron::get_status(statusMap &status) const
     set_param(status, names::axon_polarization_weight, axon_polarization_weight_, "");
     set_param(status, names::neurite_angles, neurite_angles_, "rad");
     set_param(status, names::random_rotation_angles, random_rotation_angles_, "");
+    set_param(status, names::growth_cone_model, growth_cone_model_, "");
 
     // set position
     Point pos = soma_->get_position();

@@ -30,7 +30,7 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-soma_radius = 10.
+soma_radius = 10.*um
 use_uniform_branching = False
 use_vp = False
 use_run_tumble = False
@@ -42,13 +42,13 @@ neuron_params = {
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 0.18 *rad,
-    "speed_growth_cone": .6 * um / minute,
+    "speed_growth_cone": .15 * um / minute,
     "filopodia_wall_affinity": 20.,
     "filopodia_finger_length": 25. * um,
     "filopodia_min_number": 30,
     "persistence_length" : 22. * um,
 
-    "soma_radius": soma_radius * um,
+    "soma_radius": soma_radius,
 }
 
 dendrite_params = {

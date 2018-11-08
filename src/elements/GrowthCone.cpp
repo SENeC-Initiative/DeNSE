@@ -513,6 +513,7 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
     {
         retraction_time_ = 1. + exponential_(*rnd_engine.get());
     }
+    //~ printf("checking retraction: time %f vs substep %f\n", retraction_time_, substep);
 
     if (retraction_time_ <= substep)
     {
@@ -780,7 +781,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
 
                         // move towards default_angle
                         while (
-                            kernel().space_manager.env_intersect(line, omp_id))
+                            kernel().space_manager.env_intersects(line, omp_id))
                         {
                             new_angle = 0.5 * (new_angle + default_angle);
                             p         = Point(geometry_.position.at(0) +
@@ -1109,6 +1110,9 @@ void GrowthCone::get_status(statusMap &status) const
     set_param(status, names::proba_down_move, proba_down_move_, "");
 
     set_param(status, names::persistence_length, persistence_length_, "micrometer");
+
+    set_param(status, names::proba_retraction, proba_retraction_, "");
+    set_param(status, names::duration_retraction, duration_retraction_, "minute");
 
     // update observables
     std::vector<std::string> tmp;

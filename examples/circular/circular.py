@@ -31,14 +31,16 @@ Main parameters
 '''
 
 soma_radius = 10.
-num_neurons = 2
+num_neurons = 20
 
+# ~ gc_model = 'run_tumble'
 gc_model = 'persistent_random_walk'
 
 neuron_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": True,
-    "sensing_angle": 45*deg,
+    "sensing_angle": 45.*deg,
+    "max_sensing_angle": 70.*deg,
     "speed_growth_cone": 0.16 * um / minute,
     "filopodia_wall_affinity": 0.01,
     "filopodia_finger_length": 44. * um,
@@ -81,7 +83,7 @@ Simulation
 def step(n, loop_n, plot=True):
     ds.Simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.PlotNeuron(show_nodes=True, subsample=1, show=True)
 
 
 if __name__ == '__main__':
@@ -90,13 +92,15 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 10. * minute}
+              "resolution": 20. * minute}
     # ~ kernel={"seeds":[33],
     # ~ "num_local_threads": 1,
-    # ~ "resolution": 30.}
-    #~ kernel={"seeds":[23, 68],
-    #~ "num_local_threads": 2,
-    #~ "resolution": 30.}
+    # ~ "resolution": 30.*minute}
+    # ~ kernel={
+        # ~ "seeds":[23, 68],
+        # ~ "num_local_threads": 2,
+        # ~ "resolution": 30.*minute
+    # ~ }
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/circular.svg"
@@ -112,7 +116,7 @@ if __name__ == '__main__':
                                                      soma_radius=soma_radius)
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model="run_tumble",
+    gids = ds.CreateNeurons(n=num_neurons,
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,

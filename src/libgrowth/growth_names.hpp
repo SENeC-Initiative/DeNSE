@@ -82,7 +82,7 @@ extern const std::string sensing_angle;
 extern const std::string speed_ratio_retraction;
 extern const std::string substrate_affinity;
 
-#define DURATION_RETRACTION 200.
+#define DURATION_RETRACTION 4.
 #define FILOPODIA_MIN_NUM 24
 #define FILOPODIA_FINGER_LENGTH 50.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1

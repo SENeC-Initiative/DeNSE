@@ -1283,7 +1283,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     # same for neurite number
     neurites = optional_args.get("num_neurites", 0)
     if is_scalar(neurites):
-        if not isinstance(neurites, int) or neurites < 0:
+        if not isinstance(neurites, (int, np.integer)) or neurites < 0:
             raise ValueError("`num_neurites` must be a non-negative integer.")
         base_neuron_status[b"num_neurites"] = _to_property(
             "num_neurites", neurites)

@@ -44,13 +44,14 @@ class SpaceManager : public ManagerInterface
                                  const Point &pointB) const;
     bool env_contains(const Point &point, int omp_id) const;
 
-    bool env_intersect(GeomPtr line, int omp_id) const;
     double get_wall_distance(const Point &position, int omp_id) const;
-    bool area_intersect(const std::string &area, GeomPtr line,
+
+    bool env_intersects(GeomPtr line, int omp_id) const;
+    bool area_intersects(const std::string &area, GeomPtr line,
                         int omp_id) const;
-    size_t area_num_intersections(const std::string &area, GeomPtr line,
-                                  const Point &tgt, std::vector<Point> &p,
-                                  int omp_id) const;
+    void get_intersections(GeomPtr line, GEOSGeom geometry,
+                           std::vector<Point> &p) const;
+
     double unstuck_angle(const Point &position, double current_angle,
                          double radius, const std::string &area, int omp_id);
 

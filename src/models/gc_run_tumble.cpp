@@ -148,6 +148,29 @@ Point GrowthCone_RunTumble::compute_target_position(
     const std::vector<double> &directions_weights, mtPtr rnd_engine,
     double &substep, double &new_angle)
 {
+    // test if interacting
+    if (interacting_)
+    {
+        // increased probability of tumbling
+        // get max pul direction
+        auto it_max = std::max_element(
+            directions_weights.begin(), directions_weights.end());
+        // get its index and the associated angle
+        size_t n_max     = std::distance(directions_weights.begin(), it_max);
+        double max_angle = filopodia_.directions[n_max];
+
+        // compute influence
+        double influence = directions_weights[n_max]*std::abs(sin(new_angle - max_angle)) / 100.;
+
+        // test if enough to trigger tumble
+        double x = uniform_(*(rnd_engine.get()));
+
+        if (x < influence*substep)
+        {
+            tumbling_    = true;
+        }
+    }
+
     // test whether tumbling happens
     if (tumbling_)
     {
@@ -159,17 +182,7 @@ Point GrowthCone_RunTumble::compute_target_position(
     }
     else
     {
-        // if not tumbling check for interactions
-        if (interacting_)
-        {
-            // take the pull into account: just scale delta_angle by the substep
-            //~ delta_angle_ /=  sqrt(substep);
-            //~ delta_angle_ = 0.;
-        }
-        else
-        {
-            delta_angle_ = 0.;
-        }
+        delta_angle_ = 0.;
     }
 
     // test whether a new tumble will happen before the end of the substep

@@ -2,6 +2,7 @@
 
 // C++ includes
 #include <cmath>
+#include <deque>
 
 // GEOS include
 #include <geos/geom/GeometryCollection.h>
@@ -21,6 +22,9 @@
 
 namespace growth
 {
+
+const double epsilon = 1e-4;
+
 
 void notice(const char *fmt, ...)
 {
@@ -107,6 +111,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     double wall_afty  = filopodia.wall_affinity;
     AreaPtr old_area  = areas_[area];
     double old_height = old_area->get_height();
+    double lamel_factor = 2.;
 
     //~ assert(env_contains(Point(position.at(0), position.at(1)), omp_id)
     //~ && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0),
@@ -120,23 +125,30 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     }
 #endif
 
-    // compute the number of filopodia to ignore
-    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol -
-    //1) * delta_filo); ~ unsigned int n_max  = filopodia.size - ignore; ~
-    //unsigned int n_min  = ignore;
-
     // values used locally inside loop
-    double angle, new_height, new_substrate_affinity, distance;
-    bool filo_wall, interacting(false);
-    Point filo_pos, lamel_pos, tmp_pos;
-    std::vector<Point> middle_points;
-    double delta_h, h, delta_proba;
-    GeomPtr filo_line, lamel_line;
+    double angle, distance, min_wall_dist;
+    bool filo_wall, interacting(false), keep_point, intsct;
+    Point filo_pos, tmp_pos;
+    // intersections of the filopodia
+    double x0(position.at(0)), y0(position.at(1)), x, y, point_angle;
+    std::unordered_map<std::string, AreaPtr> tested_areas;
+    std::vector<double> distances, affinities;
+    std::vector<Point> intersections;
+    //~ std::vector<AreaPtr> new_areas;
+    GeomPtr filo_line, tmp_line;
+    std::vector<size_t> indices;
+    std::vector<bool> is_wall;
     std::string name_new_area;
-    unsigned int i, n_angle;
-    int last_filo_wall(-1);
     size_t n_intersect;
     AreaPtr new_area;
+    GEOSGeom border;
+    // recursive loop
+    std::deque<AreaPtr> area_deque;
+    std::deque<Point> area_points;
+    // computation of the affinity
+    double affinity, old_dist, current_dist;
+    // loop indices
+    unsigned int i, n_angle, s_i;
 
     // test the environment for each of the filopodia's angles
     //~ for (n_angle = n_min; n_angle < n_max; n_angle++)
@@ -146,174 +158,231 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 
         angle = move.angle + filopodia.directions[n_angle];
 
-        // ================================ //
-        // test filopodia/wall interactions //
-        // ================================ //
-
-        // effect of wall on previous angles is done at the wall detection step
-        // effect future angles is done when their turn comes (in else block)
+        // clear all containers
+        distances.clear();
+        affinities.clear();
+        is_wall.clear();
+        tested_areas.clear();
+        area_deque.clear();
+        area_points.clear();
+        //~ new_areas.clear();
 
         // set position/line
         filo_pos  = Point(position.at(0) + cos(angle) * len_filo,
                          position.at(1) + sin(angle) * len_filo);
         filo_line = geosline_from_points(position, filo_pos);
 
-        // weak interaction (filopodia)
-        if (env_intersect(filo_line, omp_id))
+        // set first (current) affinity
+        affinities.push_back(subs_afty);
+
+        // ============================== //
+        // Find lamelipodia intersections //
+        // ============================== //
+
+        // in a first time, we get all the intersections between the filopodia
+        // and the environment (walls + areas)
+
+        min_wall_dist = std::numeric_limits<double>::infinity();
+
+        // intersections with areas (and indirectly with walls) "recursively"
+        if (area_intersects(area, filo_line, omp_id))
         {
             interacting = true;
 
-            // wall affinity
-            directions_weights[n_angle] *= (1. + wall_afty);
-            wall_presence[n_angle] = true;
+            area_points.push_back(position);
+            area_deque.push_back(old_area);
 
-            // apply partial wall affinity to previous angle if it exists
-            //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
-            if (last_filo_wall != n_angle - 1 and n_angle - 1 >= 0)
+            while (not area_deque.empty())
             {
-                directions_weights[n_angle - 1] *= (1. + 0.5 * wall_afty);
-            }
+                // get new area and its associated point
+                new_area      = area_deque.front();
+                tmp_pos       = area_points.front();
+                name_new_area = new_area->get_name();
+                tmp_line      = geosline_from_points(tmp_pos, filo_pos);
 
-            filo_wall      = true;
-            last_filo_wall = n_angle;
-        }
-        else if (area_intersect(area, filo_line, omp_id))
-        {
-            interacting = true;
+                auto it = tested_areas.find(name_new_area);
+                intsct  = it == tested_areas.end();
 
-            // check the number of intersections
-            n_intersect = area_num_intersections(area, filo_line, filo_pos,
-                                                 middle_points, omp_id);
+                // remove from the deque
+                area_deque.pop_front();
+                area_points.pop_front();
 
-            // get all other areas
-            for (i = 0; i < n_intersect; i++)
-            {
-                tmp_pos       = middle_points[i];
-                name_new_area = get_containing_area(tmp_pos, omp_id);
-                distance      = sqrt((position.at(0) - tmp_pos[0]) *
-                                    (position.at(0) - tmp_pos[0]) +
-                                (position.at(1) - tmp_pos[1]) *
-                                    (position.at(1) - tmp_pos[1]));
-
-                new_area   = areas_[name_new_area];
-                new_height = new_area->get_height();
-                new_substrate_affinity =
-                    new_area->get_property(names::substrate_affinity);
-
-                delta_h = abs(new_height - old_height);
-
-                if (old_height == new_height)
+                // test intersections only if not already done
+                if (intsct and area_intersects(name_new_area, tmp_line, omp_id))
                 {
-                    // same height => proba from substrate affinity
-                    if (n_intersect == 1)
+                    // add area into tested areas
+                    tested_areas[name_new_area] = new_area;
+                    // check intersections
+                    intersections.clear();
+                    border = GEOSBoundary_r(
+                        context_handler_, new_area->get_shape(omp_id).get());
+                    get_intersections(
+                        tmp_line, border, intersections);
+
+                    for (auto p : intersections)
                     {
-                        directions_weights[n_angle] *= new_substrate_affinity;
+                        // compute distance
+                        x = p[0];
+                        y = p[1];
+                        distance = sqrt((x-x0)*(x-x0) + (y-y0)*(y-y0));
+
+                        keep_point  = std::abs(x-tmp_pos[0]) > epsilon or
+                                      std::abs(y-tmp_pos[1]) > epsilon;
+                        keep_point *= (min_wall_dist - distance > epsilon);
+
+                        // intersection must be before the wall, we also exclude
+                        // the wall intersection itself because we did it in
+                        // a previous iteration
+                        if (keep_point)
+                        {
+                            // we have an intersection before the wall
+                            // compute the point just after the intersection
+                            point_angle = atan2(y-y0, x-x0);
+                            tmp_pos     = Point(
+                                x0 + (distance + epsilon)*cos(point_angle),
+                                y0 + (distance + epsilon)*sin(point_angle));
+
+                            // save distance
+                            distances.push_back(distance);
+
+                            // get containing area
+                            name_new_area = get_containing_area(tmp_pos, omp_id);
+                            it            = tested_areas.find(name_new_area);
+
+                            if (name_new_area.empty())
+                            {
+                                filo_wall = true;
+                                //~ new_areas.push_back(nullptr);
+                                is_wall.push_back(true);
+                                affinities.push_back(wall_afty);
+                                // compute distance of first wall
+                                min_wall_dist = std::min(distance, min_wall_dist);
+                            }
+                            else
+                            {
+                                //~ new_areas.push_back(areas_[name_new_area]);
+                                is_wall.push_back(false);
+                                affinities.push_back(
+                                    areas_[name_new_area]->get_property(
+                                        names::substrate_affinity));
+                            }
+
+                            // store the new areas with which we should check
+                            // for intersections in the deque
+                            if (not name_new_area.empty()
+                                and it == tested_areas.end())
+                            {
+                                area_deque.push_back(areas_[name_new_area]);
+                                area_points.push_back(tmp_pos);
+                            }
+                        }
                     }
                 }
-                else if (old_height > new_height)
+            }
+        }
+
+        // ===================== //
+        // Sort them by distance //
+        // ===================== //
+
+        // sort distances and get indices
+        indices.resize(distances.size());
+        std::iota(indices.begin(), indices.end(), 0);
+        auto comparator = [&distances](int a, int b){ return distances[a] < distances[b]; };
+        std::sort(indices.begin(), indices.end(), comparator);
+
+        // we are going to add a last entry, push back indices
+        indices.push_back(distances.size());
+        // add the last point
+        distances.push_back(len_filo);
+        is_wall.push_back(false);
+        // note that we don't need to push-back affinities because they got
+        // the additional entry from the start (the first affinity where the
+        // filopodia initiates)
+
+        // ============================ //
+        // Compute the average affinity //
+        // ============================ //
+
+        old_dist = 0.;
+        affinity = indices.empty() ? len_filo*subs_afty : 0.;
+
+        for (i=0; i < indices.size(); i++)
+        {
+            // sorted index
+            s_i          = indices[i];
+            current_dist = distances[s_i];
+
+            // are we compressing the lamellipodia (half its width)?
+            if (current_dist < 0.25*len_filo)
+            {
+                //~ printf("%i - lamel begin %f vs %f\n", i, current_dist, old_dist);
+                // if its a wall, then affinity goes to NaN and we break
+                if (is_wall[s_i])
                 {
-                    // growth cone may go down:
-                    // - if filopodia can touch the bottom, the probability of
-                    //   making a down move is increased or decreased
-                    //   depending on the substrate affinity
-                    // - if the bottom is too far, only take the probability
-                    //   of making a down move
-                    h = filopodia.finger_length - distance - delta_h;
-
-                    delta_proba = h > 0 ? new_substrate_affinity * h /
-                                              filopodia.finger_length
-                                        : 0.;
-
-                    delta_proba += proba_down_move;
-                    //~ delta_proba = proba_down_move/substep;
-                    //~ delta_proba = proba_down_move/sqrt(substep);
-                    //~ delta_proba *=
-                    //proba_down_move*substep*sin(0.5*M_PI/substep); ~
-                    //delta_proba *= proba_down_move*sin(0.5*M_PI/substep); ~
-                    //delta_proba *=
-                    //2*proba_down_move*(0.5+cos(0.5*M_PI/substep))/sqrt(substep);
-                    //~ delta_proba += proba_down_move/pow(substep, 1./3.);
-                    //~ delta_proba +=
-                    //proba_down_move*sqrt(1-cos(0.5*M_PI/sqrt(substep))); ~
-                    //delta_proba +=
-                    //proba_down_move*pow(1-cos(0.5*M_PI/sqrt(substep)), 1/3.);
-                    //~ delta_proba +=
-                    //proba_down_move*sqrt(sin(0.5*M_PI/sqrt(substep))); ~
-                    //delta_proba +=
-                    //proba_down_move/(1+sin(0.5*M_PI/sqrt(substep)));
-                    directions_weights[n_angle] *= delta_proba;
-                    //~ directions_weights[n_angle] *= new_substrate_affinity;
+                    affinity = std::nan("");
+                    break;
                 }
                 else
                 {
-                    // growth cone may go upwards:
-                    // - move is possible if the step is smaller than
-                    //   `max_height_up_move`, in [0, new_substrate_affinity]
-                    // - if step is higher, move is impossible
-                    directions_weights[n_angle] *=
-                        new_substrate_affinity *
-                        std::exp(-delta_h / max_height_up_move);
+                    //~ printf("affinity gets %f = %f * %f * %f\n", lamel_factor*affinities[s_i]*(current_dist - old_dist), lamel_factor, affinities[s_i], (current_dist - old_dist));
+                    affinity += lamel_factor*affinities[s_i]*(current_dist - old_dist);
                 }
+            }  // are we dealing with the lamellipodia?
+            else if (current_dist < 0.5*len_filo)
+            {
+                //~ printf("%i - lamel %f vs %f\n", i, current_dist, old_dist);
+                affinity += lamel_factor*affinities[s_i]*(current_dist - old_dist);
+            }  // are we in-between
+            else if (old_dist < 0.5*len_filo)
+            {
+                //~ printf("%i - mixed filo/lamel %f vs %f\n", i, current_dist, old_dist);
+                // part for lamellipodia
+                affinity += lamel_factor*affinities[s_i]*(0.5*len_filo - old_dist);
+                // part for filopodia
+                affinity += affinities[s_i]*(current_dist - 0.5*len_filo);
+            }
+            else
+            {
+                //~ printf("%i - filo %f vs %f\n", i, current_dist, old_dist);
+                affinity += affinities[s_i]*(current_dist - old_dist);
             }
 
-            // set wall affinity if necessary
-            std::string name_new_area =
-                get_containing_area(middle_points[0], omp_id);
-            new_area   = areas_[name_new_area];
-            new_height = new_area->get_height();
-
-            if (old_height < new_height)
+            // check where we stand: did we reach a wall or do we keep going?
+            if (is_wall[s_i])
             {
-                // apply partial wall affinity to previous angle if it exists
-                //~ if (last_filo_wall != n_angle-1 and n_angle-1 >= n_min)
-                if (last_filo_wall != n_angle - 1 and n_angle - 1 >= 0)
-                {
-                    directions_weights[n_angle - 1] *= (1. + 0.5 * wall_afty);
-                }
-
-                directions_weights[n_angle] *= (1. + wall_afty);
-                wall_presence[n_angle] = true;
-
-                filo_wall      = true;
-                last_filo_wall = n_angle;
+                // we will break the loop so we jump directly to the last
+                // point (the filopodia length)
+                affinity += wall_afty*(len_filo - current_dist);
+                break;
+            }
+            else
+            {
+                old_dist = current_dist;
             }
         }
-        else
-        {
-            directions_weights[n_angle] *= subs_afty;
-        }
+        affinity = std::max(affinity / len_filo, 0.);
+        directions_weights[n_angle] = affinity;
 
-        // ================================== //
-        // test lamelipodia/wall interactions //
-        // ================================== //
+        //~ std::string s = "angle " + std::to_string(n_angle) + " got affinity " + std::to_string(affinity) + " from";
 
-        // interaction with lamelipodia is twice stronger compared to filo/wall
-        if (filo_wall)
-        {
-            lamel_pos  = Point(position.at(0) + 0.5 * cos(angle) * len_filo,
-                              position.at(1) + 0.5 * sin(angle) * len_filo);
-            lamel_line = geosline_from_points(position, lamel_pos);
+        //~ for (size_t j=0; j < distances.size(); j++)
+        //~ {
+            //~ s += " d " + std::to_string(distances[j]) + " a " + std::to_string(affinities[j]);
+        //~ }
 
-            if (env_intersect(lamel_line, omp_id))
-            {
-                directions_weights[n_angle] *= 2;
-            }
-            else if (area_intersect(area, lamel_line, omp_id))
-            {
-                // everything was already computed for filopodia
-                directions_weights[n_angle] *= 2;
-            }
-        }
-        else
-        {
-            // apply partial wall affinity to next angle if relevant
-            //~ if (n_angle != n_min and last_filo_wall == n_angle-1)
-            if (n_angle != 0 and last_filo_wall == n_angle - 1)
-            {
-                directions_weights[n_angle] *= (1. + 0.5 * wall_afty);
-            }
-        }
+        //~ printf("%s\n", s.c_str());
+
+        // question: what about the transitions for up/down?
+        // answer: move to compute_accessibility! (noob)
     }
+
+    //~ std::string weights("");
+    //~ for (auto w : directions_weights)
+    //~ {
+        //~ weights += std::to_string(w) + " ";
+    //~ }
+    //~ printf("%s\n", weights.c_str());
 
     return interacting;
 }
@@ -361,7 +430,7 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
 
         GeomPtr line = geosline_from_points(starting_pos, target_pos);
 
-        if (env_intersect(line, omp_id))
+        if (env_intersects(line, omp_id))
         {
             directions_weights[n_angle] = std::nan(""); // cannot escape env
         }
@@ -373,7 +442,7 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
 }
 
 
-bool SpaceManager::env_intersect(GeomPtr line, int omp_id) const
+bool SpaceManager::env_intersects(GeomPtr line, int omp_id) const
 {
     if (environment_initialized_ == false)
     {
@@ -418,7 +487,7 @@ double SpaceManager::get_wall_distance(const Point &position, int omp_id) const
 }
 
 
-bool SpaceManager::area_intersect(const std::string &area, GeomPtr line,
+bool SpaceManager::area_intersects(const std::string &area, GeomPtr line,
                                   int omp_id) const
 {
     if (environment_initialized_ == false)
@@ -433,52 +502,31 @@ bool SpaceManager::area_intersect(const std::string &area, GeomPtr line,
 }
 
 
-size_t SpaceManager::area_num_intersections(const std::string &area,
-                                            GeomPtr line, const Point &tgt,
-                                            std::vector<Point> &points,
-                                            int omp_id) const
+void SpaceManager::get_intersections(GeomPtr line, GEOSGeom geometry,
+                                     std::vector<Point> &points) const
 {
-    if (environment_initialized_ == false)
+    if (environment_initialized_)
     {
-        return 0;
-    }
+        GEOSGeometry *intersect = GEOSIntersection_r(
+            context_handler_, geometry, line.get());
 
-    AreaPtr a = areas_.at(area);
+        size_t num_intersect = GEOSGetNumGeometries_r(context_handler_,
+                                                      intersect);
 
-    //~ GeomPtr intersect = GeomPtr(GEOSIntersection_r(
-    //~ context_handler_, a->get_shape(omp).get(), line.get()));
-    GEOSGeometry *intersect = GEOSIntersection_r(
-        context_handler_, a->get_shape(omp_id).get(), line.get());
+        double x, y;
 
-    size_t num_intersect = GEOSGetNumGeometries_r(context_handler_, intersect);
-
-    if (num_intersect > 1)
-    {
-        double x0, x1, y0, y1;
-
-        for (unsigned int i = 0; i < num_intersect - 1; i++)
+        for (unsigned int i = 0; i < num_intersect; i++)
         {
             const GEOSGeometry *g0 =
                 GEOSGetGeometryN_r(context_handler_, intersect, i);
-            auto coords1 = GEOSGeom_getCoordSeq_r(context_handler_, g0);
-            GEOSCoordSeq_getX_r(context_handler_, coords1, 0, &x0);
-            GEOSCoordSeq_getY_r(context_handler_, coords1, 0, &y0);
-            const GEOSGeometry *g1 =
-                GEOSGetGeometryN_r(context_handler_, intersect, i + 1);
-            auto coords2 = GEOSGeom_getCoordSeq_r(context_handler_, g1);
-            GEOSCoordSeq_getX_r(context_handler_, coords2, 0, &x1);
-            GEOSCoordSeq_getY_r(context_handler_, coords2, 0, &y1);
-
-            points.push_back(Point(0.5 * (x0 + x1), 0.5 * (y0 + y1)));
+            auto coords = GEOSGeom_getCoordSeq_r(context_handler_, g0);
+            GEOSCoordSeq_getX_r(context_handler_, coords, 0, &x);
+            GEOSCoordSeq_getY_r(context_handler_, coords, 0, &y);
+            points.push_back(Point(x, y));
         }
+
+        GEOSGeom_destroy_r(context_handler_, intersect);
     }
-
-    // always add last point
-    points.push_back(tgt);
-
-    GEOSGeom_destroy_r(context_handler_, intersect);
-
-    return num_intersect;
 }
 
 
@@ -516,7 +564,7 @@ double SpaceManager::unstuck_angle(const Point &position, double current_angle,
         GEOSCoordSeq_getX_r(context_handler_, coords1, 0, &x0);
         GEOSCoordSeq_getY_r(context_handler_, coords1, 0, &y0);
 
-        angle_first = fmod(abs(atan2(y0 - position.at(1), x0 - position.at(0)) -
+        angle_first = fmod(std::abs(atan2(y0 - position.at(1), x0 - position.at(0)) -
                                current_angle),
                            M_PI);
 
@@ -529,7 +577,7 @@ double SpaceManager::unstuck_angle(const Point &position, double current_angle,
             GEOSCoordSeq_getY_r(context_handler_, coords2, 0, &y1);
 
             angle_last =
-                fmod(abs(atan2(y1 - position.at(1), x1 - position.at(0)) -
+                fmod(std::abs(atan2(y1 - position.at(1), x1 - position.at(0)) -
                          current_angle),
                      M_PI);
             if (angle_last < angle_first)
@@ -640,7 +688,8 @@ std::string SpaceManager::get_containing_area(const Point &position,
         }
     }
 
-    return "default_area";
+    // if we get there, it means that this point is out of the environment
+    return "";
 }
 
 

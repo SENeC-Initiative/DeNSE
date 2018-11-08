@@ -31,6 +31,8 @@ Environment::~Environment()
     {
         delete env;
     }
+    environment_.clear();
+
     for (const GEOSPreparedGeometry *env : prepared_env_)
     {
         delete env;

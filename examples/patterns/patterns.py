@@ -12,9 +12,9 @@ from dense.units import *
 Main parameters
 '''
 
-num_neurons = 50
+num_neurons = 1
 soma_radius = 8.*um
-num_omp     = 6
+num_omp     = 1
 
 gc_model = 'run_tumble'
 
@@ -29,6 +29,7 @@ neuron_params = {
     "speed_growth_cone": 0.25 * um/minute,
     "persistence_length": 200. * um,
     "soma_radius": soma_radius,
+    "retraction_probability": 0.1,
 }
 
 dendrite_params = {
@@ -37,7 +38,7 @@ dendrite_params = {
     "sensing_angle": 30.*deg,
     "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
-    "persistence_length" : 50. * um,
+    "persistence_length" : 100. * um,
 }
 
 
@@ -59,7 +60,7 @@ if __name__ == '__main__':
 
     culture = ds.SetEnvironment("test_15-75_small.dxf",
                                 internal_shapes_as="areas",
-                                default_properties={"substrate_affinity": 0.001},
+                                default_properties={"substrate_affinity": -10.},
                                 other_properties={"substrate_affinity": 100.})
     # ~ ds.geometry.plot_shape(culture, show=True)
 
@@ -72,14 +73,20 @@ if __name__ == '__main__':
                             num_neurites=3)
 
     ds.PlotNeuron(show=False)
-    plt.xlim(-10200., -9500.)
-    plt.ylim(-700., -1500.)
+    # ~ xlim = -10200., -9500.
+    # ~ ylim = -700., -1500.
+    xlim = -9250., -9000.
+    ylim = -40., 80.
+    # ~ xlim = None, None
+    # ~ ylim = None, None
+    plt.xlim(*xlim)
+    plt.ylim(*ylim)
     plt.show()
 
     for i in range(10):
-        ds.Simulate(3.*hour)
-        ds.PlotNeuron(show=False)
-        plt.xlim(-10200., -9500.)
-        plt.ylim(-700., -1500.)
+        ds.Simulate(200.*minute)
+        ds.PlotNeuron(subsample=20, show=False)
+        plt.xlim(*xlim)
+        plt.ylim(*ylim)
         plt.show()
 

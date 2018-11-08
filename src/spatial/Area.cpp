@@ -32,6 +32,8 @@ Area::Area(GEOSGeom area, GEOSContextHandle_t handler, double height,
 
 Area::~Area()
 {
+    shape_.clear();
+
     for (const GEOSPreparedGeometry *shape : prepared_area_)
     {
         delete shape;

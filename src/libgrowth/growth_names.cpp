@@ -38,7 +38,9 @@ const std::string CR_use_ratio("CR_use_ratio");
 const std::string CR_variance("CR_variance");
 const std::string CR_weight_centrifugal("CR_weight_centrifugal");
 const std::string CR_weight_diameter("CR_weight_diameter");
+const std::string critical_pull("critical_pull");
 
+const std::string decay_factor("decay_factor");
 const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
@@ -72,6 +74,7 @@ const std::string max_gc_number("max_gc_number");
 const std::string max_sensing_angle("max_sensing_angle");
 
 const std::string neurite_angles("neurite_angles");
+const std::string noise_amplitude("noise_amplitude");
 const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");
 
@@ -82,6 +85,7 @@ const std::string proba_retraction("retraction_probability");
 
 const std::string random_walk_submodel("random_walk_submodel");
 const std::string resource("resource");
+const std::string rigidity_factor("rigidity_factor");
 const std::string rw_memory_tau("rw_memory_tau");
 const std::string rw_delta_corr("rw_delta_corr");
 
@@ -101,7 +105,7 @@ const std::string srf_somatropic_decay("srf_somatropic_decay");
 const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
-const std::string thinning_ratio("thinning_ratio");
+const std::string taper_rate("taper_rate");
 
 const std::string random_rotation_angles("random_rotation_angles");
 

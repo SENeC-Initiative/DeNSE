@@ -59,7 +59,7 @@ class SpaceManager : public ManagerInterface
                std::vector<bool> &wall_presence, const Filopodia &filopodia,
                const Point &position, const Move &move, const std::string &area,
                double down_move_proba, double max_height_up_move,
-               double substep, double sqrt_resol, unsigned int delta_filo);
+               double substep, double radius);
 
     void move_possibility(std::vector<double> &directions_weights,
                           std::vector<std::string> &new_pos_area,
@@ -76,6 +76,8 @@ class SpaceManager : public ManagerInterface
         GEOSGeom &environment, std::vector<GEOSGeom> &areas,
         std::vector<double> &heights, std::vector<std::string> &names,
         std::vector<std::unordered_map<std::string, double>> &properties) const;
+    GEOSGeom get_env_border(int omp_id) const;
+    void destroy_geom(GEOSGeom geom) const;
 
     int get_region_thread(const Point &position) const;
     int get_region_thread(double x, double y) const;

@@ -59,7 +59,8 @@ class Branching
     Branching(const Branching &cpy);
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
-    void set_branching_event(Event &ev, double duration);
+    void set_branching_event(Event &ev, signed char ev_type,
+                             double duration);
     bool branching_event(mtPtr rnd_engine, const Event &ev);
 
     // van Pelt branching functions

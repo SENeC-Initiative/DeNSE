@@ -63,17 +63,17 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
 cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
     cdef cppclass CTime "growth::Time":
         CTime() except +
-        CTime(float seconds, unsigned char minutes, unsigned char hours,
-             unsigned char days) except +
+        CTime(double seconds, unsigned char minutes, unsigned char hours,
+              size_t days) except +
         CTime(CTime initial_time, unsigned long steps) except +
-        void set_sec(float seconds)
+        void set_sec(double seconds)
         void set_min(char minutes)
         void set_hour(char hours)
         void set_day(char days)
-        float get_sec() const
+        double get_sec() const
         char get_min() const
         char get_hour() const
-        char get_day() const
+        size_t get_day() const
         double get_total_seconds() const
 
 
@@ -82,9 +82,9 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 
 
 cdef extern from "../module.hpp" namespace "growth":
-    cdef void init_growth( int* argc, char** argv[] ) except +
+    cdef void init_growth( int* argc, char** argv[] )
 
-    cdef void finalize_growth() except +
+    cdef void finalize_growth()
 
     cdef size_t create_objects(const string& object_name,
                                const vector[statusMap]& obj_params
@@ -147,8 +147,10 @@ cdef extern from "../module.hpp" namespace "growth":
                            bool detailed,
                            statusMap &status) except +
 
-    cdef void get_models(vector[string]& models,
-                         const string& object_type) except +
+    cdef string get_default_model() except +
+
+    cdef void get_models(unordered_map[string, string]& models,
+                         bool abbrev) except +
 
     cdef void get_recorder_type(size_t gid, string& level,
                                 string& event_type) except +
@@ -171,6 +173,12 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef double get_state(size_t gid, const string& level,
                           const string& variable) except +
+
+    cdef vector[string] get_elongation_types() except +
+
+    cdef vector[string] get_steering_methods() except +
+
+    cdef vector[string] get_direction_selection_methods() except +
 
     cdef void set_status(size_t gid, statusMap neuron_status,
                          statusMap axon_status,

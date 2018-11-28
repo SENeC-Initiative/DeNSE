@@ -68,6 +68,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
   public:
     Neuron() = delete;
     Neuron(size_t gid);
+    ~Neuron();
 
     // Init functions
     void init_status(const statusMap &status, const statusMap &astatus,

@@ -2,6 +2,14 @@
 
 #include <stdio.h>
 
+// kernel includes
+#include "neuron_manager.hpp"
+#include "parallelism_manager.hpp"
+#include "record_manager.hpp"
+#include "rng_manager.hpp"
+#include "simulation_manager.hpp"
+#include "space_manager.hpp"
+
 // models include
 #include "models_manager.hpp"
 
@@ -53,6 +61,7 @@ KernelManager::KernelManager()
     , simulation_manager()
     , space_manager()
     , record_manager()
+    , model_manager()
     , neuron_manager()
     // status
     , initialized_(false)
@@ -84,7 +93,7 @@ void KernelManager::initialize()
     space_manager.initialize();
     record_manager.initialize();
     // models_manager init_models() must come before neuron_manager
-    init_models();
+    model_manager.init_models();
     neuron_manager.initialize();
     num_objects_ = 0;
     initialized_ = true;
@@ -152,15 +161,6 @@ std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
  * Returns the number of objects
  */
 size_t KernelManager::get_num_objects() const { return num_objects_; }
-
-
-/**
- * Gives current time in minutes.
- */
-double KernelManager::get_current_time() const
-{
-    return simulation_manager.get_current_time();
-}
 
 
 double KernelManager::get_adaptive_timestep() const

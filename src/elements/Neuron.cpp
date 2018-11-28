@@ -1,6 +1,7 @@
 #include "Neuron.hpp"
 
 // c++ includes
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -54,6 +55,25 @@ Neuron::Neuron(size_t gid)
 }
 
 
+Neuron::~Neuron()
+{
+    // we need to delete the branching pointer of the neurites to let them die
+    for (auto &neurite : neurites_)
+    {
+        // break circular dependency of neurite/branching model
+        neurite.second->branching_model_ = nullptr;
+        // clear all neurite containers to free growth cones and nodes
+        neurite.second->nodes_.clear();
+        neurite.second->growth_cones_.clear();
+        neurite.second->growth_cones_tmp_.clear();
+        neurite.second->growth_cones_inactive_.clear();
+        neurite.second->growth_cones_inactive_tmp_.clear();
+    }
+
+    neurites_.clear();
+}
+
+
 //###################################################
 //                  Init functions
 //###################################################
@@ -92,11 +112,11 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     // get growth cone model from the model manager;
     if (growth_cone_model_ != "")
     {
-        gc_model = kernel().neuron_manager.get_model(growth_cone_model_);
+        gc_model = kernel().model_manager.get_model(growth_cone_model_);
     }
     else
     {
-        gc_model = kernel().neuron_manager.get_default_model();
+        gc_model = kernel().model_manager.get_default_model();
     }
 
     // initialize the soma giving the position of neuron
@@ -126,14 +146,14 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     if (it != astatus.end())
     {
         get_param(astatus, names::growth_cone_model, model_name);
-        axon_gc = kernel().neuron_manager.get_model(model_name);
+        axon_gc = kernel().model_manager.get_model(model_name);
     }
 
     it = dstatus.find(names::growth_cone_model);
     if (it != dstatus.end())
     {
         get_param(dstatus, names::growth_cone_model, model_name);
-        dendrite_gc = kernel().neuron_manager.get_model(model_name);
+        dendrite_gc = kernel().model_manager.get_model(model_name);
     }
 
     // create the neurites and set their parameters
@@ -202,7 +222,7 @@ void Neuron::initialize_next_event(mtPtr rnd_engine, double new_resolution,
     }
     for (auto &neurite : neurites_)
     {
-        neurite.second->branching_model_.initialize_next_event(
+        neurite.second->branching_model_->initialize_next_event(
             rnd_engine, new_resolution, previous_step);
     }
 }
@@ -267,9 +287,9 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
 bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
 {
     std::string name_neurite = std::get<3>(ev);
+    NeuritePtr neurite       = neurites_[name_neurite];
 
-    return neurites_[name_neurite]->branching_model_.branching_event(rnd_engine,
-                                                                     ev);
+    return neurite->branching_model_->branching_event(rnd_engine, ev);
 }
 
 

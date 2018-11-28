@@ -284,7 +284,9 @@ void SimulationManager::finalize_simulation_()
 void SimulationManager::new_branching_event(const Event &ev)
 {
 #pragma omp critical
-    branching_ev_tmp_.push_back(ev);
+    {
+        branching_ev_tmp_.push_back(ev);
+    }
 }
 
 
@@ -451,7 +453,7 @@ void SimulationManager::simulate(const Time &t)
                 {
                     printf("##simulation step is %lu \n", step_[omp_id]);
                     printf("##simulated minutes: %f \n",
-                           get_current_time());
+                           get_current_minutes());
                 }
 #endif /* NDEBUG */
             }
@@ -513,7 +515,7 @@ void SimulationManager::get_status(statusMap &status) const
 /**
  * Gives current time in minutes.
  */
-double SimulationManager::get_current_time() const
+double SimulationManager::get_current_minutes() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     return (step_.at(omp_id)) * Time::RESOLUTION +
@@ -521,11 +523,24 @@ double SimulationManager::get_current_time() const
 }
 
 
+/**
+ * Gives initial time.
+ */
+Time SimulationManager::get_initial_time() const
+{
+    return initial_time_;
+}
+
+
 Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
+    //~ printf("initial time: %lu days %i hours %i minutes %f seconds\n",
+           //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
     t0.update(step_[omp_id], substep_[omp_id]);
+    //~ printf("final time: %lu days %i hours %i minutes %f seconds\n",
+           //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
     return t0;
 }
 

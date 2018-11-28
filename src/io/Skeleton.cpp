@@ -31,20 +31,22 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
             std::deque<TNodePtr> nodes{node->get_child(0)};
             while (not nodes.empty())
             {
-                TNodePtr node   = nodes.back();
-                size_t i, last(node->get_branch()->size());
-
-                PointsArray &pp = node->get_branch()->points;
+                TNodePtr node = nodes.back();
+                BranchPtr b   = node->get_branch();
+                size_t i, last(b->size());
+                Point p;
 
                 for (i=0; i<last; i+=resolution)
                 {
-                    axon.first.push_back(pp[0].at(i));
-                    axon.second.push_back(pp[1].at(i));
+                    p = b->xy_at(i);
+                    axon.first.push_back(p[0]);
+                    axon.second.push_back(p[1]);
                 }
                 if (i != last-1)
                 {
-                    axon.first.push_back(pp[0].back());
-                    axon.second.push_back(pp[1].back());
+                    p = b->get_last_xy();
+                    axon.first.push_back(p[0]);
+                    axon.second.push_back(p[1]);
                 }
 
                 axon.first.push_back(NAN);
@@ -78,20 +80,22 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
             while (not nodes.empty())
             {
 
-                TNodePtr node   = nodes.back();
-                size_t i, last(node->get_branch()->size());
-
-                PointsArray &pp = node->get_branch()->points;
+                TNodePtr node = nodes.back();
+                BranchPtr b   = node->get_branch();
+                size_t i, last(b->size());
+                Point p;
 
                 for (i=0; i<last; i+=resolution)
                 {
-                    dendrites.first.push_back(pp[0].at(i));
-                    dendrites.second.push_back(pp[1].at(i));
+                    p = b->xy_at(i);
+                    dendrites.first.push_back(p[0]);
+                    dendrites.second.push_back(p[1]);
                 }
                 if (i != last-1)
                 {
-                    dendrites.first.push_back(pp[0].back());
-                    dendrites.second.push_back(pp[1].back());
+                    p = b->get_last_xy();
+                    dendrites.first.push_back(p[0]);
+                    dendrites.second.push_back(p[1]);
                 }
 
                 dendrites.first.push_back(NAN);
@@ -118,14 +122,16 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 axon.second.push_back(NAN);
             }
         }
-        // anyway get growth cones
-        auto ite = neurite.second->gc_cend();
-        for (auto it = neurite.second->gc_cbegin(); it != ite; it++)
+        // anyway get active growth cones
+        for (auto it : neurite.second->gc_range())
         {
-            double x = it->second->get_position().at(0);
-            double y = it->second->get_position().at(1);
-            growth_cones.first.push_back(x);
-            growth_cones.second.push_back(y);
+            if (it.second->is_active())
+            {
+                double x = it.second->get_position().at(0);
+                double y = it.second->get_position().at(1);
+                growth_cones.first.push_back(x);
+                growth_cones.second.push_back(y);
+            }
         }
         // add NaNs to help separate data from different neurons afterwards
         branching_points.first.push_back(NAN);

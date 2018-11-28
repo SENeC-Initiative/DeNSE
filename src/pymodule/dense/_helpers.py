@@ -19,7 +19,7 @@ Same dict is declared to deduce the type of event.
 
 import sys
 from math import modf
-from collections import defaultdict, Iterable
+from collections import defaultdict, Iterable, namedtuple
 try:
     from collections.abc import Container as _container
 except:
@@ -41,6 +41,36 @@ from .geometry import Shape
 
 
 DICT_IS_ORDERED = sys.version_info >= (3, 6)
+
+
+# ------- #
+# Classes #
+# ------- #
+
+time_units = ("day", "hour", "minute", "second")
+
+class Time(namedtuple("Time", time_units)):
+
+    __slots__ = ()
+
+    def _repr_pretty_(self, p, cycle):
+        str_pretty = ""
+        for u in time_units:
+            val = getattr(self, u)
+            if isinstance(val, ureg.Quantity):
+                val = val.m
+            if val != 0:
+                if str_pretty:
+                    str_pretty += " "
+                str_pretty += "{} {}{}".format(val, u, "s" if val > 1 else "")
+        if not str_pretty:
+            str_pretty = "0 minute"
+        p.text(str_pretty)
+
+
+model_blocks = ("elongation_type", "steering_type", "direction_selection")
+
+Model = namedtuple("Model", model_blocks)
 
 
 # ---- #
@@ -100,7 +130,7 @@ def format_time(seconds=0., minutes=0, hours=0, days=0):
 # Space #
 # ----- #
 
-def get_neurite_angles(pos, soma_size, area):
+def get_neurite_angles(pos, soma_size, area, max_neurites):
     '''
     Return the mean angles where neurites will start extending.
 
@@ -126,30 +156,22 @@ def get_neurite_angles(pos, soma_size, area):
 
     if isinstance(intersect, MultiLineString):
         lines = intersect.geoms
-        # ~ f, ax = plt.subplots()
-        # ~ plot_shape(area, axis=ax, show=False)
         for i, l in enumerate(lines):
-            # ~ plot_shape(l, axis=ax, show=False)
             p_mid = l.interpolate(0.5, normalized=True)
             theta = np.arctan2(p_mid.y - p.y, p_mid.x - p.x)
             if not angles:
                 angles["axon"] = theta*ureg.rad
-            else:
+            elif len(angles) < max_neurites:
                 angles["dendrite_{}".format(i)] = theta*ureg.rad
-            # ~ ax.scatter(p_mid.x, p_mid.y, s=4, c="r")
+            else:
+                break
     elif not intersect.is_empty:
-        # ~ f, ax = plt.subplots()
-        # ~ plot_shape(area, axis=ax, show=False)
-        # ~ plot_shape(intersect, axis=ax, show=False)
         p_mid = intersect.interpolate(0.5, normalized=True)
         theta = np.arctan2(p_mid.y - p.y, p_mid.x - p.x)
         if not angles:
             angles["axon"] = theta*ureg.rad
-        else:
+        elif len(angles) < max_neurites:
             angles["dendrite_{}".format(len(angles))] = theta*ureg.rad
-        # ~ ax.scatter(p_mid.x, p_mid.y, s=4, c="r")
-
-    # ~ plt.show()
 
     return angles
 
@@ -160,7 +182,7 @@ def get_area(area_info, culture):
         area = culture.areas[area_info]
     elif isinstance(area_info, Shape):
         area = area_info
-    elif isinstance(area_info, Iterable):
+    elif is_iterable(area_info):
         from shapely.ops import cascaded_union
         areas = []
         for a in area_info:
@@ -406,6 +428,12 @@ def is_scalar(value):
 
 def is_quantity(value):
     return isinstance(value, ureg.Quantity)
+
+
+def is_iterable(obj):
+    if is_quantity(obj):
+        return is_iterable(obj.m)
+    return isinstance(obj, Iterable) or nonstring_container(obj)
 
 
 def neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):

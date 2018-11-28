@@ -60,10 +60,12 @@ Area::~Area()
 double Area::get_property(const std::string &name) const
 {
     auto it = properties_.find(name);
+
     if (it == properties_.end())
     {
         return 1.;
     }
+
     return properties_.at(name);
 }
 

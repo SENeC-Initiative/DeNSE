@@ -31,22 +31,21 @@ Main parameters
 '''
 
 soma_radius = 10.
-num_neurons = 20
+num_neurons = 50
 
-# ~ gc_model = 'run_tumble'
-gc_model = 'persistent_random_walk'
+# ~ gc_model = 'run-and-tumble'
+gc_model = 'cst_mem_nwa'
 
 neuron_params = {
     "growth_cone_model": gc_model,
-    "use_van_pelt": True,
+    "use_van_pelt": False,
     "sensing_angle": 45.*deg,
-    "max_sensing_angle": 70.*deg,
     "speed_growth_cone": 0.16 * um / minute,
-    "filopodia_wall_affinity": 0.01,
-    "filopodia_finger_length": 44. * um,
+    "filopodia_wall_affinity": 1.,
+    "filopodia_finger_length": 10. * um,
     "filopodia_min_number": 30,
-    "persistence_length": 7. * um,
-    "B":2. * cpm,
+    "persistence_length": 50. * um,
+    "B": 2. * cph,
     "T":1000. * minute,
     "E":1.,
     "soma_radius": soma_radius * um,
@@ -56,24 +55,24 @@ dendrite_params = {
     "use_van_pelt": True,
     "growth_cone_model": gc_model,
     "sensing_angle": 60.*deg,
-    "speed_growth_cone": 0.05 * um / minute,
+    "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
     "persistence_length" : 50. * um,
-    "B":6. * cpm,
+    "B": 6. * cph,
     "T":1000. * minute,
     "E":1.,
 }
 
 axon_params = {
     "persistence_length": 200.*um,
-    "speed_growth_cone": 0.05*um/minute,
+    "speed_growth_cone": 0.1*um/minute,
     # diameter
-    "thinning_ratio": 1./400.,
+    "taper_rate": 1./400.,
     "diameter_ratio_avg": 0.5,
     # branching
     "use_van_pelt": False,
     "use_uniform_branching": False,
-    "filopodia_wall_affinity": 75.
+    "filopodia_wall_affinity": 10.
 }
                    
 '''
@@ -81,9 +80,11 @@ Simulation
 '''
 											
 def step(n, loop_n, plot=True):
+    print("simulating", n)
     ds.Simulate(n)
+    print("done")
     if plot:
-        ds.PlotNeuron(show_nodes=True, subsample=1, show=True)
+        ds.PlotNeuron(subsample=1, show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -92,7 +93,7 @@ if __name__ == '__main__':
             #~ "resolution": 30.}
     kernel = {"seeds": [33, 64, 84, 65, 68, 23],
               "num_local_threads": 6,
-              "resolution": 20. * minute}
+              "resolution": 5. * minute}
     # ~ kernel={"seeds":[33],
     # ~ "num_local_threads": 1,
     # ~ "resolution": 30.*minute}
@@ -115,24 +116,27 @@ if __name__ == '__main__':
     neuron_params['position'] = culture.seed_neurons(neurons=num_neurons,
                                                      soma_radius=soma_radius)
 
-    print("Creating neurons")
+    print("\nCreating neurons\n")
     gids = ds.CreateNeurons(n=num_neurons,
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
                             axon_params = axon_params,
                             num_neurites=3)
+
+    rec = ds.CreateRecorders(gids, "num_growth_cones")
+
     start = time.time()
     # ~ for i in range(10):
         # ~ step(1 * day, 0, True)
-    step(10 * day, 0, True)
+    step(10 * minute, 0, True)
 
-    dendrite_params.update({"speed_growth_cone" : 0.001 * um / minute,
-                            "use_van_pelt" : False})
+    dendrite_params.update({"speed_growth_cone" : 0.05 * um / minute,
+                            "use_van_pelt" : True})
 
     axon_params.update({"speed_growth_cone" : 0.09 * um / minute,
                    "use_van_pelt" : True,
-                   'B' : 10. * cpm,
+                   'B' : 10. * cph,
                    'T' : 10000. * minute,
                    'E' : 0.7})
 
@@ -147,8 +151,8 @@ if __name__ == '__main__':
                        # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        # show=True)
 
-    for i in range(3):
-        step(1 * day, 0, True)
+    for i in range(2):
+        step(4.*day, 0, True)
     duration = time.time() - start
 
     # prepare the plot

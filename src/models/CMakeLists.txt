@@ -1,12 +1,35 @@
+# Check if pymodel changed
+set( cppfile "${CMAKE_CURRENT_SOURCE_DIR}/models_manager.cpp" )
+set( inputfile "${CMAKE_CURRENT_SOURCE_DIR}/models_manager.cpp.in" )
+set( pyfile "${CMAKE_CURRENT_SOURCE_DIR}/models_generator.py" )
+
+if ((NOT EXISTS ${cppfile}) OR (${pyfile} IS_NEWER_THAN ${cppfile}) OR (${inputfile} IS_NEWER_THAN ${cppfile}))
+    execute_process(
+        COMMAND "${PYTHON}" "models_generator.py"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+endif()
+
+
 set( models_sources
-    gc_random_walk.hpp  gc_random_walk.cpp
-    gc_run_tumble.hpp  gc_run_tumble.cpp
-    gc_critical.hpp gc_critical.cpp
-    gc_dir_el.hpp gc_dir_el.cpp
-    gc_self_referential_forces.hpp gc_self_referential_forces.cpp
-    ActinWave.cpp ActinWave.hpp
-    models_manager.hpp
-    models_manager.cpp
+    ActinWave.hpp ActinWave.cpp
+    models_manager.hpp models_manager.cpp
+    # complete model and interfaces
+    complete_gc_model.hpp
+    elongation_interface.hpp
+    steering_interface.hpp
+    direction_select_interface.hpp
+    # elongation algorithms
+    cst_elongation.hpp
+    gfluct_elongation.hpp gfluct_elongation.cpp
+    resource_based_elongation.hpp resource_based_elongation.cpp
+    # steering methods
+    pull_only_steering.hpp
+    memory_based_steering.hpp memory_based_steering.cpp
+    # direction selection methods
+    nm_direction_selector.hpp nm_direction_selector.cpp
+    nwa_direction_selector.hpp nwa_direction_selector.cpp
+    rt_direction_selector.hpp rt_direction_selector.cpp
     )
 
 add_library( models STATIC ${models_sources} )

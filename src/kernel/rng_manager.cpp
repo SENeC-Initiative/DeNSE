@@ -43,11 +43,8 @@ void growth::RNGManager::create_rngs_()
 {
     if (!rng_.empty())
     {
-        printf("Deleting existing random number generators.\n");
         rng_.clear();
     }
-
-    printf("Creating default RNGs.\n");
 
     // initialize
     size_t mpi_rank = kernel().parallelism_manager.get_mpi_rank();

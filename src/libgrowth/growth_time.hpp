@@ -21,8 +21,8 @@ class Time
     typedef unsigned long timeStep;
 
     Time();
-    Time(float seconds, unsigned char minutes, unsigned char hours,
-         unsigned char days);
+    Time(double seconds, unsigned char minutes, unsigned char hours,
+         size_t days);
     Time(const Time &initial_time, timeStep steps);
 
     static void reset_resolution();
@@ -36,10 +36,10 @@ class Time
     static const double DEFAULT_RESOLUTION;
     static double RESOLUTION;
     // instance members
-    float sec_;
+    double sec_;
     unsigned char min_;
     unsigned char hour_;
-    unsigned char day_;
+    size_t day_;
 
   public:
     Time &operator+=(const Time &rhs);
@@ -49,10 +49,10 @@ class Time
 
     void update(const unsigned long steps, double substep);
 
-    float get_sec() const;
+    double get_sec() const;
     unsigned char get_min() const;
     unsigned char get_hour() const;
-    unsigned char get_day() const;
+    size_t get_day() const;
 
     void get_sec(double sec) const;
     void get_min(double min) const;
@@ -64,12 +64,12 @@ class Time
     double get_total_hours() const;
     double get_total_days() const;
 
-    void add_seconds(float seconds);
+    void add_seconds(double seconds);
 
-    void set_sec(float seconds);
+    void set_sec(double seconds);
     void set_min(unsigned char minutes);
     void set_hour(unsigned char hours);
-    void set_day(unsigned char days);
+    void set_day(size_t days);
 };
 
 /*

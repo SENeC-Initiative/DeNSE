@@ -6,7 +6,8 @@
 from libc.stdlib cimport malloc, free
 import ctypes
 
-from collections import Iterable, namedtuple
+from collections import Iterable
+from copy import deepcopy
 import datetime
 import types
 import warnings
@@ -24,8 +25,9 @@ from ._pygrowth cimport *
 __all__ = [
     "CreateNeurons",
     "CreateRecorders",
+    "GenerateModel",
     "GenerateSimulationID",
-    "GetDefaults",
+    "GetDefaultParameters",
     "GetEnvironment",
     "GetKernelStatus",
     "GetModels",
@@ -40,16 +42,7 @@ __all__ = [
     "SetKernelStatus",
     "SetStatus",
     "Simulate",
-    "Time",
 ]
-
-
-# ----------- #
-# Definitions #
-# ----------- #
-
-time_units = ("day", "hour", "minute", "second")
-Time = namedtuple("Time", time_units)
 
 
 # ---------- #
@@ -97,19 +90,15 @@ def finalize():
 # Main functions #
 # -------------- #
 
-def CreateNeurons(n=1, growth_cone_model=None, params=None,
-                  axon_params=None, dendrites_params=None, num_neurites=0,
-                  culture=None, on_area=None, neurites_on_area=False,
-                  return_ints=False, **kwargs):
+def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
+                  num_neurites=0, culture=None, on_area=None,
+                  neurites_on_area=False, return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
     Parameters
     ----------
     n : int, optional (default: 1)
-    growth_cone_model : str, optional (default: "default")
-        Growth cone model name, can be overwritten locally in `axon_params`
-        or `dendrites_params`.
     params : dict, optional (default: None)
         Parameters of the object (or shape object for obstacle).
     axon_params : dict, optional (default: same as `params`)
@@ -175,18 +164,15 @@ def CreateNeurons(n=1, growth_cone_model=None, params=None,
             warnings.warn(message, category=RuntimeWarning)
             warnings.simplefilter('default', RuntimeWarning)
 
-    growth_cone_model = \
-        "default" if growth_cone_model is None else growth_cone_model
-
     # set growth_cone_model for neurites if not present
     if "growth_cone_model" not in params:
-        params["growth_cone_model"] = growth_cone_model
+        params["growth_cone_model"] = "default"
     if "growth_cone_model" not in ax_params:
         ax_params["growth_cone_model"] = \
-            params.get("growth_cone_model", growth_cone_model)
+            params.get("growth_cone_model", params["growth_cone_model"])
     if "growth_cone_model" not in dend_params:
         dend_params["growth_cone_model"] = \
-            params.get("growth_cone_model", growth_cone_model)
+            params.get("growth_cone_model", params["growth_cone_model"])
 
     environment = GetEnvironment()
 
@@ -211,9 +197,9 @@ def CreateNeurons(n=1, growth_cone_model=None, params=None,
         rnd_pos = True
 
     if not params:
-        params = GetDefaults("neuron", settables=True)
-        params.update(GetDefaults(growth_cone_model, settables=True))
-        params['growth_cone_model'] = growth_cone_model
+        params = GetDefaultParameters("neuron", settables=True)
+        params.update(GetDefaultParameters(params["growth_cone_model"],
+                                           settables=True))
         if culture is None:
             if n == 1:
                 params['position'] = (0., 0.)
@@ -246,20 +232,23 @@ def CreateNeurons(n=1, growth_cone_model=None, params=None,
 
             pos = params["position"]
 
-            ssizes = params["soma_radius"]
-            if not nonstring_container(ssizes):
-                ssizes = [ssizes for _ in range(n)]
+            ssizes    = params["soma_radius"]
+            nneurites = num_neurites
+            if not is_iterable(params["soma_radius"]):
+                ssizes = (params["soma_radius"] for _ in range(n))
+            if not is_iterable(num_neurites):
+                nneurites = (num_neurites for _ in range(n))
 
-            nangles      = []
-            num_neurites = []
+            nangles  = []
+            neurites = []
 
-            for s, p in zip(ssizes, pos):
-                angles = get_neurite_angles(p, s, area)
+            for s, max_neurites, p in zip(ssizes, nneurites, pos):
+                angles = get_neurite_angles(p, s, area, max_neurites)
                 nangles.append(angles)
-                num_neurites.append(len(angles))
+                neurites.append(len(angles))
 
             params["neurite_angles"] = nangles
-            params["num_neurites"]   = num_neurites
+            kwargs["num_neurites"]   = neurites
 
         return _create_neurons(
             params, ax_params, dend_params, kwargs, n, return_ints)
@@ -279,11 +268,13 @@ def CreateNeurons(n=1, growth_cone_model=None, params=None,
 
             # check for specific neurite angles
             if neurites_on_area:
-                pos     = params["position"]
-                ssize   = params["soma_size"]
+                pos          = params["position"]
+                ssize        = params["soma_size"]
+                max_neurites = num_neurites
 
-                param["neurite_angles"] = get_neurite_angles(pos, ssize, area)
-                param["num_neurites"]   = len(param["neurite_angles"])
+                param["neurite_angles"] = \
+                    get_neurite_angles(pos, ssize, area, max_neurites)
+                kwargs["num_neurites"]  = len(param["neurite_angles"])
 
             gids.append(
                 _create_neurons(
@@ -385,6 +376,54 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
                                    "a bug on our issue tracker."
 
     return tuple([num_obj + i for i in range(num_created)])
+
+
+def GenerateModel(elongation_type, steering_method, direction_selection):
+    '''
+    Returns a Model object giving the method to use for each of the three main
+    properties:
+
+    - the elongation type (how the growth cone speed is computed)
+    - the steering method (how forces are exerted on the growth cone)
+    - the direction selection method (how the new direction is chosen at each
+      step)
+
+    Parameters
+    ----------
+    elongation_type : str
+        Among "constant", "gaussian-fluctuations", or "resource-based".
+    steering_method : str
+        Among "pull-only", "memory-based", or "self-referential-forces"
+        (not yet).
+    direction_selection : str
+        Either "noisy-maximum", "noisy-weighted-average", or "run-and-tumble".
+
+    Returns
+    -------
+    model : the complete model.
+
+    Note
+    ----
+    The properties of the model can be obtained through
+    ``model.elongation_type``, ``model.steering_method`` and
+    ``model.direction_selection``.
+
+    For more information on the models, see :ref:`pymodels`.
+    '''
+    etypes = [_to_string(et) for et in get_elongation_types()]
+    stypes = [_to_string(st) for st in get_steering_methods()]
+    dtypes = [_to_string(dt) for dt in get_direction_selection_methods()]
+
+    assert elongation_type in etypes, \
+        "Invalid `elongation_type` " + elongation_type + "."
+
+    assert steering_method in stypes, \
+        "Invalid `steering_method` " + steering_method + "."
+
+    assert direction_selection in dtypes, \
+        "Invalid `direction_selection` " + direction_selection + "."
+        
+    return Model(elongation_type, steering_method, direction_selection)
 
 
 def GenerateSimulationID(*args):
@@ -663,15 +702,21 @@ def GetNeurons(as_ints=False):
         return Population.from_gids(get_neurons())
 
 
-def GetDefaults(object_name, settables=False, detailed=False):
+def GetDefaultParameters(obj, property_name=None, settables_only=True,
+                         detailed=False):
     '''
     Returns the default status of an object.
 
     Parameters
     ----------
-    object_name : str
-        Name of the object, e.g. "recorder", or "persistant_random_walk".
-    settables : bool, optional (default: False)
+    obj : :obj:`str` or :class:`Model`.
+        Name of the object, among "recorder", "neuron", "neurite", or
+        "growth_cone", or a model, either as a string (e.g. "cst_rw_wrc") or
+        as a :class:`Model` object returned by :func:`GenerateModel`.
+    property_name : str, optional (default: None)
+        Name of the property that should be queried. By default, the full
+        dictionary is returned.
+    settables_only : bool, optional (default: True)
         Return only settable values; read-only values are hidden.
     detailed : bool, optional (default: False)
         If True, returns some of the options available for the substructures
@@ -684,19 +729,27 @@ def GetDefaults(object_name, settables=False, detailed=False):
         Default status of the object.
     '''
     cdef:
-        string ctype
-        string cname = _to_bytes(object_name)
+        string ctype, cname
         statusMap default_params
-    if object_name in GetModels("growth_cones"):
+
+    gc_models = GetModels("growth_cones")
+
+    if obj in gc_models.values():
+        obj = "{}_{}_{}".format(obj.elongation_type, obj.steering_method,
+                                obj.direction_selection)
+
+    cname = _to_bytes(obj)
+
+    if obj in gc_models:
         ctype = _to_bytes("growth_cone")
-    elif object_name == "neuron":
+    elif obj == "neuron":
         ctype = _to_bytes("neuron")
-    elif object_name in ["axon", "dendrite", "neurite"]:
+    elif obj in ["axon", "dendrite", "neurite"]:
         ctype = _to_bytes("neurite")
-    elif object_name == "recorder":
+    elif obj == "recorder":
         ctype = _to_bytes("recorder")
     else:
-        raise RuntimeError("Unknown object : '" + object_name + "'. "
+        raise RuntimeError("Unknown object : '" + obj + "'. "
                            "Candidates are 'recorder' and all entries in "
                            "GetModels.")
 
@@ -705,7 +758,7 @@ def GetDefaults(object_name, settables=False, detailed=False):
 
     py_type = _to_string(ctype)
 
-    if settables:
+    if settables_only:
         for unset in unsettables.get(py_type, []):
             if unset in status:
                 del status[unset]
@@ -715,20 +768,41 @@ def GetDefaults(object_name, settables=False, detailed=False):
         del status["x"]
         del status["y"]
 
-    return status
+    if property_name is None:
+        return status
+    return status[property_name]
 
 
-def GetModels(object_type="all"):
+def GetModels(abbrev=True):
     '''
     Get available models for an object type.
+
+    Parameters
+    ----------
+    abbrev : bool, optional (default: True)
+        Whether to return only the abbreviated names of the models.
+
+    Returns
+    -------
+    models : dict
+        A dictionary containing the names of the models associated to their
+        respective :class:`Model` object.
+
+    See also
+    --------
+    :func:`~dense.GenerateModel`.
     '''
-    if object_type not in ("all", "growth_cones"):
-        raise RuntimeError("Invalid `object_type`: " + object_type)
     cdef:
-        string cname = _to_bytes(object_type)
-        vector[string] cmodels
-    get_models(cmodels, cname)
-    models = [_to_string(m) for m in cmodels]
+        unordered_map[string, string] cmodels
+
+    get_models(cmodels, abbrev)
+
+    models = {}
+
+    for m in cmodels:
+        et, st, dt = _to_string(m.second).split("_")
+        models[_to_string(m.first)] = Model(et, st, dt)
+
     return models
 
 
@@ -780,7 +854,8 @@ def GetRecording(recorder, record_format="detailed"):
         level      = rec_status["level"]
         ev_type    = rec_status["event_type"]
 
-        recording[observable] = {}
+        if observable not in recording:
+            recording[observable] = {}
 
         rec_tmp = {}
         _get_recorder_data(rec, rec_tmp, rec_status, ctime_units)
@@ -999,6 +1074,8 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         Property c_prop
         string c_simulation_ID = _to_bytes(simulation_ID)
 
+    internal_status = deepcopy(status)
+
     if value is not None:
         assert is_string(status), "When using `value`, status must be the " +\
             "name of the kernel property that will be set."
@@ -1021,15 +1098,15 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         c_prop = _to_property(key, value)
         c_status.insert(pair[string, Property](key, c_prop))
     else:
-        for key, value in status.items():
+        for key, value in internal_status.items():
             assert key in GetKernelStatus(), \
                 "`" + key + "` option unknown."
             if key == "resolution":
                 assert isinstance(value, ureg.Quantity), \
                     "`resolution` must be a time quantity."
-                status[key] = value.m_as("minute")
+                internal_status[key] = value.m_as("minute")
 
-        if status.get("environment_required", False):
+        if internal_status.get("environment_required", False):
             # make sure that, if neurons exist, their growth cones are not using
             # the `simple_random_walk` model, which is not compatible.
             neurons = GetNeurons()
@@ -1039,7 +1116,7 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
                         "The `simple_random_walk` model, is not compatible with " +\
                         "complex environments."
 
-        for key, value in status.items():
+        for key, value in internal_status.items():
             key = _to_bytes(key)
             if c_status_old.find(key) == c_status.end():
                 raise KeyError(
@@ -1270,6 +1347,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     '''
     cdef:
         size_t i, len_val, num_objects
+        int num_neurites
         statusMap base_neuron_status, base_axon_status, base_dendrites_status
         string description
 
@@ -1306,8 +1384,9 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
         assert len_val == n, "`num_neurites` vector must be of size " + n + "."
         assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
             "be composed only of non-negative integers."
-        for i, v in enumerate(neurites):
-            neuron_params[i][b"num_neurites"] = _to_property("num_neurites", v)
+        for i, num_neurites in enumerate(neurites):
+            neuron_params[i][b"num_neurites"] = \
+                _to_property("num_neurites", num_neurites)
 
     # create neurons
     i = create_neurons(neuron_params, axon_params, dendrites_params)
@@ -1507,7 +1586,7 @@ cdef _property_to_val(Property c_property):
     elif c_property.data_type == VEC_SIZE:
         return [val*dim for val in c_property.uu]
     elif c_property.data_type == VEC_LONG:
-        return [val*dim for val in c_property.uu]
+        return [val*dim for val in c_property.ll]
     elif c_property.data_type == STRING:
         return _to_string(c_property.s)
     elif c_property.data_type == VEC_STRING:
@@ -1920,10 +1999,13 @@ cdef void _set_recorder_status(
         status[b"restrict_to"] = _to_property("restrict_to", restrict_to)
 
 
-def _check_params(params, object_name, gc_model="default"):
+def _check_params(params, object_name, gc_model=None):
     '''
     Check the types and validity of the parameters passed.
     '''
+    gc_model = _to_string(get_default_model()) if gc_model is None else gc_model
+    assert gc_model in GetModels(), "Unknown growth cone `" + gc_model + "`."
+
     cdef:
         string ctype
         string cname = _to_bytes(object_name)
@@ -1948,12 +2030,6 @@ def _check_params(params, object_name, gc_model="default"):
     py_defaults = _statusMap_to_dict(default_params)
 
     if ("growth_cone_model" in params):
-        # when trying to create simple random walkers, check that the
-        # environment is not used
-        if params["growth_cone_model"] == "simple_random":
-            assert not GetKernelStatus("environment_required"), \
-                "The `simple_random_walk` model cannot be used with a " +\
-                "complex environment."
         get_defaults(_to_bytes(params["growth_cone_model"]),
                      _to_bytes("growth_cone"),
                      _to_bytes(params["growth_cone_model"]), False,

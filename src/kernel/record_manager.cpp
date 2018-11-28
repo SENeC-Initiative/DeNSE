@@ -47,9 +47,12 @@ void RecordManager::initialize()
 void RecordManager::finalize()
 {
     omp_id_crec_.clear();
+    omp_id_drec_.clear();
     c_recorders_.clear();
     d_recorders_.clear();
     neuron_to_d_recorder_.clear();
+    neuron_to_c_recorder_.clear();
+    events_.clear();
 }
 
 

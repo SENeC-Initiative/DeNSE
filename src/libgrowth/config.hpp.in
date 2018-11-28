@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "growth_names.hpp"
+
 
 namespace growth
 {
@@ -113,5 +115,8 @@ inline void set_param(statusMap &map, const std::string &key,
                       const std::unordered_map<std::string, double> &value,
                       const std::string& dim);
 } // namespace growth
+
+
+#include "config_impl.hpp"
 
 #endif // CONFIG_H

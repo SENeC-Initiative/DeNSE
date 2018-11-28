@@ -338,7 +338,8 @@ void NeuronDiscreteRecorder::record(const Event &ev)
     size_t neuron       = std::get<2>(ev);
     signed char ev_type = std::get<4>(ev);
 
-    Time event_time = Time::from_steps(step, substep);
+    Time event_time = kernel().simulation_manager.get_initial_time();
+    event_time     += Time::from_steps(step, substep);
 
     // test which data is recorded
 

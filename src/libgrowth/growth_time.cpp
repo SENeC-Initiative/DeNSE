@@ -38,8 +38,8 @@ Time::Time()
 }
 
 
-Time::Time(float seconds, unsigned char minutes, unsigned char hours,
-           unsigned char days)
+Time::Time(double seconds, unsigned char minutes, unsigned char hours,
+           size_t days)
     : sec_(0.)
     , min_(0)
     , hour_(0)
@@ -69,17 +69,15 @@ void Time::update(Time::timeStep steps, double substeps)
         // prepare the quotient and remainder struct for integer division
         std::ldiv_t dv{};
 
-        // number of minutes in the resolution
-        Time::timeStep res_min = static_cast<Time::timeStep>(
-            std::floor(RESOLUTION));
         // total minutes in the step duration
-        double total_min       = steps*RESOLUTION + substeps*RESOLUTION;
+        double total_min       = steps*RESOLUTION + substeps;
         Time::timeStep int_min = std::floor(total_min);
         double frac_min        = total_min - int_min;
+        double frac_sec        = frac_min*60. - (int)(frac_min*60.);
 
         // seconds
         dv   = std::div(sec_ + frac_min*60., 60L);
-        sec_ = (float)dv.rem;
+        sec_ = (float)(dv.rem + frac_sec);
         // minutes
         dv   = std::div(min_ + int_min + dv.quot, 60L);
         min_ = (char)dv.rem;
@@ -87,7 +85,7 @@ void Time::update(Time::timeStep steps, double substeps)
         dv    = std::div(hour_ + dv.quot, 24L);
         hour_ = (char)dv.rem;
         // day
-        day_ += (char)dv.quot;
+        day_ += (size_t)dv.quot;
     }
 }
 
@@ -117,7 +115,7 @@ double Time::get_total_days() const
 }
 
 
-float Time::get_sec() const { return sec_; }
+double Time::get_sec() const { return sec_; }
 
 
 unsigned char Time::get_min() const { return min_; }
@@ -126,12 +124,12 @@ unsigned char Time::get_min() const { return min_; }
 unsigned char Time::get_hour() const { return hour_; }
 
 
-unsigned char Time::get_day() const { return day_; }
+size_t Time::get_day() const { return day_; }
 
 
 // setters
 
-void Time::add_seconds(float seconds)
+void Time::add_seconds(double seconds)
 {
     sec_ += seconds;
     if (sec_ >= 60.)
@@ -143,7 +141,7 @@ void Time::add_seconds(float seconds)
 }
 
 
-void Time::set_sec(float seconds)
+void Time::set_sec(double seconds)
 {
     sec_ = seconds;
     if (seconds >= 60.)
@@ -179,7 +177,7 @@ void Time::set_hour(unsigned char hours)
 }
 
 
-void Time::set_day(unsigned char days) { day_ = days; }
+void Time::set_day(size_t days) { day_ = days; }
 
 
 // convert time to steps
@@ -224,9 +222,9 @@ Time operator+(Time lhs, const Time &rhs)
 Time &Time::operator-=(const Time &rhs)
 {
     // define integer and decimal parts
-    unsigned int int_part;
-    float dec_part;
-    char signed_tmp;
+    size_t int_part;
+    double dec_part;
+    long int signed_tmp;
     // subtract and convert
     signed_tmp = this->day_ - rhs.get_day(); // day
     if (signed_tmp < 0)

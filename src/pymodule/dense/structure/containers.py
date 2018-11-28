@@ -244,13 +244,15 @@ class Neurite(str):
         self.neurite_type  = neurite_type
         if parent is not None:
             #~ self._taper_rate = _pg.GetStatus(parent, "taper_rate", neurite=name)
-            self._taper_rate = _pg.GetStatus(parent, "thinning_ratio", neurite=name)
+            self._taper_rate = _pg.GetStatus(parent, "taper_rate", neurite=name)
         else:
             self._taper_rate = None
         if branches:
             self._has_branches = True
         else:
             self._has_branches = False
+
+        self._name = name
 
         # store last update time
         if self._has_branches:
@@ -268,6 +270,10 @@ class Neurite(str):
                 popper.append(enum)
         for n in sorted(popper, reverse=True):
             self.branches.pop(n)
+
+    @property
+    def name(self):
+        return self._name
 
     @property
     def branches(self):

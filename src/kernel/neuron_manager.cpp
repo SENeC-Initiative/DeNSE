@@ -53,6 +53,7 @@ void NeuronManager::finalize()
 {
     neurons_.clear();
     neurons_on_thread_.clear();
+    model_map_.clear();
 }
 
 
@@ -68,10 +69,12 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
 {
     size_t first_id             = kernel().get_num_objects();
     size_t previous_num_neurons = neurons_.size();
+
     // put the neurons on the thread list they belong to
     size_t num_omp = kernel().parallelism_manager.get_num_local_threads();
     int omp_id     = kernel().parallelism_manager.get_thread_local_id();
     std::vector<std::vector<size_t>> thread_neurons(num_omp);
+
     for (size_t i = 0; i < neuron_params.size(); i++)
     {
         double x, y;
@@ -310,16 +313,6 @@ gidNeuronMap::const_iterator NeuronManager::iter_neurons()
 size_t NeuronManager::num_neurons() const { return neurons_.size(); }
 
 
-GCPtr NeuronManager::get_model(std::string model) { return model_map_[model]; }
-
-
-GCPtr NeuronManager::get_default_model()
-// default model is passed by model manager
-{
-    return model_map_["default"];
-}
-
-
 int NeuronManager::get_neuron_thread(size_t gid) const
 {
     return thread_of_neuron_.at(gid);
@@ -329,15 +322,6 @@ int NeuronManager::get_neuron_thread(size_t gid) const
 void NeuronManager::register_model(std::string model_name, GCPtr model_ptr)
 {
     model_map_[model_name] = model_ptr;
-}
-
-
-void NeuronManager::get_models(std::vector<std::string> &models)
-{
-    for (auto it : model_map_)
-    {
-        models.push_back(it.first);
-    }
 }
 
 

@@ -1,0 +1,176 @@
+#include "models_manager.hpp"
+
+#include <sstream>
+
+// Include from kernel
+#include "kernel_manager.hpp"
+
+// Include from libgrowth
+#include "elements_types.hpp"
+
+// Include from elements
+#include "GrowthCone.hpp"
+
+// Include from models
+#include "complete_gc_model.hpp"
+{model_includes}
+
+
+namespace growth
+{{
+
+ModelManager::ModelManager()
+  : elongation_types({{{elongation_list}    }})
+  , steering_methods({{{steering_list}    }})
+  , direction_selection({{{direction_selection_list}    }})
+  , abbrev_to_full({{{abbrev_to_full}    }})
+  , full_to_abbrev({{{full_to_abbrev}    }})
+  , specials({{{specials}    }})
+  , default_model({default_model})
+{{
+}}
+
+
+void ModelManager::init_models()
+{{{init_models}}}
+
+
+std::vector<std::string> ModelManager::get_elongation_types()
+{{
+    std::vector<std::string> keys;
+    keys.reserve(elongation_types.size());
+
+    for(auto const& etype: elongation_types)
+    {{
+        keys.push_back(etype);
+        keys.push_back(full_to_abbrev.at(etype));
+    }}
+
+    return keys;
+}}
+
+
+std::vector<std::string> ModelManager::get_steering_methods()
+{{
+    std::vector<std::string> keys;
+    keys.reserve(steering_methods.size());
+
+    for(auto const& smeth: steering_methods)
+    {{
+        keys.push_back(smeth);
+        keys.push_back(full_to_abbrev.at(smeth));
+    }}
+
+    return keys;
+}}
+
+
+std::vector<std::string> ModelManager::get_direction_selection_methods()
+{{
+    std::vector<std::string> keys;
+    keys.reserve(direction_selection.size());
+
+    for(auto const& dirsel: direction_selection)
+    {{
+        keys.push_back(dirsel);
+        keys.push_back(full_to_abbrev.at(dirsel));
+    }}
+
+    return keys;
+}}
+
+
+void ModelManager::get_models(std::unordered_map<std::string, std::string> &models, bool abbrev)
+{{
+
+    // special model names
+    for (auto const &it : specials)
+    {{
+        models.insert({{it.first, it.second}});
+    }}
+
+    // abbreviated names
+    std::string abbrev_name, full_name;
+
+    for (auto const& el : elongation_types)
+    {{
+        for (auto const& steer : steering_methods)
+        {{
+            for (auto const& diresel : direction_selection)
+            {{
+                abbrev_name = full_to_abbrev.at(el) + "_" + full_to_abbrev.at(steer) + "_" + full_to_abbrev.at(diresel);
+                full_name   = el + "_" + steer + "_" + diresel;
+
+                models.insert({{abbrev_name, full_name}});
+            }}
+        }}
+    }}
+
+    // full names
+    if (not abbrev)
+    {{
+        for (auto &it : models_)
+        {{
+            models.insert({{it.first, it.first}});
+        }}
+    }}
+}}
+
+
+GCPtr ModelManager::get_model(const std::string& name)
+{{
+    auto it = models_.find(name);
+
+    std::string full_name(name);
+
+    if (name == "default")
+    {{
+        full_name = default_model;
+    }}
+
+    if (it != models_.end())
+    {{
+        full_name = it->first;
+    }}
+    else
+    {{
+        auto special_it = specials.find(full_name);
+
+        if (special_it != specials.end())
+        {{
+            full_name = special_it->second;
+        }}
+        else
+        {{
+            std::vector<std::string> tokens;
+            std::string token;
+            std::istringstream tokenStream(full_name);
+
+            while (std::getline(tokenStream, token, '_'))
+            {{
+                tokens.push_back(token);
+            }}
+
+            full_name = abbrev_to_full.at(tokens[0]) + "_" +
+                        abbrev_to_full.at(tokens[1]) + "_" +
+                        abbrev_to_full.at(tokens[2]);
+        }}
+    }}
+
+    it = models_.find(full_name);
+
+    if (it == models_.end())
+    {{
+        throw std::invalid_argument("Model `" + full_name + "` does not exist.");
+    }}
+
+    return models_[full_name];
+}}
+
+
+GCPtr ModelManager::get_default_model()
+{{
+    return get_model(default_model);
+}}
+
+}} // namespace growth

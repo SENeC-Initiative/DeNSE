@@ -1,19 +1,15 @@
-#ifndef GC_TUB_H
+#ifndef RB_EL_H
+#define RB_EL_H
 
-#define GC_TUB_H
+#include "elongation_interface.hpp"
 
-#include "GrowthCone.hpp"
-#include "growth_names.hpp"
 
 namespace growth
 {
 
-class GrowthCone_Critical : public virtual GrowthCone
+class ResourceBasedElongationModel : public virtual ElongationModel
 {
     friend class Neurite;
-
-  private:
-    std::normal_distribution<double> normal_;
 
   protected:
     // parameters
@@ -44,24 +40,24 @@ class GrowthCone_Critical : public virtual GrowthCone
     double branching_th_;
     double branching_proba_;
 
-  public:
-    GrowthCone_Critical();
-    GrowthCone_Critical(const GrowthCone_Critical &);
+    std::uniform_real_distribution<double> uniform_;
+    std::normal_distribution<double> normal_;
 
-    virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
-                        double distanceToParent, std::string binaryID,
-                        const Point &position, double angle) override;
+  public:
+    ResourceBasedElongationModel(GCPtr gc, NeuritePtr neurite);
+    ResourceBasedElongationModel(const ResourceBasedElongationModel &) = delete;
+    ResourceBasedElongationModel(const ResourceBasedElongationModel &copy, GCPtr gc, NeuritePtr neurite);
 
     void initialize_CR();
     void prepare_for_split() override;
     void after_split() override;
     void reset_CR_demand();
 
-    void compute_speed(mtPtr rnd_engine, double substep) override;
-    double compute_cr_speed(mtPtr rnd_engine, double substep);
+    double compute_speed(mtPtr rnd_engine, double substep) override;
 
     void compute_CR_received(double substep);
-    double compute_CR(mtPtr rnd_engine, double substep);
+    double compute_CR(mtPtr rnd_engine, double substep, double step_length,
+                      bool stuck);
 
     // getter functions
     void printinfo() const;

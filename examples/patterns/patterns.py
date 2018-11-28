@@ -12,11 +12,11 @@ from dense.units import *
 Main parameters
 '''
 
-num_neurons = 1
+num_neurons = 50
 soma_radius = 8.*um
-num_omp     = 1
+num_omp     = 6
 
-gc_model = 'run_tumble'
+gc_model = 'run-and-tumble'
 
 neuron_params = {
     "growth_cone_model": gc_model,
@@ -60,11 +60,11 @@ if __name__ == '__main__':
 
     culture = ds.SetEnvironment("test_15-75_small.dxf",
                                 internal_shapes_as="areas",
-                                default_properties={"substrate_affinity": -10.},
+                                default_properties={"substrate_affinity": -50.},
                                 other_properties={"substrate_affinity": 100.})
     # ~ ds.geometry.plot_shape(culture, show=True)
 
-    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model=gc_model,
+    gids = ds.CreateNeurons(n=num_neurons,
                             culture=culture,
                             on_area=culture.non_default_areas.keys(),
                             neurites_on_area=True,
@@ -75,18 +75,24 @@ if __name__ == '__main__':
     ds.PlotNeuron(show=False)
     # ~ xlim = -10200., -9500.
     # ~ ylim = -700., -1500.
-    xlim = -9250., -9000.
-    ylim = -40., 80.
+    # ~ xlim = -9250., -9000.
+    # ~ ylim = -40., 80.
+    xlim = -11150., -10400.
+    ylim = -550., -100.
     # ~ xlim = None, None
     # ~ ylim = None, None
     plt.xlim(*xlim)
     plt.ylim(*ylim)
+    plt.axis('off')
+    plt.tight_layout()
     plt.show()
 
-    for i in range(10):
+    for i in range(4):
         ds.Simulate(200.*minute)
-        ds.PlotNeuron(subsample=20, show=False)
+        ds.PlotNeuron(subsample=20, dendrite_color="gold", show=False)
         plt.xlim(*xlim)
         plt.ylim(*ylim)
+        plt.axis('off')
+        plt.tight_layout()
         plt.show()
 

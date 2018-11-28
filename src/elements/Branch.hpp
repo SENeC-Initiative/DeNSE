@@ -20,10 +20,10 @@ the continuous set of points that defines its trajectory over time.
 class Branch
 {
   private:
-    Point initial_point;
+    Point initial_point_;
+    PointsArray points_;
 
   public:
-    PointsArray points;
     Branch(const Branch &copy);
     //! Create a branch with initial position and if necesary an initial length
     Branch(const Point &);
@@ -92,7 +92,11 @@ class Branch
     // Getter Functions
     double final_distance_to_soma() const;
     double initial_distance_to_soma() const;
+    double get_segment_length_at(size_t idx) const;
+    double get_last_segment_length() const;
     double get_length() const;
+    const std::vector<double>& get_xlist() const;
+    const std::vector<double>& get_ylist() const;
     //! return a Point object from last point of the Branch
     PointArray get_last_point() const;
     //! return the last xy

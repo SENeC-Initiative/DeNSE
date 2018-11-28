@@ -62,7 +62,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
     int ID        = -1;
     size_t idxp;
     double lgth, tap_r, final_diam;
-    PointsArray* p; // points and lengthof the branch
+    PointArray pp;
+    BranchPtr b; // points and lengthof the branch
 
     for (const auto &neurite : neuron->neurites_)
     {
@@ -92,21 +93,26 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
             auto node          = nodes.back();
             final_diam         = node.second->get_diameter();
             size_t branch_size = node.second->get_branch()->size();
-            p                  = &(node.second->get_branch()->points);
-            lgth               = p->at(2).back();
+            b                  = node.second->get_branch();
+            lgth               = b->get_length();
             ID                 = forkID;
             last_sample        = node.first;
             
             for (size_t idx = 0; idx < branch_size; idx += resolution_)
             {
+                pp = b->at(idx);
+
                 sample++;
-                swc_file_ << sample << " " << ID << " " << p->at(0).at(idx)
-                          << " " << p->at(1).at(idx) << " " << 0 << " "
-                          << 0.5*(final_diam + tap_r*(lgth - p->at(2).at(idx)))
+
+                swc_file_ << sample << " " << ID << " " << pp[0] << " " << pp[1]
+                          << " " << 0 << " "
+                          << 0.5*(final_diam + tap_r*(lgth - pp[2]))
                           << " " << last_sample << "\n";
+
                 ID          = neuriteID;
                 last_sample = sample;
             }
+
             nodes.pop_back();
 
             // when the neuron branch is at the end: there is no more point to

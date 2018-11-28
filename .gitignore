@@ -19,6 +19,7 @@ local_install
 install_test
 src/pymodule/dense/_pygrowth.cpp
 set_dense_vars.sh
+src/models/models_manager.cpp
 
 
 # Libraries

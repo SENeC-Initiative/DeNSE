@@ -137,8 +137,17 @@ void get_defaults(const std::string &object_name,
                   bool detailed, statusMap &status);
 
 
-void get_models(std::vector<std::string> &models,
-                const std::string &object_type);
+void get_models(std::unordered_map<std::string, std::string> &models,
+                bool abbrev);
+
+
+std::vector<std::string> get_elongation_types();
+
+
+std::vector<std::string> get_steering_methods();
+
+
+std::vector<std::string> get_direction_selection_methods();
 
 
 void get_recorder_type(size_t gid, std::string &level, std::string &event_type);
@@ -150,6 +159,9 @@ bool get_next_recording(size_t gid, std::vector<Property> &ids,
 
 bool get_next_time(size_t gid, std::vector<Property> &ids,
                    std::vector<double> &values, const std::string &time_units);
+
+
+std::string get_default_model();
 
 
 /* tools */
@@ -165,6 +177,9 @@ bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np);
 
 
 void is_valid_timestep(double timestep);
+
+
+void get_backtrace(std::string &msg, int depth);
 
 } // namespace growth
 

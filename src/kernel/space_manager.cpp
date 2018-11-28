@@ -101,29 +101,20 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                          const Filopodia &filopodia, const Point &position,
                          const Move &move, const std::string &area,
                          double proba_down_move, double max_height_up_move,
-                         double substep, double sqrt_resol,
-                         unsigned int delta_filo)
+                         double substep, double radius)
 {
     // Useful values
-    int omp_id        = kernel().parallelism_manager.get_thread_local_id();
-    double subs_afty  = filopodia.substrate_affinity;
-    double len_filo   = filopodia.finger_length;
-    double wall_afty  = filopodia.wall_affinity;
-    AreaPtr old_area  = areas_[area];
-    double old_height = old_area->get_height();
+    int omp_id          = kernel().parallelism_manager.get_thread_local_id();
+    double subs_afty    = filopodia.substrate_affinity;
+    double len_filo     = filopodia.finger_length;
+    double wall_afty    = filopodia.wall_affinity;
+    AreaPtr old_area    = areas_[area];
+    double old_height   = old_area->get_height();
     double lamel_factor = 2.;
 
     //~ assert(env_contains(Point(position.at(0), position.at(1)), omp_id)
     //~ && printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0),
     //position.at(1)));
-
-#ifndef NDEBUG
-    if (not env_contains(Point(position.at(0), position.at(1)), omp_id))
-    {
-        printf("omp (%i) pos (%f - %f)\n", omp_id, position.at(0),
-               position.at(1));
-    }
-#endif
 
     // values used locally inside loop
     double angle, distance, min_wall_dist;
@@ -151,7 +142,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     unsigned int i, n_angle, s_i;
 
     // test the environment for each of the filopodia's angles
-    //~ for (n_angle = n_min; n_angle < n_max; n_angle++)
     for (n_angle = 0; n_angle < filopodia.size; n_angle++)
     {
         filo_wall = false;
@@ -218,6 +208,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                         context_handler_, new_area->get_shape(omp_id).get());
                     get_intersections(
                         tmp_line, border, intersections);
+                    GEOSGeom_destroy_r(context_handler_, border);
 
                     for (auto p : intersections)
                     {
@@ -313,10 +304,9 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             s_i          = indices[i];
             current_dist = distances[s_i];
 
-            // are we compressing the lamellipodia (half its width)?
-            if (current_dist < 0.25*len_filo)
+            // are we compressing the tip (dist <= radius)?
+            if (current_dist <= radius)
             {
-                //~ printf("%i - lamel begin %f vs %f\n", i, current_dist, old_dist);
                 // if its a wall, then affinity goes to NaN and we break
                 if (is_wall[s_i])
                 {
@@ -325,18 +315,15 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 }
                 else
                 {
-                    //~ printf("affinity gets %f = %f * %f * %f\n", lamel_factor*affinities[s_i]*(current_dist - old_dist), lamel_factor, affinities[s_i], (current_dist - old_dist));
                     affinity += lamel_factor*affinities[s_i]*(current_dist - old_dist);
                 }
             }  // are we dealing with the lamellipodia?
             else if (current_dist < 0.5*len_filo)
             {
-                //~ printf("%i - lamel %f vs %f\n", i, current_dist, old_dist);
                 affinity += lamel_factor*affinities[s_i]*(current_dist - old_dist);
             }  // are we in-between
             else if (old_dist < 0.5*len_filo)
             {
-                //~ printf("%i - mixed filo/lamel %f vs %f\n", i, current_dist, old_dist);
                 // part for lamellipodia
                 affinity += lamel_factor*affinities[s_i]*(0.5*len_filo - old_dist);
                 // part for filopodia
@@ -344,7 +331,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             }
             else
             {
-                //~ printf("%i - filo %f vs %f\n", i, current_dist, old_dist);
                 affinity += affinities[s_i]*(current_dist - old_dist);
             }
 
@@ -361,28 +347,13 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 old_dist = current_dist;
             }
         }
+
         affinity = std::max(affinity / len_filo, 0.);
         directions_weights[n_angle] = affinity;
-
-        //~ std::string s = "angle " + std::to_string(n_angle) + " got affinity " + std::to_string(affinity) + " from";
-
-        //~ for (size_t j=0; j < distances.size(); j++)
-        //~ {
-            //~ s += " d " + std::to_string(distances[j]) + " a " + std::to_string(affinities[j]);
-        //~ }
-
-        //~ printf("%s\n", s.c_str());
 
         // question: what about the transitions for up/down?
         // answer: move to compute_accessibility! (noob)
     }
-
-    //~ std::string weights("");
-    //~ for (auto w : directions_weights)
-    //~ {
-        //~ weights += std::to_string(w) + " ";
-    //~ }
-    //~ printf("%s\n", weights.c_str());
 
     return interacting;
 }
@@ -400,21 +371,6 @@ void SpaceManager::move_possibility(std::vector<double> &directions_weights,
     unsigned int n_angle;
     Point target_pos, starting_pos;
     double angle;
-
-    // compute the number of filopodia to ignore
-    //~ unsigned int ignore = 0.5*((sqrt_resol - sqrt(substep)) / (sqrt_resol -
-    //1) * delta_filo); ~ unsigned int n_max  = filopodia.size - ignore; ~
-    //unsigned int n_min  = ignore;
-
-    //~ // set ignored direction weights to nan
-    //~ for (n_angle = 0; n_angle < n_min; n_angle++)
-    //~ {
-    //~ directions_weights[n_angle] = std::nan("");
-    //~ }
-    //~ for (n_angle = n_max; n_angle < filopodia.size; n_angle++)
-    //~ {
-    //~ directions_weights[n_angle] = std::nan("");
-    //~ }
 
     starting_pos = Point(position.at(0), position.at(1));
     assert(env_contains(starting_pos, omp_id));
@@ -597,6 +553,18 @@ double SpaceManager::unstuck_angle(const Point &position, double current_angle,
 
 
 bool SpaceManager::has_environment() const { return environment_initialized_; }
+
+
+GEOSGeom SpaceManager::get_env_border(int omp_id) const
+{
+    return GEOSBoundary_r(context_handler_, environment_manager_->get_environment(omp_id));
+}
+
+
+void SpaceManager::destroy_geom(GEOSGeom geom) const
+{
+    GEOSGeom_destroy_r(context_handler_, geom);
+}
 
 
 void SpaceManager::set_environment(

@@ -14,7 +14,7 @@
 #include "Node.hpp"
 
 // models includes
-#include "gc_critical.hpp"
+//~ #include "gc_critical.hpp"
 
 
 // Integrate the differential equation
@@ -159,7 +159,8 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
  * Set the event content based on the duration between the current time and
  * the next event
  */
-void Branching::set_branching_event(Event &ev, double duration)
+void Branching::set_branching_event(Event &ev, signed char ev_type,
+                                    double duration)
 {
     double current_substep = kernel().simulation_manager.get_current_substep();
     size_t current_step    = kernel().simulation_manager.get_current_step();
@@ -176,10 +177,10 @@ void Branching::set_branching_event(Event &ev, double duration)
     else
     {
         // remove what's left until next step
-        ev_step =
-            static_cast<size_t>((duration - resol + current_substep) / resol);
-        ev_substep = duration - resol + current_substep - ev_step * resol;
-        ev_step += current_step + 1;
+        duration  -= (resol - current_substep);
+        // set event step and substep
+        ev_step    = current_step + 1 + duration / resol;
+        ev_substep = ((current_step + 1)*resol + duration) - ev_step*resol;
     }
 
     auto n                   = neurite_->get_parent_neuron().lock();
@@ -191,7 +192,7 @@ void Branching::set_branching_event(Event &ev, double duration)
                     (ev_substep - current_substep) - duration) < 1e-6);
 
     ev = std::make_tuple(ev_step, ev_substep, neuron_gid, neurite_name,
-                         names::gc_splitting);
+                         ev_type);
 
 #ifndef NDEBUG
     printf("after set event at %lu:%f, next event in %lu:%f \n", current_step,
@@ -270,7 +271,7 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
     {
         double duration = exponential_uniform_(*(rnd_engine).get());
 
-        set_branching_event(next_uniform_event_, duration);
+        set_branching_event(next_uniform_event_, names::lateral_branching, duration);
 
         // send it to the simulation and recorder managers
         kernel().simulation_manager.new_branching_event(next_uniform_event_);
@@ -298,7 +299,7 @@ void Branching::compute_flpl_event(mtPtr rnd_engine)
         // here we compute next event with exponential distribution
         double duration = exponential_flpl_(*(rnd_engine).get());
 
-        set_branching_event(next_flpl_event_, duration);
+        set_branching_event(next_flpl_event_, names::lateral_branching, duration);
 
         // send it to the simulation and recorder managers
         kernel().simulation_manager.new_branching_event(next_flpl_event_);
@@ -511,7 +512,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
     {
         // get the current second to compute the time-dependent
         // exponential decreasing probability of having a branch.
-        double t_0     = kernel().get_current_time();
+        double t_0     = kernel().simulation_manager.get_current_minutes();
         size_t num_gcs = neurite_->growth_cones_.size() +
                          neurite_->growth_cones_inactive_.size();
 
@@ -529,7 +530,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
         }
         else
         {
-            set_branching_event(next_vanpelt_event_, duration);
+            set_branching_event(next_vanpelt_event_, names::gc_splitting, duration);
 
             // send it to the simulation and recorder managers
             kernel().simulation_manager.new_branching_event(next_vanpelt_event_);
@@ -621,17 +622,17 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
  */
 void Branching::CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone)
 {
-    std::shared_ptr<GrowthCone_Critical> gcc =
-        std::dynamic_pointer_cast<GrowthCone_Critical>(splitting_cone);
+    //~ std::shared_ptr<GrowthCone_Critical> gcc =
+        //~ std::dynamic_pointer_cast<GrowthCone_Critical>(splitting_cone);
 
-    double new_length = gcc->get_CR_speed_factor() * gcc->get_CR_received();
-    double new_angle, old_angle;
-    double old_diameter = splitting_cone->get_diameter();
-    double new_diameter = old_diameter;
-    neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
-                                       new_diameter, old_diameter);
-    neurite_->growth_cone_split(splitting_cone, new_length, new_angle,
-                                old_angle, new_diameter, old_diameter);
+    //~ double new_length = gcc->get_CR_speed_factor() * gcc->get_CR_received();
+    //~ double new_angle, old_angle;
+    //~ double old_diameter = splitting_cone->get_diameter();
+    //~ double new_diameter = old_diameter;
+    //~ neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
+                                       //~ new_diameter, old_diameter);
+    //~ neurite_->growth_cone_split(splitting_cone, new_length, new_angle,
+                                //~ old_angle, new_diameter, old_diameter);
 }
 
 

@@ -18,6 +18,9 @@ project ( dense )
 
 set( SUCCESS 1 )
 
+# @todo, for Windows, install to (python) site.USER_BASE =
+# UserName/AppData/Roaming/Python/ + get the PythonXY/site-packages (how?)
+# + copy dll to the lib folder (probably in setup.py)
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 	set( CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" )
 ENDIF ()
@@ -73,7 +76,7 @@ cgrowth_process_with_mpi()
 cgrowth_process_with_docs()
 cgrowth_get_color_flags()
 
-# check installation directory
+# check installation directory)
 
 if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
   if (UNIX)

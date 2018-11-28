@@ -48,7 +48,7 @@ use_vp = True
 use_run_tumble = False
 use_critical_resource=False
 
-gc_model = 'run_tumble'
+gc_model = 'run-and-tumble'
 
 neuron_params = {
     "dendrite_diameter": 3. * um,
@@ -56,13 +56,13 @@ neuron_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-    "sensing_angle": 0.08,
+    "sensing_angle": 45.*deg,
     "speed_growth_cone": 0.5 * um / minute,
     "filopodia_wall_affinity": 500.,
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
     "persistence_length" : 600. * um,
-    "thinning_ratio": 2./1000.,
+    "taper_rate": 2./1000.,
 
     "soma_radius": soma_radius * um,
     'B' : 10. * cpm,
@@ -76,7 +76,7 @@ dendrite_params = {
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,
-    "thinning_ratio": 3./250.,
+    "taper_rate": 3./250.,
 }
 
 
@@ -139,8 +139,7 @@ if __name__ == '__main__':
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=200, growth_cone_model=gc_model,
-                            culture=culture, params=neuron_params,
+    gids = ds.CreateNeurons(n=200, culture=culture, params=neuron_params,
                             dendrites_params=dendrite_params, num_neurites=2)
 
     start = time.time()

@@ -7,8 +7,10 @@ if ( HAVE_PYTHON )
   set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR} PARENT_SCOPE)
   set( PYMODULE_DIR ${PROJECT_SOURCE_DIR}/pymodule )
 
-  # install required python packages
-  # execute_process(COMMAND pip ["install --user cython numpy pint scipy shapely"]])
+  if (MSVC)
+    # reformat path for Windows because it does not get it otherwise
+    string(REPLACE "/" "\\\\" PYMODULE_DIR "${PYMODULE_DIR}")
+  endif ()
 
   set( ngexists 0 )
   
@@ -44,7 +46,7 @@ if ( HAVE_PYTHON )
       set( SKIP_BUILD 0 )
   endif()
 
-  #message( "Build status: ${fileschanged} + ${ngexists}" )
+  # Define MSVC variable to 0 for python if MSVC is not being used
   if (NOT MSVC)
     set(MSVC 0)
   endif ()
@@ -52,12 +54,14 @@ if ( HAVE_PYTHON )
   configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
 
   if (MSVC)
-    # file(TO_NATIVE_PATH "${PYTHON_INSTALL_DIR}" MS_PYTHON_INSTALL_DIR)
+    # reformat path for Windows because it is so annoying it does not recognize
+    # slash and backslash, also wrap PYTHON between brackets because, hey,
+    # there are whitespaces in "Program Files" (of course)!!
     string(REPLACE "/" "\\\\" MS_PYTHON_INSTALL_DIR "${PYTHON_INSTALL_DIR}")
     set(STR_CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH};${MS_PYTHON_INSTALL_DIR}\")")
 	install( CODE "${STR_CODE}
 		execute_process(
-		COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
+		COMMAND \"${PYTHON}\" ${PYMODULE_DIR}/setup.py
 			build -b ${CMAKE_CURRENT_BINARY_DIR}
 			install --prefix=${MS_PYTHON_INSTALL_DIR}
 					--install-scripts=${MS_PYTHON_INSTALL_DIR}

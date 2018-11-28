@@ -61,6 +61,8 @@ typedef std::shared_ptr<Area> AreaPtr;
  */
 
 typedef std::vector<double> Vector;
+typedef std::array<double, 3> PointArray;
+typedef std::array<Vector, 3> PointsArray;
 
 
 class Point
@@ -115,15 +117,6 @@ typedef struct Move
     }
 } Move;
 
-
-/*
- * Shape
- */
-
-class Shape
-{
-    Shape();
-};
 } // namespace growth
 
 #endif /* SPATIAL_TYPES_H */

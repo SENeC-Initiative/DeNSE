@@ -28,7 +28,10 @@ except ImportError:
 # compiler options
 
 copt =  {
-    'msvc': ['/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',],
+    'msvc': [
+        '/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',
+        '/MD', "-Zi", "/Od",
+    ],
     'mingw': [
         '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
         '-ffast-math', '-msse', '-ftree-vectorize', '-O2', '-g', "-fPIC",
@@ -42,7 +45,7 @@ copt =  {
 lopt =  {
     'unix': ['-fopenmp'],
     'mingw': ['-fopenmp'],
-	'msvc': ['/subsystem:windows', '/machine:x64'],
+	'msvc': ['/subsystem:windows', "-debug"],
 }
 
 # custom class

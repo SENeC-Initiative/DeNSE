@@ -18,6 +18,7 @@
 // kernel include
 #include "kernel_manager.hpp"
 #include "neuron_manager.hpp"
+#include "models_manager.hpp"
 #include "space_manager.hpp"
 
 
@@ -35,11 +36,8 @@ size_t create_objects(const std::string &object_name,
     }
     else
     {
-        throw InvalidParameter("Creating something other than a neuron or a "
-                               " recorder (`" +
-                                   object_name +
-                                   "`) is not "
-                                   "currently supported.",
+        throw InvalidParameter("Creating something other than a recorder (`" +
+                               object_name + "`) is not currently supported.",
                                __FUNCTION__, __FILE__, __LINE__);
     }
 
@@ -71,6 +69,139 @@ size_t create_neurons(const std::vector<statusMap> &neuron_params,
     kernel().simulation_manager.set_max_resolution();
 
     return num_created;
+}
+
+
+/*
+ * Init/Finalize and simulation functions
+ */
+
+void init_growth(int *argc, char **argv[])
+{
+    KernelManager::create_kernel_manager();
+    kernel().parallelism_manager.mpi_init(argc, argv);
+    kernel().initialize();
+}
+
+
+void finalize_growth()
+{
+    kernel().parallelism_manager.mpi_finalize();
+    KernelManager::destroy_kernel_manager();
+}
+
+
+void simulate(const Time &simtime)
+{
+    try
+    {
+        kernel().simulation_manager.simulate(simtime);
+    }
+    catch (...)
+    {
+        std::string message = "Error occurred in `simulate`.\n";
+        get_backtrace(message, 0);
+
+        throw std::runtime_error(message);
+    }
+}
+
+
+void reset_kernel() { kernel().reset(); }
+
+
+std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
+
+
+/*
+ * Environment
+ */
+
+void set_environment(
+    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+    std::vector<double> heights, const std::vector<std::string> &names,
+    const std::vector<std::unordered_map<std::string, double>> &properties)
+{
+    kernel().space_manager.set_environment(environment, areas, heights, names,
+                                           properties);
+}
+
+
+void get_environment(
+    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
+    std::vector<double> &heights, std::vector<std::string> &names,
+    std::vector<std::unordered_map<std::string, double>> &properties)
+{
+    kernel().space_manager.get_environment(environment, areas, heights, names,
+                                           properties);
+}
+
+
+/*
+ * Statuses
+ */
+
+
+void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
+{
+    kernel().set_simulation_ID(simulation_ID);
+    kernel().set_status(status_dict);
+}
+
+
+void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
+                statusMap dendrites_status)
+{
+    // @todo: do this in parallel
+    auto neuron = kernel().neuron_manager.get_neuron(gid);
+    neuron->set_status(neuron_status);
+
+    auto local_params = neuron_status;
+    for (auto &param : axon_status)
+    {
+        local_params[param.first] = param.second;
+    }
+    neuron->set_neurite_status("axon", local_params);
+
+    local_params = neuron_status;
+    for (auto &param : dendrites_status)
+    {
+        local_params[param.first] = param.second;
+    }
+    neuron->set_neurite_status("dendrite", local_params);
+
+    // update max_resolution for simulation
+    kernel().simulation_manager.set_max_resolution();
+}
+
+
+/*
+ * Models
+ */
+
+
+void get_models(std::unordered_map<std::string, std::string> &models,
+                bool abbrev)
+{
+    kernel().model_manager.get_models(models, abbrev);
+}
+
+
+std::vector<std::string> get_elongation_types()
+{
+    return kernel().model_manager.get_elongation_types();
+}
+
+
+std::vector<std::string> get_steering_methods()
+{
+    return kernel().model_manager.get_steering_methods();
+}
+
+
+std::vector<std::string> get_direction_selection_methods()
+{
+    return kernel().model_manager.get_direction_selection_methods();
 }
 
 
@@ -129,6 +260,12 @@ statusMap get_neurite_status(size_t gid, const std::string &neurite,
 }
 
 
+std::string get_default_model()
+{
+    return kernel().model_manager.default_model;
+}
+
+
 void get_defaults(const std::string &object_name,
                   const std::string &object_type, const std::string &gc_model,
                   bool detailed, statusMap &status)
@@ -137,7 +274,7 @@ void get_defaults(const std::string &object_name,
 
     if (object_type == "growth_cone")
     {
-        gc = kernel().neuron_manager.get_model(object_name);
+        gc = kernel().model_manager.get_model(object_name);
         gc->get_status(status);
     }
     else if (object_type == "neuron" || object_type == "neurite")
@@ -146,7 +283,7 @@ void get_defaults(const std::string &object_name,
         if (detailed)
         {
             std::string model = (gc_model == "") ? "default" : gc_model;
-            gc = kernel().neuron_manager.get_model(model);
+            gc = kernel().model_manager.get_model(model);
             gc->get_status(status);
         }
     }
@@ -154,16 +291,6 @@ void get_defaults(const std::string &object_name,
     {
         // return default NeuronContinuousRecorder
         kernel().record_manager.get_defaults(status);
-    }
-}
-
-
-void get_models(std::vector<std::string> &models,
-                const std::string &object_type)
-{
-    if (object_type == "all" || object_type == "growth_cones")
-    {
-        kernel().neuron_manager.get_models(models);
     }
 }
 
@@ -180,26 +307,6 @@ bool is_neurite(size_t gid, const std::string& neurite)
 }
 
 
-/*
- * Init functions
- */
-
-void init_growth(int *argc, char **argv[])
-{
-    KernelManager::create_kernel_manager();
-    kernel().parallelism_manager.mpi_init(argc, argv);
-    kernel().initialize();
-    printf("models initialized\n");
-}
-
-
-void finalize_growth()
-{
-    kernel().parallelism_manager.mpi_finalize();
-    KernelManager::destroy_kernel_manager();
-}
-
-
 std::string object_type(size_t gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
@@ -213,196 +320,6 @@ std::string object_type(size_t gid)
     else
     {
         throw std::runtime_error("Object does not exist.");
-    }
-}
-
-
-void reset_kernel() { kernel().reset(); }
-
-
-void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
-{
-    kernel().set_simulation_ID(simulation_ID);
-    kernel().set_status(status_dict);
-}
-
-
-std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
-
-
-void set_environment(
-    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
-    std::vector<double> heights, const std::vector<std::string> &names,
-    const std::vector<std::unordered_map<std::string, double>> &properties)
-{
-    kernel().space_manager.set_environment(environment, areas, heights, names,
-                                           properties);
-}
-
-
-void get_environment(
-    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
-    std::vector<double> &heights, std::vector<std::string> &names,
-    std::vector<std::unordered_map<std::string, double>> &properties)
-{
-    kernel().space_manager.get_environment(environment, areas, heights, names,
-                                           properties);
-}
-
-
-void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
-                statusMap dendrites_status)
-{
-    // @todo: do this in parallel
-    auto neuron = kernel().neuron_manager.get_neuron(gid);
-    neuron->set_status(neuron_status);
-
-    auto local_params = neuron_status;
-    for (auto &param : axon_status)
-    {
-        local_params[param.first] = param.second;
-    }
-    neuron->set_neurite_status("axon", local_params);
-
-    local_params = neuron_status;
-    for (auto &param : dendrites_status)
-    {
-        local_params[param.first] = param.second;
-    }
-    neuron->set_neurite_status("dendrite", local_params);
-
-    // update max_resolution for simulation
-    kernel().simulation_manager.set_max_resolution();
-}
-
-
-void test_random_generator(Random_vecs &values, size_t size)
-{
-    kernel().simulation_manager.test_random_generator(values, size);
-    printf("%lu number generated from rng\n", values[0].size());
-}
-
-
-void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
-                  SkelNeurite &growth_cones, SkelSomas &somas,
-                  std::vector<size_t> gids, unsigned int resolution)
-{
-#ifndef NDEBUG
-    printf("Getting skeleton\n");
-#endif
-    std::vector<NeuronPtr> neurons_vector;
-    for (const auto &neuron_gid : gids)
-    {
-        neurons_vector.push_back(
-            kernel().neuron_manager.get_neuron(neuron_gid));
-    }
-
-    for (auto const &neuron : neurons_vector)
-    {
-        Skeleton neuron_skel = Skeleton(neuron.get(), resolution);
-
-        // fill the neurites
-        _fill_skel(neuron_skel.axon, axon, true);
-        _fill_skel(neuron_skel.dendrites, dendrites, true);
-        _fill_skel(neuron_skel.branching_points, nodes, false);
-        _fill_skel(neuron_skel.growth_cones, growth_cones, false);
-
-        somas[0].push_back(neuron_skel.soma_position.at(0));
-        somas[1].push_back(neuron_skel.soma_position.at(1));
-        somas[2].push_back(neuron_skel.soma_radius);
-    }
-#ifndef NDEBUG
-    printf(" %lu neurons has been imported for visualization \n"
-           " the size of neurites vector is: %lu \n"
-           " the size of axon vector is :    %lu \n"
-           " the size of soma vector is :    %lu \n"
-           " the size of growth_cones is:    %lu \n",
-           neurons_vector.size(), dendrites.first.size(), axon.first.size(),
-           somas[0].size(), growth_cones.first.size());
-#endif
-}
-
-
-void get_swc(std::string output_file, std::vector<size_t> gids,
-             unsigned int resolution)
-{
-#ifndef NDEBUG
-    printf("Getting skeleton\n");
-#endif
-    std::sort(gids.begin(), gids.end());
-    Swc swc(output_file, resolution);
-    for (const auto &neuron_gid : gids)
-    {
-        const NeuronPtr neuron = kernel().neuron_manager.get_neuron(neuron_gid);
-        // @todo: pass non default arguments
-        swc.to_swc(neuron.get(), neuron_gid);
-    }
-    swc.close_file();
-#ifndef NDEBUG
-    printf("swc to file %s", output_file.c_str());
-#endif
-}
-
-
-void get_backtrace(std::string &msg, int depth = 0)
-{
-    try
-    {
-        throw;
-    }
-    catch (const std::exception &e)
-    {
-        // handle exceptions of known type
-        msg += std::to_string(depth) + ": [" + std::string(typeid(e).name()) +
-               "] " + std::string(e.what()) + "\n";
-        try
-        {
-            std::rethrow_if_nested(e);
-        }
-        catch (...)
-        {
-            get_backtrace(msg, ++depth);
-        }
-    }
-    catch (const std::nested_exception &ne)
-    {
-        // Not all nesting exceptions will be of a known type, but if they use
-        // the mixin type std::nested_exception, then we can at least handle
-        // them enough to get the nested exception:
-        msg += std::to_string(depth) + ": Unknown nested exception\n";
-
-        try
-        {
-            ne.rethrow_nested();
-        }
-        catch (...)
-        {
-            get_backtrace(msg, ++depth);
-        }
-    }
-    catch (...)
-    {
-        // Exception nesting works through inheritance, hence if the type cannot
-        // be inherited std::nested_exception will not work.
-        // Trying something like std::throw_with_nested( int{10} ) will hit this
-        // final catch block.
-        msg += std::to_string(depth) + ": Unknown nested exception\n";
-    }
-}
-
-
-void simulate(const Time &simtime)
-{
-    try
-    {
-        kernel().simulation_manager.simulate(simtime);
-    }
-    catch (...)
-    {
-        std::string message = "Error occurred in `simulate`.\n";
-        get_backtrace(message, 0);
-
-        throw std::runtime_error(message);
     }
 }
 
@@ -443,52 +360,43 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
     NeuronPtr n            = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
 
-    //~ std::unordered_map<size_t, int> ids;
     size_t idx = 0;
 
     auto node_it  = neurite.lock()->nodes_cbegin();
     auto node_end = neurite.lock()->nodes_cend();
-    auto gc_it    = neurite.lock()->gc_cbegin();
-    auto gc_end   = neurite.lock()->gc_cend();
 
     while (node_it != node_end)
     {
         std::vector<std::vector<double>> points_tmp;
         BranchPtr b = node_it->second->get_branch();
 
-        //~ printf("got branch; null = %i\n", b == nullptr);
-        //~ printf("branch size %lu\n", b->size());
-        //~ ids[node_it->second->get_nodeID()] = idx;
-        //~ idx++;
 
         if (b->size() != 0)
         {
-            //~ printf("nonzero branch size\n");
+            const std::vector<double> &xx = b->get_xlist();
+            const std::vector<double> &yy = b->get_ylist();
+
             switch (start_point)
             {
             case 0:
-                points_tmp.push_back(b->points.at(0));
-                points_tmp.push_back(b->points.at(1));
+                points_tmp.push_back(xx);
+                points_tmp.push_back(yy);
                 break;
             default:
                 std::vector<double> row_x, row_y;
                 // x
-                auto it  = b->points[0].cbegin();
-                auto end = b->points[0].cend();
-                row_x.insert(row_x.begin(), it + start_point, end);
+                auto it  = xx.cbegin();
+                auto end = xx.cend();
+                row_x.insert(row_x.end(), it + start_point, end);
                 points_tmp.push_back(row_x);
                 // y
-                it  = b->points.at(1).cbegin();
-                end = b->points.at(1).cend();
-                row_y.insert(row_y.begin(), it + start_point, end);
+                it  = yy.cbegin();
+                end = yy.cend();
+                row_y.insert(row_y.end(), it + start_point, end);
                 points_tmp.push_back(row_y);
             }
 
-            // assign the id to a vector index
-            //~ printf("updated idx, looking for parent (null is %i)\n", node_it->second->get_parent().lock() == nullptr);
-
             parents.push_back(node_it->second->get_parent().lock()->get_nodeID());
-            //~ nodes.push_back(node_it->first);
             nodes.push_back(node_it->second->get_nodeID());
 
             points.push_back(points_tmp);
@@ -498,54 +406,80 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
         node_it++;
     }
 
-    //~ printf("correcting parent ids\n");
-
-    // correct the parent ids to their vector index
-    
-    //~ for (size_t i=0; i < parents.size(); i++)
-    //~ {
-        //~ size_t parent_id = parents[i];
-
-        //~ if (ids.find(parent_id) == ids.end() or parent_id == ids[parent_id])
-        //~ {
-            //~ parents[i] = -1;
-        //~ }
-        //~ else
-        //~ {
-            //~ parents[i] = ids[parent_id];
-        //~ }
-    //~ }
-
-    //~ printf("doing gcs\n");
-
-    while (gc_it != gc_end)
+    for (auto gc : neurite.lock()->gc_range())
     {
         std::vector<std::vector<double>> points_tmp;
-        BranchPtr b = gc_it->second->get_branch();
-        //~ printf("got gc branch, null %i\n", b == nullptr);
+        BranchPtr b = gc.second->get_branch();
+
         if (b->size() != 0)
         {
-            points_tmp.push_back(b->points.at(0));
-            points_tmp.push_back(b->points.at(1));
+            points_tmp.push_back(b->get_xlist());
+            points_tmp.push_back(b->get_ylist());
 
-            //~ printf("pushed back, parent is null %i\n", gc_it->second->get_parent().expired());
+            size_t parent_id = gc.second->get_parent().lock()->get_nodeID();
 
-            size_t parent_id = gc_it->second->get_parent().lock()->get_nodeID();
-
-            //~ printf("getting parent\n");
-            //~ parents.push_back(ids[parent_id]);
             parents.push_back(parent_id);
-            //~ nodes.push_back(gc_it->first);
-            nodes.push_back(gc_it->second->get_nodeID());
-            //~ printf("got parent\n");
+            nodes.push_back(gc.second->get_nodeID());
 
             points.push_back(points_tmp);
 
-            diameters.push_back(gc_it->second->get_diameter());
+            diameters.push_back(gc.second->get_diameter());
         }
-
-        gc_it++;
     }
+}
+
+
+void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
+                  SkelNeurite &growth_cones, SkelSomas &somas,
+                  std::vector<size_t> gids, unsigned int resolution)
+{
+    std::vector<NeuronPtr> neurons_vector;
+    for (const auto &neuron_gid : gids)
+    {
+        neurons_vector.push_back(
+            kernel().neuron_manager.get_neuron(neuron_gid));
+    }
+
+    for (auto const &neuron : neurons_vector)
+    {
+        Skeleton neuron_skel = Skeleton(neuron.get(), resolution);
+
+        // fill the neurites
+        _fill_skel(neuron_skel.axon, axon, true);
+        _fill_skel(neuron_skel.dendrites, dendrites, true);
+        _fill_skel(neuron_skel.branching_points, nodes, false);
+        _fill_skel(neuron_skel.growth_cones, growth_cones, false);
+
+        somas[0].push_back(neuron_skel.soma_position.at(0));
+        somas[1].push_back(neuron_skel.soma_position.at(1));
+        somas[2].push_back(neuron_skel.soma_radius);
+    }
+#ifndef NDEBUG
+    printf(" %lu neurons has been imported for visualization \n"
+           " the size of neurites vector is: %lu \n"
+           " the size of axon vector is :    %lu \n"
+           " the size of soma vector is :    %lu \n"
+           " the size of growth_cones is:    %lu \n",
+           neurons_vector.size(), dendrites.first.size(), axon.first.size(),
+           somas[0].size(), growth_cones.first.size());
+#endif
+}
+
+
+void get_swc(std::string output_file, std::vector<size_t> gids,
+             unsigned int resolution)
+{
+    std::sort(gids.begin(), gids.end());
+    Swc swc(output_file, resolution);
+
+    for (const auto &neuron_gid : gids)
+    {
+        const NeuronPtr neuron = kernel().neuron_manager.get_neuron(neuron_gid);
+        // @todo: pass non default arguments
+        swc.to_swc(neuron.get(), neuron_gid);
+    }
+
+    swc.close_file();
 }
 
 
@@ -614,6 +548,60 @@ bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np)
     NeuriteWeakPtr neurite_ptr = n->get_neurite(neurite);
 
     return neurite_ptr.lock()->walk_tree(np);
+}
+
+
+void get_backtrace(std::string &msg, int depth = 0)
+{
+    try
+    {
+        throw;
+    }
+    catch (const std::exception &e)
+    {
+        // handle exceptions of known type
+        msg += std::to_string(depth) + ": [" + std::string(typeid(e).name()) +
+               "] " + std::string(e.what()) + "\n";
+        try
+        {
+            std::rethrow_if_nested(e);
+        }
+        catch (...)
+        {
+            get_backtrace(msg, ++depth);
+        }
+    }
+    catch (const std::nested_exception &ne)
+    {
+        // Not all nesting exceptions will be of a known type, but if they use
+        // the mixin type std::nested_exception, then we can at least handle
+        // them enough to get the nested exception:
+        msg += std::to_string(depth) + ": Unknown nested exception\n";
+
+        try
+        {
+            ne.rethrow_nested();
+        }
+        catch (...)
+        {
+            get_backtrace(msg, ++depth);
+        }
+    }
+    catch (...)
+    {
+        // Exception nesting works through inheritance, hence if the type cannot
+        // be inherited std::nested_exception will not work.
+        // Trying something like std::throw_with_nested( int{10} ) will hit this
+        // final catch block.
+        msg += std::to_string(depth) + ": Unknown nested exception\n";
+    }
+}
+
+
+void test_random_generator(Random_vecs &values, size_t size)
+{
+    kernel().simulation_manager.test_random_generator(values, size);
+    printf("%lu number generated from rng\n", values[0].size());
 }
 
 } /* namespace */

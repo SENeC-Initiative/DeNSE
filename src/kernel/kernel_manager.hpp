@@ -7,12 +7,17 @@
 
 #include "config_impl.hpp"
 #include "exceptions.hpp"
+
+#include "models_manager.hpp"
+
 #include "neuron_manager.hpp"
 #include "parallelism_manager.hpp"
 #include "record_manager.hpp"
 #include "rng_manager.hpp"
+#include "models_manager.hpp"
 #include "simulation_manager.hpp"
 #include "space_manager.hpp"
+
 
 namespace growth
 {
@@ -76,7 +81,6 @@ class KernelManager
     void update_num_objects();
 
     std::string simulation_ID_;
-    double get_current_time() const;
     double get_adaptive_timestep() const;
     bool using_environment() const;
     //! Returns true if kernel is initialized
@@ -87,6 +91,7 @@ class KernelManager
     SimulationManager simulation_manager;
     SpaceManager space_manager;
     RecordManager record_manager;
+    ModelManager model_manager;
     NeuronManager neuron_manager;
 
   private:
@@ -101,7 +106,9 @@ class KernelManager
 };
 
 KernelManager &kernel();
+
 } // namespace growth
+
 
 // Inline implementations
 
@@ -116,6 +123,7 @@ inline growth::KernelManager &growth::kernel()
 {
     return KernelManager::get_kernel_manager();
 }
+
 
 inline bool growth::KernelManager::is_initialized() const
 {

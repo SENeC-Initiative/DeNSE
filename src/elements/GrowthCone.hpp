@@ -53,6 +53,8 @@ class GrowthCone : public TopologicalNode,
     std::vector<std::string> observables_;
 
     // motion-related data
+    bool active_;
+    bool just_retracted_;
     char turning_;
     double turned_;
     double delta_angle_;
@@ -74,7 +76,6 @@ class GrowthCone : public TopologicalNode,
     size_t min_filopodia_; // minimal number of filopodia
     size_t num_filopodia_; // minimal number of filopodia
 
-    double persistence_length_; // persistence length of the neurite l_p
     double current_diameter_;
 
     Filopodia filopodia_;
@@ -94,7 +95,7 @@ class GrowthCone : public TopologicalNode,
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
-                        const Point &position, double angle);
+                        const Point &position, double angle) = 0;
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
                          float distanceToParent, const std::string &binaryID,
@@ -114,32 +115,34 @@ class GrowthCone : public TopologicalNode,
                                double substep);
     virtual void
     compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                double substep);
+                                double substep) = 0;
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
-    virtual Point
-    compute_target_position(const std::vector<double> &directions_weights,
-                            mtPtr rnd_engine, double &substep,
-                            double &new_angle);
+    virtual void
+    compute_target_angle(const std::vector<double> &directions_weights,
+                         mtPtr rnd_engine, double &substep, double &new_angle) = 0;
+
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
 
     // elongation
     void compute_module(double substep);
-    virtual void compute_speed(mtPtr rnd_engine, double substep);
+    virtual void compute_speed(mtPtr rnd_engine, double substep) = 0;
 
     void init_filopodia();
 
     void set_angle(double angle);
-    virtual void prepare_for_split();
-    virtual void after_split();
+    virtual void prepare_for_split() = 0;
+    virtual void after_split() = 0;
 
     // get functions
     double get_module() const;
     virtual double get_state(const char *observable) const;
     virtual double get_growth_cone_speed() const;
     virtual double get_diameter() const override;
+    bool just_retracted() const;
+    bool is_active() const;
 
     // status and kernel-related functions
     virtual void set_diameter(double diameter) override;
@@ -147,7 +150,7 @@ class GrowthCone : public TopologicalNode,
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();
     void update_growth_properties(const std::string &area_name);
-    void update_filopodia(double substep);
+    void update_filopodia();
 };
 
 } // namespace growth

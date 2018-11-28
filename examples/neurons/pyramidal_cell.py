@@ -24,14 +24,14 @@ neuron_params = {
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
     "polarization_strength": 20.,
     "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
-    "growth_cone_model": "persistent_random_walk"
+    "growth_cone_model": "cst_mem_nwa"
 }
 
 axon_params = {
     "persistence_length": 500.*um,
     "speed_growth_cone": 0.03*um/minute,
     # diameter
-    "thinning_ratio": 1./400.,
+    "taper_rate": 1./400.,
     "diameter_ratio_avg": 0.5,
     # branching
     "use_van_pelt": False,
@@ -41,12 +41,12 @@ axon_params = {
 dend_params = {
     "persistence_length": 250.*um,
     "speed_growth_cone": 0.01*um/minute,
-    "thinning_ratio": 1./200.,
+    "taper_rate": 1./200.,
     "use_uniform_branching": False,
     "use_van_pelt": True,
     "B": 1.*cpm,
     "T": 1000.*minute,
-    "gc_split_angle_mean": 25.,
+    "gc_split_angle_mean": 25.*deg,
 }
 
 kernel = {
@@ -61,17 +61,22 @@ ds.SetKernelStatus(kernel)
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, growth_cone_model="run_tumble",
-                     params=neuron_params, axon_params=axon_params,
-                     dendrites_params=dend_params, num_neurites=3)
+n = ds.CreateNeurons(n=num_neurons, params=neuron_params,
+                     axon_params=axon_params, dendrites_params=dend_params,
+                     num_neurites=3)
 
-print(ds.GetStatus(n[0], "growth_cone_model", level="neurite"))
+rec = ds.CreateRecorders(n, "num_growth_cones")
+
 
 # first, elongation
 
 ds.Simulate(7*day)
 
+
 print(dense.GetKernelStatus('time'))
+
+recording = ds.GetRecording(rec, record_format="compact")
+print(recording)
 
 ds.plot.PlotNeuron(show=True)
 
@@ -88,7 +93,7 @@ lb_axon = {
 
 
 dend_params = {
-    "thinning_ratio": 1./100.,
+    "taper_rate": 1./100.,
     "use_van_pelt": False,
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.00015*cpm,
@@ -127,26 +132,26 @@ ds.SetStatus(n, dendrites_params=dend_params, axon_params=vp_axon)
 ds.Simulate(40*day)
 print(dense.GetKernelStatus('time'))
 
-ds.plot.PlotNeuron(show=True)
+# ~ ds.plot.PlotNeuron(show=True)
 
-ds.NeuronToSWC("pyramidal-cell.swc", gid=n)
+# ~ ds.NeuronToSWC("pyramidal-cell.swc", gid=n)
 
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("pyramidal-cell.swc")
+# ~ import neurom as nm
+# ~ from neurom import viewer
+# ~ nrn = nm.load_neuron("pyramidal-cell.swc")
 
-fig, _ = viewer.draw(nrn)
+# ~ fig, _ = viewer.draw(nrn)
 
-for ax in fig.axes:
-    ax.set_title("")
+# ~ for ax in fig.axes:
+    # ~ ax.set_title("")
 
-tree = n[0].axon.get_tree()
+# ~ tree = n[0].axon.get_tree()
 
-import matplotlib.pyplot as plt
-plt.axis('off')
-fig.suptitle("")
-plt.tight_layout()
-plt.show()
-tree.show_dendrogram()
+# ~ import matplotlib.pyplot as plt
+# ~ plt.axis('off')
+# ~ fig.suptitle("")
+# ~ plt.tight_layout()
+# ~ plt.show()
+# ~ tree.show_dendrogram()
 
-print("Asymmetry of axon:", ds.structure.tree_asymmetry(n[0].axon))
+# ~ print("Asymmetry of axon:", ds.structure.tree_asymmetry(n[0].axon))

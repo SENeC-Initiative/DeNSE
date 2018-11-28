@@ -10,6 +10,16 @@
 This file contains a brief summary or the steps needed to install DeNSE on
 various platforms.
 
+It is divided into:
+- details on the software required to install and run DeNSE,
+- specific installation procedures for Linux, MacOS, and Windows,
+- details about the manual installation and additional options that can be
+  passed to configure and install DeNSE,
+- details about configuring the various paths that may be required to make your
+  system aware of the existence of DeNSE.
+
+A help for usual issues during compilation is present at the bottom of the file.
+
 
 Requirements
 ============
@@ -39,6 +49,7 @@ Before installation, several tools must be pre-installed, including
     * svg.path and dxfgrabber to load SVG and DXF files to create complex
       environments
     * PyOpenGL to efficiently seed neurons in complex environments
+    * ipython to 
 
 
 Automatic installation
@@ -197,16 +208,118 @@ Otherwise, check that you have all the things required to install homebrew on
 https://docs.brew.sh/Installation.
 
 
+Windows (minimal)
+-----------------
+
+This installation is the most "lightweight" since you "only" have to install
+Visual Studio on your computer (even though can already take roughly 3 Gb).
+However, it requires to manually set quite a number of environment variables
+to make everything work, so it is not recommended for standard users (see the
+Anaconda install below instead).
+
+Make sure you have Visual Studio installed including Visual C++, otherwise get
+it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
+Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
+(include Linux tools to get C++ for CMake) as well as the Python packages (this
+will automatically install Python and include it in the path, so you don't need
+to do anything more).
+
+Once VisualStudio is installed, download the latest GEOS source file (.tar.bz2)
+from https://trac.osgeo.org/geos.
+Unpack the file, then go to the "geos-X.Y.Z" folder and create a new "build"
+folder.
+
+Open the VisualStudio prompt (e.g. "xAB Native Tools Command Prompt for VS 2017"
+in the startup menu, with AB your system config, either 64 or 86), then type
+
+    cd C:\path\to\geos-X.Y.Z\build\
+    cmake .. -DCMAKE_INSTALL_PREFIX=geos_prefix
+    cmake --build . --config Release --target INSTALL
+
+where "geos_prefix" is the path where you want GEOS to be installed.
+This should compile and install GEOS.
+
+Add to the PATH:
+- open Control Panel
+- go to System > Advance System Settings
+- this should open the System Properties window on the "Advanced" tab
+- click on the "Environment Variables..." button
+- go to "System variables", select PATH and click "Edit..."
+- add the "geos_prefix" path, separated from the previous entry by a semicolumn.
+
+To use Python and pip, you need to add their folder to the PATH. Using the MSVC
+install, the folders are:
+- C:/Program Files (xAB)/Microsoft Visual Studio/Shared/PythonXY_AB/ for Python
+- C:/Program Files (xAB)/Microsoft Visual Studio/Shared/PythonXY_AB/Scripts for pip
+
+Again, AB is your system configuratio (64 or 86) and XY give the Python version.
+You can add them to the PATH using the previous procedure, otherwise you will
+have to "cd" to the directories every time you want to execute either Python or
+pip.
+
+From then on, install the required python packages:
+
+    pip install --user cython
+    pip install --user numpy scipy pint shapely PyOpenGL svg.path dxfgrabber
+    pip install --user matplotlib
+
+Same as before, you will need to add Cython to the PATH (but pip will warn you
+about that, giving you the path that you need to add).
+
+Once everything is ready, go to the source folder of DeNSE, create a "build"
+directory, then
+
+    cd X:/path/to/DeNSE/build
+    set DISTUTILS_USE_SDK 1
+    cmake .. -DCMAKE_INSTALL_PREFIX=X:/where/you/want/dense/to/be/installed
+    cmake --build . --config Release --target INSTALL
+
+
+Windows (Anaconda)
+------------------
+
+This is the "simple" way, if you are not used to UNIX-like platforms.
+Note that Windows install is highly experimental and might very well not work,
+so I would advise against wasting too much time on it if troubles arise: install
+VirtualBox and a random Linux version like Mint, then use DeNSE on the virtual
+OS.
+
+First, you will need to install Anaconda: https://www.anaconda.com/download/.
+Once the installation is finished, launch Anaconda Navigator for the final
+installation steps, then, once it finishes, you can run the Anaconda Prompt from
+the startup menu.
+
+Make sure you have Visual Studio installed including Visual C++, otherwise get
+it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
+Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
+(include Linux tools to get C++ for CMake)
+
+Once in the Anaconda Prompt, run:
+
+    conda install cmake geos
+    pip install cython
+    pip install shapely pint PyOpenGL svg.path dxfgrabber
+
+Then
+
+    mkdir build
+    cd build
+    set DISTUTILS_USE_SDK 1
+    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder
+    cmake --build . --config Release --target INSTALL
+
+
 Windows (Cygwin)
 ----------------
 
-WARNING: only use with single-thread configuration! (1 OpenMP thread),
-multi-threaded configurations with Cygwin slow down the computation.
+WARNING: this is not the preferred install mode on Windows because it relies on
+a very slow patch of POSIX which will only let you use DeNSE with single-thread
+configuration (1 OpenMP thread), multi-threaded configurations with Cygwin will
+only slow down the computation.
 
-This installation is not optimal for Windows because it works in some kind of
+This installation is also not optimal for Windows because it works in some
 separate environment.
-Note that this installation also requires roughly 2Gb of space.
-However, it works, so for the time being it is the preferred install procedure.
+Eventually, note that this installation also requires roughly 2 Gb of space.
 
 First, install Cygwin and the necessary packages:
 * download Cygwin from https://www.cygwin.com/,
@@ -265,49 +378,10 @@ If the installation finished without error, you can now use DeNSE: go to the
 "Launching" section.
 
 
-Windows (Anaconda)
-------------------
-
-(Not working for the time being)
-
-This is the "simple" way, if you are not used to UNIX-like platforms.
-Note that Windows install is highly experimental and might very well not work,
-so I would advise against wasting too much time on it if troubles arise: install
-VirtualBox and a random Linux version like Mint, then use DeNSE on the virtual
-OS.
-
-First, you will need to install Anaconda: https://www.anaconda.com/download/.
-Once the installation is finished, launch Anaconda Navigator for the final
-installation steps, then, once it finishes, you can run the Anaconda Prompt from
-the startup menu.
-
-Make sure you have Visual Studio installed including Visual C++, otherwise get
-it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
-Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
-(include Linux tools to get C++ for CMake)
-
-Once in the Anaconda Prompt, run:
-
-    conda install cmake geos
-    pip install cython
-    pip install shapely pint
-
-Then
-
-    mkdir build
-    cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder -DCMAKE_BUILD_TYPE=Release
-    cmake --build . --config Release --target INSTALL
-
-Note that for people using 32-bit architectures, you might have to force the
-64-bit compile by adding -DCMAKE_GENERATOR_PLATFORM=x64 to the first cmake
-command.
-
-
 Manual installation
 ===================
 
-Note that manual installation requires that you already have installed all the
+Note that manual installation requires that you already installed all the
 dependencies of DeNSE listed in "Requirements".
 
 
@@ -343,8 +417,9 @@ Once you made sure the "build" directory is empy, run
 Additional CMake options
 ------------------------
 
-The CMake script accepts several options to customize the installation; these options can be
-added after "cmake ..", separated by spaces, and include (do not copy the quotes):
+The CMake script accepts several options to customize the installation; these
+options can be added after "cmake ..", separated by spaces, and include
+(do not copy the quotes):
 
 * a custom install path provided through
   "-DCMAKE_INSTALL_PREFIX=/your/install/path", which MUST be provided as an
@@ -430,7 +505,7 @@ Open a terminal and run
 
     python
 
-then in the following console, input
+(or ipython), then in the following console, input
 
     import dense as ds
 
@@ -443,16 +518,36 @@ To run scripts saved in a python file (e.g. in the examples), run
     python the_script_name.py
 
 
-Windows (Cygwin)
-----------------
+Windows
+-------
 
-To run DeNSE, first open a Cygwin terminal.
+* Minimal install:
+   - to run interactively, either install ipython (pip install --user ipython)
+     or start Python (Python or Python Idle in the statup menu)
+   - to run a script, open a prompt (preferably a Visual Studio one) and
+     type "python the_script_name.py"
 
-If you want to run it with interactive plotting (matplotlib), then:
-   - type "startxwin >/dev/null 2>&1 &" and press enter, to start the initiate
-     the graphical interface
-   - type "export DISPLAY=:0.0" and press enter to select the screen
+* Anaconda:
+   - open the anaconda prompt and type "ipython" to run interactively,
+   - otherwise type "python the_script_name.py".
 
-Whether you want to plot or not:
-   - to run DeNSE interactively, run "ipython3", then "import dense as ds"
-   - to run a script, type "python3 the_script_name.py"
+* Cygwin:
+   - first open a Cygwin terminal,
+   - if you want to run it with interactive plotting (matplotlib), then:
+       - type "startxwin >/dev/null 2>&1 &" and press enter, to start the
+         graphical interface
+       - type "export DISPLAY=:0.0" and press enter to select the screen
+   - whether you want to plot or not:
+       - to run DeNSE interactively, run "ipython3", then "import dense as ds"
+       - to run a script, type "python3 the_script_name.py"
+
+
+Known errors
+============
+
+* Linker error LNK1112 (conflict between module and target machine type)
+   - on Windows, this usually means that you are not compiling with the correct
+     version of MSVC. Check that (on a 64-bit platform, you are using the x64
+     version, or the x86 on a 32-bit platform). If everything is correct, add
+     "-DCMAKE_GENERATOR_PLATFORM=xAB", where AB is either 64 or 86, to force the
+     correct compiler.

@@ -59,10 +59,6 @@ class NeuronManager : public ManagerInterface
 
     gidNeuronMap::const_iterator iter_neurons();
 
-    GCPtr get_model(std::string model_name);
-    void get_models(std::vector<std::string> &models);
-    GCPtr get_default_model();
-
     void set_max_resol(size_t neuron, double max_resol);
     double get_max_resol() const;
 

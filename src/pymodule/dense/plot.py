@@ -497,7 +497,7 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
 def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
                show_culture=True, aspect=1., soma_radius=None,
                active_gc="d", gc_size=2., soma_color='k', axon_color="r",
-               dendrite_color="b", subsample=20, save_path=None, title=None,
+               dendrite_color="b", subsample=1, save_path=None, title=None,
                axis=None, show_density=False, dstep=20., dmin=None, dmax=None,
                colorbar=True, show=True, **kwargs):
     '''
@@ -531,7 +531,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         Color of the axons.
     dendrite_color : valid matplotlib color, optional (default: "b")
         Color of the dendrites.
-    subsample : int, optional (default: 20)
+    subsample : int, optional (default: 1)
         Subsample the neurites to save memory.
     save_path : str, optional (default: not saved)
         Path where the plot should be saved, including the filename, pdf only.

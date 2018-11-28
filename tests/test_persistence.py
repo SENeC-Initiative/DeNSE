@@ -12,27 +12,26 @@ from scipy.optimize import curve_fit
 import nngt
 
 import dense as ds
-
+from dense.units import *
 
 '''
 Setting the parameters
 '''
 
-num_neurons   = 1000
-simtime       = 5000.
+num_neurons   = 200
+
+simtime       = 10000.
 num_omp       = 7
 # ~ resolutions   = (1., 2., 5., 10., 20., 50.)
 resolutions   = (1., 10., 25., 50.)
 
-# ~ gc_model      = "simple_random_walk"
-gc_model      = "persistent_random_walk"
-# ~ gc_model      = "run_tumble"
+gc_model      = "run-and-tumble"
+# ~ gc_model      = "simple-random-walk"
 sensing_angle = 0.1
 
 cmap          = plt.get_cmap('plasma')
 # ~ colors        = np.linspace(0.2, 0.8, 20)
 colors        = np.linspace(0.2, 0.8, len(resolutions))
-
 
 '''
 Analysis functions
@@ -41,13 +40,11 @@ Analysis functions
 def exp_decay(x, lp):
     return np.exp(-x / lp)
 
-
 def norm_angle_from_vectors(vectors):
     #~ angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
     angles  = np.arctan2(vectors[1], vectors[0])
     norms   = np.linalg.norm(vectors, axis=0)
     return angles, norms
-
 
 def correlation(points, distances):
     '''
@@ -97,13 +94,12 @@ def correlation(points, distances):
     else:
         return np.NaN
 
-
 '''
 Simulations with DeNSE
 '''
 
-# ~ show_neurons = False
-show_neurons = True
+show_neurons = False
+# ~ show_neurons = True
 
 gc_pos     = []
 data_times = {}
@@ -114,9 +110,10 @@ fig2, ax2 = plt.subplots()
 
 sensing_angles = np.linspace(0.1, 3., 10)
 
-speed     = 1.
-l_p       = 500.
-dist_max  = speed*(simtime-100)
+speed     = 0.2
+l_p       = 800.
+# ~ dist_max  = speed*(simtime-100)
+dist_max  = speed*simtime
 dist_step = 50.
 distances = np.arange(dist_step, dist_max, dist_step)
 
@@ -125,37 +122,41 @@ for k, resol in enumerate(resolutions):
     np.random.seed(1)
     ds.ResetKernel()
     ds.SetKernelStatus({
-        "resolution": resol,
+        "resolution": resol * minute,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
         "environment_required": False,
+        "adaptive_timestep": -1.,
     })
 
     params = {
         "growth_cone_model": gc_model,
         "use_critical_resource": False,
+        "speed_growth_cone" : speed * um / minute,
         "filopodia_wall_affinity": 2.5,
         "filopodia_min_number": 100,
         "proba_down_move": 0.05,
-        "scale_up_move": 5.,
-        "persistence_length": l_p,
-        "position": [(0., 0.) for _ in range(num_neurons)]
+        "scale_up_move": 5. * um,
+        "persistence_length": l_p * um,
+        "sensing_angle" : sensing_angle * rad,
+        "position": [(0., 0.) for _ in range(num_neurons)] * um,
+        "taper_rate": 0.,
     }
-    if gc_model != "simple_random_walk":
-        params["sensing_angle"] = sensing_angle
 
-    params["max_sensing_angle"] = 1.6
+    params["max_sensing_angle"] = 1.6 * rad
 
     gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 
-    ds.Simulate(simtime)
-
+    ds.Simulate(simtime*minute)
+    # ~ print(ds.NeuronStructure())
+    ds.PlotNeuron(show=False)
+    
     ''' Analyze the resulting neurons '''
 
     population = ds.Population.from_gids(gids)
 
     axons     = [neuron.axon.xy.transpose() for neuron in population]
-
+    # ~ print(axons)
     sequence  = []
     for i, points in enumerate(axons):
         sequence.append(correlation(points, distances))
@@ -167,10 +168,10 @@ for k, resol in enumerate(resolutions):
 
     ax.plot(distances, avg_corr, color=cmap(colors[k]), alpha=1,
             label="resol: {}".format(resol))
-    # ~ ax.plot(distances, exp_decay(distances, lp[0]))
+    ax.plot(distances, exp_decay(distances, lp[0]))
 
     if show_neurons:
-        ds.PlotNeuron(show=False, title=str(resol))
+        ds.PlotNeuron(show=True, title=str(resol))
 
 
 # plot ref

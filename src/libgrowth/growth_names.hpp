@@ -45,7 +45,7 @@ extern const std::string initial_branch_lenght;
 //! default branching probability
 extern const std::string branching_proba_default;
 
-extern const std::string thinning_ratio;
+extern const std::string taper_rate;
 extern const std::string diameter_ratio_avg;
 extern const std::string diameter_ratio_std;
 extern const std::string diameter_eta_exp;
@@ -95,8 +95,24 @@ extern const std::string substrate_affinity;
 #define SCALE_UP_MOVE 20.
 #define SENSING_ANGLE 0.1433
 #define SPEED_RATIO_RETRACTION 0.2
-#define SPEED_GROWTH_CONE 1.
+#define SPEED_GROWTH_CONE 0.01  // um/min
 #define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
+
+
+/*
+ * Steering models
+ */
+
+// memory-based steering
+extern const std::string rigidity_factor;
+extern const std::string decay_factor;
+
+
+/*
+ * Direction selection models
+ */
+extern const std::string noise_amplitude;
+extern const std::string critical_pull;
 
 
 /*

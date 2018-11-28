@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/range/join.hpp>
+#include <boost/range/iterator_range.hpp>
+
 // elements includes
 #include "Branch.hpp"
 #include "Branching.hpp"
@@ -19,6 +22,11 @@
 
 namespace growth
 {
+
+typedef std::unordered_map<size_t, GCPtr> gc_map;
+typedef std::unordered_map<size_t, GCPtr>::const_iterator gc_const_it;
+typedef boost::range::joined_range<const gc_map, const gc_map> gc_it_range;
+
 
 // Neuron forward declaration
 class GrowthConeContinuousRecorder;
@@ -121,15 +129,14 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_node(NodePtr);
 
     bool walk_tree(NodeProp& np) const;
-    std::unordered_map<size_t, GCPtr>::const_iterator gc_cbegin() const;
-    std::unordered_map<size_t, GCPtr>::const_iterator gc_cend() const;
+    gc_it_range gc_range() const;
     std::unordered_map<size_t, NodePtr>::const_iterator nodes_cbegin() const;
     std::unordered_map<size_t, NodePtr>::const_iterator nodes_cend() const;
 
   private:
     //! Neuron parent
     NeuronWeakPtr parent_;
-    Branching branching_model_;
+    BranchingPtr branching_model_;
     std::string name_;
     bool active_;
     double max_arbor_len_;
@@ -148,10 +155,11 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     //! growth cones
     std::string growth_cone_model_;
-    std::unordered_map<size_t, GCPtr> growth_cones_;
-    std::unordered_map<size_t, GCPtr> growth_cones_tmp_;
-    std::unordered_map<size_t, GCPtr> growth_cones_inactive_;
-    std::unordered_map<size_t, GCPtr> growth_cones_inactive_tmp_;
+    gc_map growth_cones_;
+    gc_map growth_cones_tmp_;
+    gc_map growth_cones_inactive_;
+    gc_map growth_cones_inactive_tmp_;
+
     std::vector<size_t> dead_cones_;
     std::deque<ActinPtr> actinDeck_;
     std::unordered_map<size_t, NodePtr> nodes_;
@@ -160,7 +168,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;
-    double thinning_ratio_;     // diameter thinning with distance
+    double taper_rate_;     // diameter thinning with distance
     double min_diameter_;
 
     // competition

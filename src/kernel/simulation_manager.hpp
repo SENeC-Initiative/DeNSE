@@ -35,8 +35,9 @@ class SimulationManager : public ManagerInterface
     void new_branching_event(const Event &ev);
 
     Time get_time() const;
+    Time get_initial_time() const;
     double get_resolution() const;
-    double get_current_time() const;
+    double get_current_minutes() const;
     size_t get_current_step() const;
     double get_current_substep() const;
 

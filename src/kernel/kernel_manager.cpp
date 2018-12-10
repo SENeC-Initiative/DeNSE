@@ -70,7 +70,7 @@ KernelManager::KernelManager()
     , record_enabled_(false)
     , env_required_(true)
     , num_objects_(0)
-    , adaptive_timestep_(4.)
+    , adaptive_timestep_(-1.)
     , version_("0.1.0")
 {
 }

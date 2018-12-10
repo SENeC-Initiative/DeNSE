@@ -54,8 +54,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
     // the previous point is set to -1
     size_t last_sample = 0;
     size_t sample      = 1;
-    Point pos          = neuron->get_position();
-    swc_file_ << 1 << " " << somaID << " " << pos.at(0) << " " << pos.at(1)
+    BPoint pos         = neuron->get_position();
+    swc_file_ << 1 << " " << somaID << " " << pos.x() << " " << pos.y()
               << " " << 0 << " " << neuron->get_soma_radius() << " " << -1
               << "\n";
     int neuriteID = -1;
@@ -132,8 +132,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 // add growth cone at the end!
                 sample++;
                 swc_file_ << sample << " " << endID << " "
-                          << node.second->get_position().at(0) << " "
-                          << node.second->get_position().at(1) << " " << 0
+                          << node.second->get_position().x() << " "
+                          << node.second->get_position().y() << " " << 0
                           << " " << 0.5*node.second->get_diameter() << " "
                           << last_sample << "\n";
                 /*                if (not nodes.empty())*/

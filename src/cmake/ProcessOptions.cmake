@@ -128,11 +128,58 @@ function( CGROWTH_PROCESS_WITH_PYTHON )
   set( HAVE_PYTHON OFF PARENT_SCOPE )
   string(REGEX MATCH "^(2|3)([.][0-9])?" VALID_PYVERSION "${with-python}" )
 
-  if ( ${with-python} STREQUAL "ON" OR VALID_PYVERSION )
+  if ( ${with-python} STREQUAL "ON" OR VALID_PYVERSION OR EXISTS ${with-python} )
 
     # Localize the Python interpreter
     if ( ${with-python} STREQUAL "ON" )
       find_package( PythonInterp )
+    elseif (EXISTS ${with-python} )
+        # Directly get all variables from python
+        execute_process(COMMAND "${with-python}" "-c"
+          "from distutils import sysconfig as s;import sys;import struct;
+print('.'.join(str(v) for v in sys.version_info));
+print(sys.prefix);
+print(s.get_python_inc(plat_specific=True));
+print(s.get_python_lib(plat_specific=True));
+print(s.get_config_var('SO'));
+print(hasattr(sys, 'gettotalrefcount')+0);
+print(struct.calcsize('@P'));
+print(s.get_config_var('LDVERSION') or s.get_config_var('VERSION'));
+print(s.get_config_var('LIBDIR') or '');
+print(s.get_config_var('MULTIARCH') or '');
+"
+            RESULT_VARIABLE _PYTHON_SUCCESS
+            OUTPUT_VARIABLE _PYTHON_VALUES
+            ERROR_VARIABLE _PYTHON_ERROR_VALUE)
+        # Convert the process output into a list
+        if (_PYTHON_SUCCESS MATCHES 0)
+          set(PYTHONINTERP_FOUND 1)
+        endif ()
+        if(WIN32)
+          string(REGEX REPLACE "\\\\" "/" _PYTHON_VALUES ${_PYTHON_VALUES})
+        endif()
+        string(REGEX REPLACE ";" "\\\\;" _PYTHON_VALUES ${_PYTHON_VALUES})
+        string(REGEX REPLACE "\n" ";" _PYTHON_VALUES ${_PYTHON_VALUES})
+        list(GET _PYTHON_VALUES 0 _PYTHON_VERSION_LIST)
+        list(GET _PYTHON_VALUES 1 PYTHON_PREFIX)
+        list(GET _PYTHON_VALUES 2 PYTHON_INCLUDE_DIR)
+        list(GET _PYTHON_VALUES 3 PYTHON_SITE_PACKAGES)
+        list(GET _PYTHON_VALUES 4 PYTHON_MODULE_EXTENSION)
+        list(GET _PYTHON_VALUES 5 PYTHON_IS_DEBUG)
+        list(GET _PYTHON_VALUES 6 PYTHON_SIZEOF_VOID_P)
+        list(GET _PYTHON_VALUES 7 PYTHON_LIBRARY_SUFFIX)
+        list(GET _PYTHON_VALUES 8 PYTHON_LIBDIR)
+        list(GET _PYTHON_VALUES 9 PYTHON_MULTIARCH)
+        # The built-in FindPython didn't always give the version numbers
+        string(REGEX REPLACE "\\." ";" _PYTHON_VERSION_LIST ${_PYTHON_VERSION_LIST})
+        list(GET _PYTHON_VERSION_LIST 0 PYTHON_VERSION_MAJOR)
+        list(GET _PYTHON_VERSION_LIST 1 PYTHON_VERSION_MINOR)
+        list(GET _PYTHON_VERSION_LIST 2 PYTHON_VERSION_PATCH)
+
+        # Make sure all directory separators are '/'
+        string(REGEX REPLACE "\\\\" "/" PYTHON_PREFIX ${PYTHON_PREFIX})
+        string(REGEX REPLACE "\\\\" "/" PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_DIR})
+        string(REGEX REPLACE "\\\\" "/" PYTHON_SITE_PACKAGES ${PYTHON_SITE_PACKAGES})
     else ()
       find_package( PythonInterp ${with-python} REQUIRED )
     endif ()
@@ -141,11 +188,17 @@ function( CGROWTH_PROCESS_WITH_PYTHON )
       set( PYTHONINTERP_FOUND "${PYTHONINTERP_FOUND}" PARENT_SCOPE )
       set( PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} PARENT_SCOPE )
       set( PYTHON ${PYTHON_EXECUTABLE} PARENT_SCOPE )
+      set( PYTHON_VERSION_MAJOR ${PYTHON_VERSION_MAJOR} PARENT_SCOPE )
       set( PYTHON_VERSION ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} PARENT_SCOPE )
 
       # Localize Python lib/header files and make sure that their version matches
-      # the Python interpreter version !
-      find_package( PythonLibs ${PYTHON_VERSION_STRING} EXACT )
+      # the Python interpreter version
+      if (${PYTHON_VERSION})
+        find_package( PythonLibs ${PYTHON_VERSION} EXACT )
+      else ()
+        find_package( PythonLibs )
+      endif ()
+
       if ( PYTHONLIBS_FOUND )
         set( HAVE_PYTHON ON PARENT_SCOPE )
         # export found variables to parent scope
@@ -192,6 +245,7 @@ function( CGROWTH_PROCESS_WITH_PYTHON )
   endif ()
 endfunction()
 
+
 function( CGROWTH_PROCESS_WITH_GEOS )
   # Find GEOS
   if ( NOT "${with-geos}" STREQUAL "ON" )
@@ -206,6 +260,21 @@ function( CGROWTH_PROCESS_WITH_GEOS )
     message( FATAL_ERROR "GEOS required" )
   endif ()
 endfunction()
+
+
+function( CGROWTH_PROCESS_WITH_BOOST )
+  # Find BOOST
+  find_package(Boost 1.62 REQUIRED)
+  #~ find_package(Boost REQUIRED)
+  if ( Boost_FOUND )
+    # export found to parent
+    set ( Boost_FOUND ${Boost_FOUND} PARENT_SCOPE )
+    set ( Boost_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}" PARENT_SCOPE )
+  else ()
+    message( FATAL_ERROR "BOOST required" )
+  endif ()
+endfunction()
+
 
 function( CGROWTH_PROCESS_WITH_OPENMP )
   # Find OPENMP

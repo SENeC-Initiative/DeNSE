@@ -52,7 +52,7 @@ class ActinWave : public std::enable_shared_from_this<ActinWave>
     void actin_on_node();
     void actin_on_growth_cone();
     void actin_make_branch(mtPtr);
-    void get_geometry(Point &xy, double &angle, mtPtr rnd_engine) const;
+    void get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const;
 
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;

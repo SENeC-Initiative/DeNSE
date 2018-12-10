@@ -1,4 +1,4 @@
-#include "resource_based_elongation.hpp"
+#include "elongation_resource_based.hpp"
 
 // c++ includes
 #include <cmath>
@@ -194,9 +194,14 @@ double ResourceBasedElongationModel::compute_CR(
                 neurite_ptr_->gc_split_angles_diameter(
                     rnd_engine, new_angle, old_angle, new_diameter,
                     old_diameter);
+
+                // this has to be replaced to make it create an event for the
+                // beginning of the next timestep and delegate to the
+                // branching model
+                NodePtr update_me;
                 neurite_ptr_->growth_cone_split(
                     gc_weakptr_.lock(), step_length, new_angle, old_angle,
-                    new_diameter, old_diameter);
+                    new_diameter, old_diameter, update_me);
             }
         }
     }

@@ -42,13 +42,13 @@ class GrowthCone_SelfReferentialForces : public virtual GrowthCone
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
-                        const Point &position, double angle) override;
+                        const BPoint &position, double angle) override;
 
     void prepare_for_split() override;
     void after_split() override;
     void initialize_SRF();
 
-    virtual Point
+    virtual BPoint
     compute_target_position(const std::vector<double> &directions_weights,
                             mtPtr rnd_engine, double &substep,
                             double &new_angle) override;

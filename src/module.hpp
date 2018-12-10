@@ -19,6 +19,7 @@
 #include "space_manager.hpp"
 #include "spatial_types.hpp"
 
+
 namespace growth
 {
 
@@ -50,7 +51,7 @@ void set_kernel_status(const statusMap &status_dict, std::string simulation_ID);
 
 
 void set_environment(
-    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+    GEOSGeometry *environment, const std::vector<GEOSGeometry *> &areas,
     std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties);
 
@@ -70,7 +71,7 @@ void test_random_generator(Random_vecs &values, size_t size);
 /* Getters functions */
 
 void get_environment(
-    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
+    GEOSGeometry * &environment, std::vector<GEOSGeometry *> &areas,
     std::vector<double> &heights, std::vector<std::string> &names,
     std::vector<std::unordered_map<std::string, double>> &properties);
 
@@ -128,6 +129,12 @@ void get_branches_data(size_t neuron, const std::string &neurite,
                        std::vector<double> &diameters,
                        std::vector<int> &parents, std::vector<size_t> &nodes,
                        size_t start_point);
+
+
+void get_geom_skeleton(std::vector<size_t> gids,
+                       std::vector<GEOSGeometry*>& axons,
+                       std::vector<GEOSGeometry*>& dendrites,
+                       std::vector< std::vector<double> >& somas);
 
 
 // parameters and recordings

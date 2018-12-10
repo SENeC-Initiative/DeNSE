@@ -1,67 +1,39 @@
 #include "Environment.hpp"
 
-#include "kernel_manager.hpp"
-
 
 namespace growth
 {
 
-Environment::Environment(GEOSGeom environment,
-                         GEOSContextHandle_t context_handler)
+Environment::Environment(BMultiPolygonPtr environment)
+  : environment_(environment)
 {
-    assert(0 != environment);
-    assert(GEOSisValid_r(context_handler, environment));
-
-    for (int i = 0; i < kernel().parallelism_manager.get_num_local_threads();
-         i++)
+    for (const auto& polygon : *(environment_.get()))
     {
-        environment_.push_back(GEOSGeom_clone_r(context_handler, environment));
-        prepared_env_.push_back(GEOSPrepare_r(context_handler, environment_.back()));
-        const GEOSGeom border = GEOSBoundary_r(context_handler, environment_.back());
-        prepared_border_.push_back(GEOSPrepare_r(context_handler, border));
-        assert(prepared_env_[i] != 0);
-        assert(prepared_border_[i] != 0);
+        boundary_.push_back(BLineString());
+
+        auto &ls = boundary_.back();
+        ls.insert(ls.end(), polygon.outer().begin(), polygon.outer().end());
+
+        for (const auto& inner : polygon.inners())
+        {
+            boundary_.push_back(BLineString());
+
+            auto &l = boundary_.back();
+            l.insert(l.end(), inner.begin(), inner.end());
+        }
     }
 }
 
 
-Environment::~Environment()
+const BMultiPolygonPtr Environment::get_environment() const
 {
-    for (auto env : environment_)
-    {
-        delete env;
-    }
-    environment_.clear();
-
-    for (const GEOSPreparedGeometry *env : prepared_env_)
-    {
-        delete env;
-    }
-    prepared_env_.clear();
-
-    for (const GEOSPreparedGeometry *border : prepared_border_)
-    {
-        delete border;
-    }
-    prepared_border_.clear();
+    return environment_;
 }
 
 
-GEOSGeom Environment::get_environment(int omp_id) const
+const BMultiLineString& Environment::get_boundary() const
 {
-    return environment_.at(omp_id);
-}
-
-
-const GEOSPreparedGeometry *Environment::get_prepared(int omp_id) const
-{
-    return prepared_env_[omp_id];
-}
-
-
-const GEOSPreparedGeometry *Environment::get_border(int omp_id) const
-{
-    return prepared_border_[omp_id];
+    return boundary_;
 }
 
 } // namespace growth

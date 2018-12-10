@@ -13,13 +13,13 @@ namespace growth
 
 // BaseNode functions
 
-void BaseNode::set_position(const Point &pos) { geometry_.position = pos; }
+void BaseNode::set_position(const BPoint &pos) { geometry_.position = pos; }
 
 
 double BaseNode::get_distance_to_soma() const { return geometry_.dis_to_soma; }
 
 
-Point BaseNode::get_position() const { return geometry_.position; }
+BPoint BaseNode::get_position() const { return geometry_.position; }
 
 
 int BaseNode::get_centrifugal_order() const { return -1; }
@@ -58,7 +58,7 @@ TopologicalNode::TopologicalNode(const TopologicalNode &tnode)
 
 
 TopologicalNode::TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
-                                 const Point &position,
+                                 const BPoint &position,
                                  const std::string &binaryID)
     : topology_{parent, parent.lock()->get_centrifugal_order() + 1, false, 0,
                 binaryID}
@@ -84,23 +84,24 @@ void TopologicalNode::topological_advance()
  * @param xy
  * @param distanceToSoma
  */
-void TopologicalNode::set_first_point(const Point p, double length)
+void TopologicalNode::set_first_point(const BPoint &p, double length)
 {
     biology_.branch->set_first_point(p, length);
 }
 
 
-void TopologicalNode::set_position(const Point &pos)
+void TopologicalNode::set_position(const BPoint &pos)
 {
     LogicError("Cannot set only position for a TopologicalNode", __FUNCTION__,
                __FILE__, __LINE__);
 }
 
 
-void TopologicalNode::set_position(const Point &pos, double dist_to_soma,
+void TopologicalNode::set_position(const BPoint &pos, double dist_to_soma,
                                    BranchPtr b)
 {
-    assert(pos == b->get_last_xy());
+    assert(pos.x() == b->get_last_xy().x() and
+           pos.y() == b->get_last_xy().y());
 
     geometry_.position    = pos;
     geometry_.dis_to_soma = dist_to_soma;
@@ -123,6 +124,12 @@ size_t TopologicalNode::get_branch_size() const
 }
 
 
+seg_range TopologicalNode::segment_range() const
+{
+    return biology_.branch->segment_range();
+}
+
+
 bool TopologicalNode::support_AW() const { return false; }
 
 //##########################################################
@@ -138,7 +145,7 @@ Growth cone constructor:
 \param BranchParentID is the relative name respect to the parent,
 necessary for build the Id
 */
-Node::Node(BaseWeakNodePtr parent, float distance, Point position,
+Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &position,
            std::string binaryID)
     : TopologicalNode(parent, distance, position, binaryID)
 {

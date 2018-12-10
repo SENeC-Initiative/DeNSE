@@ -17,9 +17,9 @@ class PullOnlySteeringModel : public virtual SteeringModel
     : SteeringModel(copy, gc, neurite) {};
 
     virtual void
-    compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                const Filopodia& filo, double substep,
-                                double &total_proba, bool &stuck) override final
+    compute_direction_probabilities(
+      std::vector<double> &directions_weights, const Filopodia& filo,
+      double substep, double &total_proba, bool &stuck) override final
     {
         total_proba = 0.;
         stuck       = true;

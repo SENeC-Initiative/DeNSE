@@ -20,33 +20,30 @@ the continuous set of points that defines its trajectory over time.
 class Branch
 {
   private:
-    Point initial_point_;
+    BPoint initial_point_;
     PointsArray points_;
+    std::vector<BPolygonPtr> segments_;
+    std::pair<BPoint, BPoint> last_points_;
 
   public:
     Branch(const Branch &copy);
     //! Create a branch with initial position and if necesary an initial length
-    Branch(const Point &);
-    Branch(const Point &, double);
+    Branch(const BPoint &);
+    Branch(const BPoint &, double);
     //! default constructor
     Branch();
     ~Branch();
 
-    /**
-     * @brief Add a point to the branch
-     *
-     * \param Point& point in x,y to add to the vector
-     * \param double l is optional but required for an easy computation.
-     */
-    void add_point(const Point &, double);
+    void add_point(const BPoint &pos, double length, BPolygonPtr poly,
+                   const BPoint &lp1, const BPoint &lp2);
 
     /**
      * @brief Get the module of length between the point and the last in the
      * array.
      *
-     * \param Point&
+     * \param BPoint&
      */
-    double module_from_points(const Point &);
+    double module_from_points(const BPoint &);
 
     /**
      * @brief set first element of Branch container
@@ -54,7 +51,7 @@ class Branch
      * @param xy the points where the branch starts
      * @param distanceToSoma the distance from soma at branch start.
      */
-    void set_first_point(const Point &xy, double distanceToSoma);
+    void set_first_point(const BPoint &xy, double distanceToSoma);
 
     /**
      * @brief resize the head of the branch: first point invariate
@@ -95,17 +92,20 @@ class Branch
     double get_segment_length_at(size_t idx) const;
     double get_last_segment_length() const;
     double get_length() const;
+    const std::pair<BPoint, BPoint>& get_last_points() const;
     const std::vector<double>& get_xlist() const;
     const std::vector<double>& get_ylist() const;
-    //! return a Point object from last point of the Branch
     PointArray get_last_point() const;
+    const BPolygonPtr get_last_segment() const;
+    const BPolygonPtr get_segment_at(size_t idx) const;
+    seg_range segment_range() const;
     //! return the last xy
-    Point get_last_xy() const;
+    BPoint get_last_xy() const;
     /**
-    Return a Point object from the 'idx' element of the Branch
+    Return a BPoint object from the 'idx' element of the Branch
     */
     PointArray at(size_t idx) const;
-    Point xy_at(size_t idx) const;
+    BPoint xy_at(size_t idx) const;
     size_t size() const;
 };
 } // namespace growth

@@ -92,7 +92,8 @@ void ActinWave::actin_make_branch(mtPtr rnd_engine)
     double new_length = 1.; // @todo: compute from actinContent
     //@TODO
     size_t TODO = 1;
-    ownNeurite_->lateral_branching(targetNode_, TODO, new_length, rnd_engine);
+    NodePtr todo_ptr;
+    ownNeurite_->lateral_branching(targetNode_, TODO, todo_ptr, rnd_engine);
 }
 
 void ActinWave::initialize_AW_distributions()
@@ -101,7 +102,7 @@ void ActinWave::initialize_AW_distributions()
     branch_distribution_ = std::uniform_real_distribution<double>(0, 1);
 }
 
-void ActinWave::get_geometry(Point &xy, double &angle, mtPtr rnd_engine) const
+void ActinWave::get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const
 {
     size_t id_x     = targetNode_->get_branch()->size();
     double distance = targetNode_->get_branch()->at(id_x)[2];
@@ -110,20 +111,20 @@ void ActinWave::get_geometry(Point &xy, double &angle, mtPtr rnd_engine) const
         id_x--;
         distance = targetNode_->get_branch()->at(id_x)[2];
     }
-    Point xy_0 = Point(targetNode_->get_branch()->at(id_x)[0],
+    BPoint xy_0 = BPoint(targetNode_->get_branch()->at(id_x)[0],
                        targetNode_->get_branch()->at(id_x)[1]);
-    Point xy_1 = Point(targetNode_->get_branch()->at(id_x + 1)[0],
+    BPoint xy_1 = BPoint(targetNode_->get_branch()->at(id_x + 1)[0],
                        targetNode_->get_branch()->at(id_x + 1)[1]);
     double direction;
-    if (xy_1.at(1) - xy_0.at(1))
+    if (xy_1.y() - xy_0.y())
     {
-        direction = atan((xy_1.at(0) - xy_0.at(0)) / (xy_1.at(1) - xy_0.at(1)));
+        direction = atan((xy_1.x() - xy_0.x()) / (xy_1.y() - xy_0.y()));
     }
     else
     {
         direction = M_PI / 2.;
     }
-    xy    = Point(targetNode_->get_branch()->at(id_x)[0],
+    xy    = BPoint(targetNode_->get_branch()->at(id_x)[0],
                targetNode_->get_branch()->at(id_x)[1]);
     angle = get_angle(rnd_engine, direction);
 }

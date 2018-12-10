@@ -1,7 +1,9 @@
-#include "nm_direction_selector.hpp"
+#include "direction_select_nm.hpp"
 
+// kernel includes
 #include "kernel_manager.hpp"
 
+// element includes
 #include "GrowthCone.hpp"
 
 
@@ -29,10 +31,11 @@ NMDirectionSelector::NMDirectionSelector(const NMDirectionSelector& copy,
 }
 
 
-void NMDirectionSelector::compute_target_angle(
+void NMDirectionSelector::select_direction(
   const std::vector<double> &directions_weights, const Filopodia &filo,
   mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
-  double &substep, double &step_length, double &new_angle, bool &stopped)
+  double &substep, double &step_length, double &new_angle, bool &stopped,
+  size_t &default_direction)
 {
     auto it = std::adjacent_find(
         directions_weights.begin(), directions_weights.end(),
@@ -41,19 +44,43 @@ void NMDirectionSelector::compute_target_angle(
     // get max only if some weights differ
     if (it != directions_weights.end())
     {
-        auto it_max  = std::max_element(
-            directions_weights.begin(), directions_weights.end());
-        // get its index and the associated angle
-        double n_max = std::distance(directions_weights.begin(), it_max);
+        double w, w_max = std::numeric_limits<double>::lowest();
+
+        for (size_t n = 0; n < directions_weights.size(); n++)
+        {
+            w = directions_weights[n];
+
+            if (not std::isnan(w) and w > w_max)
+            {
+                w_max             = w;
+                default_direction = n;
+            }
+        }
 
         // set angle + add previous angle plus random rotation
         new_angle    =
-            filo.directions[n_max] + old_angle +
+            filo.directions[default_direction] + old_angle +
             noise_amplitude_*sqrt(substep)*normal_(*(rnd_engine.get()));
     }
     else
     {
         // "keep straight"
+        // default angle is closest to zero
+        double dist, min_dist(std::numeric_limits<double>::max());
+
+        for (size_t n=0; n < directions_weights.size(); n++)
+        {
+            if (not std::isnan(directions_weights[n]))
+            {
+                dist = std::abs(filo.directions[n]);
+                if (dist < min_dist)
+                {
+                    default_direction = n;
+                    min_dist          = dist;
+                }
+            }
+        }
+
         new_angle = old_angle +
                     noise_amplitude_*sqrt(substep)*normal_(*(rnd_engine.get()));
     }
@@ -62,11 +89,16 @@ void NMDirectionSelector::compute_target_angle(
 
 void NMDirectionSelector::set_status(const statusMap &status)
 {
-    double pl, na;
-    bool b;
+    double pl, na, gc_speed;
+    bool bl, bn;
 
-    b = get_param(status, names::persistence_length, pl);
-    if (b)
+    // get speed (all possible versions)
+    get_param(status, names::speed_growth_cone, gc_speed);
+
+    bl = get_param(status, names::persistence_length, pl);
+    bn = get_param(status, names::noise_amplitude, na);
+
+    if (bl)
     {
         if (pl < 0)
         {
@@ -77,8 +109,7 @@ void NMDirectionSelector::set_status(const statusMap &status)
         persistence_length_ = pl;
     }
 
-    b = get_param(status, names::noise_amplitude, na);
-    if (b)
+    if (bn)
     {
         if (na < 0)
         {
@@ -87,6 +118,10 @@ void NMDirectionSelector::set_status(const statusMap &status)
         }
 
         noise_amplitude_ = na;
+    }
+    else
+    {
+        noise_amplitude_ = sqrt(2*gc_speed / persistence_length_);
     }
 }
 

@@ -89,7 +89,7 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
         {
             size_t old_steps   = std::get<0>(next_uniform_event_);
             double old_substep = std::get<1>(next_uniform_event_);
-            size_t new_steps =
+            size_t new_steps   =
                 old_steps * new_resolution_ratio + old_substep / resol;
             double new_substep =
                 old_steps * resol + old_substep - new_steps * resol;
@@ -176,17 +176,29 @@ void Branching::set_branching_event(Event &ev, signed char ev_type,
     }
     else
     {
-        // remove what's left until next step
-        duration  -= (resol - current_substep);
         // set event step and substep
-        ev_step    = current_step + 1 + duration / resol;
-        ev_substep = ((current_step + 1)*resol + duration) - ev_step*resol;
+        // first set "integer" part
+        ev_step    = current_step + duration / resol;
+        // then "floating" part
+        ev_substep = current_substep +
+                     (duration - (ev_step - current_step)*resol);
+        // potential update
+        if (ev_substep >= resol)
+        {
+            ev_step    += 1;
+            ev_substep -= resol;
+        }
     }
 
     auto n                   = neurite_->get_parent_neuron().lock();
     size_t neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
 
+    // std::cout << "event type is " << ev_type << std::endl;
+    // std::cout << ev_step << " " << current_step << " " << ev_substep << " "
+    //           << current_substep << " " << duration << " "
+    //           << (ev_step - current_step) * resol +
+    //              ev_substep - current_substep << std::endl;
     assert(ev_substep >= 0);
     assert(std::abs((ev_step - current_step) * resol +
                     (ev_substep - current_substep) - duration) < 1e-6);
@@ -223,26 +235,48 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
         (std::get<0>(next_vanpelt_event_) == std::get<0>(ev)) &&
         (std::abs(std::get<1>(next_vanpelt_event_) - std::get<1>(ev)) < 1e-8);
 
+    // prepare pointers to nodes and branching_point
+    TNodePtr branching_node = nullptr;
+    NodePtr new_node = nullptr;
+    size_t branching_point;
+
+    bool success(false);
+
     // check uniform event
     if (use_uniform_branching_ and uniform_occurence)
     {
-        return uniform_new_branch(rnd_engine);
+        success = uniform_new_branch(branching_node, new_node, branching_point,
+                                     rnd_engine);
     }
     // check flpl event
     if (use_flpl_branching_ and flpl_occurence)
     {
-        return flpl_new_branch(rnd_engine);
+        success = flpl_new_branch(branching_node, new_node, branching_point,
+                                  rnd_engine);
     }
     // verify vanpelt event
     if (use_van_pelt_ and van_pelt_occurence)
     {
-        return vanpelt_new_branch(rnd_engine);
+        success = vanpelt_new_branch(branching_node, new_node, branching_point,
+                                     rnd_engine);
+    }
+
+    if (success)
+    {
+        // update the R-tree: all points from branch_point on need to be
+        // removed and reassigned to the new point.
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+        kernel().space_manager.update_objects_branching(
+            branching_node, new_node, branching_point,
+            neurite_->get_parent_neuron().lock()->get_gid(),
+            neurite_->get_name(), omp_id);
     }
 
     // note that critical resource splitting is instantaneous and unplanned
     // thus it is never communicated through branching events
 
-    return false;
+    return success;
 }
 
 
@@ -316,18 +350,18 @@ void Branching::compute_flpl_event(mtPtr rnd_engine)
  *
  * @param rnd_engine
  */
-bool Branching::flpl_new_branch(mtPtr rnd_engine)
+bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                size_t &branching_point, mtPtr rnd_engine)
 {
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching (FLPL) @@@@@@@@\n");
 #endif
+    branching_node = nullptr;
 
     if (not neurite_->growth_cones_.empty())
     {
-        TNodePtr branching_node;
         GCPtr branching_cone;
-        double new_length = 0.; // cone created exactly on the branch to make sure
-                                // it is not created outside the environment.
+        bool success = false;
 
         // select a random node of the tree, excluding the firstNode_
         // This is a reservoir sampling algorithm
@@ -335,7 +369,8 @@ bool Branching::flpl_new_branch(mtPtr rnd_engine)
         for (auto &cone : neurite_->growth_cones_)
         {
             // check if the elected cone is not dead and waiting for removal!
-            if (not cone.second->is_dead() and cone.second->get_branch_size() > 3)
+            if (not cone.second->is_dead()
+                and cone.second->get_branch_size() > 3)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
                                   1. / cone.second->get_branch_size());
@@ -380,21 +415,17 @@ bool Branching::flpl_new_branch(mtPtr rnd_engine)
                 (powf(x_1, (n + 1)) - powf(x_0, (n + 1))) * y + powf(x_0, (n + 1));
             int x = (int)powf(a, 1. / (n + 1));
 
-            size_t branch_point = x;
+            branching_point = x;
 
             // actuate lateral branching on the elected node through the NEURITE.
-            neurite_->lateral_branching(branching_node, branch_point, new_length,
-                                        rnd_engine);
+            success = neurite_->lateral_branching(
+                branching_node, branching_point, new_node, rnd_engine);
             next_flpl_event_ = invalid_ev;
         }
 
         compute_flpl_event(rnd_engine);
 
-        if (max == 0)
-        {
-            return false;
-        }
-        return true;
+        return success;
     }
 
     next_flpl_event_ = invalid_ev;
@@ -412,17 +443,19 @@ bool Branching::flpl_new_branch(mtPtr rnd_engine)
  *
  * @param rnd_engine
  */
-bool Branching::uniform_new_branch(mtPtr rnd_engine)
+bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                   size_t &branching_point, mtPtr rnd_engine)
 {
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching @@@@@@@@\n");
 #endif
+    branching_node = nullptr;
+    new_node       = nullptr;
+
     if (not neurite_->growth_cones_.empty())
     {
-        TNodePtr branching_node;
         GCPtr branching_cone;
-        double new_length = 0.; // cone created exactly on the branch to make sure
-                                // it is not created outside the environment.
+        bool success = false;
 
         // select a random node of the tree, excluding the firstNode_
         // This is a reservoir sampling algorithm
@@ -430,7 +463,8 @@ bool Branching::uniform_new_branch(mtPtr rnd_engine)
         for (auto &cone : neurite_->growth_cones_)
         {
             // check if the elected cone is not dead and waiting for removal!
-            if (not cone.second->is_dead() and cone.second->get_branch_size() > 3)
+            if (not cone.second->is_dead()
+                and cone.second->get_branch_size() > 3)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
                                   1. / cone.second->get_branch_size());
@@ -461,25 +495,22 @@ bool Branching::uniform_new_branch(mtPtr rnd_engine)
         // if no node was suited for lateral branching skip the branching.
         if (max > 0)
         {
-            // choose the point uniformly on the branch, except for firts 2 and last
-            // 2 points.
-            size_t branch_point = uniform_(*(rnd_engine).get()) *
-                                      (branching_node->get_branch()->size() - 4) +
-                                  2;
+            // choose the point uniformly on the branch, except for firts 2 and
+            // last 2 points.
+            branching_point = uniform_(*(rnd_engine).get()) *
+                                  (branching_node->get_branch()->size() - 4) +
+                              2;
 
-            // actuate lateral branching on the elected node through the NEURITE.
-            neurite_->lateral_branching(branching_node, branch_point, new_length,
-                                        rnd_engine);
+            // actuate lateral branching on the elected node through the
+            // NEURITE.
+            success = neurite_->lateral_branching(
+                branching_node, branching_point, new_node, rnd_engine);
             next_uniform_event_ = invalid_ev;
         }
 
         compute_uniform_event(rnd_engine);
 
-        if (max == 0)
-        {
-            return false;
-        }
-        return true;
+        return success;
     }
 
     next_uniform_event_ = invalid_ev;
@@ -547,8 +578,12 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
  * @function growth_cone_split(...)
  *
  */
-bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
+bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                   size_t &branching_point, mtPtr rnd_engine)
 {
+    branching_node = nullptr;
+    new_node       = nullptr;
+
     if (not neurite_->growth_cones_.empty())
     {
         // simple implementation of a reservoir sampling algorithm for weigthed
@@ -576,24 +611,27 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
             }
         }
 
-#ifndef NDEBUG
-        printf(" order%i, size %lu of selected\n",
-               next_vanpelt_cone_->get_centrifugal_order(),
-               next_vanpelt_cone_->get_branch()->size());
-#endif
+        // set branching node and point
+        branching_node  = next_vanpelt_cone_;
+        branching_point = branching_node->get_branch()->size() - 1;
+
         //@TODO define new legth for van pelt
-        double new_length = next_vanpelt_cone_->get_module();
+        double new_length = 0.5*next_vanpelt_cone_->get_diameter();
         double new_angle, old_angle;
         double old_diameter = next_vanpelt_cone_->get_diameter();
         double new_diameter = old_diameter;
         neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
                                            new_diameter, old_diameter);
         bool success =
-            neurite_->growth_cone_split(next_vanpelt_cone_, new_length, new_angle,
-                                        old_angle, new_diameter, old_diameter);
+            neurite_->growth_cone_split(next_vanpelt_cone_, new_length,
+                                        new_angle, old_angle, new_diameter,
+                                        old_diameter, new_node);
 
         next_vanpelt_event_ = invalid_ev;
         compute_vanpelt_event(rnd_engine);
+#ifndef NDEBUG
+        printf("VP branching on %lu, %s, %lu at %lu\n", neurite_->get_parent_neuron().lock()->get_gid(), neurite_->get_name().c_str(), branching_node->get_nodeID(), branching_point);
+#endif
         return success;
     }
 
@@ -620,7 +658,8 @@ bool Branching::vanpelt_new_branch(mtPtr rnd_engine)
  * @param rnd_engine
  * @param splitting_cone the cone who is going to split
  */
-void Branching::CR_new_branch(mtPtr rnd_engine, GCPtr splitting_cone)
+void Branching::CR_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                              size_t &branching_point, mtPtr rnd_engine)
 {
     //~ std::shared_ptr<GrowthCone_Critical> gcc =
         //~ std::dynamic_pointer_cast<GrowthCone_Critical>(splitting_cone);

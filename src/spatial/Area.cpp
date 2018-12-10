@@ -1,50 +1,31 @@
 #include "Area.hpp"
 
-// kernel include
-#include "kernel_manager.hpp"
-
 
 namespace growth
 {
 
-Area::Area(GEOSGeom area, GEOSContextHandle_t handler, double height,
-           const std::string &name,
+Area::Area(BMultiPolygonPtr area, double height, const std::string &name,
            std::unordered_map<std::string, double> properties)
-    : height_(height)
-    , name_(name)
-    , properties_(properties)
+  : height_(height)
+  , name_(name)
+  , properties_(properties)
+  , shape_(area)
 {
-    assert(0 != area);
-    assert(GEOSisValid_r(handler, area));
-
-    for (int i = 0; i < kernel().parallelism_manager.get_num_local_threads();
-         i++)
+    for (const auto& polygon : *(area.get()))
     {
-        shape_.push_back(GeomPtr(GEOSGeom_clone_r(handler, area)));
-        prepared_area_.push_back(GEOSPrepare_r(handler, shape_[i].get()));
-        const GEOSGeom border = GEOSBoundary_r(handler, shape_[i].get());
-        prepared_border_.push_back(GEOSPrepare_r(handler, border));
-        assert(prepared_area_[i] != 0);
-        assert(prepared_border_[i] != 0);
+        boundary_.push_back(BLineString());
+
+        auto &ls = boundary_.back();
+        ls.insert(ls.end(), polygon.outer().begin(), polygon.outer().end());
+
+        for (const auto& inner : polygon.inners())
+        {
+            boundary_.push_back(BLineString());
+
+            auto &l = boundary_.back();
+            l.insert(l.end(), inner.begin(), inner.end());
+        }
     }
-}
-
-
-Area::~Area()
-{
-    shape_.clear();
-
-    for (const GEOSPreparedGeometry *shape : prepared_area_)
-    {
-        delete shape;
-    }
-    prepared_area_.clear();
-
-    for (const GEOSPreparedGeometry *border : prepared_border_)
-    {
-        delete border;
-    }
-    prepared_border_.clear();
 }
 
 
@@ -83,18 +64,15 @@ void Area::get_properties(
 }
 
 
-const GEOSPreparedGeometry *Area::get_area(int omp_id) const
+const BMultiPolygonPtr Area::get_area() const
 {
-    return prepared_area_[omp_id];
+    return shape_;
 }
 
 
-const GEOSPreparedGeometry *Area::get_border(int omp_id) const
+const BMultiLineString& Area::get_boundary() const
 {
-    return prepared_border_[omp_id];
+    return boundary_;
 }
-
-
-GeomPtr Area::get_shape(int omp_id) const { return shape_.at(omp_id); }
 
 } // namespace growth

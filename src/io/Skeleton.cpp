@@ -34,19 +34,19 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 TNodePtr node = nodes.back();
                 BranchPtr b   = node->get_branch();
                 size_t i, last(b->size());
-                Point p;
+                BPoint p;
 
                 for (i=0; i<last; i+=resolution)
                 {
                     p = b->xy_at(i);
-                    axon.first.push_back(p[0]);
-                    axon.second.push_back(p[1]);
+                    axon.first.push_back(p.x());
+                    axon.second.push_back(p.y());
                 }
                 if (i != last-1)
                 {
                     p = b->get_last_xy();
-                    axon.first.push_back(p[0]);
-                    axon.second.push_back(p[1]);
+                    axon.first.push_back(p.x());
+                    axon.second.push_back(p.y());
                 }
 
                 axon.first.push_back(NAN);
@@ -57,9 +57,9 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 if (node->has_child())
                 {
                     branching_points.first.push_back(
-                        node->get_position().at(0));
+                        node->get_position().x());
                     branching_points.second.push_back(
-                        node->get_position().at(1));
+                        node->get_position().y());
                     NodePtr mynode = std::dynamic_pointer_cast<Node>(node);
                     nodes.push_front(mynode->get_child(0));
                     nodes.push_front(mynode->get_child(1));
@@ -83,19 +83,19 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 TNodePtr node = nodes.back();
                 BranchPtr b   = node->get_branch();
                 size_t i, last(b->size());
-                Point p;
+                BPoint p;
 
                 for (i=0; i<last; i+=resolution)
                 {
                     p = b->xy_at(i);
-                    dendrites.first.push_back(p[0]);
-                    dendrites.second.push_back(p[1]);
+                    dendrites.first.push_back(p.x());
+                    dendrites.second.push_back(p.y());
                 }
                 if (i != last-1)
                 {
                     p = b->get_last_xy();
-                    dendrites.first.push_back(p[0]);
-                    dendrites.second.push_back(p[1]);
+                    dendrites.first.push_back(p.x());
+                    dendrites.second.push_back(p.y());
                 }
 
                 dendrites.first.push_back(NAN);
@@ -106,9 +106,9 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 if (node->has_child())
                 {
                     branching_points.first.push_back(
-                        node->get_position().at(0));
+                        node->get_position().x());
                     branching_points.second.push_back(
-                        node->get_position().at(1));
+                        node->get_position().y());
                     NodePtr mynode = std::dynamic_pointer_cast<Node>(node);
                     nodes.push_front(mynode->get_child(0));
                     nodes.push_front(mynode->get_child(1));
@@ -122,17 +122,16 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 axon.second.push_back(NAN);
             }
         }
+
         // anyway get active growth cones
         for (auto it : neurite.second->gc_range())
         {
-            if (it.second->is_active())
-            {
-                double x = it.second->get_position().at(0);
-                double y = it.second->get_position().at(1);
-                growth_cones.first.push_back(x);
-                growth_cones.second.push_back(y);
-            }
+            double x = it.second->get_position().x();
+            double y = it.second->get_position().y();
+            growth_cones.first.push_back(x);
+            growth_cones.second.push_back(y);
         }
+
         // add NaNs to help separate data from different neurons afterwards
         branching_points.first.push_back(NAN);
         branching_points.second.push_back(NAN);
@@ -140,4 +139,5 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
         growth_cones.second.push_back(NAN);
     }
 }
+
 } // namespace growth

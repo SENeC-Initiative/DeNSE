@@ -29,11 +29,12 @@ class RTDirectionSelector: public virtual DirectionSelectModel
     RTDirectionSelector(const RTDirectionSelector& copy, GCPtr gc, NeuritePtr neurite);
 
     virtual void
-    compute_target_angle(
+    select_direction(
         const std::vector<double> &directions_weights, const Filopodia &filo,
         mtPtr rnd_engine, double total_proba, bool interacting,
         double old_angle, double &substep, double &step_length,
-        double &new_angle, bool &stopped) override final;
+        double &new_angle, bool &stopped,
+        size_t &default_direction) override final;
 
     void initialize_rt();
 

@@ -16,10 +16,10 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 1.5 * um,
+    "dendrite_diameter": 2. * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "has_axon": False,
-    "polarization_strength": 2.,
+    "growth_cone_model": "run-and-tumble",
 }
 
 #~ dend_params = {
@@ -27,7 +27,7 @@ neuron_params = {
     #~ "persistence_length": 300. * um,
     #~ "speed_growth_cone": 0.01 * um / minute,
     #~ # diameter
-    #~ "thinning_ratio": 0.5/200.,
+    #~ "taper_rate": 0.5/200.,
     #~ # branching
     #~ "use_van_pelt": True,
     #~ "B": 10. * cpm,
@@ -37,11 +37,11 @@ neuron_params = {
 #~ }
 
 dend_params = {
-    "sensing_angle": 45.,
-    "persistence_length": 200. * um,
+    "sensing_angle": 45.*deg,
+    "persistence_length": 20. * um,
     "speed_growth_cone": 0.005 * um/minute,
     # diameter
-    "thinning_ratio": 0.5/100.,
+    "taper_rate": 0.4/100.,
     # branching
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.0001 * cpm,
@@ -59,7 +59,7 @@ ds.SetKernelStatus(kernel)
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.CreateNeurons(n=num_neurons, params=neuron_params,
                      dendrites_params=dend_params, num_neurites=8)
 
 #~ ds.Simulate(15000)
@@ -91,7 +91,7 @@ dend_params = {
 
 ds.SetStatus(n, dendrites_params=dend_params)
 
-ds.Simulate(200000)
+ds.Simulate(20.*day)
 
 ds.PlotNeuron()
 

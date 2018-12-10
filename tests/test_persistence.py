@@ -9,8 +9,6 @@ import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit
 
-import nngt
-
 import dense as ds
 from dense.units import *
 
@@ -18,16 +16,16 @@ from dense.units import *
 Setting the parameters
 '''
 
-num_neurons   = 200
+num_neurons   = 100
 
 simtime       = 10000.
-num_omp       = 7
+num_omp       = 4
 # ~ resolutions   = (1., 2., 5., 10., 20., 50.)
-resolutions   = (1., 10., 25., 50.)
+resolutions   = (1., 10., 20., 50.)
 
 gc_model      = "run-and-tumble"
 # ~ gc_model      = "simple-random-walk"
-sensing_angle = 0.1
+sensing_angle = 70.*deg
 
 cmap          = plt.get_cmap('plasma')
 # ~ colors        = np.linspace(0.2, 0.8, 20)
@@ -111,7 +109,7 @@ fig2, ax2 = plt.subplots()
 sensing_angles = np.linspace(0.1, 3., 10)
 
 speed     = 0.2
-l_p       = 800.
+l_p       = 500.
 # ~ dist_max  = speed*(simtime-100)
 dist_max  = speed*simtime
 dist_step = 50.
@@ -127,6 +125,7 @@ for k, resol in enumerate(resolutions):
         "seeds": [2*i for i in range(num_omp)],
         "environment_required": False,
         "adaptive_timestep": -1.,
+        "interactions": False,
     })
 
     params = {
@@ -138,18 +137,18 @@ for k, resol in enumerate(resolutions):
         "proba_down_move": 0.05,
         "scale_up_move": 5. * um,
         "persistence_length": l_p * um,
-        "sensing_angle" : sensing_angle * rad,
+        "sensing_angle" : sensing_angle,
         "position": [(0., 0.) for _ in range(num_neurons)] * um,
         "taper_rate": 0.,
     }
 
     params["max_sensing_angle"] = 1.6 * rad
+    # ~ params["max_sensing_angle"] = sensing_angle*rad
 
     gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
 
     ds.Simulate(simtime*minute)
     # ~ print(ds.NeuronStructure())
-    ds.PlotNeuron(show=False)
     
     ''' Analyze the resulting neurons '''
 

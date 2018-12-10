@@ -184,19 +184,8 @@ void Time::set_day(size_t days) { day_ = days; }
 
 void Time::to_steps(const Time &t, timeStep &steps, double &substep)
 {
-    steps = 0L;
-
-    // days are special (could get too large)
-    timeStep min_in_days = t.get_day() * 1440;
-    steps += (timeStep)std::floor(min_in_days / RESOLUTION);
-    double remainder = (double)min_in_days - steps * RESOLUTION;
-
-    // steps in hours, min, sec
-    timeStep minutes = t.get_hour() * 60 + t.get_min() + t.get_sec() / 60.;
-    remainder += minutes;
-    steps += (timeStep)std::floor(remainder / RESOLUTION);
-
-    substep = remainder/RESOLUTION - std::floor(remainder/RESOLUTION);
+    steps   = (timeStep)std::floor(t.get_total_minutes() / RESOLUTION);
+    substep = t.get_total_minutes() - steps * RESOLUTION;
 }
 
 

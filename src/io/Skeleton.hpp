@@ -16,7 +16,7 @@ class Skeleton
 {
   public:
     //! Center of mass of the soma
-    Point soma_position;
+    BPoint soma_position;
     double soma_radius;
     //! Container for the dendrites representation
     SkelNeurite dendrites;

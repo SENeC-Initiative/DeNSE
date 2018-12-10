@@ -18,13 +18,6 @@ project ( dense )
 
 set( SUCCESS 1 )
 
-# @todo, for Windows, install to (python) site.USER_BASE =
-# UserName/AppData/Roaming/Python/ + get the PythonXY/site-packages (how?)
-# + copy dll to the lib folder (probably in setup.py)
-IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	set( CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local" )
-ENDIF ()
-
 
 ###############################################################################
 #################            User-defined options             #################
@@ -71,10 +64,33 @@ cgrowth_process_with_includes()
 cgrowth_process_with_defines()
 cgrowth_process_with_python()
 cgrowth_process_with_geos()
+cgrowth_process_with_boost()
 cgrowth_process_with_openmp()
 cgrowth_process_with_mpi()
 cgrowth_process_with_docs()
 cgrowth_get_color_flags()
+
+
+# check prefix
+
+# @todo, for Windows, install to site.USER_BASE (done)
+# + get the PythonXY/site-packages (is this really necessary?)
+# + copy dll to the lib folder (probably in setup.py)
+IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; import os; print(os.path.abspath(site.USER_BASE))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message("\n\n\n\n${PY_LOCAL_DIR}\n\n\n\n")
+    set( CMAKE_INSTALL_PREFIX "${PY_LOCAL_DIR}" CACHE STRING "install prefix" FORCE)
+	  set( CMAKE_INSTALL_PREFIX "${PY_LOCAL_DIR}" )
+ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
+    set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
+ELSEIF ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" )
+    message( FATAL_ERROR "Do not install into '/usr/local'. "
+             "Please change CMAKE_INSTALL_PREFIX." )
+ELSE ()
+  # make sure we get the absolute path
+  get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
+ENDIF ()
+
 
 # check installation directory)
 

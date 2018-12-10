@@ -58,6 +58,22 @@ class Neuron(int):
         return self._dendrites.copy()  # shallow copy of the content
 
     @property
+    def neurites(self):
+        '''
+        Return a dict containing one :class:`Neurite` container for each
+        neurite, with its name as key.
+        '''
+        neurites = self.dendrites
+        if self.has_axon:
+            axon = self.axon
+            neurites[axon.name] = axon
+        return neurites
+
+    @property
+    def has_axon(self):
+        return _pg.GetStatus(self, "has_axon")
+
+    @property
     def total_length(self):
         return _pg.GetState(self, variable="length")
 

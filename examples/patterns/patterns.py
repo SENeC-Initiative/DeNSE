@@ -21,7 +21,7 @@ gc_model = 'run-and-tumble'
 neuron_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
-    "sensing_angle": 30.*deg,
+    "sensing_angle": 70.*deg,
     "speed_growth_cone": 0.16 * um/minute,
     "filopodia_wall_affinity": 0.01,
     "filopodia_finger_length": 10. * um,
@@ -30,6 +30,8 @@ neuron_params = {
     "persistence_length": 200. * um,
     "soma_radius": soma_radius,
     "retraction_probability": 0.1,
+    "axon_diameter": 2.*um,
+    "dendrite_diameter": 2.*um,
 }
 
 dendrite_params = {
@@ -77,19 +79,20 @@ if __name__ == '__main__':
     # ~ ylim = -700., -1500.
     # ~ xlim = -9250., -9000.
     # ~ ylim = -40., 80.
-    xlim = -11150., -10400.
-    ylim = -550., -100.
-    # ~ xlim = None, None
-    # ~ ylim = None, None
+    # ~ xlim = -11150., -10400.
+    # ~ ylim = -550., -100.
+    xlim = None, None
+    ylim = None, None
     plt.xlim(*xlim)
     plt.ylim(*ylim)
     plt.axis('off')
     plt.tight_layout()
     plt.show()
 
-    for i in range(4):
-        ds.Simulate(200.*minute)
-        ds.PlotNeuron(subsample=20, dendrite_color="gold", show=False)
+    for i in range(2):
+        ds.Simulate(800.*minute)
+        # ~ ds.PlotNeuron(subsample=20, dendrite_color="gold", show=False)
+        ds.NewPlotNeuron(dendrite_color="gold", show=False)
         plt.xlim(*xlim)
         plt.ylim(*ylim)
         plt.axis('off')

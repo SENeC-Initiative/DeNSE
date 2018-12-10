@@ -5,6 +5,10 @@
 *.egg.info
 
 
+# Virtual env
+env/
+
+
 # CMake generated
 
 CMakeCache.txt
@@ -18,6 +22,7 @@ src/libgrowth/config.hpp
 local_install
 install_test
 src/pymodule/dense/_pygrowth.cpp
+src/pymodule/dense/_pygrowth.pxd
 set_dense_vars.sh
 src/models/models_manager.cpp
 

@@ -28,16 +28,13 @@ class Environment
     friend class SpaceManager;
 
   private:
-    Environment(GEOSGeom environment, GEOSContextHandle_t handler);
-    std::vector<GEOSGeom> environment_;
-    std::vector<const GEOSPreparedGeometry *> prepared_env_;
-    std::vector<const GEOSPreparedGeometry *> prepared_border_;
+    Environment(BMultiPolygonPtr environment);
+    BMultiPolygonPtr environment_;
+    BMultiLineString boundary_;
 
   public:
-    ~Environment();
-    GEOSGeom get_environment(int omp_id) const;
-    const GEOSPreparedGeometry *get_prepared(int omp_id) const;
-    const GEOSPreparedGeometry *get_border(int omp_id) const;
+    const BMultiPolygonPtr get_environment() const;
+    const BMultiLineString& get_boundary() const;
 };
 
 } // namespace growth

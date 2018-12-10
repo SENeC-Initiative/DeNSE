@@ -30,7 +30,7 @@ namespace growth
  *   override the :cpp:func:`growth::DirectionSelectModel::get_state` function.
  * - There is only one method that has to be implemented for a direction
  *   model to be valid, which is
- *   :cpp:func:`growth::DirectionSelectModel::compute_target_angle`.
+ *   :cpp:func:`growth::DirectionSelectModel::select_direction`.
  *
  * See also
  * --------
@@ -63,13 +63,12 @@ class DirectionSelectModel
     DirectionSelectModel(const DirectionSelectModel& copy, GCPtr gc, NeuritePtr neurite)
       : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
 
-    
     virtual void
-    compute_target_angle(
+    select_direction(
         const std::vector<double> &directions_weights, const Filopodia &filo,
         mtPtr rnd_engine, double total_proba, bool interacting,
         double old_angle, double &substep, double &step_length,
-        double &new_angle, bool &stopped) = 0;
+        double &new_angle, bool &stopped, size_t &default_direction) = 0;
 
     void get_observables(std::vector<std::string> &obs) const
     {

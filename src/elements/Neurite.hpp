@@ -71,7 +71,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     ~Neurite();
 
     // Init and finalize functions
-    void init_first_node(BaseWeakNodePtr soma, Point pos,
+    void init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
                          std::string neurite_name, double soma_radius,
                          double neurite_diameter);
     void set_soma_angle(const double angle);
@@ -89,14 +89,15 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     double get_available_cr() const;
 
     // Branching functions
-    void lateral_branching(TNodePtr branching_node, size_t branch_point,
-                           double new_length, mtPtr rnd_engine);
+    bool lateral_branching(TNodePtr branching_node, size_t branch_point,
+                           NodePtr &new_node, mtPtr rnd_engine);
     bool growth_cone_split(GCPtr branching_cone, double new_length,
                            double new_angle, double old_angle,
-                           double new_diameter, double old_diameter);
+                           double new_diameter, double old_diameter,
+                           NodePtr &new_node);
     GCPtr create_branching_cone(const TNodePtr branching_node, NodePtr new_node,
                                 double new_length, double new_diameter,
-                                Point xy, double new_cone_angle);
+                                const BPoint &xy, double new_cone_angle);
     void update_parent_nodes(NodePtr new_node, TNodePtr oldnode);
     void update_tree_structure(TNodePtr root);
     void delete_parent_node(NodePtr parent, int child_id);
@@ -114,13 +115,14 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     // Get/set functions
     // void init_status(const statusMap &status);
+    const std::string & get_type() const;
     void set_status(const statusMap &);
     void get_status(statusMap &, const std::string &level) const;
     double get_state(const char *observable) const;
     unsigned int num_growth_cones() const;
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;
-    std::string get_name() const;
+    const std::string& get_name() const;
     double get_taper_rate() const;
     double get_max_resol() const;
 

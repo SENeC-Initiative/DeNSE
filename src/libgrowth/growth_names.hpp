@@ -67,8 +67,22 @@ extern const std::string diameter_eta_exp;
 
 
 /*
- * SPACE SENSING
+ * SPACE AND SENSING
  */
+
+extern const std::string affinity_axon_self;
+extern const std::string affinity_axon_dendrite_same_neuron;
+extern const std::string affinity_axon_soma_same_neuron;
+extern const std::string affinity_axon_axon_other_neuron;
+extern const std::string affinity_axon_dendrite_other_neuron;
+extern const std::string affinity_axon_soma_other_neuron;
+extern const std::string affinity_dendrite_self;
+extern const std::string affinity_dendrite_axon_same_neuron;
+extern const std::string affinity_dendrite_dendrite_same_neuron;
+extern const std::string affinity_dendrite_soma_same_neuron;
+extern const std::string affinity_dendrite_axon_other_neuron;
+extern const std::string affinity_dendrite_dendrite_other_neuron;
+extern const std::string affinity_dendrite_soma_other_neuron;
 
 extern const std::string duration_retraction;
 extern const std::string filopodia_min_number;
@@ -81,6 +95,7 @@ extern const std::string scale_up_move;
 extern const std::string sensing_angle;
 extern const std::string speed_ratio_retraction;
 extern const std::string substrate_affinity;
+extern const std::string points_per_circle;
 
 #define DURATION_RETRACTION 4.
 #define FILOPODIA_MIN_NUM 24
@@ -97,6 +112,23 @@ extern const std::string substrate_affinity;
 #define SPEED_RATIO_RETRACTION 0.2
 #define SPEED_GROWTH_CONE 0.01  // um/min
 #define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
+#define DEFAULT_POINTS_PER_CIRCLE 12 // number of points used to create a circle
+
+
+/*
+ * Steering models
+ */
+
+// memory-based steering
+extern const std::string rigidity_factor;
+extern const std::string decay_factor;
+
+
+/*
+ * Direction selection models
+ */
+extern const std::string noise_amplitude;
+extern const std::string critical_pull;
 
 
 /*
@@ -279,6 +311,18 @@ extern const signed char gc_splitting;
 extern const signed char gc_deletion;
 
 extern const std::string num_growth_cones;
+
+
+/*
+ * Kernel
+ */
+
+extern const std::string max_allowed_resolution;
+extern const std::string interactions;
+
+#define DEFAULT_MAX_RESOL 30.
+
+
 } // namespace names
 
 } // namespace growth

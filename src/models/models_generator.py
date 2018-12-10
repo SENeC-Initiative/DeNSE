@@ -43,41 +43,41 @@ The `method` argument must not contain underscores.
 # list of elongation methods
 elongation_methods = [
     ModelComponent(method="constant",
-                   filename="cst_elongation.hpp",
+                   filename="elongation_cst.hpp",
                    classname="CstElongationModel"),
 
     ModelComponent(method="gaussian-fluctuations",
-                   filename="gfluct_elongation.hpp",
+                   filename="elongation_gfluct.hpp",
                    classname="GFluctElongationModel"),
 
     ModelComponent(method="resource-based",
-                   filename="resource_based_elongation.hpp",
+                   filename="elongation_resource_based.hpp",
                    classname="ResourceBasedElongationModel"),
 ]
 
 # list of steering methods
 steering_methods = [
     ModelComponent(method="pull-only",
-                   filename="pull_only_steering.hpp",
+                   filename="steering_pull_only.hpp",
                    classname="PullOnlySteeringModel"),
 
     ModelComponent(method="memory-based",
-                   filename="memory_based_steering.hpp",
+                   filename="steering_memory_based.hpp",
                    classname="MemBasedSteeringModel"),
 ]
 
 # list of direction selection methods
 direction_selection_methods = [
     ModelComponent(method="noisy-maximum",
-                   filename="nm_direction_selector.hpp",
+                   filename="direction_select_nm.hpp",
                    classname="NMDirectionSelector"),
 
     ModelComponent(method="noisy-weighted-average",
-                   filename="nwa_direction_selector.hpp",
+                   filename="direction_select_nwa.hpp",
                    classname="NWADirectionSelector"),
 
     ModelComponent(method="run-and-tumble",
-                   filename="rt_direction_selector.hpp",
+                   filename="direction_select_rt.hpp",
                    classname="RTDirectionSelector"),
 ]
 

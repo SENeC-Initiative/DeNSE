@@ -34,7 +34,7 @@ typedef std::shared_ptr<SteeringModel> SMPtr;
  *   override the :cpp:func:`growth::SteeringModel::get_state` function.
  * - There is only one method that has to be implemented for a steering
  *   model to be valid, which is
- *   :cpp:func:`growth::SteeringModel::compute_intrinsic_direction`.
+ *   :cpp:func:`growth::SteeringModel::compute_direction_probabilities`.
  *
  * See also
  * --------
@@ -64,9 +64,9 @@ class SteeringModel
       : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
 
     virtual void
-    compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                const Filopodia& filo, double substep,
-                                double &total_proba, bool &stuck) = 0;
+    compute_direction_probabilities(std::vector<double> &directions_weights,
+                                    const Filopodia& filo, double substep,
+                                    double &total_proba, bool &stuck) = 0;
 
     void get_observables(std::vector<std::string> &obs) const
     {

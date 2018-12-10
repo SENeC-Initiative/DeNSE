@@ -37,6 +37,8 @@ class GrowthCone : public TopologicalNode,
     friend class Branching;
 
   protected:
+    size_t neuron_id_;
+    std::string neurite_name_;
     const std::string model_;
     bool using_environment_; // whether we're embedded in space
     double resol_;
@@ -51,6 +53,9 @@ class GrowthCone : public TopologicalNode,
     bool interacting_;
     bool update_filopodia_;
     std::vector<std::string> observables_;
+
+    // affinity
+    Affinities aff_;
 
     // motion-related data
     bool active_;
@@ -71,6 +76,8 @@ class GrowthCone : public TopologicalNode,
     double proba_down_move_; // proba of going down if bottom out of reach
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
+
+    space_tree_map current_neighbors_;
 
     double max_sensing_angle_;
     size_t min_filopodia_; // minimal number of filopodia
@@ -95,11 +102,11 @@ class GrowthCone : public TopologicalNode,
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                         double distanceToParent, std::string binaryID,
-                        const Point &position, double angle) = 0;
+                        const BPoint &position, double angle) = 0;
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
                          float distanceToParent, const std::string &binaryID,
-                         const Point &position, double angle);
+                         const BPoint &position, double angle);
 
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);
@@ -107,21 +114,20 @@ class GrowthCone : public TopologicalNode,
     void prune(size_t cone_n);
 
     // compute direction
-    bool compute_pull(std::vector<double> &directions_weights,
-                      std::vector<bool> &wall_presence, double substep,
-                      mtPtr rnd_engine);
-    void compute_accessibility(std::vector<double> &directions_weights,
-                               std::vector<std::string> &change_to_new_area,
-                               double substep);
+    bool sense_environment(std::vector<double> &directions_weights,
+                           std::vector<bool> &wall_presence, double substep,
+                           mtPtr rnd_engine);
+
     virtual void
-    compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                double substep) = 0;
+    compute_direction_probabilities(std::vector<double> &directions_weights,
+                                    double substep) = 0;
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
     virtual void
-    compute_target_angle(const std::vector<double> &directions_weights,
-                         mtPtr rnd_engine, double &substep, double &new_angle) = 0;
+    select_direction(const std::vector<double> &directions_weights,
+                     mtPtr rnd_engine, double &substep, double &new_angle,
+                     size_t &default_direction) = 0;
 
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
@@ -142,7 +148,11 @@ class GrowthCone : public TopologicalNode,
     virtual double get_growth_cone_speed() const;
     virtual double get_diameter() const override;
     bool just_retracted() const;
+    size_t get_neuron_id() const;
+    const std::string& get_neurite_name() const;
+    const BPolygonPtr get_last_segment() const;
     bool is_active() const;
+    double get_self_affinity() const;
 
     // status and kernel-related functions
     virtual void set_diameter(double diameter) override;

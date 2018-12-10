@@ -41,7 +41,7 @@ SimulationManager::SimulationManager()
     , terminate_(false)     //!< Terminate on signal or error
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
-    , max_resol_(std::numeric_limits<double>::max())
+    , max_resol_(DEFAULT_MAX_RESOL)
 {
 }
 
@@ -64,7 +64,7 @@ void SimulationManager::finalize()
     final_substep_ = 0.;
     initial_time_  = Time();
     final_time_    = Time();
-    max_resol_     = std::numeric_limits<double>::max();
+    max_resol_     = DEFAULT_MAX_RESOL;
 }
 
 
@@ -150,8 +150,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
     final_time_ = initial_time_ + t;
 
     Time::timeStep steps;
-    Time::to_steps(t, steps, final_substep_);
-    final_step_ += steps;
+    Time::to_steps(t, final_step_, final_substep_);
 
     // set the right number of step objects
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
@@ -215,6 +214,8 @@ void SimulationManager::initialize_simulation_(const Time &t)
         // rethrowing nullptr is illegal
         std::rethrow_exception(captured_exception);
     }
+
+    simulating_ = true;
 }
 
 
@@ -272,7 +273,11 @@ void SimulationManager::finalize_simulation_()
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
     initial_time_.update(final_step_, final_substep_);
 
+    assert(initial_time_.get_total_seconds()
+           == final_time_.get_total_seconds());
+
     final_step_ = 0;
+    simulating_ = false;
 }
 
 
@@ -315,20 +320,22 @@ void SimulationManager::simulate(const Time &t)
 
 #pragma omp parallel
     {
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        size_t step_next_ev, current_step;
+        double previous_substep = 0.;
+        bool new_step           = false;
+        bool branched           = false;
+
+        mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
+        gidNeuronMap local_neurons =
+            kernel().neuron_manager.get_local_neurons(omp_id);
+
         try
         {
-            int omp_id = kernel().parallelism_manager.get_thread_local_id();
-            size_t step_next_ev, current_step;
-            double previous_substep = 0.;
-            bool new_step           = false;
-            bool branched           = false;
-
-            mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
-            gidNeuronMap local_neurons =
-                kernel().neuron_manager.get_local_neurons(omp_id);
-
             // then run the simulation
-            while (step_[omp_id] <= final_step_)
+            while (step_[omp_id] < final_step_
+                   or (step_[omp_id] == final_step_
+                       and substep_[omp_id] < final_substep_))
             {
                 current_step     = step_[omp_id];
                 previous_substep = substep_[omp_id];
@@ -363,7 +370,7 @@ void SimulationManager::simulate(const Time &t)
 
                     if (step_next_ev == final_step_)
                     {
-                        substep_[omp_id] = Time::RESOLUTION + final_substep_;
+                        substep_[omp_id] = final_substep_;
                     }
                     else
                     {
@@ -377,7 +384,22 @@ void SimulationManager::simulate(const Time &t)
                     if (step_next_ev == current_step)
                     {
                         substep_[omp_id] = std::get<1>(branching_ev_.back());
-                        new_step         = (substep_[omp_id] == Time::RESOLUTION);
+
+                        if (current_step == final_step_
+                            and substep_[omp_id] > final_substep_)
+                        {
+                            substep_[omp_id] = final_substep_;
+                            new_step         = false;
+                        }
+                        else
+                        {
+                           new_step = (substep_[omp_id] == Time::RESOLUTION);
+                        }
+                    }
+                    else if (current_step == final_step_)
+                    {
+                        substep_[omp_id] = final_substep_;
+                        new_step         = false;
                     }
                     else
                     {
@@ -385,23 +407,6 @@ void SimulationManager::simulate(const Time &t)
                         new_step         = true;
                     }
                 }
-
-                //~ // check when the next event will occur
-                //~ step_next_ev = branching_ev_.empty()
-                                   //~ ? current_step + 1
-                                   //~ : std::get<0>(branching_ev_.back());
-
-                //~ // compute substep accordingly
-                //~ if (step_next_ev == current_step)
-                //~ {
-                    //~ substep_[omp_id] = std::get<1>(branching_ev_.back());
-                    //~ new_step         = (substep_[omp_id] == Time::RESOLUTION);
-                //~ }
-                //~ else
-                //~ {
-                    //~ substep_[omp_id] = Time::RESOLUTION;
-                    //~ new_step         = true;
-                //~ }
 
                 assert(substep_[omp_id] >= 0.);
 
@@ -439,10 +444,16 @@ void SimulationManager::simulate(const Time &t)
                     }
                 }
 
+#pragma omp barrier
+                // update the R-tree
+                kernel().space_manager.update_rtree();
+                // wait for the update
+#pragma omp barrier
+
                 if (new_step)
                 {
-                    // full step is completed, record, reset substep_, incr.
-                    // step_
+                    // full step is completed, record
+                    // reset substep_, increment step_
                     kernel().record_manager.record(omp_id);
                     substep_[omp_id] = 0.;
                     step_[omp_id]++;
@@ -595,6 +606,12 @@ void SimulationManager::set_max_resolution()
     max_modifier = 1. / max_modifier;
 
     max_resol_ = kernel().neuron_manager.get_max_resol() * max_modifier;
+}
+
+
+bool SimulationManager::simulating() const
+{
+    return simulating_;
 }
 
 } // namespace growth

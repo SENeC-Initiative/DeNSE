@@ -1,4 +1,4 @@
-#include "nwa_direction_selector.hpp"
+#include "direction_select_nwa.hpp"
 
 #include "kernel_manager.hpp"
 
@@ -29,10 +29,11 @@ NWADirectionSelector::NWADirectionSelector(const NWADirectionSelector& copy,
 }
 
 
-void NWADirectionSelector::compute_target_angle(
+void NWADirectionSelector::select_direction(
   const std::vector<double> &directions_weights, const Filopodia &filo,
   mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
-  double &substep, double &step_length, double &new_angle, bool &stopped)
+  double &substep, double &step_length, double &new_angle, bool &stopped,
+  size_t &default_direction)
 {
     double weight;
 
@@ -51,6 +52,22 @@ void NWADirectionSelector::compute_target_angle(
 
     // normalize
     new_angle /= total_proba;
+
+    // default angle is closest to new_angle
+    double dist, min_dist(std::numeric_limits<double>::max());
+
+    for (size_t n=0; n < directions_weights.size(); n++)
+    {
+        if (not std::isnan(directions_weights[n]))
+        {
+            dist = std::abs(new_angle - filo.directions[n]);
+            if (dist < min_dist)
+            {
+                default_direction = n;
+                min_dist          = dist;
+            }
+        }
+    }
 
     // add previous angle plus random rotation
     new_angle += old_angle +
@@ -94,7 +111,6 @@ void NWADirectionSelector::set_status(const statusMap &status)
     {
         noise_amplitude_ = sqrt(2*gc_speed / persistence_length_);
     }
-
 }
 
 

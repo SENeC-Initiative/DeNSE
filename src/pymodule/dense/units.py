@@ -25,6 +25,9 @@ class FormattedQuantity(ureg.Quantity):
     def _repr_html_(self):
         return '{:H}'.format(self)
 
+    def __repr__(self):
+        return str(self)
+
 ureg.Quantity = FormattedQuantity
 Q_   = ureg.Quantity
 

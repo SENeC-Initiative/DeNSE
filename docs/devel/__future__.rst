@@ -1,6 +1,13 @@
 What to implement:
 ==================
 
+@todo:
+
+* if environment_required is False, seed randomly in -1000, 1000 um
+* correct time print GetKernelStatus
+* error with cst_mem_nm
+
+
 Including reference formats and tools
 -------------------------------------
 
@@ -20,16 +27,10 @@ Nice video to remember what we want:
 https://www.youtube.com/watch?v=EP4yeyD8ktY
 
 
-Make the models combinable
---------------------------
-
-Replace the current virtual functions by ``std::function`` attributes and
-use the callback mechanism to associate the proper instance to the function.
-
-http://en.cppreference.com/w/cpp/utility/functional/function
-https://stackoverflow.com/questions/14189440/c-class-member-callback-simple-examples
-
-Store the additional parameters into one or several maps depending on the types.
+Video of growth
+---------------
+Store linestrings (new one after each retraction) and distance from soma,
+then use Shapely to redraw only the changed part using the interpolation method.
 
 
 User defined models
@@ -246,3 +247,117 @@ Done
   - max sensing angle that does not contain at least 3 sigma on each side
 * Check culture in CreateNeurons
 * Set growth stop conditions (diameter, stuck)
+* Made the models combinable
+
+
+Documentation
+=============
+
+Area we wuilding the right user-level documentation
+
+What is documentation?
+----------------------
+
+* procedural (tutorials, step by step guides)
+* exemplary (examples)
+* conceptual (how the software work)
+* referential (automatic with RTD)
+
+**BrainScaleS**
+
+* emulate a system which reproduces the behavior of a neuron model
+* time of "simulation" (emulation) is independent of the number of neurons
+
+As for SpiNNaker, the equivalent of the doc is mostly contained inside the
+Guidebook.
+
+The Guidebook is on GitHub and anyone can make a PR. It then undergoes CI to
+make sure that it is compliant and that all examples run.
+
+Note that they have very different kind of potential users (neuroscientists
+and people from machine learning)
+
+They have a mailing list.
+
+**SpiNNaker**
+
+This is really simulation, though different from NEST.
+
+Again, there is some kind of hardware documentation which is mostly for
+developpers, then a technical documentation, then the Guidebook.
+
+They have an installation guide and a mailing list.
+
+The have code-level documentation (probably doxygen related) which is updated
+all the time.
+
+
+What should the documentation contain?
+--------------------------------------
+
+How to cite and tell which version you used.
+Ask to not use the master version for publications.
+
+https://www.writethedocs.org/
+
+Documentation should be:
+* ARID: Accept (some) Repetition In Docs
+* complete
+* discoverable and addressable (RTD does that)
+* skimmable (people don't read, they skim)
+
+A way to get feedback from users and to include them into the docs.
+
+An introduction: "DeNSE for biologists", "DeNSE for physicists"... plus a
+glossary explaining the specific words/language.
+Different entry points.
+
+How the equations are solved.
+
+Error FAQ
+
+Diagrams
+-> show visually how the software interact (for both NNGT and DeNSE)
+
+Glossaries
+
+
+**Levels**
+
+- training (basics)
+- users (intermediate/advanced)
+- maintenance/developers
+
+
+**Media**
+
+- video as a quick intro (training)
+- website (training manual, user manual, maintainance manual)
+- notebooks (training + user)
+
+
+**Examples**
+we're doing with it: if it's not inside, then no guarantee it works
+tags them with level and application
+
+say what 
+
+don'ts
+
+
+**Entry points/front materials**
+
+- glossary for each entry point (biology, physicists, maths)
+- possible flowcharts for going through the documentation
+- propose a next/previous page depending on the entry point
+
+Very short videos from people using NEST for different things and explain what
+they do and which part of the software they find interesting (or propose their
+flowchart)
+
+
+**style guide**
+
+check visible of greyscale/with color disabled filters
+add metadata for visuals
+enforce vector graphics

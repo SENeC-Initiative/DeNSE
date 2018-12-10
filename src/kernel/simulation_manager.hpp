@@ -33,6 +33,7 @@ class SimulationManager : public ManagerInterface
     virtual void get_status(statusMap &) const;
     void num_threads_changed(int num_omp);
     void new_branching_event(const Event &ev);
+    bool simulating() const;
 
     Time get_time() const;
     Time get_initial_time() const;
@@ -73,31 +74,6 @@ class SimulationManager : public ManagerInterface
  */
 inline void SimulationManager::terminate() { terminate_ = true; }
 
-
-//~ inline Time const&
-//~ SimulationManager::get_initial_time() const
-//~ {
-//~ return initial_time_;
-//~ }
-
-//~ inline Time const
-//~ SimulationManager::get_time() const
-//~ {
-//~ assert( not simulating_ );
-//~ return initial_time_ + Time::time( step_ );
-//~ }
-
-//~ inline size_t
-//~ SimulationManager::get_slice() const
-//~ {
-//~ return slice_;
-//~ }
-
-//~ inline Time const&
-//~ SimulationManager::get_clock() const
-//~ {
-//~ return clock_;
-//~ }
 } // namespace growth
 
 #endif /* SIMULATION_M_H */

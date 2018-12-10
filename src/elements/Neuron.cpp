@@ -10,7 +10,11 @@
 // elements includes
 #include "GrowthCone.hpp"
 #include "Node.hpp"
+
+// lib includes
 #include "growth_names.hpp"
+#include "spatial_types.hpp"
+#include "tools.hpp"
 
 // kernel includes
 #include "Skeleton.hpp"
@@ -90,6 +94,14 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     get_param(status, names::axon_polarization_weight, axon_polarization_weight_);
     get_param(status, names::has_axon, has_axon_);
 
+    // send the soma to the space_manager
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+    kernel().space_manager.add_object(
+        get_position(), get_position(), 2*details.soma_radius, 0., 0.,
+        std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+
+    // prepare the neurites
     std::unordered_map<std::string, double> nas;
     bool angles_set = get_param(status, names::neurite_angles, nas);
     if (angles_set)
@@ -127,7 +139,7 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         double x, y;
         get_param(status, "x", x);
         get_param(status, "y", y);
-        soma_->set_position(Point(x, y));
+        soma_->set_position(BPoint(x, y));
     }
     else
     {
@@ -322,7 +334,7 @@ std::string Neuron::new_neurite(const std::string &name,
     //#####################################
     // initialize parameters
     double angle = 0;
-    Point cone_start_point;
+    BPoint cone_start_point;
     bool contained = false;
 
     // a minimal trophism approach: set the neurite on the other side of the
@@ -333,26 +345,24 @@ std::string Neuron::new_neurite(const std::string &name,
         if (neurite_angles_.find(name) != neurite_angles_.end())
         {
             angle = neurite_angles_[name] + rnd_angle_;
-            Point position = get_position();
+            BPoint position = get_position();
             cone_start_point =
-                Point(position.at(0) + details.soma_radius * cos(angle),
-                      position.at(1) + details.soma_radius * sin(angle));
+                BPoint(position.x() + details.soma_radius * cos(angle),
+                      position.y() + details.soma_radius * sin(angle));
 
             contained =
-                kernel().space_manager.env_contains(cone_start_point, omp_id);
-
-            char sgn = uniform_(*(rnd_engine).get()) > 0.5 ? 1 : -1;
+                kernel().space_manager.env_contains(cone_start_point);
 
             while (not contained)
             {
-                angle         += sgn*0.1;
+                angle         += sgn(uniform_(*(rnd_engine).get()) - 0.5)*0.1;
                 axon_angle_    = angle;
                 neurite_angles_["axon"] = axon_angle_;
                 cone_start_point =
-                    Point(position.at(0) + details.soma_radius * cos(angle),
-                          position.at(1) + details.soma_radius * sin(angle));
+                    BPoint(position.x() + details.soma_radius * cos(angle),
+                          position.y() + details.soma_radius * sin(angle));
                 contained =
-                    kernel().space_manager.env_contains(cone_start_point, omp_id);
+                    kernel().space_manager.env_contains(cone_start_point);
             }
         }
         else
@@ -369,12 +379,12 @@ std::string Neuron::new_neurite(const std::string &name,
                 }
                 axon_angle_    = angle;
                 neurite_angles_["axon"] = axon_angle_;
-                Point position = get_position();
+                BPoint position = get_position();
                 cone_start_point =
-                    Point(position.at(0) + details.soma_radius * cos(angle),
-                          position.at(1) + details.soma_radius * sin(angle));
+                    BPoint(position.x() + details.soma_radius * cos(angle),
+                          position.y() + details.soma_radius * sin(angle));
                 contained =
-                    kernel().space_manager.env_contains(cone_start_point, omp_id);
+                    kernel().space_manager.env_contains(cone_start_point);
                 if (axon_angle_set_ and not contained)
                 {
                     throw InvalidParameter("Invalid axon angle for neuron: growth "
@@ -393,13 +403,13 @@ std::string Neuron::new_neurite(const std::string &name,
         if (neurite_angles_.find(name) != neurite_angles_.end())
         {
             angle = neurite_angles_[name] + rnd_angle_;
-            Point position = get_position();
+            BPoint position = get_position();
             cone_start_point =
-                Point(position.at(0) + details.soma_radius * cos(angle),
-                      position.at(1) + details.soma_radius * sin(angle));
+                BPoint(position.x() + details.soma_radius * cos(angle),
+                      position.y() + details.soma_radius * sin(angle));
 
             contained =
-                kernel().space_manager.env_contains(cone_start_point, omp_id);
+                kernel().space_manager.env_contains(cone_start_point);
 
             char sgn = uniform_(*(rnd_engine).get()) > 0.5 ? 1 : -1;
 
@@ -408,10 +418,10 @@ std::string Neuron::new_neurite(const std::string &name,
                 angle                   += sgn*0.1;
                 neurite_angles_[name]    = angle;
                 cone_start_point =
-                    Point(position.at(0) + details.soma_radius * cos(angle),
-                          position.at(1) + details.soma_radius * sin(angle));
+                    BPoint(position.x() + details.soma_radius * cos(angle),
+                          position.y() + details.soma_radius * sin(angle));
                 contained =
-                    kernel().space_manager.env_contains(cone_start_point, omp_id);
+                    kernel().space_manager.env_contains(cone_start_point);
             }
         }
         else
@@ -478,13 +488,13 @@ std::string Neuron::new_neurite(const std::string &name,
 
                 neurite_angles_[name] = angle;
 
-                Point position = get_position();
+                BPoint position = get_position();
                 cone_start_point =
-                    Point(position.at(0) + details.soma_radius * cos(angle),
-                          position.at(1) + details.soma_radius * sin(angle));
+                    BPoint(position.x() + details.soma_radius * cos(angle),
+                          position.y() + details.soma_radius * sin(angle));
 
             } while (
-                not kernel().space_manager.env_contains(cone_start_point, omp_id));
+                not kernel().space_manager.env_contains(cone_start_point));
         }
 
         neurites_[name]->init_first_node(soma_, get_position(), name,
@@ -632,10 +642,11 @@ void Neuron::set_status(const statusMap &status)
         get_param(status, "x", x);
         get_param(status, "y", y);
 
-        Point p = Point(x, y);
+        BPoint p = BPoint(x, y);
 
-        if (has_neurites and p != get_position())
+        if (has_neurites and not kernel().space_manager.is_close(p, get_position()))
         {
+            printf("(%f, %f), vs (%f, %f)\n", p.x(), p.y(), get_position().x(), get_position().y());
             throw InvalidArg("Cannot change the position of neuron " +
                              std::to_string(gid_) +
                              " after neurites have been created.",
@@ -728,9 +739,9 @@ void Neuron::get_status(statusMap &status) const
     set_param(status, names::growth_cone_model, growth_cone_model_, "");
 
     // set position
-    Point pos = soma_->get_position();
-    set_param(status, "x", pos.at(0), "micrometer");
-    set_param(status, "y", pos.at(1), "micrometer");
+    BPoint pos = soma_->get_position();
+    set_param(status, "x", pos.x(), "micrometer");
+    set_param(status, "y", pos.y(), "micrometer");
 }
 
 
@@ -797,7 +808,7 @@ int Neuron::get_num_neurites() const { return neurites_.size(); }
 std::string Neuron::get_gc_model() const { return growth_cone_model_; }
 
 
-Point Neuron::get_position() const { return soma_->get_position(); }
+BPoint Neuron::get_position() const { return soma_->get_position(); }
 
 
 size_t Neuron::get_gid() const { return gid_; }

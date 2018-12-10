@@ -31,6 +31,7 @@ Before installation, several tools must be pre-installed, including
     * A C and C++11-compliant compiler such as GCC (4.8.1+)
     * Python (2.7 or 3.3+) and its header/development files
     * GEOS (3.5+) and its header/development files
+    * Boost Geometry and Range (Boost 1.62 or higher)
     * Cython
 
 2. Some python modules
@@ -76,7 +77,7 @@ Once this is over, go to the "Launching" part.
 
 Otherwise, first install the required tools
 
-    sudo apt install cmake g++ python python-dev python-pip libgeos++-dev
+    sudo apt install cmake g++ python python-dev python-pip libboost-dev libgeos++-dev
 
 Then use pip to install the required python libraries
 
@@ -457,46 +458,64 @@ As advised, you can now compile by running
 
     make && make install
 
-Depending on whether you specified a custom path or not, you can now either jump
-to the "Launching" section, or configure the paths.
+Depending on whether you specified a custom path or not, you can now
+either jump to the "Launching" section, or configure the paths.
+
+
+Manual installation of Boost
+============================
+
+First, download the latest version of Boost (or any version greater or
+equal to 1.62) on https://www.boost.org/users/download/.
+
+Expand the archive, and open a terminal in the "boost_1_XY_Z/" folder.
+Once there, type
+
+    ./bootstrap.sh
+    sudo ./b2 install
+
+to install the new boost version in /usr/local where Cmake can easily
+find it.
 
 
 Configuring the paths
 =====================
 
-If all goes well, the installation should be in directories that are included by
-default in the system's path and should not require any additional work.
+If all goes well, the installation should be in directories that are
+included by default in the system's path and should not require any
+additional work.
 
-However, if you have performed a manual install with a custom install path, you
-will need to add declare this path to the system; it may also happen that the
-automatic install picked a non-default folder, requiring you to manually edit
-the system's path to be able to launch DeNSE.
+However, if you have performed a manual install with a custom install
+path, you will need to add declare this path to the system; it may also
+happen that the automatic install picked a non-default folder, requiring
+you to manually edit the system's path to be able to launch DeNSE.
 
 In that case, just execute
 
     ./set_dense_vars.sh
 
-In the unlikely event where this still does not solve the problem (even after
-rebooting the system) then open the "update_system_path.sh" file and copy the
+In the unlikely event where this still does not solve the problem (even
+after rebooting the system) then open the "update_system_path.sh" file
+and copy the
 
     export PYTHONPATH="path_to_python_install_dir:$PYTHONPATH"
     export LD_LIBRARY_PATH="path_to_lib_install_dir:$LD_LIBRARY_PATH"
     export PATH="path_to_bin_install_dir:$PATH"
 
-lines in the file, and search the web for the profile file you should put them
-in on your specific linux distribution (hint: this is usually ~/.bashrc,
-~/.bash_profile, ~/.profile, or /etc/profile).
+lines in the file, and search the web for the profile file you should
+put them in on your specific linux distribution (hint: this is usually
+~/.bashrc, ~/.bash_profile, ~/.profile, or /etc/profile).
 
-Note that if you compiled GEOS manually, you might have to add its installation
-folder to LD_LIBRARY_PATH also. To know what to add, look for libgeos_c.so
-(it is usually located in /usr/local/lib with the manual installation).
+Note that if you compiled GEOS manually, you might have to add its
+installation (it is usually located in /usr/local/lib with the manual
+installation).
 
 
 Launching
 =========
 
-Once DeNSE is installed, you can test that it works correctly by launching it
-into a Python terminal.
+Once DeNSE is installed, you can test that it works correctly by
+launching it into a Python terminal.
 
 Linux and MacOs
 ---------------
@@ -545,9 +564,25 @@ Windows
 Known errors
 ============
 
+* CMake Error at /usr/share/cmake-3.5/Modules/FindBoost.cmake:1677 (message):
+   Unable to find the requested Boost libraries.
+   Boost version: 1.62.0
+   Boost include path: /usr/local/include
+   Detected version of Boost is too old.  Requested version was 1.63 (or
+   newer).
+   - this means that you should upgrade your version of boost; for old
+     Linux distributions, manuall install is described in the "Manual
+     Boost installation" section.
 * Linker error LNK1112 (conflict between module and target machine type)
    - on Windows, this usually means that you are not compiling with the correct
      version of MSVC. Check that (on a 64-bit platform, you are using the x64
      version, or the x86 on a 32-bit platform). If everything is correct, add
      "-DCMAKE_GENERATOR_PLATFORM=xAB", where AB is either 64 or 86, to force the
      correct compiler.
+* CMake Error at src/cmake_install.cmake:42 (file):
+  file INSTALL cannot copy file
+  "/home/mallory/Documents/Software/netgrowth/build/src/growth" to
+  "/usr/local/bin/growth".
+   - on some Cmake versions, a variable is not shown as default, just
+     clear the build folder and run the configuration and compilation
+     again.

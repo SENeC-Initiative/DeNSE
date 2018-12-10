@@ -78,7 +78,7 @@ GrowthCone_SelfReferentialForces::GrowthCone_SelfReferentialForces(
 
 GCPtr GrowthCone_SelfReferentialForces::clone(
     BaseWeakNodePtr parent, NeuritePtr neurite, double distanceToParent,
-    std::string binaryID, const Point &position, double angle)
+    std::string binaryID, const BPoint &position, double angle)
 {
 #ifndef NDEBUG
     printf(" It's calling RandomWalk->clone! with direction %f\n", angle);
@@ -113,14 +113,14 @@ GCPtr GrowthCone_SelfReferentialForces::clone(
  *
  *
  */
-Point GrowthCone_SelfReferentialForces::compute_target_position(
+BPoint GrowthCone_SelfReferentialForces::compute_target_position(
     const std::vector<double> &directions_weights, mtPtr rnd_engine,
     double &substep, double &new_angle)
 {
     // center the position of the "sphere" the growth cone actual position
     // double weight =1;
-    Point new_center    = Point(0, 0);
-    Point actual_center = biology_.branch->get_last_xy();
+    BPoint new_center    = BPoint(0, 0);
+    BPoint actual_center = biology_.branch->get_last_xy();
     size_t idx          = 1;
 
     // run over previous direction and weight over the whole path
@@ -153,7 +153,7 @@ Point GrowthCone_SelfReferentialForces::compute_target_position(
     double step         = sqrt(pow(new_center[0], 2) + pow(new_center[1], 2));
     double scale_factor = (move_.speed / step);
     new_center =
-        Point(new_center[0] * scale_factor, new_center[1] * scale_factor);
+        BPoint(new_center[0] * scale_factor, new_center[1] * scale_factor);
 
     double sigma_angle = sqrt(substep) * move_.sigma_angle;
 
@@ -166,8 +166,8 @@ Point GrowthCone_SelfReferentialForces::compute_target_position(
     new_angle = atan2(y, x);
 
     // check that this step is allowed, otherwise move towards default_angle
-    Point target_pos =
-        Point(geometry_.position.at(0) + cos(new_angle) * move_.module,
+    BPoint target_pos =
+        BPoint(geometry_.position.at(0) + cos(new_angle) * move_.module,
               geometry_.position.at(1) + sin(new_angle) * move_.module);
 
     return target_pos;

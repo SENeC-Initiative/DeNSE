@@ -13,7 +13,6 @@ namespace growth
 
 class CstElongationModel
   : public virtual ElongationModel
-  , public std::enable_shared_from_this<CstElongationModel>
 {
   protected:
     double speed_growth_cone_;

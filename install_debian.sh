@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install cmake g++ python python-dev python-pip libgeos++-dev doxygen python-matplotlib python-tk
+sudo apt install cmake g++ python python-dev python-pip libgeos++-dev doxygen python-matplotlib python-tk libboost-dev
 
 pip install --user setuptools
 pip install --user cython

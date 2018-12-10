@@ -28,14 +28,13 @@ namespace growth
  *
  * Most of the work is still performed in the :cpp:class:`GrowthCone` as
  * GrowthConeModel simply overrides :cpp:func:`compute_speed` and
- * :cpp:func:`compute_intrinsic_direction` (both called in
- * :cpp:func:`GrowthCone::grow`), as well as :cpp:func:`compute_target_angle`
+ * :cpp:func:`compute_direction_probabilities` (both called in
+ * :cpp:func:`GrowthCone::grow`), as well as :cpp:func:`select_direction`
  * (called in :cpp:func:`GrowthCone::make_move`).
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 class GrowthConeModel
   : public virtual GrowthCone
-  , public std::enable_shared_from_this<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>
 {
   private:
     std::shared_ptr<ElType> elongator_;
@@ -54,18 +53,18 @@ class GrowthConeModel
 
     GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
                 double distanceToParent, std::string binaryID,
-                const Point &position, double angle) override final;
+                const BPoint &position, double angle) override final;
 
     void compute_speed(mtPtr rnd_engine, double substep) override final;
 
     void
-    compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                double substep) override final;
+    compute_direction_probabilities(std::vector<double> &directions_weights,
+                                    double substep) override final;
 
     void
-    compute_target_angle(const std::vector<double> &directions_weights,
-                         mtPtr rnd_engine, double &substep,
-                         double &new_angle) override final;
+    select_direction(const std::vector<double> &directions_weights,
+                     mtPtr rnd_engine, double &substep, double &new_angle,
+                     size_t &default_direction) override final;
 
     void prepare_for_split() override final;
     void after_split() override final;
@@ -136,7 +135,7 @@ template <class ElType, class SteerMethod, class DirSelMethod>
 GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
     BaseWeakNodePtr parent, NeuritePtr neurite,
     double distanceToParent, std::string binaryID,
-    const Point &position, double angle)
+    const BPoint &position, double angle)
 {
     auto new_cone = std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(*this);
     
@@ -158,7 +157,7 @@ GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
     // update containing area
     new_cone->current_area_ =
         using_environment_
-            ? kernel().space_manager.get_containing_area(position, omp_id)
+            ? kernel().space_manager.get_containing_area(position)
             : "";
 
     if (using_environment_)
@@ -189,10 +188,10 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_speed(
  * @brief use the `steerer_` member to evaluate the probability of each angle.
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_intrinsic_direction(
+void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_direction_probabilities(
   std::vector<double> &directions_weights, double substep)
 {
-    steerer_->compute_intrinsic_direction(
+    steerer_->compute_direction_probabilities(
         directions_weights, filopodia_, substep, total_proba_, stuck_);
 }
 
@@ -201,13 +200,13 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_intrinsic_direc
  * @brief use the `dir_selector_` member to chose the next direction.
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_target_angle(
+void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::select_direction(
   const std::vector<double> &directions_weights, mtPtr rnd_engine,
-  double &substep, double &new_angle)
+  double &substep, double &new_angle, size_t &default_direction)
 {
-    dir_selector_->compute_target_angle(directions_weights, filopodia_,
+    dir_selector_->select_direction(directions_weights, filopodia_,
         rnd_engine, total_proba_, interacting_, move_.angle, substep,
-        move_.module, new_angle, stopped_);
+        move_.module, new_angle, stopped_, default_direction);
 }
 
 

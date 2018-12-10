@@ -7,6 +7,8 @@
 #include <memory>
 #include <stdexcept>
 
+#include <boost/range/adaptor/strided.hpp>
+
 // elements include
 #include "Branch.hpp"
 #include "GrowthCone.hpp"
@@ -20,6 +22,9 @@
 #include "neuron_manager.hpp"
 #include "models_manager.hpp"
 #include "space_manager.hpp"
+
+
+namespace ba = boost::adaptors;
 
 
 namespace growth
@@ -118,7 +123,7 @@ std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
  */
 
 void set_environment(
-    GEOSGeom environment, const std::vector<GEOSGeom> &areas,
+    GEOSGeometry * environment, const std::vector<GEOSGeometry *> &areas,
     std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties)
 {
@@ -128,7 +133,7 @@ void set_environment(
 
 
 void get_environment(
-    GEOSGeom &environment, std::vector<GEOSGeom> &areas,
+    GEOSGeometry *&environment, std::vector<GEOSGeometry *> &areas,
     std::vector<double> &heights, std::vector<std::string> &names,
     std::vector<std::unordered_map<std::string, double>> &properties)
 {
@@ -450,8 +455,8 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
         _fill_skel(neuron_skel.branching_points, nodes, false);
         _fill_skel(neuron_skel.growth_cones, growth_cones, false);
 
-        somas[0].push_back(neuron_skel.soma_position.at(0));
-        somas[1].push_back(neuron_skel.soma_position.at(1));
+        somas[0].push_back(neuron_skel.soma_position.x());
+        somas[1].push_back(neuron_skel.soma_position.y());
         somas[2].push_back(neuron_skel.soma_radius);
     }
 #ifndef NDEBUG
@@ -463,6 +468,187 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
            neurons_vector.size(), dendrites.first.size(), axon.first.size(),
            somas[0].size(), growth_cones.first.size());
 #endif
+}
+
+
+void get_geom_skeleton(std::vector<size_t> gids,
+                       std::vector<GEOSGeometry*>& axons,
+                       std::vector<GEOSGeometry*>& dendrites,
+                       std::vector< std::vector<double> >& somas)
+{
+    std::vector<GEOSGeometry *> vec;
+    //~ std::vector<BPolygon> vec_tmp;
+    //~ std::vector<BMultiPolygon> vec_geom;
+    std::vector<BPolygon> vec_tmp, vec_geom;
+
+    GEOSContextHandle_t ch = kernel().space_manager.get_context_handler();
+    GEOSWKTReader *reader  = GEOSWKTReader_create_r(ch);
+    GEOSGeometry *geom_tmp, *geom_union;
+    std::stringstream s;
+    std::string wkt;
+    size_t num_poly;
+
+    for (size_t gid : gids)
+    {
+        NeuronPtr neuron = kernel().neuron_manager.get_neuron(gid);
+        auto neurite_it  = neuron->neurite_cbegin();
+        auto neurite_end = neuron->neurite_cend();
+
+        while (neurite_it != neurite_end)
+        {
+            auto node_it  = neurite_it->second->nodes_cbegin();
+            auto node_end = neurite_it->second->nodes_cend();
+
+            vec.clear();
+            vec_geom.clear();
+
+            while (node_it != node_end)
+            {
+                for (BPolygonPtr p : node_it->second->segment_range())
+                {
+                    s.str("");
+                    s << std::setprecision(12) << bg::wkt(*(p.get()));
+                    geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
+                    vec.push_back(geom_tmp);
+                }
+                //~ auto srange  = node_it->second->segment_range();
+                //~ size_t ssize = srange.size();
+                //~ for (size_t i=0; i < ssize; i += 2 )
+                //~ {
+                    //~ if (i < ssize - 1)
+                    //~ {
+                        //~ bg::union_(*(srange[i].get()), *(srange[i+1].get()), vec_tmp);
+                    //~ }
+                    //~ else
+                    //~ {
+                        //~ vec_tmp.push_back(*(srange.back().get()));
+                    //~ }
+                //~ }
+                //~ while (vec_tmp.size() >= 2)
+                //~ {
+                    //~ std::vector<BPolygon> vec_tmp2;
+                    //~ size_t old_size;
+
+                    //~ for (size_t i=0; i < vec_tmp.size(); i += 2 )
+                    //~ {
+                        //~ if (i < vec_tmp.size() - 1)
+                        //~ {
+                            //~ old_size = vec_tmp2.size();
+                            //~ bg::union_(vec_tmp[i], vec_tmp[i+1], vec_tmp2);
+
+                            //~ vec_tmp2.resize(old_size + 1);
+                        //~ }
+                        //~ else
+                        //~ {
+                            //~ vec_tmp2.push_back(vec_tmp.back());
+                        //~ }
+                    //~ }
+
+                    //~ vec_tmp.swap(vec_tmp2);
+                //~ }
+
+                if (vec_tmp.size())
+                {
+                    vec_geom.push_back(vec_tmp.back());
+                }
+                node_it++;
+            }
+
+            for (auto gc : neurite_it->second->gc_range())
+            {
+                for (BPolygonPtr p : gc.second->segment_range())
+                {
+                    s.str("");
+                    s << std::setprecision(12) << bg::wkt(*(p.get()));
+                    geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
+                    vec.push_back(geom_tmp);
+                }
+
+                //~ auto srange  = gc.second->segment_range();
+                //~ size_t ssize = srange.size();
+                //~ for (size_t i=0; i < ssize; i += 2 )
+                //~ {
+                    //~ if (i < ssize - 1)
+                    //~ {
+                        //~ printf("union\n");
+                        //~ bg::union_(*(srange[i].get()), *(srange[i+1].get()), vec_tmp);
+                        //~ printf("done\n");
+                    //~ }
+                    //~ else
+                    //~ {
+                        //~ printf("push_back\n");
+                        //~ vec_tmp.push_back(*(srange.back().get()));
+                        //~ printf("done\n");
+                    //~ }
+                //~ }
+                //~ while (vec_tmp.size() >= 2)
+                //~ {
+                    //~ std::vector<BPolygon> vec_tmp2;
+                    //~ size_t old_size;
+
+                    //~ for (size_t i=0; i < vec_tmp.size(); i += 2 )
+                    //~ {
+                        //~ if (i < vec_tmp.size() - 1)
+                        //~ {
+                            //~ old_size = vec_tmp2.size();
+                            //~ bg::union_(vec_tmp[i], vec_tmp[i+1], vec_tmp2);
+
+                            //~ vec_tmp2.resize(old_size + 1);
+                        //~ }
+                        //~ else
+                        //~ {
+                            //~ vec_tmp2.push_back(vec_tmp.back());
+                        //~ }
+                    //~ }
+
+                    //~ vec_tmp.swap(vec_tmp2);
+                //~ }
+
+                //~ if (vec_tmp.size())
+                //~ {
+                    //~ vec_geom.push_back(vec_tmp.back());
+                //~ }
+            }
+
+            //~ for (auto geom : vec_geom)
+            //~ {
+                //~ s.str("");
+                //~ s << std::setprecision(12) << bg::wkt(geom);
+                //~ geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
+                //~ vec.push_back(geom_tmp);
+            //~ }
+
+            //~ // create the stupid collection to make the union
+            geom_tmp = GEOSGeom_createCollection_r(ch, GEOS_MULTIPOLYGON,
+                                                   vec.data(), vec.size());
+            geom_union = GEOSUnaryUnion_r(ch, geom_tmp);
+
+            //~ double area = 0.;
+            //~ if (GEOSisValid_r(ch, geom_union))
+            //~ GEOSArea_r(ch, geom_union, &area);
+            //~ printf("valid union %i of area %f\n", GEOSisValid_r(ch, geom_union), area);
+
+            GEOSGeom_destroy_r(ch, geom_tmp);
+
+            if (neurite_it->second->get_type() == "axon")
+            {
+                axons.push_back(geom_union);
+                //~ axons.insert(axons.end(), vec.begin(), vec.end());
+            }
+            else
+            {
+                dendrites.push_back(geom_union);
+                //~ dendrites.insert(dendrites.end(), vec.begin(), vec.end());
+            }
+
+            vec.clear();
+
+            neurite_it++;
+        }
+
+        BPoint soma = neuron->get_position();
+        somas.push_back({soma.x(), soma.y(), neuron->get_soma_radius()});
+    }
 }
 
 

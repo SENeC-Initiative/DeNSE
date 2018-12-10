@@ -8,17 +8,21 @@
 import numpy as np
 
 import matplotlib.animation as anim
+import matplotlib.gridspec as gridspec
 from matplotlib.lines import Line2D
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
-import matplotlib.gridspec as gridspec
 from matplotlib.cm import get_cmap
+from matplotlib.textpath import TextPath
+
+from shapely.ops import cascaded_union
 
 from . import _pygrowth as _pg
 from .geometry import plot_shape
+from ._helpers import is_iterable
 
 
-__all__ = ["PlotEnvironment", "PlotNeuron", "PlotRecording"]
+__all__ = ["NewPlotNeuron", "PlotEnvironment", "PlotNeuron", "PlotRecording"]
 
 
 # --------------- #
@@ -494,12 +498,102 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
 # PlotNeuron #
 # ---------- #
 
+def NewPlotNeuron(gid=None, culture=None, show_culture=True, soma_radius=None,
+                  soma_color='k', axon_color="r", dendrite_color="b", aspect=1.,
+                  title=None, axis=None, show_neuron_id=False,
+                  show=True, **kwargs):
+    '''
+    Plot neurons in the network.
+
+    Parameters
+    ----------
+    gid : int or list, optional (default: all neurons)
+        Id(s) of the neuron(s) to plot.
+    culture :  :class:`~dense.geometry.Shape`, optional (default: None)
+        Shape of the environment; if the environment was already set using
+        :func:`~dense.CreateEnvironment`.
+    show_culture : bool, optional (default: True)
+        If True, displays the culture in which the neurons are embedded.
+    aspect : float, optional (default: 1.)
+        Set the aspect ratio between the `x` and `y` axes.
+    title : str, optional (default: no title)
+        Title of the plot.
+    axis : :class:`matplotlib.pyplot.Axes`, optional (default: None)
+        Axis on which the plot should be drawn, otherwise a new one will be
+        created.
+    show : bool, optional (default: True)
+        Whether the plot should be displayed immediately or not.
+    **kwargs : optional arguments
+        Details on how to plot the environment, see :func:`PlotEnvironment`.
+    '''
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    soma_alpha = kwargs.get("soma_alpha", 1.)
+
+    # plot
+    fig, ax, ax2 = None, None, None
+    if axis is None:
+        fig, ax = plt.subplots()
+    else:
+        ax = axis
+        fig = axis.get_figure()
+    # get the objects describing the neurons
+    if gid is None:
+        gid = _pg.GetNeurons(as_ints=True)
+    elif not is_iterable(gid):
+        gid = [gid]
+
+    new_lines = 0
+
+    axons, dendrites, somas = _pg._get_geom_skeleton(gid)
+
+    # get the culture if necessary
+    env_required = _pg.GetKernelStatus('environment_required')
+    if show_culture and env_required:
+        if culture is None:
+            culture = _pg.GetEnvironment()
+        PlotEnvironment(culture, ax=ax, show=False, **kwargs)
+        new_lines += 1
+
+    for a in axons:
+        plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2, show=False)
+
+    for d in dendrites:
+        plot_shape(d, axis=ax, fc=dendrite_color, show_contour=False, zorder=2, show=False)
+        
+    # plot the somas
+    n     = len(somas[2])
+    radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
+    r_max = np.max(radii)
+    r_min = np.min(radii)
+    size  = (1.5*r_min if len(gid) <= 10
+             else (r_min if len(gid) <= 100 else 0.7*r_min))
+
+    for i, x, y, r in zip(gid, somas[0], somas[1], radii):
+        circle = plt.Circle(
+            (x, y), r, color=soma_color, alpha=soma_alpha)
+        artist = ax.add_artist(circle)
+        artist.set_zorder(5)
+        if show_neuron_id:
+            str_id    = str(i)
+            xoffset   = len(str_id)*0.35*size
+            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
+            textpatch = PathPatch(text, edgecolor="w", facecolor="w",
+                                  linewidth=0.01*size)
+            ax.add_artist(textpatch)
+            textpatch.set_zorder(6)
+
+    if show:
+        plt.show()
+
+
 def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
                show_culture=True, aspect=1., soma_radius=None,
                active_gc="d", gc_size=2., soma_color='k', axon_color="r",
                dendrite_color="b", subsample=1, save_path=None, title=None,
                axis=None, show_density=False, dstep=20., dmin=None, dmax=None,
-               colorbar=True, show=True, **kwargs):
+               colorbar=True, show_neuron_id=False, show=True, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -540,6 +634,8 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     axis : :class:`matplotlib.pyplot.Axes`, optional (default: None)
         Axis on which the plot should be drawn, otherwise a new one will be
         created.
+    show_neuron_id : bool, optional (default: False)
+        Whether the GID of the neuron should be displayed inside the soma.
     show : bool, optional (default: True)
         Whether the plot should be displayed immediately or not.
     **kwargs : optional arguments
@@ -569,6 +665,10 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     dend_alpha = kwargs.get("dend_alpha", 1.)
     gc_color   = kwargs.get("gc_color", "g")
     # get the objects describing the neurons
+    if gid is None:
+        gid = _pg.GetNeurons(as_ints=True)
+    elif not is_iterable(gid):
+        gid = [gid]
     somas, axons, dendrites, growth_cones, nodes = _pg._get_pyskeleton(
         gid, subsample)
     # get the culture if necessary
@@ -596,11 +696,24 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     n = len(somas[2])
     radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
     r_max = np.max(radii)
-    for x, y, r in zip(somas[0], somas[1], radii):
+    r_min = np.min(radii)
+    size  = (1.5*r_min if len(gid) <= 10
+             else (r_min if len(gid) <= 100 else 0.7*r_min))
+
+    for i, x, y, r in zip(gid, somas[0], somas[1], radii):
         circle = plt.Circle(
             (x, y), r, color=soma_color, alpha=soma_alpha)
         artist = ax.add_artist(circle)
         artist.set_zorder(5)
+        if show_neuron_id:
+            str_id    = str(i)
+            xoffset   = len(str_id)*0.35*size
+            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
+            textpatch = PathPatch(text, edgecolor="w", facecolor="w",
+                                  linewidth=0.01*size)
+            ax.add_artist(textpatch)
+            textpatch.set_zorder(6)
+
     # set the axis limits
     if (not show_culture or not env_required) and len(ax.lines) == new_lines:
         _set_ax_lim(

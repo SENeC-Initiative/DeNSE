@@ -21,9 +21,9 @@ class MemBasedSteeringModel : public virtual SteeringModel
     MemBasedSteeringModel(const MemBasedSteeringModel &copy, GCPtr gc, NeuritePtr neurite);
 
     virtual void
-    compute_intrinsic_direction(std::vector<double> &directions_weights,
-                                const Filopodia& filo, double substep,
-                                double &total_proba, bool &stuck) override final;
+    compute_direction_probabilities(
+        std::vector<double> &directions_weights, const Filopodia& filo,
+        double substep, double &total_proba, bool &stuck) override final;
 
     virtual void set_status(const statusMap &status) override final;
 

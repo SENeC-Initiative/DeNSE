@@ -6,6 +6,7 @@
 #include "elements_types.hpp"
 #include "spatial_types.hpp"
 
+
 namespace growth
 {
 
@@ -42,19 +43,19 @@ typedef struct NodeTopology
 
 typedef struct NodeGeometry
 {
-    Point position;
+    BPoint position;
     double dis_to_soma;
     double dis_to_parent;
     NodeGeometry()
-        : position(Point())
-        , dis_to_soma(-1)
-        , dis_to_parent(-1)
+      : position(BPoint())
+      , dis_to_soma(-1)
+      , dis_to_parent(-1)
     {
     }
-    NodeGeometry(Point position, double dis_to_soma, double dis_to_parent)
-        : position(position)
-        , dis_to_soma(dis_to_soma)
-        , dis_to_parent(dis_to_parent)
+    NodeGeometry(const BPoint &position, double dis_to_soma, double dis_to_parent)
+      : position(position)
+      , dis_to_soma(dis_to_soma)
+      , dis_to_parent(dis_to_parent)
     {
     }
 } NodeGeometry;
@@ -108,11 +109,11 @@ class BaseNode
      *
      * @param Point xy: x and y of the node.
      */
-    virtual void set_position(const Point &);
+    virtual void set_position(const BPoint &);
 
     //! getters function
     virtual int get_centrifugal_order() const;
-    virtual Point get_position() const;
+    virtual BPoint get_position() const;
     virtual double get_distance_to_soma() const;
     virtual double get_distance_parent() const;
     virtual std::string get_treeID() const;
@@ -133,20 +134,20 @@ class TopologicalNode : public BaseNode
     TopologicalNode();
     TopologicalNode(const TopologicalNode &tnode);
     TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
-                    const Point &position, const std::string &binaryID);
+                    const BPoint &position, const std::string &binaryID);
 
     // typedef of method pointer, used in Branching.cpp
     /**
      * @brief Update the binaryId and the centrifugal order
      */
     void topological_advance();
-    void set_first_point(const Point p, double length);
+    void set_first_point(const BPoint &p, double length);
     virtual void set_diameter(double diameter);
-    void set_position(const Point &) override;
-    void set_position(const Point &pos, double dist_to_soma, BranchPtr b);
+    void set_position(const BPoint &) override;
+    void set_position(const BPoint &pos, double dist_to_soma, BranchPtr b);
 
     // geometry getter functions
-    inline Point get_position() const override { return geometry_.position; }
+    inline BPoint get_position() const override { return geometry_.position; }
     inline double get_distance_to_soma() const override
     {
         return geometry_.dis_to_soma;
@@ -169,6 +170,8 @@ class TopologicalNode : public BaseNode
         return topology_.binaryID;
     }
 
+    seg_range segment_range() const;
+
     // biology getter functions
     inline bool is_dead() const { return biology_.dead; }
     inline BranchPtr get_branch() const { return biology_.branch; }
@@ -189,7 +192,7 @@ class Node : public TopologicalNode
 
   public:
     typedef size_t (Node::*Get_method)(void) const;
-    Node(BaseWeakNodePtr parent, float distanceToParent, Point position,
+    Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &position,
          std::string binaryID);
 
     Node(const Node &);

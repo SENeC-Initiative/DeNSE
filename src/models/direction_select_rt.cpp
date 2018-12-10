@@ -1,4 +1,4 @@
-#include "rt_direction_selector.hpp"
+#include "direction_select_rt.hpp"
 
 #include "config.hpp"
 
@@ -19,7 +19,7 @@ RTDirectionSelector::RTDirectionSelector(GCPtr gc, NeuritePtr neurite)
 {
     observables_.push_back("num_tumbles");
 
-    uniform_         = std::uniform_real_distribution<double>(0., 1.);
+    uniform_ = std::uniform_real_distribution<double>(0., 1.);
 
     initialize_rt();
 }
@@ -32,7 +32,6 @@ RTDirectionSelector::RTDirectionSelector(const RTDirectionSelector& copy,
   , critical_pull_(copy.critical_pull_)
   , sensing_angle_(copy.sensing_angle_)
   , p_tumble_on_stop_(copy.p_tumble_on_stop_)
-  , tau_(copy.tau_)
   , tumbling_(false)
   , num_tumbles_(0)
 {
@@ -46,8 +45,7 @@ void RTDirectionSelector::initialize_rt()
 {
     // this renormalization of the "tumbling rate" is necessary to obtain
     // the correct persistence length
-    tau_ =
-        12. / (sensing_angle_ * sensing_angle_ * persistence_length_);
+    tau_ = 24. / (sensing_angle_ * sensing_angle_ * persistence_length_);
 
     exponential_rt_ = std::exponential_distribution<double>(tau_);
 
@@ -58,10 +56,11 @@ void RTDirectionSelector::initialize_rt()
 }
 
 
-void RTDirectionSelector::compute_target_angle(
+void RTDirectionSelector::select_direction(
   const std::vector<double> &directions_weights, const Filopodia &filo,
   mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
-  double &substep, double &step_length, double &new_angle, bool &stopped)
+  double &substep, double &step_length, double &new_angle, bool &stopped,
+  size_t &default_direction)
 {
     new_angle = old_angle;
 
@@ -128,8 +127,8 @@ void RTDirectionSelector::compute_target_angle(
         tumbling_ = false;
 
         // weighted random choice for the new angle
-        double cumulated_weight = 0;
-        double weight;
+        //~ new_angle += sensing_angle_*(uniform_(*(rnd_engine.get())) - 0.5);
+        double weight, cumulated_weight(0);
         double x = total_proba * uniform_(*(rnd_engine.get()));
 
         for (size_t i = 0; i < directions_weights.size(); i++)
@@ -144,6 +143,40 @@ void RTDirectionSelector::compute_target_angle(
                 {
                     new_angle += filo.directions[i];
                     break;
+                }
+            }
+        }
+
+        // default angle is closest to new_angle
+        double dist, min_dist(std::numeric_limits<double>::max());
+
+        for (size_t n=0; n < directions_weights.size(); n++)
+        {
+            if (not std::isnan(directions_weights[n]))
+            {
+                dist = std::abs(new_angle - filo.directions[n]);
+                if (dist < min_dist)
+                {
+                    default_direction = n;
+                    min_dist          = dist;
+                }
+            }
+        }
+    }
+    else
+    {
+        // keep straight: default angle is closest to zero
+        double dist, min_dist(std::numeric_limits<double>::max());
+
+        for (size_t n=0; n < directions_weights.size(); n++)
+        {
+            if (not std::isnan(directions_weights[n]))
+            {
+                dist = std::abs(filo.directions[n]);
+                if (dist < min_dist)
+                {
+                    default_direction = n;
+                    min_dist          = dist;
                 }
             }
         }

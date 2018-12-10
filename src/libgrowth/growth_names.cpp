@@ -11,6 +11,20 @@ const std::string actin_content_tau("actin_content_tau");
 const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
 const std::string active("active");
+
+const std::string affinity_axon_axon_other_neuron("affinity_axon_axon_other_neuron");
+const std::string affinity_axon_dendrite_other_neuron("affinity_axon_dendrite_other_neuron");
+const std::string affinity_axon_dendrite_same_neuron("affinity_axon_dendrite_same_neuron");
+const std::string affinity_axon_self("affinity_axon_self");
+const std::string affinity_axon_soma_other_neuron("affinity_axon_soma_other_neuron");
+const std::string affinity_axon_soma_same_neuron("affinity_axon_soma_same_neuron");
+const std::string affinity_dendrite_axon_other_neuron("affinity_dendrite_axon_other_neuron");
+const std::string affinity_dendrite_axon_same_neuron("affinity_dendrite_axon_same_neuron");
+const std::string affinity_dendrite_dendrite_other_neuron("affinity_dendrite_dendrite_other_neuron");
+const std::string affinity_dendrite_dendrite_same_neuron("affinity_dendrite_dendrite_same_neuron");
+const std::string affinity_dendrite_self("affinity_dendrite_self");
+const std::string affinity_dendrite_soma_other_neuron("affinity_dendrite_soma_other_neuron");
+const std::string affinity_dendrite_soma_same_neuron("affinity_dendrite_soma_same_neuron");
 const std::string axon_angle("axon_angle");
 const std::string axon_diameter("axon_diameter");
 const std::string axon_polarization_weight("axon_polarization_weight");
@@ -65,10 +79,12 @@ const std::string growth_cone_model("growth_cone_model");
 const std::string has_axon("has_axon");
 
 const std::string initial_branch_lenght("initial_branch_lenght");
+const std::string interactions("interactions");
 
 const std::string lateral_branching_angle_mean("lateral_branching_angle_mean");
 const std::string lateral_branching_angle_std("lateral_branching_angle_std");
 
+const std::string max_allowed_resolution("max_allowed_resolution");
 const std::string max_arbor_length("max_arbor_length");
 const std::string max_gc_number("max_gc_number");
 const std::string max_sensing_angle("max_sensing_angle");
@@ -79,6 +95,7 @@ const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");
 
 const std::string persistence_length("persistence_length");
+const std::string points_per_circle("points_per_circle");
 const std::string polarization_strength("polarization_strength");
 const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");

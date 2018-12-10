@@ -51,8 +51,11 @@ if ( HAVE_PYTHON )
     set(MSVC 0)
   endif ()
 
-  configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py)
+  # configure _pygrowth.pxd and setup.py
+  configure_file(${PYMODULE_DIR}/setup.py.in ${PYMODULE_DIR}/setup.py @ONLY)
+  configure_file(${PYMODULE_DIR}/dense/_pygrowth.pxd.in ${PYMODULE_DIR}/dense/_pygrowth.pxd @ONLY)
 
+  # run setup.py
   if (MSVC)
     # reformat path for Windows because it is so annoying it does not recognize
     # slash and backslash, also wrap PYTHON between brackets because, hey,

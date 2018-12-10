@@ -84,7 +84,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         if (kernel().space_manager.has_environment())
         {
             // printf("check point %f, %f in the environment \n",x,y);
-            if (not kernel().space_manager.env_contains(Point(x, y), omp_id))
+            if (not kernel().space_manager.env_contains(BPoint(x, y)))
             {
                 throw std::runtime_error(
                     " a Neuron was positioned outside the environment\n");

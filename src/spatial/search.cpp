@@ -10,7 +10,7 @@
 namespace growth
 {
 
-void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
+void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
                           double distanceToNode)
 {
     /*    //implemnet BINARY SEARCH TREE*/
@@ -25,9 +25,9 @@ void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
     // Point xy_1 = Point(targetNode_->get_branch()->at(id_x + 1)[0],
     // targetNode_->get_branch()->at(id_x + 1)[1]);
     // double direction;
-    // if (xy_1.at(1) - xy_0.at(1))
+    // if (xy_1.y() - xy_0.y())
     //{
-    // direction = atan((xy_1.at(0) - xy_0.at(0)) / (xy_1.at(1) - xy_0.at(1)));
+    // direction = atan((xy_1.x() - xy_0.x()) / (xy_1.y() - xy_0.y()));
     //}
     // else
     //{
@@ -38,13 +38,13 @@ void locate_from_distance(Point &xy, double &angle, const BranchPtr branch,
     /*angle = get_angle(rnd_engine, direction);*/
 }
 
-void locate_from_idx(Point &xy, double &angle, double &distance,
+void locate_from_idx(BPoint &xy, double &angle, double &distance,
                      const BranchPtr branch, size_t id_x)
 {
     xy       = branch->xy_at(id_x);
     distance = branch->at(id_x)[2];
 
-    Point xy_1;      // second point to get the local direction of the branch
+    BPoint xy_1;      // second point to get the local direction of the branch
     double sign = 0; // correct the direction if xy_1 before xy
 
     // all branches must always be of size at least 2 (branching events occur
@@ -53,13 +53,13 @@ void locate_from_idx(Point &xy, double &angle, double &distance,
     double delta_x, delta_y;
     if (id_x == branch->size())
     {
-        delta_y = xy.at(1) - branch->at(id_x - 1)[1];
-        delta_x = xy.at(0) - branch->at(id_x - 1)[0];
+        delta_y = xy.y() - branch->at(id_x - 1)[1];
+        delta_x = xy.x() - branch->at(id_x - 1)[0];
     }
     else
     {
-        delta_y = xy.at(1) - branch->at(id_x + 1)[1];
-        delta_x = xy.at(0) - branch->at(id_x + 1)[0];
+        delta_y = xy.y() - branch->at(id_x + 1)[1];
+        delta_x = xy.x() - branch->at(id_x + 1)[0];
         sign    = M_PI;
     }
     // get the principal argument (between -Pi and Pi)

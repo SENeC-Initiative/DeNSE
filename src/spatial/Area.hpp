@@ -19,25 +19,21 @@ namespace growth
 class Area
 {
   public:
-    Area(GEOSGeom area, GEOSContextHandle_t handler, double height,
-         const std::string &name,
+    Area(BMultiPolygonPtr area, double height, const std::string &name,
          std::unordered_map<std::string, double> properties);
-    ~Area();
 
-    const GEOSPreparedGeometry *get_area(int omp_id) const;
-    const GEOSPreparedGeometry *get_border(int omp_id) const;
+    const BMultiPolygonPtr get_area() const;
     double get_property(const std::string &name) const;
     double get_height() const;
     std::string get_name() const;
     void
     get_properties(std::unordered_map<std::string, double> &properties) const;
-    GeomPtr get_shape(int omp_id) const;
+    const BMultiLineString& get_boundary() const;
 
   private:
-    std::vector<GeomPtr> shape_;
+    BMultiPolygonPtr shape_;
+    BMultiLineString boundary_;
     std::string name_;
-    std::vector<const GEOSPreparedGeometry *> prepared_area_;
-    std::vector<const GEOSPreparedGeometry *> prepared_border_;
     double height_;
     std::unordered_map<std::string, double> properties_;
 };

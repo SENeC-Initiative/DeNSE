@@ -1,4 +1,4 @@
-#include "memory_based_steering.hpp"
+#include "steering_memory_based.hpp"
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -27,7 +27,7 @@ MemBasedSteeringModel::MemBasedSteeringModel(const MemBasedSteeringModel &copy, 
 {}
 
 
-void MemBasedSteeringModel::compute_intrinsic_direction(
+void MemBasedSteeringModel::compute_direction_probabilities(
     std::vector<double> &directions_weights, const Filopodia& filo, double substep,
     double &total_proba, bool &stuck)
 {

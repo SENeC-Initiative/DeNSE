@@ -187,9 +187,15 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
         assert env_required is True, \
             "Provided culture but no environment is required. " + \
             "To use one, call `SetKernelStatus('environment_required', True)`."
-        assert environment.contains(culture), \
-            "The shape provided with `culture` is not contained is the " + \
-            "total environment."
+
+        # check that the environment contains the region provided
+        contained = environment.contains(culture)
+
+        # if not, this can come from rounding errors
+        if not contained:
+            assert culture.almost_equals(environment, decimal=6), \
+                "The shape provided with `culture` is not contained in nor " + \
+                "equal to the total environment."
 
     # seed neurons on random positions or get position from `params`?
     rnd_pos = kwargs.get("rnd_pos", False)
@@ -622,10 +628,18 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
                 del neuron_status["y"]
 
                 neuron_status["position"] = tuple(pos)
-                neuron_status["axon_params"] = _statusMap_to_dict(
-                    get_neurite_status(gid, "axon", "neurite"))
-                neuron_status["dendrites_params"] = _statusMap_to_dict(
-                    get_neurite_status(gid, "dendrites", "neurite"))
+                num_neurites = get_neurites(gid).size()
+                nlevel       = _to_bytes("neurite")
+
+                if neuron_status["has_axon"] and num_neurites:
+                    neuron_status["axon_params"] = _statusMap_to_dict(
+                        get_neurite_status(gid, b"axon", nlevel))
+
+                if ((not neuron_status["has_axon"] and num_neurites)
+                    or num_neurites > 1):
+                    neuron_status["dendrites_params"] = _statusMap_to_dict(
+                        get_neurite_status(gid, b"dendrites", nlevel))
+
                 status[gid] = neuron_status
         elif GetObjectType(gid) == "recorder":
             c_status = get_status(gid)
@@ -753,7 +767,7 @@ def GetDefaultParameters(obj, property_name=None, settables_only=True,
                            "Candidates are 'recorder' and all entries in "
                            "GetModels.")
 
-    get_defaults(cname, ctype, "default", detailed, default_params)
+    get_defaults(cname, ctype, b"default", detailed, default_params)
     status = _statusMap_to_dict(default_params)
 
     py_type = _to_string(ctype)
@@ -1454,6 +1468,65 @@ def _get_pyskeleton(gid, unsigned int resolution=10):
     py_nodes        = (nodes.first, nodes.second)
 
     return somas, py_axons, py_dendrites, py_growth_cones, py_nodes
+
+
+def _get_geom_skeleton(gid):
+    '''
+    Gets the geometries composing the skeletons.
+
+    Parameters
+    ----------
+    gid : int, optional (default: all neurons)
+        Id of the neuron(s) to plot.
+
+    Returns
+    -------
+    py_somas : 2-tuple of shape (2, N)
+        Positions of the somas.
+    py_axons : 2-tuple
+        Points describing the axons.
+    py_dendrites : 2-tuple
+        Points describing the dendrites.
+    py_growth_cones : 2-tuple
+        Points describing the growth cones.
+    py_nodes : 2-tuple
+        Points describing the nodes.
+    '''
+    from shapely.geometry.base import geom_factory
+
+    cdef:
+        vector[GEOSGeometry*] axons, dendrites
+        vector[vector[double]] somas
+        vector[size_t] gids
+
+    if gid is None:
+        gids = get_neurons()
+    elif isinstance(gid, (int, np.integer)):
+        # creates a vector of size 1
+        assert is_neuron(gid) == "neuron", \
+            "GID `{}` is not a neuron.".format(gid)
+        gids =  vector[size_t](1, <size_t>gid)
+    elif nonstring_container(gid):
+        for n in gid:
+            assert is_neuron(n), "GID `{}` is not a neuron.".format(n)
+            gids.push_back(<size_t>n)
+    else:
+        raise ArgumentError("`gid` should be an int, a list, or None.")
+    get_geom_skeleton(gids, axons, dendrites, somas)
+
+    py_axons, py_dendrites = [], []
+
+    for a in axons:
+        pygeos_geom = <uintptr_t>a
+        if a is not NULL:
+            py_axons.append(geom_factory(pygeos_geom))
+
+    for d in dendrites:
+        pygeos_geom = <uintptr_t>d
+        if d is not NULL:
+            py_dendrites.append(geom_factory(pygeos_geom))
+
+    return py_axons, py_dendrites, np.array(somas).T
 
 
 def _get_tree(neuron, neurite):

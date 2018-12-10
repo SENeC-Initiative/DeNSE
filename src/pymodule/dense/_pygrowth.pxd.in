@@ -1,5 +1,6 @@
 #!/usr/bin/env cython
 #-*- coding:utf-8 -*-
+# cython: language_level=@PYTHON_VERSION_MAJOR@
 
 """ Generation tools for NNGT """
 
@@ -95,7 +96,7 @@ cdef extern from "../module.hpp" namespace "growth":
                                const vector[statusMap]& dendrites_params
                                ) except +
 
-    cdef void get_environment(GEOSGeometry* &environment,
+    cdef void get_environment(GEOSGeometry*& environment,
                               vector[GEOSGeometry*]& areas,
                               vector[double] heights, vector[string]& names,
                               vector[unordered_map[string, double]]& properties
@@ -117,6 +118,12 @@ cdef extern from "../module.hpp" namespace "growth":
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,
         SkelNeurite& growth_cones, SkelSomas& somas,
         vector[size_t] gids, unsigned int resolution) except +
+
+    cdef void get_geom_skeleton(
+        vector[size_t] gids, vector[GEOSGeometry*]& axons,
+        vector[GEOSGeometry*]& dendrites,
+        vector[vector[double]]& somas) except +
+
 
     cdef void get_swc(string output_file,
         vector[size_t] gids, unsigned int resolution) except +

@@ -50,18 +50,18 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      num_neurites=6)
 
-ds.Simulate(2 * day)
+ds.simulate(2 * day)
 
-ds.plot.PlotNeuron(show=True, subsample=50, axon_color = 'k')
+ds.plot.plot_neurons(show=True, subsample=50, axon_color = 'k')
 
 
 lb_axon = {
@@ -72,12 +72,12 @@ lb_axon = {
     "lateral_branching_angle_mean": 45.,
 }
 
-ds.SetStatus(n, axon_params=lb_axon)
+ds.set_object_status(n, axon_params=lb_axon)
 
-ds.Simulate(5 * day)
+ds.simulate(5 * day)
 
-ds.NeuronToSWC("granule-cell.swc", gid=n)
-ds.plot.PlotNeuron(show=True, subsample=50)
+ds.save_to_swc("granule-cell.swc", gid=n)
+ds.plot.plot_neurons(show=True, subsample=50)
 
 import neurom as nm
 from neurom import viewer

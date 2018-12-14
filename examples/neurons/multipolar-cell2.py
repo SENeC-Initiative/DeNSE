@@ -75,12 +75,12 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      num_neurites=3)
 
@@ -90,13 +90,13 @@ n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
 resource_branching = {'CR_branching_th': 80., 'CR_branching_proba': 0.0005}
 d_rsrc_branching = {'CR_branching_th': 60., 'CR_branching_proba': 0.0003}
 
-#~ ds.SetStatus(n, params=vp_branching)
-#~ ds.SetStatus(n, params=resource_branching)
-ds.SetStatus(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
+#~ ds.set_object_status(n, params=vp_branching)
+#~ ds.set_object_status(n, params=resource_branching)
+ds.set_object_status(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
-ds.Simulate(20000)
+ds.simulate(20000)
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.plot_neurons(show=True)
 
 lb = {
     "use_van_pelt": False,
@@ -107,18 +107,18 @@ lb = {
 
 no_b = {"use_van_pelt": False}
 
-ds.SetStatus(n, axon_params=lb, dendrites_params=no_b)
+ds.set_object_status(n, axon_params=lb, dendrites_params=no_b)
 
-ds.Simulate(50000)
+ds.simulate(50000)
 
 end_branching = { "use_flpl_branching": False, "use_van_pelt": True, "T": 60000.}
-ds.SetStatus(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_status(n, axon_params=end_branching, dendrites_params=end_branching)
 
-ds.Simulate(100000)
+ds.simulate(100000)
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.plot_neurons(show=True)
 
-ds.NeuronToSWC("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 import neurom as nm
 from neurom import viewer

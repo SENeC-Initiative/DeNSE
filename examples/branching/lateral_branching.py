@@ -41,9 +41,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=False)
+        ds.plot_neurons(show_nodes=True, show=False)
 
 
 if __name__ =='__main__':
@@ -55,7 +55,7 @@ if __name__ =='__main__':
             "resolution": 10.}
     kernel["environment_required"] = False
 
-    ds.SetKernelStatus(kernel)
+    ds.get_kernel_status(kernel)
 
     '''
     Create neurons
@@ -71,7 +71,7 @@ if __name__ =='__main__':
 
     neuron_params['position'] = np.random.uniform(-10000, 10000, (num_neurons, 2))
 
-    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
+    gids = ds.create_neurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
@@ -80,8 +80,8 @@ if __name__ =='__main__':
     Create recorders
     '''
 
-    gids_rec = ds.CreateRecorders(gids, "length", levels="growth_cone")
-    rec_ngc  = ds.CreateRecorders(
+    gids_rec = ds.create_recorders(gids, "length", levels="growth_cone")
+    rec_ngc  = ds.create_recorders(
         gids, "num_growth_cones", levels="neuron")
 
     #~ step(6000, 0, True)
@@ -92,7 +92,7 @@ if __name__ =='__main__':
         print("\nNew step block")
         step(2000, 0, False)
 
-    ds.PlotNeuron(show_nodes=True, show=True)
+    ds.plot_neurons(show_nodes=True, show=True)
 
-    #~ pprint(ds.GetStatus(gids_rec))
-    ds.PlotRecording(rec_ngc, time_units="minutes")
+    #~ pprint(ds.get_object_status(gids_rec))
+    ds.plot_recording(rec_ngc, time_units="minutes")

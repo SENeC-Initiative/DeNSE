@@ -16,21 +16,21 @@ def functions():
     '''
     
     '''
-    ds.SetKernelStatus('environment_required', False)
-    m  = ds.GenerateModel('constant', 'memory_based', 'run-and-rumble')
+    ds.get_kernel_status('environment_required', False)
+    m  = ds.generate_model('constant', 'memory_based', 'run-and-rumble')
     print(m)
-    dp = ds.GetDefaultParameters(m)
-    e  = ds.GetEnvironment()
-    ks = ds.GetKernelStatus()
-    ms = ds.GetModels()
-    gn = ds.CreateNeurons(1, m)
-    n  = ds.GetNeurons()
-    ns = ds.GetStatus(n)
-    si = ds.GetSimulationID()
-    ds.Simulate(20*hour)
-    ni = ds.GetNeurons()
+    dp = ds.get_default_parameters(m)
+    e  = ds.get_environment()
+    ks = ds.get_kernel_status()
+    ms = ds.get_models()
+    gn = ds.create_neurons(1, m)
+    n  = ds.get_neurons()
+    ns = ds.get_object_status(n)
+    si = ds.get_simulation_id()
+    ds.simulate(20*hour)
+    ni = ds.get_neurons()
     st = ds.NeuronStrucuture(n)
-    ds.ResetKernel()
+    ds.reset_kernel()
     return 1
 
 def test_functions():

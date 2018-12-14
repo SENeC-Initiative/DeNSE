@@ -29,7 +29,7 @@ It's possible to set the same parameters for dendrites and axon or to specify
 them, passing a dictionary with the respective name "axon_params" or
 "dendrite_params" to the :func:`~dense._pygrowth.Create` function.
 This can also be done during the simulation with
-:func:`~dense._pygrowth.SetStatus`
+:func:`~dense._pygrowth.set_object_status`
 
 Parameters are set when kernel is initiated and the process is recursive.
 Each neuron is created with a ``StatusMap``, which is a dictionary with all the

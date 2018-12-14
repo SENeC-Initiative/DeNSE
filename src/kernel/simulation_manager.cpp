@@ -296,7 +296,7 @@ void SimulationManager::new_branching_event(const Event &ev)
 
 
 /**
- * Simulate for the given time .
+ * simulate for the given time .
  * This function performs the following steps
  * 1. set the new simulation time
  * 2. call prepare_simulation()

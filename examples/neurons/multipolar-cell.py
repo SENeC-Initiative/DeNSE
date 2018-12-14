@@ -98,17 +98,17 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      #~ num_neurites=6)
                      num_neurites=1)
 
-rec = ds.CreateRecorders(n, ["angle", "length"], levels="growth_cone")
+rec = ds.create_recorders(n, ["angle", "length"], levels="growth_cone")
 
 # Turn branching on
 
@@ -116,14 +116,14 @@ rec = ds.CreateRecorders(n, ["angle", "length"], levels="growth_cone")
 resource_branching = {'CR_branching_th': 80., 'CR_branching_proba': 0.0005}
 d_rsrc_branching = {'CR_branching_th': 60., 'CR_branching_proba': 0.0003}
 
-#~ ds.SetStatus(n, params=vp_branching)
-#~ ds.SetStatus(n, params=resource_branching)
-ds.SetStatus(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
+#~ ds.set_object_status(n, params=vp_branching)
+#~ ds.set_object_status(n, params=resource_branching)
+ds.set_object_status(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 for i in range(10):
-    ds.Simulate(2000)
-    ds.plot.PlotRecording(rec, show=False)
-    ds.plot.PlotNeuron(show=True)
+    ds.simulate(2000)
+    ds.plot.plot_recording(rec, show=False)
+    ds.plot.plot_neurons(show=True)
 
 
 lb = {
@@ -135,20 +135,20 @@ lb = {
 lb_axon = lb.copy()
 lb_axon["flpl_branching_rate"] = 0.0008
 
-ds.SetStatus(n, axon_params=lb_axon, dendrites_params=lb)
+ds.set_object_status(n, axon_params=lb_axon, dendrites_params=lb)
 
-ds.Simulate(50000)
-ds.plot.PlotNeuron(show=True)
+ds.simulate(50000)
+ds.plot.plot_neurons(show=True)
 
 
 end_branching = {"CR_branching_th": 500., 'CR_branching_proba': 0.0005}
-ds.SetStatus(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_status(n, axon_params=end_branching, dendrites_params=end_branching)
 
-ds.Simulate(100000)
+ds.simulate(100000)
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.plot_neurons(show=True)
 
-ds.NeuronToSWC("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 import neurom as nm
 from neurom import viewer

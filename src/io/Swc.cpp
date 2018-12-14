@@ -87,6 +87,7 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
         // present branch is over start again from there.
         TNodePtr node = neurite.second->get_first_node()->get_child(0);
         std::deque<std::pair<size_t, TNodePtr>> nodes{std::make_pair(1, node)};
+
         while (not nodes.empty())
         {
             idxp               = 0;

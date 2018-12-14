@@ -28,7 +28,7 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params,
     experiment_params = {}
     experiment_params["num_neurons"] = n_samples
     np.random.seed(kernel['seeds'])
-    ds.SetKernelStatus(kernel, ds.GenerateSimulationID())
+    ds.get_kernel_status(kernel, ds.generate_simulation_id())
     culture = ds.CreateEnvironment(
         culture_file, min_x=0, max_x=cavity_x_max)
     pos_left = culture.seed_neurons(
@@ -39,29 +39,29 @@ def RunNetGrowth(n_samples, sim_length, n_procs, neuron_params,
     neuron_params['position'] = pos_left
 
     gids = None
-    gids = ds.CreateNeurons(experiment_params["num_neurons"],
+    gids = ds.create_neurons(experiment_params["num_neurons"],
                                    "random_walk",
                                    culture=culture,
                                    params=neuron_params,
                                    num_neurites=1
                                    )
-    ds.Simulate(sim_length)
+    ds.simulate(sim_length)
     # fig, ax = plt.subplots()
-    # ds.plot.PlotNeuron(gid=range(experiment_params["num_neurons"]),
+    # ds.plot.plot_neurons(gid=range(experiment_params["num_neurons"]),
                               # culture = culture, soma_color="k",
                               # axon_color='g', axis=ax, show=True)
-    ds.SaveJson(filepath=save_path)
+    ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path, swc_resolution=1)
-    # ds.SaveJson(filepath=tmp_dir)
-    # ds.PlotNeuron(show_nodes=True)
-    ds.ResetKernel()
+    # ds.save_json_info(filepath=tmp_dir)
+    # ds.plot_neurons(show_nodes=True)
+    ds.reset_kernel()
 
 
 def Test(neuron_params, sim_length=300, n_samples=10, plot=False):
     swc_folder = os.path.join(os.getcwd(), "tmp_measure")
     CleanFolder(swc_folder)
     RunNetGrowth(n_samples, sim_length, 5,  neuron_params, swc_folder)
-    population, _ = ds.PopulationFromSwc(swc_folder)
+    population, _ = ds.load_swc(swc_folder)
     # # return ensembles
     # # rw_corr.plot_results(ensembles, plot=True)
     # info =InfoFromJson(os.path.join(folder,"info.json"))

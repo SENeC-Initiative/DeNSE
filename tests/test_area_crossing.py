@@ -45,15 +45,15 @@ for k, resol in enumerate(resolutions):
     print("\nSimulating with resol {}\n".format(resol))
 
     np.random.seed(1)
-    ds.ResetKernel()
+    ds.reset_kernel()
 
-    ds.SetKernelStatus({
+    ds.get_kernel_status({
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
     })
 
-    ds.SetEnvironment(shape)
+    ds.set_environment(shape)
 
     params = {
         "sensing_angle": 0.12,
@@ -65,9 +65,9 @@ for k, resol in enumerate(resolutions):
         "position": [(x, y) for x, y in zip(np.random.uniform(490, 510, num_neurons), np.random.uniform(-250, 250, num_neurons))],
     }
 
-    gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
-    ds.Simulate(800)
+    ds.simulate(800)
 
     neurons   = ds.structure.NeuronStructure(gids)
     tips      = np.concatenate(
@@ -78,7 +78,7 @@ for k, resol in enumerate(resolutions):
     fractions.append(np.sum(contained) / float(num_neurons))
     lengths.append(neurite_length(gids))
 
-    ds.PlotNeuron(show=False, title="resol {}".format(resol))
+    ds.plot_neurons(show=False, title="resol {}".format(resol))
 
 
 '''

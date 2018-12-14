@@ -97,13 +97,13 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=True)
         else:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=False, save_path=save_path)
 
 
@@ -113,12 +113,12 @@ def run_dense(neuron_params):
     resolution = 1.
     np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution * minute
-    ds.SetKernelStatus(kernel, simulation_ID="van_pelt_branching")
+    ds.set_kernel_status(kernel, simulation_id="van_pelt_branching")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2)) * um
-    gid = ds.CreateNeurons(n=num_neurons,
+    gid = ds.create_neurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   num_neurites=3,
@@ -128,13 +128,13 @@ def run_dense(neuron_params):
     neuron_params['use_van_pelt'] = False
     neuron_params['use_flpl_branching'] = False
 
-    ds.SetStatus(gid, params=neuron_params,
+    ds.set_object_status(gid, params=neuron_params,
                         axon_params=axon_params)
     step(200./resolution * minute, 1, False, True)
     neuron_params['use_van_pelt'] = True
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    ds.SetStatus(gid, params=neuron_params,
+    ds.set_object_status(gid, params=neuron_params,
                         axon_params=neuron_params)
     step(1000./resolution * minute, 1, False, True)
     step(1000./resolution * minute, 1, False, True)
@@ -149,18 +149,18 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.SetStatus(gid,params = neuron_params,
+    # ds.set_object_status(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     ds.SaveSwc(swc_resolution=5)
-    ds.SaveJson()
+    ds.save_json_info()
 
-    swc_file = ds.GetSimulationID()
+    swc_file = ds.get_simulation_id()
     # print(swc_file)
 
-    # ds.ResetKernel()
+    # ds.reset_kernel()
     return swc_file
 
 

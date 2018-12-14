@@ -66,9 +66,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n*minute)
+    ds.simulate(n*minute)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -83,23 +83,23 @@ if __name__ == '__main__':
     #~ culture_file = main_dir + "/../culture/follow_angle96.svg"
     #~ culture_file = main_dir + "/../culture/follow_angle120.svg"
 
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
 
     neuron_params['growth_cone_model'] = 'run-and-tumble'
 
     gids = None
-    culture = ds.SetEnvironment(culture_file, min_x=0, max_x=500)
+    culture = ds.set_environment(culture_file, min_x=0, max_x=500)
 
-    ds.geometry.plot.plot_shape(culture, show=True)
+    ds.environment.plot.plot_shape(culture, show=True)
 
     # generate the neurons inside the left chamber
     pos_left = culture.seed_neurons(neurons=100, xmin=0, xmax=100, soma_radius=soma_radius)
     neuron_params['position'] = pos_left
 
-    gids = ds.CreateNeurons(n=100, culture=culture, params=neuron_params,
+    gids = ds.create_neurons(n=100, culture=culture, params=neuron_params,
                             num_neurites=1)
 
-    #~ ds.plot.PlotNeuron(show=True)
+    #~ ds.plot.plot_neurons(show=True)
 
     #~ step(200, 0, False)
     for loop_n in range(5):
@@ -107,12 +107,12 @@ if __name__ == '__main__':
 
     # prepare the plot
     fig, ax = plt.subplots()
-    #~ ds.plot.PlotNeuron(gid=range(100), culture=culture, soma_color="k",
+    #~ ds.plot.plot_neurons(gid=range(100), culture=culture, soma_color="k",
     #~ axon_color='#00ff00a0', axis=ax, show=False)
-    #~ ds.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+    #~ ds.plot.plot_neurons(gid=range(100, 200), show_culture=False, axis=ax,
     #~ soma_color='k', axon_color='#ffa000a0',
     #~ show=True)
-    ax, ax2 = ds.plot.PlotNeuron(gid=range(40), culture=culture, soma_color="k",
+    ax, ax2 = ds.plot.plot_neurons(gid=range(40), culture=culture, soma_color="k",
                        axon_color='g', show_density=True, dstep=8., dmax=50.,
                        dmin=None, axis=ax, show=False)
 
@@ -121,5 +121,5 @@ if __name__ == '__main__':
 
     plt.tight_layout()
 
-    ds.geometry.plot_shape(culture, alpha=0., axis=ax2, ec=(1, 1, 1, 0.5),
+    ds.environment.plot_shape(culture, alpha=0., axis=ax2, ec=(1, 1, 1, 0.5),
                            show=True)

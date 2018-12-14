@@ -1,8 +1,12 @@
-import dense as ds
-import sys
-import matplotlib.pyplot as plt
-import matplotlib
 import copy
+import sys
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+import dense as ds
+from dense.elements import Population
+
 
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
@@ -61,7 +65,7 @@ def rall_circle(pop,gid):
         # axes.scatter(0,0,c='k')
 
 if __name__ =="__main__":
-    pop = ds.Population(sys.argv[1])
+    pop = Population(sys.argv[1])
     import argparse
     parser = argparse.ArgumentParser(description='Sholl analysis')
     parser.add_argument('--culture',  type=str,

@@ -26,7 +26,7 @@ def NeuronStructure(gid=None, downsample=False):
     # get the objects describing the neurons
     somas, axons, dendrites, growth_cones, nodes = _pg._get_pyskeleton(gid)
     if gid is None:
-        gid = _pg.GetNeurons()
+        gid = _pg.get_neurons()
     elif not nonstring_container(gid):
         gid = [gid]
     # restructure

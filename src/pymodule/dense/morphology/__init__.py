@@ -4,6 +4,5 @@
 """ Tools relaetd to neuronal structure """
 
 from .neuron_shape import *
-from .containers import Population, Neuron, Neurite, Node, Tree
-from .ensemblerw import EnsembleRW
+from .graph import generate_network
 from .algorithms import *

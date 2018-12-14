@@ -1177,7 +1177,19 @@ void Neurite::set_status(const statusMap &status)
     get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
     get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
 
-    get_param(status, names::taper_rate, taper_rate_);
+    double tr;
+    bool tr_set = get_param(status, names::taper_rate, tr);
+
+    if (tr_set and tr != taper_rate_)
+    {
+        if (kernel().simulation_manager.get_current_minutes() > 0.)
+        {
+            throw std::invalid_argument("Cannot change `taper_rate` after "
+                                        "simulation start.");
+        }
+
+        taper_rate_ = tr;
+    }
 
     double sd_std(diameter_ratio_std_), sd_avg(diameter_ratio_avg_);
     get_param(status, names::diameter_ratio_std, sd_std);

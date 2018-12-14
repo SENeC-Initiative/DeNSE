@@ -16,32 +16,31 @@ import pint
 import numpy as np
 cimport numpy as np
 
-from .geometry import Shape
+from .environment import Shape
 from .units import ureg
 from ._helpers import *
 from ._pygrowth cimport *
 
 
 __all__ = [
-    "CreateNeurons",
-    "CreateRecorders",
-    "GenerateModel",
-    "GenerateSimulationID",
-    "GetDefaultParameters",
-    "GetEnvironment",
-    "GetKernelStatus",
-    "GetModels",
-    "GetNeurons",
-    "GetObjectType",
-    "GetRecording",
-    "GetSimulationID",
-    "GetStatus",
-    "NeuronToSWC",
-    "ResetKernel",
-    "SetEnvironment",
-    "SetKernelStatus",
-    "SetStatus",
-    "Simulate",
+    "create_neurons",
+    "create_recorders",
+    "generate_model",
+    "generate_simulation_id",
+    "get_default_parameters",
+    "get_environment",
+    "get_kernel_status",
+    "get_models",
+    "get_neurons",
+    "get_object_type",
+    "get_recording",
+    "get_simulation_id",
+    "get_object_status",
+    "reset_kernel",
+    "set_environment",
+    "set_kernel_status",
+    "set_object_status",
+    "simulate",
 ]
 
 
@@ -71,7 +70,7 @@ def init(list argv):
         for i, argvi in enumerate(argv_bytes):
             argv_chars[i] = argvi
 
-        init_growth(&argc, &argv_chars)
+        init_growth_(&argc, &argv_chars)
 
         # If using MPI, argv might now have changed, so rebuild it
         del argv[:]
@@ -83,16 +82,16 @@ def init(list argv):
 
 def finalize():
     ''' Finalize the KernelManager '''
-    finalize_growth()
+    finalize_growth_()
 
 
 # -------------- #
 # Main functions #
 # -------------- #
 
-def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
-                  num_neurites=0, culture=None, on_area=None,
-                  neurites_on_area=False, return_ints=False, **kwargs):
+def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
+                   num_neurites=0, culture=None, on_area=None,
+                   neurites_on_area=False, return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -151,7 +150,7 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
     params       = {} if params is None else params.copy()
     ax_params    = {} if axon_params is None else axon_params.copy()
     dend_params  = {} if dendrites_params is None else dendrites_params.copy()
-    env_required = GetKernelStatus("environment_required")
+    env_required = get_kernel_status("environment_required")
     # num_neurites must go in kwargs because it can be a list or an int
     kwargs['num_neurites'] = num_neurites
     # check kwargs for its values
@@ -174,7 +173,7 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
         dend_params["growth_cone_model"] = \
             params.get("growth_cone_model", params["growth_cone_model"])
 
-    environment = GetEnvironment()
+    environment = get_environment()
 
     if env_required:
         culture = environment if culture is None else culture
@@ -182,11 +181,11 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
         assert env_required is False, \
             "Environment is required but culture was not initialized. " + \
             "To avoid the need for a culture, use " + \
-            "`SetKernelStatus('environment_required', False)`."
+            "`get_kernel_status('environment_required', False)`."
     else:
         assert env_required is True, \
             "Provided culture but no environment is required. " + \
-            "To use one, call `SetKernelStatus('environment_required', True)`."
+            "To use one, call `get_kernel_status('environment_required', True)`."
 
         # check that the environment contains the region provided
         contained = environment.contains(culture)
@@ -203,8 +202,8 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
         rnd_pos = True
 
     if not params:
-        params = GetDefaultParameters("neuron", settables=True)
-        params.update(GetDefaultParameters(params["growth_cone_model"],
+        params = get_default_parameters("neuron", settables=True)
+        params.update(get_default_parameters(params["growth_cone_model"],
                                            settables=True))
         if culture is None:
             if n == 1:
@@ -288,9 +287,9 @@ def CreateNeurons(n=1, params=None, axon_params=None, dendrites_params=None,
         return gids
 
 
-def CreateRecorders(targets, observables, sampling_intervals=None,
-                    start_times=None, end_times=None, levels="auto",
-                    restrict_to=None, record_to="memory", buffer_size=100):
+def create_recorders(targets, observables, sampling_intervals=None,
+                     start_times=None, end_times=None, levels="auto",
+                     restrict_to=None, record_to="memory", buffer_size=100):
     '''
     Create recorders to monitor the state of target neurons in the environment.
     One recorder is created on each thread containing target neurons for every
@@ -345,7 +344,7 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
         size_t num_obj, num_created, num_obs
 
     # get initial number of objects
-    num_obj = get_num_objects()
+    num_obj = get_num_objects_()
 
     # switch targets and observables to lists
     targets     = list(targets) if nonstring_container(targets) else [targets]
@@ -375,7 +374,7 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
                              buffer_size=buffer_size[i])
         obj_params.push_back(status)
 
-    num_created = create_objects(b"recorder", obj_params)
+    num_created = create_objects_(b"recorder", obj_params)
 
     assert num_created >= num_obs, "Wrong number of recorders created, " +\
                                    "this is an internal error, please file " +\
@@ -384,7 +383,7 @@ def CreateRecorders(targets, observables, sampling_intervals=None,
     return tuple([num_obj + i for i in range(num_created)])
 
 
-def GenerateModel(elongation_type, steering_method, direction_selection):
+def generate_model(elongation_type, steering_method, direction_selection):
     '''
     Returns a Model object giving the method to use for each of the three main
     properties:
@@ -416,9 +415,9 @@ def GenerateModel(elongation_type, steering_method, direction_selection):
 
     For more information on the models, see :ref:`pymodels`.
     '''
-    etypes = [_to_string(et) for et in get_elongation_types()]
-    stypes = [_to_string(st) for st in get_steering_methods()]
-    dtypes = [_to_string(dt) for dt in get_direction_selection_methods()]
+    etypes = [_to_string(et) for et in get_elongation_types_()]
+    stypes = [_to_string(st) for st in get_steering_methods_()]
+    dtypes = [_to_string(dt) for dt in get_direction_selection_methods_()]
 
     assert elongation_type in etypes, \
         "Invalid `elongation_type` " + elongation_type + "."
@@ -432,19 +431,20 @@ def GenerateModel(elongation_type, steering_method, direction_selection):
     return Model(elongation_type, steering_method, direction_selection)
 
 
-def GenerateSimulationID(*args):
+def generate_simulation_id(*args):
     '''
     Generate the Hash from the elements passed and add date and time of the
     kernel initialization.
     '''
-    hash_ = HashID(*args)
+    from .io import generate_hash_id
+    hash_ = generate_hash_id(*args)
     now_  = datetime.datetime.now()
     return now_.strftime("%Y%h%d_%H:%M_") + hash_ + "_DeNSESim"
 
 
-def GetEnvironment():
+def get_environment():
     '''
-    Return the environment as a :class:`~dense.geometry.Shape` object.
+    Return the environment as a :class:`~dense.environment.Shape` object.
     '''
     from shapely.geometry.base import geom_factory
 
@@ -456,7 +456,7 @@ def GetEnvironment():
         vector[string] names
         vector[unordered_map[string, double]] properties
 
-    get_environment(geos_geom, c_areas, heights, names, properties)
+    get_environment_(geos_geom, c_areas, heights, names, properties)
 
     if geos_geom == NULL:
         return None
@@ -466,7 +466,7 @@ def GetEnvironment():
     default_properties = {}
     if heights.size():
         try:
-            from .geometry import Area
+            from .environment import Area
             for i in range(c_areas.size()):
                 pygeos_geom = <uintptr_t>c_areas[i]
                 shapely_object = geom_factory(pygeos_geom)
@@ -500,7 +500,7 @@ def GetEnvironment():
     return env
 
 
-def GetKernelStatus(property_name=None):
+def get_kernel_status(property_name=None):
     '''
     Get the configuration properties.
 
@@ -517,7 +517,7 @@ def GetKernelStatus(property_name=None):
         or a dictionary containing the full configuration.
     '''
     cdef:
-        statusMap c_status = get_kernel_status()
+        statusMap c_status = get_kernel_status_()
     if property_name is None:
         return _statusMap_to_dict(c_status, with_time=True)
     elif property_name == "time":
@@ -531,19 +531,19 @@ def GetKernelStatus(property_name=None):
         return _property_to_val(c_status[property_name])
 
 
-def GetSimulationID():
+def get_simulation_id():
     '''
     Get the identifier for the simulation
     '''
     cdef:
-        string c_simulation_ID
-    c_simulation_ID = get_simulation_ID()
+        string c_simulation_id
+    c_simulation_id = get_simulation_id_()
 
-    return _to_string(c_simulation_ID)
+    return _to_string(c_simulation_id)
 
 
-def GetStatus(gids, property_name=None, level=None, neurite=None,
-              time_units="hours", return_iterable=False):
+def get_object_status(gids, property_name=None, level=None, neurite=None,
+                      time_units="hours", return_iterable=False):
     '''
     Get the object's properties.
 
@@ -595,7 +595,7 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
         #creates a vector of size 1
         gids = vector[size_t](1, <size_t>gids)
     for gid in gids:
-        if GetObjectType(gid) == "neuron":
+        if get_object_type(gid) == "neuron":
             # get level
             if level is None and neurite is None:
                 clevel = _to_bytes("neuron")
@@ -610,14 +610,14 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
                 if neurite is None:
                     neurite = _get_neurites(gid)[0]
                 cneurite    = _to_bytes(neurite)
-                c_status    = get_neurite_status(gid, cneurite, clevel)
+                c_status    = get_neurite_status_(gid, cneurite, clevel)
                 status[gid] = _statusMap_to_dict(c_status)
             elif neurite == "dendrites":
                 cneurite    = _to_bytes("dendrites")
-                c_status    = get_neurite_status(gid, cneurite, clevel)
+                c_status    = get_neurite_status_(gid, cneurite, clevel)
                 status[gid] = _statusMap_to_dict(c_status)
             else:
-                c_status      = get_status(gid)
+                c_status      = get_status_(gid)
                 neuron_status = _statusMap_to_dict(c_status)
 
                 x_mag = neuron_status["x"].magnitude
@@ -628,21 +628,21 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
                 del neuron_status["y"]
 
                 neuron_status["position"] = tuple(pos)
-                num_neurites = get_neurites(gid).size()
+                num_neurites = get_neurites_(gid).size()
                 nlevel       = _to_bytes("neurite")
 
                 if neuron_status["has_axon"] and num_neurites:
                     neuron_status["axon_params"] = _statusMap_to_dict(
-                        get_neurite_status(gid, b"axon", nlevel))
+                        get_neurite_status_(gid, b"axon", nlevel))
 
                 if ((not neuron_status["has_axon"] and num_neurites)
                     or num_neurites > 1):
                     neuron_status["dendrites_params"] = _statusMap_to_dict(
-                        get_neurite_status(gid, b"dendrites", nlevel))
+                        get_neurite_status_(gid, b"dendrites", nlevel))
 
                 status[gid] = neuron_status
-        elif GetObjectType(gid) == "recorder":
-            c_status = get_status(gid)
+        elif get_object_type(gid) == "recorder":
+            c_status = get_status_(gid)
             rec_status = _statusMap_to_dict(c_status)
             status[gid] = rec_status
         else:
@@ -660,7 +660,7 @@ def GetStatus(gids, property_name=None, level=None, neurite=None,
         return status
 
 
-def GetState(gids, variable, level="neuron"):
+def get_object_state(gids, variable, level="neuron"):
     '''
     Return the state of a neuron or neurite at the current time.
 
@@ -688,11 +688,11 @@ def GetState(gids, variable, level="neuron"):
         #creates a vector of size 1
         gids = vector[size_t](1, <size_t>gids)
     for gid in gids:
-        if GetObjectType(gid) == "neuron":
+        if get_object_type(gid) == "neuron":
             if not (level == "neuron" or is_neurite(gid, clevel)):
                 raise RuntimeError(
                     "`level` must be 'neuron' or a valid neurite.")
-            state.append(get_state(gid, clevel, cvar))
+            state.append(get_state_(gid, clevel, cvar))
         else:
             raise RuntimeError("Only neuron state can be queried.")
 
@@ -702,22 +702,22 @@ def GetState(gids, variable, level="neuron"):
         return np.array(state)
 
 
-def GetObjectType(gid):
+def get_object_type(gid):
     ''' Return the type of the object. '''
-    return _to_string(object_type(gid))
+    return _to_string(object_type_(gid))
 
 
-def GetNeurons(as_ints=False):
+def get_neurons(as_ints=False):
     ''' Return the neuron ids. '''
     if as_ints:
-        return np.array(get_neurons(), dtype=int)
+        return np.array(get_neurons_(), dtype=int)
     else:
-        from .structure import Population
-        return Population.from_gids(get_neurons())
+        from .elements import Population
+        return Population.from_gids(get_neurons_())
 
 
-def GetDefaultParameters(obj, property_name=None, settables_only=True,
-                         detailed=False):
+def get_default_parameters(obj, property_name=None, settables_only=True,
+                           detailed=False):
     '''
     Returns the default status of an object.
 
@@ -726,7 +726,7 @@ def GetDefaultParameters(obj, property_name=None, settables_only=True,
     obj : :obj:`str` or :class:`Model`.
         Name of the object, among "recorder", "neuron", "neurite", or
         "growth_cone", or a model, either as a string (e.g. "cst_rw_wrc") or
-        as a :class:`Model` object returned by :func:`GenerateModel`.
+        as a :class:`Model` object returned by :func:`generate_model`.
     property_name : str, optional (default: None)
         Name of the property that should be queried. By default, the full
         dictionary is returned.
@@ -746,7 +746,7 @@ def GetDefaultParameters(obj, property_name=None, settables_only=True,
         string ctype, cname
         statusMap default_params
 
-    gc_models = GetModels("growth_cones")
+    gc_models = get_models("growth_cones")
 
     if obj in gc_models.values():
         obj = "{}_{}_{}".format(obj.elongation_type, obj.steering_method,
@@ -765,9 +765,9 @@ def GetDefaultParameters(obj, property_name=None, settables_only=True,
     else:
         raise RuntimeError("Unknown object : '" + obj + "'. "
                            "Candidates are 'recorder' and all entries in "
-                           "GetModels.")
+                           "get_models.")
 
-    get_defaults(cname, ctype, b"default", detailed, default_params)
+    get_defaults_(cname, ctype, b"default", detailed, default_params)
     status = _statusMap_to_dict(default_params)
 
     py_type = _to_string(ctype)
@@ -787,7 +787,7 @@ def GetDefaultParameters(obj, property_name=None, settables_only=True,
     return status[property_name]
 
 
-def GetModels(abbrev=True):
+def get_models(abbrev=True):
     '''
     Get available models for an object type.
 
@@ -804,12 +804,12 @@ def GetModels(abbrev=True):
 
     See also
     --------
-    :func:`~dense.GenerateModel`.
+    :func:`~dense.generate_model`.
     '''
     cdef:
         unordered_map[string, string] cmodels
 
-    get_models(cmodels, abbrev)
+    get_models_(cmodels, abbrev)
 
     models = {}
 
@@ -820,7 +820,7 @@ def GetModels(abbrev=True):
     return models
 
 
-def GetRecording(recorder, record_format="detailed"):
+def get_recording(recorder, record_format="detailed"):
     '''
     Return the recorded data.
 
@@ -841,13 +841,13 @@ def GetRecording(recorder, record_format="detailed"):
 
     At neurite level:
 
-    >>> GetRecording(rec)
+    >>> get_recording(rec)
     >>> {observable: {
     >>>     neuron0: {"axon": [...], "dendrite1": [...], ...},
     >>>     neuron1: {"axon": [...], "dendrite1": [...], ...}, ...},
     >>>  "times": [...]}
 
-    >>> GetRecording(rec, "compact")
+    >>> get_recording(rec, "compact")
     >>> {observable: {
     >>>     "data": {
     >>>         (neuron0, "axon"): [...],
@@ -862,7 +862,7 @@ def GetRecording(recorder, record_format="detailed"):
         recorder = [recorder]
 
     for rec in recorder:
-        rec_status = GetStatus(rec)
+        rec_status = get_object_status(rec)
 
         observable = rec_status["observable"]
         level      = rec_status["level"]
@@ -933,39 +933,12 @@ def GetRecording(recorder, record_format="detailed"):
     return recording
 
 
-def NeuronToSWC(filename, gid=None, resolution=10):
-    '''
-    Save neurons to SWC file.
-
-    Parameters
-    ----------
-    filename : str
-        Name of the SWC to write.
-    gid : int or list of ints
-        Neurons to save.
-    resolution : int, optional (default: 10)
-        Coarse-graining factor of the structure: only one point every
-        `resolution` will be kept.
-    '''
-    cdef:
-        string cfname = _to_bytes(filename)
-        vector[size_t] gids
-    if gid is None:
-        gids = get_neurons()
-    elif isinstance(gid, int):
-        gids = vector[size_t](1, <size_t>gid)
-    else:
-        for n in gid:
-            gids.push_back(<size_t>n)
-    get_swc(cfname, gids, resolution)
-
-
-def ResetKernel():
+def reset_kernel():
     ''' Reset the whole simulator. '''
-    reset_kernel()
+    reset_kernel_()
 
 
-def SetEnvironment(culture, min_x=None, max_x=None, unit='um',
+def set_environment(culture, min_x=None, max_x=None, unit='um',
                    parent=None, interpolate_curve=50,
                    internal_shapes_as="holes", default_properties=None,
                    other_properties=None):
@@ -974,9 +947,9 @@ def SetEnvironment(culture, min_x=None, max_x=None, unit='um',
 
     Parameters
     ----------
-    culture : str or :class:`~dense.geometry.Shape`
+    culture : str or :class:`~dense.environment.Shape`
         Path to an SVG or DXF file containing the culture model, or directly
-        a :class:`~dense.geometry.Shape` object.
+        a :class:`~dense.environment.Shape` object.
     unit : str, optional (default: 'um')
         Set the unit of the culture's dimensions.
         Default is micrometers ('um').
@@ -1001,26 +974,26 @@ def SetEnvironment(culture, min_x=None, max_x=None, unit='um',
 
     Returns
     -------
-    culture : :class:`~dense.geometry.Shape`
+    culture : :class:`~dense.environment.Shape`
 
     Note
     ----
     The `internal_shapes_as`, `default_properties`, and `other_properties`
     keyword arguments are only used if `culture` refers to a file which will
-    be loaded through :func:`~dense.geometry.culture_from_file`.
+    be loaded through :func:`~dense.environment.culture_from_file`.
     """
     # make sure that, if neurons exist, their growth cones are not using the
     # `simple_random_walk` model, which is not compatible.
-    neurons = GetNeurons()
+    neurons = get_neurons()
 
     if neurons:
         for n in neurons:
-            assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
+            assert get_object_status_(n, "growth_cone_model") != "simple_random_walk", \
                 "The `simple_random_walk` model, is not compatible with " +\
                 "complex environments."
 
     if is_string(culture):
-        from .geometry import culture_from_file
+        from .environment import culture_from_file
         culture = culture_from_file(
             culture, min_x=min_x, max_x=max_x, unit=unit,
             interpolate_curve=interpolate_curve,
@@ -1045,14 +1018,14 @@ def SetEnvironment(culture, min_x=None, max_x=None, unit='um',
 
     geos_geom = geos_from_shapely(culture)
 
-    set_environment(geos_geom, c_areas, heights, names, properties)
+    set_environment_(geos_geom, c_areas, heights, names, properties)
 
     culture._return_quantity = True
 
     return culture
 
 
-def SetKernelStatus(status, value=None, simulation_ID=None):
+def set_kernel_status(status, value=None, simulation_id=None):
     '''
     Set the simulator's configuration.
 
@@ -1062,9 +1035,9 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         Dictionary containing the configuration options.
     value : object, optional (default: None)
         Used to set a single value.
-    simulation_ID: str
+    simulation_id: str
         Unique identifier of the simulation, generally
-        simulation_ID = Hash(kernel_status, axon_params, dend_params)
+        simulation_id = Hash(kernel_status, axon_params, dend_params)
 
     Note
     ----
@@ -1080,27 +1053,27 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
       generators (one per processus, total number needs to be the
       same as `num_virtual_processes`)
     '''
-    if simulation_ID is None:
-        simulation_ID = "defaultID"
+    if simulation_id is None:
+        simulation_id = "defaultID"
     cdef:
-        statusMap c_status_old = get_kernel_status()
+        statusMap c_status_old = get_kernel_status_()
         statusMap c_status
         Property c_prop
-        string c_simulation_ID = _to_bytes(simulation_ID)
+        string c_simulation_id = _to_bytes(simulation_id)
 
     internal_status = deepcopy(status)
 
     if value is not None:
         assert is_string(status), "When using `value`, status must be the " +\
             "name of the kernel property that will be set."
-        assert status in GetKernelStatus(), "`" + status + "` option unknown."
+        assert status in get_kernel_status(), "`" + status + "` option unknown."
         if status == "environment_required" and value is True:
             # make sure that, if neurons exist, their growth cones are not using
             # the `simple_random_walk` model, which is not compatible.
-            neurons = GetNeurons()
+            neurons = get_neurons()
             if neurons:
                 for n in neurons:
-                    assert GetStatus(
+                    assert get_object_status(
                         n, "growth_cone_model") != "simple_random_walk", \
                         "The `simple_random_walk` model, is not compatible " +\
                         "with complex environments."
@@ -1113,7 +1086,7 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         c_status.insert(pair[string, Property](key, c_prop))
     else:
         for key, value in internal_status.items():
-            assert key in GetKernelStatus(), \
+            assert key in get_kernel_status(), \
                 "`" + key + "` option unknown."
             if key == "resolution":
                 assert isinstance(value, ureg.Quantity), \
@@ -1123,10 +1096,10 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
         if internal_status.get("environment_required", False):
             # make sure that, if neurons exist, their growth cones are not using
             # the `simple_random_walk` model, which is not compatible.
-            neurons = GetNeurons()
+            neurons = get_neurons()
             if neurons:
                 for n in neurons:
-                    assert GetStatus(n, "growth_cone_model") != "simple_random_walk", \
+                    assert get_object_status(n, "growth_cone_model") != "simple_random_walk", \
                         "The `simple_random_walk` model, is not compatible with " +\
                         "complex environments."
 
@@ -1138,10 +1111,11 @@ def SetKernelStatus(status, value=None, simulation_ID=None):
             c_prop = _to_property(key, value)
             c_status.insert(pair[string, Property](key, c_prop))
 
-    set_kernel_status(c_status, c_simulation_ID)
+    set_kernel_status_(c_status, c_simulation_id)
 
 
-def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
+def set_object_status(gids, params=None, axon_params=None,
+                      dendrites_params=None):
     '''
     Update the status of the objects indexes by `gids` using the parameters
     contained in `params`.
@@ -1184,40 +1158,40 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
     # check parameters
     if it_a and it_d:
         for gid, p, p_a, p_d in zip(gids, it_p, it_a, it_d):
-            object_name  = GetObjectType(gid)
+            object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
             _check_params(p, object_name)
 
-            astat        = GetStatus(gid, neurite="axon")
+            astat        = get_object_status(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_a, "neurite", gc_model=gc_model)
 
-            dstat        = GetStatus(gid, neurite="dendrites")
+            dstat        = get_object_status(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_d, "neurite", gc_model=gc_model)
     elif it_a:
         for gid, p, p_a in zip(gids, it_p, it_a):
-            object_name  = GetObjectType(gid)
+            object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            astat        = GetStatus(gid, neurite="axon")
+            astat        = get_object_status(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
             _check_params(p_a, "neurite", gc_model=gc_model)
     elif it_d:
         for gid, p, p_d in zip(gids, it_p, it_d):
-            object_name  = GetObjectType(gid)
+            object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            dstat        = GetStatus(gid, neurite="dendrites")
+            dstat        = get_object_status(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
             _check_params(p_d, "neurite", gc_model=gc_model)
     else:
         for gid, p in zip(gids, it_p):
-            object_name = GetObjectType(gid)
+            object_name = get_object_type(gid)
             _check_params(p, object_name)
 
     cdef:
@@ -1248,13 +1222,13 @@ def SetStatus(gids, params=None, axon_params=None, dendrites_params=None):
                 dendrites_statuses[i][_to_bytes(k)] = _to_property(k, v)
 
     for i, neuron in enumerate(gids):
-        set_status(neuron, neuron_statuses[i], axon_statuses[i],
-                   dendrites_statuses[i])
+        set_status_(neuron, neuron_statuses[i], axon_statuses[i],
+                    dendrites_statuses[i])
 
 
-def Simulate(time, force_resol=False):
+def simulate(time, force_resol=False):
     '''
-    Simulate the growth of a culture.
+    simulate the growth of a culture.
 
     Parameters
     ----------
@@ -1263,12 +1237,12 @@ def Simulate(time, force_resol=False):
 
     Notes
     -----
-    All parameters are added, i.e. ``dense.Simulate(25.4, 2)`` will lead
+    All parameters are added, i.e. ``dense.simulate(25.4, 2)`` will lead
     to a 145.4-second long simulation.
     '''
     assert is_quantity(time), "`time` must have units."
 
-    kernel_status = GetKernelStatus()
+    kernel_status = get_kernel_status()
     max_resol     = kernel_status["max_allowed_resolution"]
     if kernel_status["resolution"] > max_resol and not force_resol:
         raise RuntimeError(
@@ -1284,7 +1258,7 @@ def Simulate(time, force_resol=False):
     # initialize the Time instance
     cdef CTime simtime = CTime(s, m, h, d)
     # launch simulation
-    simulate(simtime)
+    simulate_(simtime)
 
 
 def test_random_gen(size=10000):
@@ -1296,12 +1270,11 @@ def test_random_gen(size=10000):
     -------
     List of floats
     """
-
     cdef:
         vector[vector[double]] c_values
         size_t size_c = size
 
-    test_random_generator(c_values, size_c)
+    test_random_generator_(c_values, size_c)
 
     return c_values
 
@@ -1312,7 +1285,7 @@ def test_random_gen(size=10000):
 
 def _get_neurites(gid):
     ''' Return a list of strings with the neurite names for neuron `gid` '''
-    return [_to_string(s) for s in get_neurites(gid)]
+    return [_to_string(s) for s in get_neurites_(gid)]
 
 
 def _get_branches_data(gid, neurite, start_point=0):
@@ -1343,9 +1316,12 @@ def _get_branches_data(gid, neurite, start_point=0):
         vector[int] parents
         vector[size_t] nodes
         size_t cgid = int(gid)
+
     cneurite = _to_bytes(neurite)
-    get_branches_data(
+
+    get_branches_data_(
         cgid, cneurite, points, diameters, parents, nodes, start_point)
+
     return points, diameters, parents, nodes
 
 
@@ -1365,7 +1341,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
         statusMap base_neuron_status, base_axon_status, base_dendrites_status
         string description
 
-    num_objects = get_num_objects()
+    num_objects = get_num_objects_()
     # neuronal parameters (make default statusMap with scalar values which are
     # the same for all neurons)
     base_neuron_status = _get_scalar_status(params, n)
@@ -1403,7 +1379,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
                 _to_property("num_neurites", num_neurites)
 
     # create neurons
-    i = create_neurons(neuron_params, axon_params, dendrites_params)
+    i = create_neurons_(neuron_params, axon_params, dendrites_params)
 
     assert i == n, "Internal error: please file a bug report including a " \
                    "minimal working example leading to the bug and the full " \
@@ -1412,7 +1388,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     if return_ints:
         return tuple(i for i in range(num_objects, num_objects + n))
     else:
-        from .structure import Neuron, Population
+        from .elements import Neuron, Population
         neurons = []
         for i in range(n):
             pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
@@ -1452,16 +1428,19 @@ def _get_pyskeleton(gid, unsigned int resolution=10):
         gids = get_neurons()
     elif isinstance(gid, (int, np.integer)):
         # creates a vector of size 1
-        assert is_neuron(gid) == "neuron", \
+        assert is_neuron_(gid) == "neuron", \
             "GID `{}` is not a neuron.".format(gid)
         gids =  vector[size_t](1, <size_t>gid)
     elif nonstring_container(gid):
         for n in gid:
-            assert is_neuron(n), "GID `{}` is not a neuron.".format(n)
+            assert is_neuron_(n), "GID `{}` is not a neuron.".format(n)
             gids.push_back(<size_t>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
-    get_skeleton(axons, dendrites, nodes, growth_cones, somas, gids, resolution)
+
+    get_skeleton_(axons, dendrites, nodes, growth_cones, somas, gids,
+                  resolution)
+
     py_axons        = (axons.first, axons.second)
     py_dendrites    = (dendrites.first, dendrites.second)
     py_growth_cones = (growth_cones.first, growth_cones.second)
@@ -1503,16 +1482,16 @@ def _get_geom_skeleton(gid):
         gids = get_neurons()
     elif isinstance(gid, (int, np.integer)):
         # creates a vector of size 1
-        assert is_neuron(gid) == "neuron", \
+        assert is_neuron_(gid) == "neuron", \
             "GID `{}` is not a neuron.".format(gid)
         gids =  vector[size_t](1, <size_t>gid)
     elif nonstring_container(gid):
         for n in gid:
-            assert is_neuron(n), "GID `{}` is not a neuron.".format(n)
+            assert is_neuron_(n), "GID `{}` is not a neuron.".format(n)
             gids.push_back(<size_t>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
-    get_geom_skeleton(gids, axons, dendrites, somas)
+    get_geom_skeleton_(gids, axons, dendrites, somas)
 
     py_axons, py_dendrites = [], []
 
@@ -1529,12 +1508,39 @@ def _get_geom_skeleton(gid):
     return py_axons, py_dendrites, np.array(somas).T
 
 
+def _neuron_to_swc(filename, gid=None, resolution=10):
+    '''
+    Save neurons to SWC file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the SWC to write.
+    gid : int or list of ints
+        Neurons to save.
+    resolution : int, optional (default: 10)
+        Coarse-graining factor of the structure: only one point every
+        `resolution` will be kept.
+    '''
+    cdef:
+        string cfname = _to_bytes(filename)
+        vector[size_t] gids
+    if gid is None:
+        gids = get_neurons_()
+    elif isinstance(gid, int):
+        gids = vector[size_t](1, <size_t>gid)
+    else:
+        for n in gid:
+            gids.push_back(<size_t>n)
+    get_swc_(cfname, gids, resolution)
+
+
 def _get_tree(neuron, neurite):
     '''
     Return a tree describing a neurite.
     '''
-    from .structure import Node, Tree
-    pos  = GetStatus(neuron, property_name="position")
+    from .elements import Node, Tree
+    pos  = get_object_status(neuron, property_name="position")
     tree = Tree(neuron, neurite)
 
     keep_going = True
@@ -1544,7 +1550,7 @@ def _get_tree(neuron, neurite):
         string cneurite = _to_bytes(neurite)
 
     while keep_going:
-        keep_going = walk_neurite_tree(neuron, cneurite, nprop)
+        keep_going = walk_neurite_tree_(neuron, cneurite, nprop)
 
         node      = Node(nprop.n_id, tree, parent=nprop.p_id,
                          diameter=nprop.diameter,
@@ -1784,7 +1790,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
     level      = rec_status["level"]
     ev_type    = rec_status["event_type"]
     observable = rec_status["observable"]
-    resolution = GetKernelStatus("resolution").m_as("minute")
+    resolution = get_kernel_status("resolution").m_as("minute")
 
     res_obs   = {}    # data for the observable
     res_times = None  # times (only one if "continuous", else dict)
@@ -1794,18 +1800,18 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
     # get the recording
     if level == "neuron":
         if ev_type == "continuous":
-            get_next_time(gid, time_ids, times, time_units)
+            get_next_time_(gid, time_ids, times, time_units)
             res_times = np.linspace(
                 times[0]*resolution, times[1]*resolution, int(times[2]))
         else:
             res_times = {}
         while do_next:
-            do_next = get_next_recording(gid, data_ids, data)
+            do_next = get_next_recording_(gid, data_ids, data)
             if data_ids.size() > 0:
                 neuron = data_ids[0].ul
                 res_obs[neuron] = data
                 if ev_type == "discrete":
-                    get_next_time(gid, time_ids, times, time_units)
+                    get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron] = times
                     assert neuron == int(time_ids[0].ul), "Internal error!"
             # clear data
@@ -1815,13 +1821,13 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
             times.clear()
     elif level == "neurite":
         if ev_type == "continuous":
-            get_next_time(gid, time_ids, times, time_units)
+            get_next_time_(gid, time_ids, times, time_units)
             res_times = np.linspace(
                 times[0]*resolution, times[1]*resolution, int(times[2]))
         else:
             res_times = {}
         while do_next:
-            do_next = get_next_recording(gid, data_ids, data)
+            do_next = get_next_recording_(gid, data_ids, data)
             if data_ids.size() > 0:
                 # get ids and initialize data
                 neuron  = int(data_ids[0].ul)
@@ -1833,7 +1839,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 # set data
                 res_obs[neuron][neurite] = data
                 if ev_type == "discrete":
-                    get_next_time(gid, time_ids, times, time_units)
+                    get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron][neurite] = times
                     assert neuron  == int(time_ids[0].ul), "Internal error!"
                     assert neurite == _to_string(time_ids[1].s), "Internal error!"
@@ -1845,13 +1851,13 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
     elif level == "growth_cone":
         res_times = {}
         while do_next:
-            do_next          = get_next_recording(gid, data_ids, data)
+            do_next = get_next_recording_(gid, data_ids, data)
             if data_ids.size() > 0:
                 # get ids and check them
                 neuron           = int(data_ids[0].ul)
                 neurite          = _to_string(data_ids[1].s)
                 gc               = int(data_ids[2].ul)
-                get_next_time(gid, time_ids, times, _to_bytes(time_units))
+                get_next_time_(gid, time_ids, times, _to_bytes(time_units))
                 assert neuron   == int(time_ids[0].ul), "Internal error!"
                 assert neurite  == _to_string(time_ids[1].s), "Internal error!"
                 assert gc       == int(time_ids[2].ul), "Internal error!"
@@ -1938,7 +1944,7 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                                                        len(buffer_size))
 
     # check validity of sampling intervals
-    resol = GetKernelStatus("resolution")
+    resol = get_kernel_status("resolution")
     for interval in sampling_intervals:
         if interval is not None:
             c_time = CTime(interval.second, interval.minute, interval.hour,
@@ -1959,15 +1965,15 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 # we work at neurite or gc level
                 if level == "auto":
                     for new_lvl in ("neurite", "growth_cone"):
-                        valid_obs = GetStatus(n, "observables", neurite=rt,
-                                              level=new_lvl)
+                        valid_obs = get_object_status(
+                            n, "observables", neurite=rt, level=new_lvl)
                         if obs in valid_obs:
                             pos_auto.append(i)
                             new_level.append(new_lvl)
                             break
                 else:
-                    valid_obs = GetStatus(n, "observables", neurite=rt,
-                                          level=level)
+                    valid_obs = get_object_status(n, "observables", neurite=rt,
+                                                  level=level)
                     if obs not in valid_obs:
                         raise RuntimeError(
                             "Valid observables for neurite `"
@@ -1981,19 +1987,22 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                         neurites =  _get_neurites(n)
                         if "axon" in neurites:
                             valid_obs  = set(
-                                GetStatus(n, "observables", neurite="axon",
-                                          level=new_lvl))
+                                get_object_status(n, "observables",
+                                                  neurite="axon",
+                                                  level=new_lvl))
                             neurites = [nrt for nrt in neurites if nrt != "axon"]
                             if neurites:
                                 valid_obs = valid_obs.intersection(
-                                    GetStatus(n, "observables",
-                                        neurite="dendrites", level=new_lvl))
+                                    get_object_status(
+                                        n, "observables", neurite="dendrites",
+                                        level=new_lvl))
                         elif neurites:
-                            valid_obs = GetStatus(n, "observables",
-                                                  neurite="dendrites",
-                                                  level=new_lvl)
+                            valid_obs = get_object_status(
+                                n, "observables", neurite="dendrites",
+                                level=new_lvl)
                     else:
-                        valid_obs = GetStatus(n, "observables", level=new_lvl)
+                        valid_obs = get_object_status(n, "observables",
+                                                      level=new_lvl)
                     if obs in valid_obs:
                         pos_auto.append(i)
                         new_level.append(new_lvl)
@@ -2003,22 +2012,22 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 neurites  =  _get_neurites(n)
                 if "axon" in neurites:
                     valid_obs  = set(
-                        GetStatus(n, "observables", neurite="axon",
-                                  level=level))
+                        get_object_status(n, "observables", neurite="axon",
+                                          level=level))
                     neurites = [nrt for nrt in neurites if nrt != "axon"]
                     if neurites:
-                        valid_obs = valid_obs.intersection(GetStatus(
+                        valid_obs = valid_obs.intersection(get_object_status(
                             n, "observables", neurite="dendrites",
                             level=level))
                 elif neurites:
-                    valid_obs = GetStatus(n, "observables",
-                                          neurite="dendrites",
-                                          level=level)
+                    valid_obs = get_object_status(n, "observables",
+                                                  neurite="dendrites",
+                                                  level=level)
                 if obs not in valid_obs:
                     raise RuntimeError("Valid observables at level `"
                                        "{}` are {}".format(level, valid_obs))
             else:
-                if obs not in GetStatus(n, "observables", level=level):
+                if obs not in get_object_status(n, "observables", level=level):
                     valid_lvl = []
                     for k, v in valid_levels.items():
                         if obs in v:
@@ -2041,7 +2050,7 @@ def _check_neurons_targets(targets):
     invalid_neurons = []
 
     for n in targets:
-        if GetObjectType(n) != "neuron":
+        if get_object_type(n) != "neuron":
             invalid_neurons.append(n)
 
     if invalid_neurons:
@@ -2055,11 +2064,11 @@ cdef void _set_recorder_status(
     '''
     Convert the arguments into the statusMap for the recorder.
     '''
-    status[b"targets"]    = _to_property("targets", targets)
-    status[b"observable"] = _to_property("observable", observable)
-    status[b"level"]      = _to_property("level", level)
-    status[b"event_type"] = _to_property("event_type", ev_type[observable])
-    status[b"record_to"] = _to_property("record_to", record_to)
+    status[b"targets"]     = _to_property("targets", targets)
+    status[b"observable"]  = _to_property("observable", observable)
+    status[b"level"]       = _to_property("level", level)
+    status[b"event_type"]  = _to_property("event_type", ev_type[observable])
+    status[b"record_to"]   = _to_property("record_to", record_to)
     status[b"buffer_size"] = _to_property("buffer_size", buffer_size)
     if sampling_interval is not None:
         status[b"sampling_interval"] = _to_property(
@@ -2076,8 +2085,9 @@ def _check_params(params, object_name, gc_model=None):
     '''
     Check the types and validity of the parameters passed.
     '''
-    gc_model = _to_string(get_default_model()) if gc_model is None else gc_model
-    assert gc_model in GetModels(), "Unknown growth cone `" + gc_model + "`."
+    gc_model = \
+        _to_string(get_default_model_()) if gc_model is None else gc_model
+    assert gc_model in get_models(), "Unknown growth cone `" + gc_model + "`."
 
     cdef:
         string ctype
@@ -2086,7 +2096,7 @@ def _check_params(params, object_name, gc_model=None):
         statusMap default_params
         Property prop
 
-    if object_name in GetModels("growth_cones"):
+    if object_name in get_models("growth_cones"):
         ctype = _to_bytes("growth_cone")
     elif object_name == "neuron":
         ctype = _to_bytes("neuron")
@@ -2097,16 +2107,16 @@ def _check_params(params, object_name, gc_model=None):
     else:
         raise RuntimeError("Unknown object : '" + object_name + "'. "
                            "Candidates are 'recorder' and all entries in "
-                           "GetModels.")
+                           "get_models.")
 
-    get_defaults(cname, ctype, cgcmodel, True, default_params)
+    get_defaults_(cname, ctype, cgcmodel, True, default_params)
     py_defaults = _statusMap_to_dict(default_params)
 
     if ("growth_cone_model" in params):
-        get_defaults(_to_bytes(params["growth_cone_model"]),
-                     _to_bytes("growth_cone"),
-                     _to_bytes(params["growth_cone_model"]), False,
-                     default_params)
+        get_defaults_(_to_bytes(params["growth_cone_model"]),
+                      _to_bytes("growth_cone"),
+                      _to_bytes(params["growth_cone_model"]), False,
+                      default_params)
 
     py_defaults = _statusMap_to_dict(default_params)
 

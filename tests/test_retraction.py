@@ -48,15 +48,15 @@ lengths = []
 
 for k, resol in enumerate(resolutions):
     np.random.seed(1)
-    ds.ResetKernel()
-    ds.SetKernelStatus({
+    ds.reset_kernel()
+    ds.get_kernel_status({
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i+1 for i in range(num_omp)],
         "wall_area_width": 5.,
     })
 
-    ds.SetEnvironment(shape)
+    ds.set_environment(shape)
 
     params = {
         "sensing_angle": 0.04,
@@ -69,10 +69,10 @@ for k, resol in enumerate(resolutions):
         # ~ "filopodia_wall_affinity": 10./resol,
     }
 
-    gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
-    ds.Simulate(simtime)
-    ds.PlotNeuron(show=False, title="Resolution: {}".format(resol))
+    ds.simulate(simtime)
+    ds.plot_neurons(show=False, title="Resolution: {}".format(resol))
 
     lengths.append(neurite_length(gids))
 

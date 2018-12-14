@@ -5,13 +5,13 @@ import os
 
 import numpy as np
 
-from . import _pygrowth as _pg
+from .. import _pygrowth as _pg
 from .dataIO import ImportRecordFile
 
 
 def GrowthConeDynamicsAnalyzer(record_file_="default"):
     if record_file_=="default":
-        record_file_ = os.path.join(_pg.GetSimulationID(),"/record.dat")
+        record_file_ = os.path.join(_pg.get_simulation_id(),"/record.dat")
     events,steps = ImportRecordFile(record_file_)
     gc_list = _step_data_array(steps)
     plot_dynamic_data(gc_list)

@@ -5,17 +5,18 @@ import numpy as np
 
 from shapely.errors import TopologicalError
 
-from . import _pygrowth as _pg
-from .structure import NeuronStructure, Population
+from .. import _pygrowth as _pg
+from ..elements import Population
+from .neuron_shape import NeuronStructure
 
 
 __all__ = [
-    "CreateGraph"
+    "generate_network"
     "intersections",
 ]
 
 
-def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
+def generate_network(neurons=None, method="intersection", connection_proba=0.5,
                 **kwargs):
     """
     Create the graph.
@@ -57,7 +58,7 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
     population = None
 
     if neurons is None:
-        neurons    = _pg.GetNeurons()
+        neurons    = _pg.get_neurons()
 
     population  = Population.from_gids(neurons)
     num_neurons = len(neurons)
@@ -68,7 +69,7 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
     axons         = [neuron.axon for neuron in neurons]
     dendrites     = [neuron.dendrites for neuron in neurons]
 
-    shape = _pg.GetEnvironment()
+    shape = _pg.get_environment()
     unit = "micrometer" if shape is None else shape.unit
     positions     = np.array(
         [neuron.position.to(unit).magnitude for neuron in neurons])
@@ -91,7 +92,7 @@ def CreateGraph(neurons=None, method="intersection", connection_proba=0.5,
                          "'spine_based'.")
 
     # create the graph in nngt
-    shape = _pg.GetEnvironment()
+    shape = _pg.get_environment()
     graph = nngt.SpatialGraph(
         nodes=num_neurons, positions=positions, shape=shape)
 

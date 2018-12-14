@@ -3,6 +3,7 @@
 
 import os
 from os.path import join, isfile
+
 import numpy as np
 
 
@@ -14,11 +15,6 @@ __all__ = [
     "GetSWCStructure",
     "GetProperties",
 ]
-
-# #### to don't break things
-# class SwcEnsemble(Population):
-# def __init__(**kwargs):
-# Population.__init__(**kwargs)
 
 
 def ImportSwc(swc_file):

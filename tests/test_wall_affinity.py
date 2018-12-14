@@ -78,9 +78,9 @@ for k, resol in enumerate(resolutions):
     print("\nSimulating with resol {}\n".format(resol))
 
     np.random.seed(1)
-    ds.ResetKernel()
+    ds.reset_kernel()
 
-    ds.SetKernelStatus({
+    ds.get_kernel_status({
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i+1 for i in range(num_omp)],
@@ -89,7 +89,7 @@ for k, resol in enumerate(resolutions):
     # ~ width = resol*np.sin(sensing_angle*np.sqrt(resol))
     width = 50.
 
-    ds.SetEnvironment(shape)
+    ds.set_environment(shape)
 
     base_affinity = 10.
 
@@ -106,21 +106,21 @@ for k, resol in enumerate(resolutions):
         "growth_cone_model": "run_tumble",
     }
 
-    gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
     rec = None
     if with_obs:
-        rec  = ds.CreateRecorders(gids, observable, levels="growth_cone")
+        rec  = ds.create_recorders(gids, observable, levels="growth_cone")
 
     t0 = time.time()
-    ds.Simulate(simtime)
+    ds.simulate(simtime)
     times.append(time.time()-t0)
 
-    #~ ds.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect='auto')
-    # ~ ds.PlotNeuron(show=False, title="Resolution: {}".format(resol), aspect=1)
+    #~ ds.plot_neurons(show=False, title="Resolution: {}".format(resol), aspect='auto')
+    # ~ ds.plot_neurons(show=False, title="Resolution: {}".format(resol), aspect=1)
 
     affinities.append(
-        ds.GetStatus(0, "axon_params")["filopodia_wall_affinity"])
+        ds.get_object_status(0, "axon_params")["filopodia_wall_affinity"])
 
     fractions.append(fraction_neurites_near_walls(
         gids, shape, width, percentiles=(85, 70, 50, 30, 15)))
@@ -145,7 +145,7 @@ for k, resol in enumerate(resolutions):
 
     # get observable status
     if with_obs:
-        data = ds.GetRecording(rec, "compact")
+        data = ds.get_recording(rec, "compact")
         data_times[resol] = next(iter(data[observable]["times"].values()))
 
         statuses[resol] = []

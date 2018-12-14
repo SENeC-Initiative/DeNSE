@@ -7,22 +7,20 @@
 
 import numpy as np
 
-import matplotlib.animation as anim
-import matplotlib.gridspec as gridspec
-from matplotlib.lines import Line2D
-from matplotlib.patches import PathPatch
-from matplotlib.path import Path
-from matplotlib.cm import get_cmap
-from matplotlib.textpath import TextPath
-
-from shapely.ops import cascaded_union
+import matplotlib.animation as _anim
+import matplotlib.gridspec as _gridspec
+from matplotlib.lines import Line2D as _Line2D
+from matplotlib.patches import PathPatch as _PathPatch
+from matplotlib.path import Path as _Path
+from matplotlib.cm import get_cmap as _get_cmap
+from matplotlib.textpath import TextPath as _TextPath
 
 from . import _pygrowth as _pg
-from .geometry import plot_shape
-from ._helpers import is_iterable
+from .environment import plot_shape
+from ._helpers import is_iterable as _is_iterable
 
 
-__all__ = ["NewPlotNeuron", "PlotEnvironment", "PlotNeuron", "PlotRecording"]
+__all__ = ["plot_environment", "plot_neurons", "plot_recording"]
 
 
 # --------------- #
@@ -132,7 +130,7 @@ class _Animator:
 # Animate class #
 # ------------- #
 
-class Animate(_Animator, anim.FuncAnimation):
+class Animate(_Animator, _anim.FuncAnimation):
 
     '''
     Class to plot the raster plot, firing-rate, and average trajectory in
@@ -145,7 +143,7 @@ class Animate(_Animator, anim.FuncAnimation):
                  gc_size=2, fps=10, save_to_file=None, file_fps=None,
                  prune_video=1):
         '''
-        Simulate network growth and show the animation at the same time.
+        simulate network growth and show the animation at the same time.
 
         Parameters
         ----------
@@ -192,7 +190,7 @@ class Animate(_Animator, anim.FuncAnimation):
         self._total_seconds = seconds + 60*minutes + 3600*hours + 86400*days
         self._current_seconds = 0.
 
-        self.timestep   = _pg.GetKernelStatus("resolution")
+        self.timestep   = _pg.get_kernel_status("resolution")
         self.num_frames = int(self._total_seconds / interval)
 
         # check that the interval is a multiple of the resolution
@@ -205,14 +203,14 @@ class Animate(_Animator, anim.FuncAnimation):
         self.space.grid(False)
 
         # lines
-        self._somas = Line2D(
+        self._somas = _Line2D(
             [], [], ls="", color='k', marker=neuron, markersize=neuron_size)
-        self._growth_cones = Line2D(
+        self._growth_cones = _Line2D(
             [], [], ls="", color='g', marker=active_gc, markersize=gc_size)
-        self._nodes = Line2D(
+        self._nodes = _Line2D(
             [], [], ls="", color='k', marker="d", markersize=1.)
-        self._axons = Line2D([], [], color='red', linewidth=1)
-        self._dendrites = Line2D([], [], color='blue', linewidth=1)
+        self._axons = _Line2D([], [], color='red', linewidth=1)
+        self._dendrites = _Line2D([], [], color='blue', linewidth=1)
 
         lines = [
             self._somas, self._growth_cones, self._nodes,
@@ -222,7 +220,7 @@ class Animate(_Animator, anim.FuncAnimation):
         # set axis properties
         self.set_axis_prop()
 
-        anim.FuncAnimation.__init__(self, self.fig, self._draw, self._gen_data,
+        _anim.FuncAnimation.__init__(self, self.fig, self._draw, self._gen_data,
                                     interval=1000. / fps, blit=True)
 
     #-------------------------------------------------------------------------
@@ -240,7 +238,7 @@ class Animate(_Animator, anim.FuncAnimation):
                     num_seconds = self._total_seconds - self._current_seconds
                     i = self.num_frames
                 # simulate network growth
-                _pg.Simulate(num_seconds)
+                _pg.simulate(num_seconds)
             elif self.event is not None:
                 if self.event.key in ('right', 'n'):
                     i += self.increment
@@ -323,7 +321,7 @@ class Animate(_Animator, anim.FuncAnimation):
 # Plot recording #
 # -------------- #
 
-def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
+def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
                   legend=True, show=True):
     '''
     Plot the result of a recording.
@@ -353,12 +351,12 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
         The axes of the plots.
     '''
     import matplotlib.pyplot as plt
-    status      = _pg.GetStatus(recorder, time_units=time_units)
+    status      = _pg.get_object_status(recorder, time_units=time_units)
 
     num_rec     = 1
     num_neurons = 0
     colors      = [[0.5]]
-    cmap        = get_cmap(cmap)
+    cmap        = _get_cmap(cmap)
 
     # check how many recorders we got and prepare data
     if "targets" in status:
@@ -386,7 +384,7 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
         num_cols = int(np.sqrt(num_neurons))
         num_rows = num_cols + 1 if num_cols**2 < num_neurons else num_cols
     fig = plt.figure()
-    gs   = gridspec.GridSpec(num_rows, num_cols)
+    gs   = _gridspec.GridSpec(num_rows, num_cols)
 
     axes      = {rec: [] for rec in status}
     first_rec = next(iter(status))
@@ -408,7 +406,7 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
                     # the line of its detached spine is invisible. First,
                     # activate the frame but make the patch and spines
                     # invisible.
-                    make_patch_spines_invisible(twinax)
+                    _make_patch_spines_invisible(twinax)
                     # Second, show the right spine.
                     twinax.spines["right"].set_visible(True)
 
@@ -418,7 +416,7 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
         rec_type    = rec_status["observable"]
         level       = rec_status["level"]
         ev_type     = rec_status["event_type"]
-        data        = _pg.GetRecording(rec)
+        data        = _pg.get_recording(rec)
 
         k = 0
 
@@ -495,104 +493,15 @@ def PlotRecording(recorder, time_units="hours", display="overlay", cmap=None,
 
 
 # ---------- #
-# PlotNeuron #
+# plot_neurons #
 # ---------- #
 
-def NewPlotNeuron(gid=None, culture=None, show_culture=True, soma_radius=None,
-                  soma_color='k', axon_color="r", dendrite_color="b", aspect=1.,
-                  title=None, axis=None, show_neuron_id=False,
-                  show=True, **kwargs):
-    '''
-    Plot neurons in the network.
-
-    Parameters
-    ----------
-    gid : int or list, optional (default: all neurons)
-        Id(s) of the neuron(s) to plot.
-    culture :  :class:`~dense.geometry.Shape`, optional (default: None)
-        Shape of the environment; if the environment was already set using
-        :func:`~dense.CreateEnvironment`.
-    show_culture : bool, optional (default: True)
-        If True, displays the culture in which the neurons are embedded.
-    aspect : float, optional (default: 1.)
-        Set the aspect ratio between the `x` and `y` axes.
-    title : str, optional (default: no title)
-        Title of the plot.
-    axis : :class:`matplotlib.pyplot.Axes`, optional (default: None)
-        Axis on which the plot should be drawn, otherwise a new one will be
-        created.
-    show : bool, optional (default: True)
-        Whether the plot should be displayed immediately or not.
-    **kwargs : optional arguments
-        Details on how to plot the environment, see :func:`PlotEnvironment`.
-    '''
-    import matplotlib
-    import matplotlib.pyplot as plt
-
-    soma_alpha = kwargs.get("soma_alpha", 1.)
-
-    # plot
-    fig, ax, ax2 = None, None, None
-    if axis is None:
-        fig, ax = plt.subplots()
-    else:
-        ax = axis
-        fig = axis.get_figure()
-    # get the objects describing the neurons
-    if gid is None:
-        gid = _pg.GetNeurons(as_ints=True)
-    elif not is_iterable(gid):
-        gid = [gid]
-
-    new_lines = 0
-
-    axons, dendrites, somas = _pg._get_geom_skeleton(gid)
-
-    # get the culture if necessary
-    env_required = _pg.GetKernelStatus('environment_required')
-    if show_culture and env_required:
-        if culture is None:
-            culture = _pg.GetEnvironment()
-        PlotEnvironment(culture, ax=ax, show=False, **kwargs)
-        new_lines += 1
-
-    for a in axons:
-        plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2, show=False)
-
-    for d in dendrites:
-        plot_shape(d, axis=ax, fc=dendrite_color, show_contour=False, zorder=2, show=False)
-        
-    # plot the somas
-    n     = len(somas[2])
-    radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
-    r_max = np.max(radii)
-    r_min = np.min(radii)
-    size  = (1.5*r_min if len(gid) <= 10
-             else (r_min if len(gid) <= 100 else 0.7*r_min))
-
-    for i, x, y, r in zip(gid, somas[0], somas[1], radii):
-        circle = plt.Circle(
-            (x, y), r, color=soma_color, alpha=soma_alpha)
-        artist = ax.add_artist(circle)
-        artist.set_zorder(5)
-        if show_neuron_id:
-            str_id    = str(i)
-            xoffset   = len(str_id)*0.35*size
-            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
-            textpatch = PathPatch(text, edgecolor="w", facecolor="w",
-                                  linewidth=0.01*size)
-            ax.add_artist(textpatch)
-            textpatch.set_zorder(6)
-
-    if show:
-        plt.show()
-
-
-def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
-               show_culture=True, aspect=1., soma_radius=None,
-               active_gc="d", gc_size=2., soma_color='k', axon_color="r",
-               dendrite_color="b", subsample=1, save_path=None, title=None,
-               axis=None, show_density=False, dstep=20., dmin=None, dmax=None,
+def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
+               culture=None, show_culture=True, aspect=1., soma_radius=None,
+               active_gc="d", gc_size=2., soma_color='k',
+               axon_color="indianred", dendrite_color="royalblue",
+               subsample=1, save_path=None, title=None, axis=None,
+               show_density=False, dstep=20., dmin=None, dmax=None,
                colorbar=True, show_neuron_id=False, show=True, **kwargs):
     '''
     Plot neurons in the network.
@@ -601,7 +510,12 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     ----------
     gid : int or list, optional (default: all neurons)
         Id(s) of the neuron(s) to plot.
-    culture :  :class:`~dense.geometry.Shape`, optional (default: None)
+    mode : str, optional (default: "sticks")
+        How to draw the neurons. By default, the "sticks" mode shows the real
+        width of the neurites. Switching to "lines" only leaves the trajectory
+        of the growth cones, without information about the neurite width.
+        Eventually, the "mixed" mode shows both informations superimposed.
+    culture :  :class:`~dense.environment.Shape`, optional (default: None)
         Shape of the environment; if the environment was already set using
         :func:`~dense.CreateEnvironment`.
     show_nodes : bool, optional (default: False)
@@ -639,7 +553,7 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     show : bool, optional (default: True)
         Whether the plot should be displayed immediately or not.
     **kwargs : optional arguments
-        Details on how to plot the environment, see :func:`PlotEnvironment`.
+        Details on how to plot the environment, see :func:`plot_environment`.
 
     Returns
     -------
@@ -647,6 +561,10 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
     '''
     import matplotlib
     import matplotlib.pyplot as plt
+
+    assert mode in ("lines", "sticks", "mixed"),\
+        "Unknown `mode` '" + mode + "'. Accepted values are 'lines', " +\
+        "'sticks' or 'mixed'."
 
     if show_density:
         subsample = 1 
@@ -659,44 +577,70 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         ax = axis
         fig = axis.get_figure()
     new_lines = 0
+
     # plotting options
     soma_alpha = kwargs.get("soma_alpha", 0.8)
-    axon_alpha = kwargs.get("axon_alpha", 1.)
-    dend_alpha = kwargs.get("dend_alpha", 1.)
+    axon_alpha = kwargs.get("axon_alpha", 0.6)
+    dend_alpha = kwargs.get("dend_alpha", 0.6)
     gc_color   = kwargs.get("gc_color", "g")
+
     # get the objects describing the neurons
     if gid is None:
-        gid = _pg.GetNeurons(as_ints=True)
-    elif not is_iterable(gid):
+        gid = _pg.get_neurons(as_ints=True)
+    elif not _is_iterable(gid):
         gid = [gid]
-    somas, axons, dendrites, growth_cones, nodes = _pg._get_pyskeleton(
-        gid, subsample)
+
+    somas, growth_cones, nodes = None, None, None
+    axon_lines, dend_lines     = None, None
+    axons, dendrites           = None, None
+
+    if mode in ("lines", "mixed"):
+        somas, axon_lines, dend_lines, growth_cones, nodes = \
+            _pg._get_pyskeleton(gid, subsample)
+    if mode in ("sticks", "mixed"):
+        axons, dendrites, somas = _pg._get_geom_skeleton(gid)
+
     # get the culture if necessary
-    env_required = _pg.GetKernelStatus('environment_required')
+    env_required = _pg.get_kernel_status('environment_required')
     if show_culture and env_required:
         if culture is None:
-            culture = _pg.GetEnvironment()
-        PlotEnvironment(culture, ax=ax, show=False, **kwargs)
+            culture = _pg.get_environment()
+        plot_environment(culture, ax=ax, show=False, **kwargs)
         new_lines += 1
-    # plot the axons
-    ax.plot(axons[0], axons[1], ls="-", c=axon_color)
-    # plot the dendrites
-    ax.plot(dendrites[0], dendrites[1], ls="-",
-            c=dendrite_color)
-    new_lines += 2
+
+    # plot the elements
+    if mode in ("sticks", "mixed"):
+        for a in axons:
+            plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2,            alpha=axon_alpha, show=False)
+
+        for d in dendrites:
+            plot_shape(d, axis=ax, fc=dendrite_color, show_contour=False,                  alpha=dend_alpha, zorder=2, show=False)
+
+    if mode in ("lines", "mixed"):
+        ax.plot(axon_lines[0], axon_lines[1], ls="-", c=axon_color)
+        ax.plot(dend_lines[0], dend_lines[1], ls="-", c=dendrite_color)
+        new_lines += 2
+
     # plot the rest if required
-    if show_nodes:
+    if show_nodes and mode in ("lines", "mixed"):
         ax.plot(nodes[0], nodes[1], ls="", marker="d", ms="1", c="k", zorder=4)
         new_lines += 1
-    if show_active_gc:
+
+    if show_active_gc and mode in ("lines", "mixed"):
         ax.plot(growth_cones[0], growth_cones[1], ls="", marker=active_gc,
                 c=gc_color, ms=gc_size, zorder=4)
         new_lines += 1
+
     # plot the somas
     n = len(somas[2])
     radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
+
+    if mode in ("sticks", "mixed"):
+        radii *= 1.05
+
     r_max = np.max(radii)
     r_min = np.min(radii)
+
     size  = (1.5*r_min if len(gid) <= 10
              else (r_min if len(gid) <= 100 else 0.7*r_min))
 
@@ -708,24 +652,43 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         if show_neuron_id:
             str_id    = str(i)
             xoffset   = len(str_id)*0.35*size
-            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
-            textpatch = PathPatch(text, edgecolor="w", facecolor="w",
-                                  linewidth=0.01*size)
+            text      = _TextPath((x-xoffset, y-0.35*size), str_id, size=size)
+            textpatch = _PathPatch(text, edgecolor="w", facecolor="w",
+                                   linewidth=0.01*size)
             ax.add_artist(textpatch)
             textpatch.set_zorder(6)
 
     # set the axis limits
     if (not show_culture or not env_required) and len(ax.lines) == new_lines:
-        _set_ax_lim(
-            ax, axons[0] + dendrites[0], axons[1] + dendrites[1],
-            offset=2*r_max)
+        if mode in ("lines", "mixed"):
+            _set_ax_lim(ax, axon_lines[0] + dend_lines[0],
+                        axon_lines[1] + dend_lines[1], offset=2*r_max)
+        else:
+            xx = []
+            yy = []
+
+            for a in axons:
+                xmin, ymin, xmax, ymax = a.bounds
+                xx.extend((xmin, xmax))
+                yy.extend((ymin, ymax))
+
+            for d in dendrites:
+                xmin, ymin, xmax, ymax = d.bounds
+                xx.extend((xmin, xmax))
+                yy.extend((ymin, ymax))
+
+            _set_ax_lim(ax, xx, yy, offset=2*r_max)
+
     ax.set_aspect(aspect)
+
     if title is not None:
         fig.suptitle(title)
+
     if save_path is not None:
         if not save_path.endswith('pdf'):
             save_path += ".pdf"
         plt.savefig(save_path, format="pdf", dpi=300)
+
     if show_density:
         from matplotlib.colors import LogNorm
         fig, ax2 = plt.subplots()
@@ -758,7 +721,6 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
         data = ax2.imshow(counts.T, extent=lims, origin="lower",
                           vmin=0 if dmin is None else dmin, vmax=dmax,
                           cmap=cmap)
-
         
         if colorbar:
             extend = "neither"
@@ -771,44 +733,31 @@ def PlotNeuron(gid=None, culture=None, show_nodes=False, show_active_gc=True,
             cb = plt.colorbar(data, ax=ax2, extend=extend)
             cb.set_label("Number of neurites per bin")
         ax2.set_aspect(aspect)
-        ax2.set_xlabel("x ($\mu$ m)")
-        ax2.set_ylabel("y ($\mu$ m)")
+        ax2.set_xlabel(r"x ($\mu$ m)")
+        ax2.set_ylabel(r"y ($\mu$ m)")
 
     if show:
         plt.show()
 
     if show_density:
         return ax, ax2
-    else:
-        return ax
+
+    return ax
 
 
-# --------------- #
-# PlotEnvironment #
-# --------------- #
+# ---------------- #
+# Plot environment #
+# ---------------- #
 
-def BtmorphVisualize(Simulation_folder):
-    import matplotlib.pyplot as plt
-    import btmorph2
-    from .dataIO import SimulationsFromFolder
-    neurons = SimulationsFromFolder(Simulation_folder)
-    for gid in neurons['neurons']:
-        neuron = btmorph2.NeuronMorphology(neurons['neurons'][gid]['data'])
-        plt.figure()
-        neuron.plot_2D()
-        plt.figure()
-        neuron.plot_dendrogram()
-
-
-def PlotEnvironment(culture=None, title='Environment', ax=None, m='',
-                    mc="#999999", fc="#8888ff", ec="#444444", alpha=0.5,
+def plot_environment(culture=None, title='Environment', ax=None, m='',
+                    mc="#999999", fc="#ccccff", ec="#444444", alpha=0.5,
                     brightness="height", show=True, **kwargs):
     '''
     Plot the environment in which the neurons grow.
 
     Parameters
     ----------
-    culture : :class:`~dense.geometry.Shape`, optional (default: None)
+    culture : :class:`~dense.environment.Shape`, optional (default: None)
         Shape of the environment; if the environment was already set using
         :func:`~dense.CreateEnvironment`
     title : str, optional (default: 'Shape')
@@ -834,7 +783,7 @@ def PlotEnvironment(culture=None, title='Environment', ax=None, m='',
         If True, the plot will be displayed immediately.
     '''
     if culture is None:
-        culture = _pg.GetEnvironment()
+        culture = _pg.get_environment()
     plot_shape(culture, axis=ax,  m=m, mc=mc, fc=fc, ec=ec, alpha=alpha,
                brightness=brightness, show=show)
 
@@ -849,7 +798,7 @@ def _make_patch(shape, **kwargs):
 
     Parameters
     ----------
-    shape: :class:`dense.geometry.Shape`
+    shape: :class:`dense.environment.Shape`
         may be a Shapely or GeoJSON-like object with or without holes.
     kwargs: keywords arguments for :class:`matplotlib.patches.PathPatch`
 
@@ -874,8 +823,8 @@ def _make_patch(shape, **kwargs):
         [_path_instructions(shape.exterior)] +
         [_path_instructions(h) for h in shape.interiors])
 
-    path = Path(vertices, instructions)
-    return PathPatch(path, **kwargs)
+    path = _Path(vertices, instructions)
+    return _PathPatch(path, **kwargs)
 
 
 def _path_instructions(ob):
@@ -886,8 +835,8 @@ def _path_instructions(ob):
     # The codes will be all "LINETO" commands, except for "MOVETO"s at the
     # beginning of each subpath
     n = len(getattr(ob, 'coords', None) or ob)
-    vals = np.ones(n, dtype=Path.code_type) * Path.LINETO
-    vals[0] = Path.MOVETO
+    vals = np.ones(n, dtype=_Path.code_type) * _Path.LINETO
+    vals[0] = _Path.MOVETO
     return vals
 
 
@@ -901,19 +850,19 @@ def _set_ax_lim(ax, xdata, ydata, xlims=None, ylims=None, offset=0.):
         ax.set_xlim(*xlims)
     else:
         x_min, x_max = np.nanmin(xdata) - offset, np.nanmax(xdata) + offset
-        if not np.isnan(x_min) and np.isnan(x_max):
+        if not np.isnan(x_min) and not np.isnan(x_max):
             width = x_max - x_min
             ax.set_xlim(x_min - 0.05*width, x_max + 0.05*width)
     if ylims is not None:
         ax.set_ylim(*ylims)
     else:
         y_min, y_max = np.nanmin(ydata) - offset, np.nanmax(ydata) + offset
-        if not np.isnan(y_min) and np.isnan(y_max):
+        if not np.isnan(y_min) and not np.isnan(y_max):
             height = y_max - y_min
             ax.set_ylim(y_min - 0.05*height, y_max + 0.05*height)
 
 
-def make_patch_spines_invisible(ax):
+def _make_patch_spines_invisible(ax):
     ax.set_frame_on(True)
     ax.patch.set_visible(False)
     for sp in ax.spines.values():

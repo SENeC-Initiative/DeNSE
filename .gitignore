@@ -42,7 +42,7 @@ docs/_build
 docs/doxyfiles/
 docs/conf.py
 docs/modules/dense.rst
-docs/modules/geometry.rst
+docs/modules/environment.rst
 
 
 # DeNSE run files

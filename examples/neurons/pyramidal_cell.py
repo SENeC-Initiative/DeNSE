@@ -9,9 +9,6 @@ from dense.units import *
 import numpy as np
 import os
 
-import seaborn as sns
-
-
 # parameters
 
 num_omp     = 1
@@ -61,30 +58,26 @@ kernel = {
 
 np.random.seed(0)
 
-ds.SetKernelStatus(kernel)
-
+ds.set_kernel_status(kernel)
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, params=neuron_params,
+n = ds.create_neurons(n=num_neurons, params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      num_neurites=3)
 
-rec = ds.CreateRecorders(n, "num_growth_cones")
-
+rec = ds.create_recorders(n, "num_growth_cones")
 
 # first, elongation
 
-ds.Simulate(7*day)
+ds.simulate(7*day)
 
+print(ds.get_kernel_status('time'))
 
-print(ds.GetKernelStatus('time'))
-
-recording = ds.GetRecording(rec, record_format="compact")
+recording = ds.get_recording(rec, record_format="compact")
 print(recording)
 
-ds.plot.PlotNeuron(mode="mixed", show=True)
-
+ds.plot.plot_neurons(mode="mixed", show=True)
 
 # then branching
 
@@ -96,9 +89,7 @@ lb_axon = {
     "lateral_branching_angle_mean": 45.*deg,
 }
 
-
 dend_params = {
-    "taper_rate": 1./100.,
     "use_van_pelt": False,
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.00015*cpm,
@@ -107,13 +98,13 @@ dend_params = {
     "lateral_branching_angle_mean": 40.*deg,
 }
 
-ds.SetStatus(n, dendrites_params=dend_params, axon_params=lb_axon)
+ds.set_object_status(n, dendrites_params=dend_params, axon_params=lb_axon)
 
-ds.Simulate(20*day + 5*hour)
+ds.simulate(20*day + 5*hour)
 
-print(ds.GetKernelStatus('time'))
+print(ds.get_kernel_status('time'))
 
-ds.plot.PlotNeuron(mode="mixed", show=True)
+ds.plot.plot_neurons(mode="mixed", show=True)
 
 # then further branching
 
@@ -133,13 +124,13 @@ dend_params = {
     "gc_split_angle_mean": 30.*deg,
 }
 
-# ds.SetStatus(n, dendrites_params=dend_params, axon_params=vp_axon)
-# ds.Simulate(40*day)
-# print(dense.GetKernelStatus('time'))
+# ds.set_object_status(n, dendrites_params=dend_params, axon_params=vp_axon)
+# ds.simulate(40*day)
+# print(dense.get_kernel_status('time'))
 
-# ds.plot.PlotNeuron(mode="mixed", show=True)
+# ds.plot.plot_neurons(mode="mixed", show=True)
 
-# ~ ds.NeuronToSWC("pyramidal-cell.swc", gid=n)
+# ~ ds.save_to_swc("pyramidal-cell.swc", gid=n)
 
 # ~ import neurom as nm
 # ~ from neurom import viewer

@@ -18,7 +18,7 @@ Welcome to DeNSE's documentation!
 
     modules/dense
     modules/units
-    modules/geometry
+    modules/environment
 
 .. toctree::
     :maxdepth: 3

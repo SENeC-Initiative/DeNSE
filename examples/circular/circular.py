@@ -21,12 +21,12 @@ def CleanFolder(tmp_dir, make=True):
 
 def step(n, loop_n, plot=True):
     print("simulating", n)
-    ds.Simulate(n)
+    ds.simulate(n)
     print("done")
     if plot:
         fig, ax = plt.subplots()
-        ds.plot.PlotNeuron(mode='mixed', subsample=1, axis=ax, show_nodes=True,
-                           show_neuron_id=True, show=True)
+        ds.plot.plot_neurons(mode='mixed', subsample=1, axis=ax,
+                             show_nodes=True, show_neuron_id=True, show=True)
 
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -44,8 +44,6 @@ simtime     = 50.*hour + 30.*minute
 soma_radius = 5.
 num_neurons = 1
 
-# gc_model = 'run-and-tumble'
-# gc_model = 'simple-random-walk'
 gc_model = 'cst_po_nwa'
 
 neuron_params = {
@@ -59,7 +57,7 @@ neuron_params = {
     "filopodia_min_number": 30,
     "persistence_length": 50. * um,
     "taper_rate": 1./40.,
-    # "affinity_axon_axon_other_neuron": 100.,
+    "affinity_axon_axon_other_neuron": 100.,
     # "affinity_axon_dendrite_same_neuron": np.NaN,
     # "affinity_axon_dendrite_other_neuron": np.NaN,
     # "affinity_axon_soma_other_neuron": np.NaN,
@@ -125,12 +123,12 @@ if __name__ == '__main__':
     # ~ }
     kernel["environment_required"] = False
 
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        shape   = ds.geometry.Shape.disk(300.)
-        culture = ds.SetEnvironment(shape)
+        shape   = ds.environment.Shape.disk(300.)
+        culture = ds.set_environment(shape)
         # generate the neurons inside the left chamber
         # pos_left = culture.seed_neurons(
             # neurons=100, xmax=540, soma_radius=soma_radius)
@@ -141,14 +139,14 @@ if __name__ == '__main__':
             np.random.uniform(-1000, 1000, (num_neurons, 2))*um
 
     print("\nCreating neurons\n")
-    gids = ds.CreateNeurons(n=num_neurons,
+    gids = ds.create_neurons(n=num_neurons,
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
                             axon_params=axon_params,
                             num_neurites=3)
 
-    rec = ds.CreateRecorders(gids, "num_growth_cones")
+    rec = ds.create_recorders(gids, "num_growth_cones")
 
     start = time.time()
     for i in range(1):
@@ -162,7 +160,7 @@ if __name__ == '__main__':
                         "use_uniform_branching": True,
                         "uniform_branching_rate": 0.1 * cph,})
 
-    ds.SetStatus(gids,
+    ds.set_object_status(gids,
                  params=neuron_params,
                  dendrites_params=dendrite_params,
                  axon_params=axon_params)
@@ -173,7 +171,7 @@ if __name__ == '__main__':
     step(simtime, 0, True)
     # ~ step(5.*hour, 0, True)
     duration = time.time() - start
-    print(ds.GetKernelStatus("time"))
+    print(ds.get_kernel_status("time"))
 
     # prepare the plot
     plt.show(block=True)
@@ -181,10 +179,10 @@ if __name__ == '__main__':
 
     # save
     # ~ save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
-    # ~ ds.SaveJson(filepath=save_path)
+    # ~ ds.save_json_info(filepath=save_path)
     # ~ ds.SaveSwc(filepath=save_path,swc_resolution = 10)
 
-    # ~ graph = ds.CreateGraph(connection_proba=1)
+    # ~ graph = ds.generate_network(connection_proba=1)
 
     # ~ graph.to_file("circular.el")
     # ~ nngt.plot.draw_network(graph, show=True)

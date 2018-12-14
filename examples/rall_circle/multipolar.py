@@ -99,13 +99,13 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=True)
         else:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=False, save_path=save_path)
 
 
@@ -116,12 +116,12 @@ def run_dense(kernel,neuron_params,ID,plot):
     np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution
     kernel["angles_in_radians"] = True
-    ds.SetKernelStatus(kernel, simulation_ID=ID)
+    ds.set_kernel_status(kernel, simulation_id=ID)
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2))
-    gid = ds.CreateNeurons(n=num_neurons,
+    gid = ds.create_neurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
@@ -129,7 +129,7 @@ def run_dense(kernel,neuron_params,ID,plot):
                                   position=[]
                                   )
 
-    # ds.SetStatus(gid, params=neuron_params,
+    # ds.set_object_status(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3./resolution, 1, False, plot)
     step(300./resolution, 1, False, plot)
@@ -138,7 +138,7 @@ def run_dense(kernel,neuron_params,ID,plot):
     dendrite_params['use_van_pelt'] = True
     axon_params['use_flpl_branching'] = False
     axon_params['flpl_branching_rate'] = 0.001
-    ds.SetStatus(gid,
+    ds.set_object_status(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -157,18 +157,18 @@ def run_dense(kernel,neuron_params,ID,plot):
         "CR_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    ds.SetStatus(gid,
+    ds.set_object_status(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     step(3000./resolution, 1, False, plot)
     ds.SaveSwc(swc_resolution=25)
-    ds.SaveJson()
+    ds.save_json_info()
 
-    swc_file = ds.GetSimulationID()
+    swc_file = ds.get_simulation_id()
     # print(swc_file)
 
-    # ds.ResetKernel()
+    # ds.reset_kernel()
     return swc_file
 
 

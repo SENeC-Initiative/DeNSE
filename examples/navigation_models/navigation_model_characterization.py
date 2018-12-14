@@ -10,26 +10,26 @@ num_neurons = 400
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(
+        ds.plot_neurons(
             show_nodes=True, save_path=save_path)
 
 def run_dense(neuron_params,letter,length_simulation,single=False):
 
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
-    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
     neuron_params["position"]=np.zeros((num_neurons,2))
     simulated_neurons = num_neurons
-    gids = ds.CreateNeurons(n=simulated_neurons,
+    gids = ds.create_neurons(n=simulated_neurons,
                                    params=neuron_params,
                                    num_neurites=1,
                                    position=[]
                                    )
 
     step(length_simulation, 1, False ,plot=False)
-    neurons    = ds.GetNeurons()
+    neurons    = ds.get_neurons()
     structure  = ds.NeuronStructure(neurons)
     population = ds.Population.from_structure(structure)
     ens =  ds.EnsembleRW(population)
@@ -37,7 +37,7 @@ def run_dense(neuron_params,letter,length_simulation,single=False):
     ens.name = neuron_params["growth_cone_model"]
     fits = ens.fit()
     # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    ds.ResetKernel()
+    ds.reset_kernel()
     return ens
     # population.__class__ = EnsembleRW
 

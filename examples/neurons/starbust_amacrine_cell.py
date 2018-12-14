@@ -55,16 +55,16 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, params=neuron_params,
+n = ds.create_neurons(n=num_neurons, params=neuron_params,
                      dendrites_params=dend_params, num_neurites=8)
 
-#~ ds.Simulate(15000)
+#~ ds.simulate(15000)
 
-#~ ds.plot.PlotNeuron(show=True)
+#~ ds.plot.plot_neurons(show=True)
 
 
 #~ dend_params = {
@@ -89,30 +89,12 @@ dend_params = {
     "gc_split_angle_std": 3. * deg,
 }
 
-ds.SetStatus(n, dendrites_params=dend_params)
+ds.set_object_status(n, dendrites_params=dend_params)
 
-ds.Simulate(20.*day)
+ds.simulate(20.*day)
 
-ds.PlotNeuron()
+ds.plot.plot_neurons(mode = 'mixed')
 
-ds.NeuronToSWC("starbust-amacrine-cell.swc", gid=n, resolution=100)
-
-#~ ds.plot.PlotNeuron(show=True)
-
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("starbust-amacrine-cell.swc")
-
-fig, _ = viewer.draw(nrn)
-
-for ax in fig.axes:
-    ax.set_title("")
-
-import matplotlib.pyplot as plt
-plt.axis('off')
-fig.suptitle("")
-plt.tight_layout()
-plt.show()
 tree = n[0].dendrites["dendrite_1"].get_tree()
 tree.show_dendrogram()
 

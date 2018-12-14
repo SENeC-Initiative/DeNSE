@@ -54,9 +54,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ =='__main__':
@@ -68,7 +68,7 @@ if __name__ =='__main__':
             "resolution": 30.}
     kernel["environment_required"] = False
 
-    ds.SetKernelStatus(kernel)
+    ds.get_kernel_status(kernel)
 
     '''
     Create neurons
@@ -84,24 +84,24 @@ if __name__ =='__main__':
     neuron_params['position'] = np.random.uniform(-1000, 1000, (5, 2))
 
     num_neurons = 5
-    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model='random_walk',
+    gids = ds.create_neurons(n=num_neurons, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=2)
 
     pprint("neuron status")
-    pprint(ds.GetStatus(gids[0]))
+    pprint(ds.get_object_status(gids[0]))
 
     '''
     Create recorders
     '''
 
-    gids_rec = ds.CreateRecorders(gids, "length", levels="neurite")
+    gids_rec = ds.create_recorders(gids, "length", levels="neurite")
 
-    print(gids_rec, ds.GetStatus(gids_rec))
+    print(gids_rec, ds.get_object_status(gids_rec))
 
     print("start simu")
 
     step(100, 0, False)
 
-    ds.PlotRecording(gids_rec, show=True)
+    ds.plot_recording(gids_rec, show=True)

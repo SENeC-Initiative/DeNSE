@@ -70,9 +70,9 @@ Simulation
 '''
 
 def step(time, loop_n, plot=True):
-    ds.Simulate(time)
+    ds.simulate(time)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -85,12 +85,12 @@ if __name__ == '__main__':
     }
 
     culture_file = current_dir + "arches_3.svg"
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
-    print(ds.GetKernelStatus("num_local_threads"))
+    print(ds.get_kernel_status("num_local_threads"))
 
     if kernel["environment_required"]:
-        culture = ds.SetEnvironment(culture_file, min_x=0, max_x=800)
+        culture = ds.set_environment(culture_file, min_x=0, max_x=800)
         # generate the neurons inside the left chamber
         pos = culture.seed_neurons(
             neurons=num_neurons, soma_radius=soma_radius)
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(
+    gids = ds.create_neurons(
         n=num_neurons, growth_cone_model="persistent_rw_critical",
         culture=culture, params=neuron_params,
         dendrites_params=dendrite_params, num_neurites=2)
@@ -109,4 +109,4 @@ if __name__ == '__main__':
     step(5 * day, 0, False)
 
     # prepare the plot
-    ds.plot.PlotNeuron(show_density=True, dstep=4., dmax=10, cmap="jet")
+    ds.plot.plot_neurons(show_density=True, dstep=4., dmax=10, cmap="jet")

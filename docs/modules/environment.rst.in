@@ -1,0 +1,16 @@
+==========================
+The ``environment`` module
+==========================
+
+.. currentmodule:: environment
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.environment
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -58,15 +58,15 @@ if __name__ == '__main__':
         "environment_required": True
     }
 
-    ds.SetKernelStatus(kernel)
+    ds.get_kernel_status(kernel)
 
-    culture = ds.SetEnvironment("test_15-75_small.dxf",
+    culture = ds.set_environment("test_15-75_small.dxf",
                                 internal_shapes_as="areas",
                                 default_properties={"substrate_affinity": -50.},
                                 other_properties={"substrate_affinity": 100.})
-    # ~ ds.geometry.plot_shape(culture, show=True)
+    # ~ ds.environment.plot_shape(culture, show=True)
 
-    gids = ds.CreateNeurons(n=num_neurons,
+    gids = ds.create_neurons(n=num_neurons,
                             culture=culture,
                             on_area=culture.non_default_areas.keys(),
                             neurites_on_area=True,
@@ -74,7 +74,7 @@ if __name__ == '__main__':
                             dendrites_params=dendrite_params,
                             num_neurites=3)
 
-    ds.PlotNeuron(show=False)
+    ds.plot_neurons(show=False)
     # ~ xlim = -10200., -9500.
     # ~ ylim = -700., -1500.
     # ~ xlim = -9250., -9000.
@@ -90,9 +90,9 @@ if __name__ == '__main__':
     plt.show()
 
     for i in range(2):
-        ds.Simulate(800.*minute)
-        # ~ ds.PlotNeuron(subsample=20, dendrite_color="gold", show=False)
-        ds.NewPlotNeuron(dendrite_color="gold", show=False)
+        ds.simulate(800.*minute)
+        # ~ ds.plot_neurons(subsample=20, dendrite_color="gold", show=False)
+        ds.Newplot_neurons(dendrite_color="gold", show=False)
         plt.xlim(*xlim)
         plt.ylim(*ylim)
         plt.axis('off')

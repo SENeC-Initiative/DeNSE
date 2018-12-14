@@ -88,9 +88,9 @@ dendrite_params = {
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(
+        ds.plot_neurons(
             show_nodes=True, save_path="examples/last_run_5")
 
 
@@ -130,7 +130,7 @@ if '__main__' is __name__:
         neuron_params["use_lateral_branching"] = False
 
     kernel_dict = {"num_local_threads": args.proc, "seeds": args.seeds}
-    simulation_ID = ds.GenerateSimulationID(
+    simulation_ID = ds.generate_simulation_id(
         kernel_dict, neuron_params, dendrite_params)
     kernel_dict["record_enabled"] = args.record_enable
     if args.record_enable and not os.path.exists(simulation_ID):
@@ -145,7 +145,7 @@ if '__main__' is __name__:
         dendrite_params = axon_params
 
     if not args.not_environment:
-        ds.SetKernelStatus(kernel_dict, simulation_ID)
+        ds.get_kernel_status(kernel_dict, simulation_ID)
         if args.culture_file is not None:
             culture = ds.CreateEnvironment(
                 args.culture_file, min_x=0, max_x=1000)
@@ -153,7 +153,7 @@ if '__main__' is __name__:
             culture = ds.CreateEnvironment(
                 os.getcwd() + '/culture_from_filled_polygons.svg', min_x=0,
                 max_x=100)
-        gids = ds.CreateNeurons(culture=culture,
+        gids = ds.create_neurons(culture=culture,
                                        n=args.neurons,
                                        params=neuron_params,
                                        dendrites_params=dendrite_params,
@@ -163,16 +163,16 @@ if '__main__' is __name__:
         kernel_dict["environment_required"] = False
         kernel_dict["resolution"] = 1.
 
-        ds.SetKernelStatus(kernel_dict, simulation_ID)
+        ds.get_kernel_status(kernel_dict, simulation_ID)
         neuron_params["position"] = np.random.uniform(
             -500, 500, (args.neurons, 2))
-        gids = ds.CreateNeurons(n=args.neurons,
+        gids = ds.create_neurons(n=args.neurons,
                                        params=neuron_params,
                                        dendrites_params=dendrite_params,
                                        axon_params=axon_params,
                                        num_neurites=1 + args.dendrites)
 
-    # ds.PlotEnvironment(culture)
+    # ds.plot_environment(culture)
 
     if args.test_random:
         vals = ds.TestRandomGen(1000000)
@@ -182,14 +182,14 @@ if '__main__' is __name__:
     if args.simulate:
         step(100, 1, False)
         neuron_params["use_van_pelt"] = True
-        ds.SetStatus(gids,
+        ds.set_object_status(gids,
                             axon_params = neuron_params,
                             dendrites_params= neuron_params,
                             params = neuron_params)
         for loop_n in range(args.n_loops):
             step(args.step_size, loop_n, args.plot)
 
-        kernel_ID = ds.GetSimulationID()
+        kernel_ID = ds.get_simulation_id()
 
         if args.save:
             save_path = simulation_ID
@@ -198,7 +198,7 @@ if '__main__' is __name__:
             # save to default path: "simulation_ID/..."
             swc_file = ds.SaveSwc(
                 filepath=save_path, swc_resolution=args.swc_resolution)
-            json_file = ds.SaveJson(filepath=save_path)
+            json_file = ds.save_json_info(filepath=save_path)
         if args.bt_visualize:
             ds.BtmorphVisualize(save_path)
         if args.dyn_analyze:

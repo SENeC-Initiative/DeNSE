@@ -5,11 +5,11 @@ Environment and geometry
 ========================
 
 To simulate neuronal growth inside a complex environment, the |name| simulator
-provides a special module called `geometry`, which corresponds to the
+provides a special module called `environment`, which corresponds to the
 PyNCulture_ library.
 
-This :mod:`~dense.geometry` module provides all the necessary tools to generate
-cultures of various sizes, shapes, and patterns.
+This :mod:`~dense.environment` module provides all the necessary tools to
+generate cultures of various sizes, shapes, and patterns.
 
 
 Importing the environment from a file
@@ -18,12 +18,12 @@ Importing the environment from a file
 Note on file import
 -------------------
 
-Currently, the :mod:`~dense.geometry` module imposes that the main culture
+Currently, the :mod:`~dense.environment` module imposes that the main culture
 be composed of a single polygon.
 This means that, when trying to create culture from files, one must make sure
 that all components are contained inside a single "parent" polygon. This is
 especially true when importing structures with holes (or using
-``internal_shapes_as="holes"`` in :func:`~dense.geometry.culture_from_file`):
+``internal_shapes_as="holes"`` in :func:`~dense.environment.culture_from_file`):
 as shown on the figure below, cultures with a whole circling a subculture
 are invalid and will not be loaded.
 
@@ -43,8 +43,8 @@ Importing shapes from SVG files
 
 The easiest way to import shapes is probably to use SVG files, first drawing
 the shape in a vector image editor such as Inkscape_, then importing it using
-:func:`~dense.geometry.culture_from_file`.
-Several examples are available in the ``geometry/examples/`` folder.
+:func:`~dense.environment.culture_from_file`.
+Several examples are available in the ``environment/examples/`` folder.
 
 Note that since SVG files do not contain the precise sizes of the structures,
 it is necessary to provide the actual dimensions of the final environment upon

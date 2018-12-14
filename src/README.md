@@ -13,9 +13,9 @@
     + ``Neurite`` is an element composed of parts that will all grow accordong to the same parameters,
     + ``Branch`` is necessary because it is the only time-sequential container.
 
-* Geometry
-    + Environment can be read from a `.dfx` file
-    + Geometric operations are implemented using CGAL
+* Environment
+    + Environment can be read from a `.svg` or a `.dfx` file
+    + Geometric operations are implemented using Boost::geometry
 
 
 ## Current limitations
@@ -35,7 +35,7 @@
 
 * [x] Create a ``Configuration`` object which will contain the parameters of the simulation (e.g. the number of mpi/omp processes, the timestep...)
 * [x] Make one random number generator per ``omp`` process inside ``Area`` and pass a pointer to the neurites or use one RNG per neuron.
-* Implement the obstacles and evironment with CGAL
+* Implement the obstacles and environment with Boost::geometry
 * set branching proba to be timestep independant (square root of timestep)
 
 ### Model

@@ -90,7 +90,7 @@ dend_t = {
 
 
 def show_nrn(neuron):
-    ds.NeuronToSWC(filename, gid=neuron)
+    ds.save_to_swc(filename, gid=neuron)
     import neurom as nm
     from neurom import viewer
     nrn = nm.load_neuron(filename)
@@ -113,32 +113,32 @@ kernel = {
     "adaptive_timestep": -1.,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
-bip_neuron = ds.CreateNeurons(1, params=bip_nrn, axon_params=bip_axon_i,
+bip_neuron = ds.create_neurons(1, params=bip_nrn, axon_params=bip_axon_i,
                               dendrites_params=bip_dend_i, num_neurites=2)
 
 # initial extension (5 days)
 
-ds.Simulate(7200)
+ds.simulate(7200)
 show_nrn(bip_neuron)
 
 # Extension and branching period (5 days)
 
-ds.SetStatus(bip_neuron, axon_params=bip_axon_lb, dendrites_params=bip_dend_lb)
+ds.set_object_status(bip_neuron, axon_params=bip_axon_lb, dendrites_params=bip_dend_lb)
 
-ds.Simulate(7200)
+ds.simulate(7200)
 show_nrn(bip_neuron)
 
 # Extension and branching period (5 more days)
 
-ds.Simulate(7200)
+ds.simulate(7200)
 show_nrn(bip_neuron)
 
 # Termination period (10 days)
 
-ds.SetStatus(bip_neuron, axon_params=axon_t, dendrites_params=dend_t)
+ds.set_object_status(bip_neuron, axon_params=axon_t, dendrites_params=dend_t)
 
-ds.Simulate(14400)
+ds.simulate(14400)
 show_nrn(bip_neuron)
 

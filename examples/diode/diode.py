@@ -25,7 +25,6 @@ def CleanFolder(tmp_dir, make=True):
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
 
-
 '''
 Main parameters
 '''
@@ -35,7 +34,7 @@ use_uniform_branching = False
 use_vp = False
 use_run_tumble = False
 
-gc_model = 'persistent_random_walk'
+gc_model = 'cst_po_nm'
 
 neuron_params = {
     "growth_cone_model": gc_model,
@@ -79,9 +78,9 @@ Simulation
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -100,11 +99,11 @@ if __name__ == '__main__':
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/arches_diode.svg"
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1800)
+        culture = ds.set_environment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
             neurons=50, soma_radius=soma_radius, ymax=-500)
@@ -116,7 +115,7 @@ if __name__ == '__main__':
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=100, growth_cone_model="persistent_rw_critical",
+    gids = ds.create_neurons(n=100,
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
@@ -134,14 +133,14 @@ if __name__ == '__main__':
                    'B' : 10. * cpm,
                    'T' : 1000. * minute,
                    'E' : 0.7}
-    ds.SetStatus(gids,
+    ds.set_object_status(gids,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     fig, ax = plt.subplots()
-    # ds.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+    # ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
                        # axon_color='g', gc_color="r", axis=ax, show=False)
-    # ds.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+    # ds.plot.plot_neurons(gid=range(100, 200), show_culture=False, axis=ax,
                        # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        # show=True)
     # step(4000, 0, False)
@@ -150,43 +149,24 @@ if __name__ == '__main__':
     duration = time.time() - start
 
     # prepare the plot
-    ds.plot.PlotNeuron(gid=range(300), culture=culture, soma_alpha=0.8,
+    ds.plot.plot_neurons(gid=range(300), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.PlotNeuron(gid=range(300, 600), show_culture=False, axis=ax,
+    ds.plot.plot_neurons(gid=range(300, 600), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
-    ds.plot.PlotNeuron(gid=range(300, 600), show_culture=False, axis=ax,
+    ds.plot.plot_neurons(gid=range(300, 600), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
     plt.show(block=True)
     print("SIMULATION ENDED")
-    # ds.ResetKernel()
+    # ds.reset_kernel()
 
     # save
     # structure = ds.NeuronStructure()
-    # graph =ds.CreateGraph()
+    # graph =ds.generate_network()
     save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
-    ds.SaveJson(filepath=save_path)
+    ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path,swc_resolution = 10)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -197,7 +177,7 @@ if __name__ == '__main__':
 
     # intersection = ds.IntersectionsFromEnsemble(population)
     # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ds.CreateGraph(population, intersection)
+    # graph = ds.generate_network(population, intersection)
     # #graph info
     # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
     # nngt.plot.draw_network(graph, esize=0.1, show=True)

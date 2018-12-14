@@ -71,9 +71,9 @@ Simulation
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -83,11 +83,11 @@ if __name__ == '__main__':
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/polygons.svg"
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1800)
+        culture = ds.set_environment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         # pos_left = culture.seed_neurons(
             # neurons=100, xmax=540, soma_radius=soma_radius)
@@ -95,7 +95,7 @@ if __name__ == '__main__':
                                                       soma_radius=soma_radius)
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=num_neurons, growth_cone_model="persistent_rw_critical",
+    gids = ds.create_neurons(n=num_neurons, growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
@@ -111,10 +111,10 @@ if __name__ == '__main__':
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(),"swc"))
-    ds.SaveJson(filepath=save_path)
+    ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path,swc_resolution = 10)
     structure = ds.NeuronStructure()
-    graph =ds.CreateGraph(structure=structure)
+    graph =ds.generate_network(structure=structure)
 
 
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
 
 
-    # ds.ResetKernel()
+    # ds.reset_kernel()
 
     ### Import population for network analysis
     # ng_population = ds.SimulationsFromFolder(save_path)
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     # intersection = ds.IntersectionsFromEnsemble(population)
     # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ds.CreateGraph(population, intersection)
+    # graph = ds.generate_network(population, intersection)
     # #graph info
     # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
     # nngt.plot.draw_network(graph, esize=0.1, show=True)

@@ -4,7 +4,7 @@ What to implement:
 @todo:
 
 * if environment_required is False, seed randomly in -1000, 1000 um
-* correct time print GetKernelStatus
+* correct time print get_kernel_status
 * error with cst_mem_nm
 
 
@@ -144,7 +144,8 @@ Let user choose the units it wants as output
 
 ### Statuses
 
-* Clean up `set_status` and python `SetStatus`
+* Clean up `set_status` and python `set_object_status`
+
 @CheckStatus
 
 
@@ -245,7 +246,7 @@ Done
 * Timestep limits (Timestep must not be too big to avoid)
   - step longer than sensing distance of the filopodia
   - max sensing angle that does not contain at least 3 sigma on each side
-* Check culture in CreateNeurons
+* Check culture in create_neurons
 * Set growth stop conditions (diameter, stuck)
 * Made the models combinable
 

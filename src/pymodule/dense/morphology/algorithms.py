@@ -1,4 +1,3 @@
-# !/usr/bin/env python
 # -*- coding:utf-8 -*-
 # This software is part of the DeNSE project and the SENEC initiative
 #
@@ -247,7 +246,7 @@ def tree_asymmetry(neurite, neuron=None):
     try:
         tree = neurite.get_tree().neurom_tree()
     except AttributeError:
-        nrn = _pg.GetNeurons(neuron)[0]
+        nrn = _pg.get_neurons(neuron)[0]
         nrt = nrn.get_neurite(neurite)
         tree = neurite.get_tree().neurom_tree()
     asyms = nm.get("partition_asymmetry", tree)

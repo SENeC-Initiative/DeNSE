@@ -118,8 +118,8 @@ distances = np.arange(dist_step, dist_max, dist_step)
 
 for k, resol in enumerate(resolutions):
     np.random.seed(1)
-    ds.ResetKernel()
-    ds.SetKernelStatus({
+    ds.reset_kernel()
+    ds.get_kernel_status({
         "resolution": resol * minute,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
@@ -145,9 +145,9 @@ for k, resol in enumerate(resolutions):
     params["max_sensing_angle"] = 1.6 * rad
     # ~ params["max_sensing_angle"] = sensing_angle*rad
 
-    gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
-    ds.Simulate(simtime*minute)
+    ds.simulate(simtime*minute)
     # ~ print(ds.NeuronStructure())
     
     ''' Analyze the resulting neurons '''
@@ -170,7 +170,7 @@ for k, resol in enumerate(resolutions):
     ax.plot(distances, exp_decay(distances, lp[0]))
 
     if show_neurons:
-        ds.PlotNeuron(show=True, title=str(resol))
+        ds.plot_neurons(show=True, title=str(resol))
 
 
 # plot ref

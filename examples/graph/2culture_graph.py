@@ -1,12 +1,14 @@
-import dense as ds
-import nngt
 import matplotlib.pyplot as plt
+import nngt
+
+import dense as ds
+from dense.units import *
+from dense.elements import Population
 
 
-pop = ds.structure.Population.from_swc_population\
-        (ds.NeuronsFromSimulation("2culture_swc"))
+pop = Population.from_swc(ds.NeuronsFromSimulation("2culture_swc"))
 
-graph, intersections = ds.CreateGraph(pop)
+graph, intersections = ds.generate_network(pop)
 
 for key in intersections:
     intersections[key]=list(set(intersections[key]))

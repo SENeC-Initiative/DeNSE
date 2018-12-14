@@ -14,8 +14,8 @@ import numpy as np
 
 from shapely.geometry import LineString
 
-from ..geometry import Shape
-from ..structure import NeuronStructure
+from ..environment import Shape
+from ..morphology import NeuronStructure
 from .._helpers import nonstring_container
 from .._helpers_geom import _get_wall_area
 

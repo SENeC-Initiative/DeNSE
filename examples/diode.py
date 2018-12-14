@@ -80,9 +80,9 @@ Simulation
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -101,11 +101,11 @@ if __name__ == '__main__':
     kernel["environment_required"] = True
 
     culture_file = "diode.svg"
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        culture = ds.SetEnvironment(culture_file, min_x=0, max_x=1500)
+        culture = ds.set_environment(culture_file, min_x=0, max_x=1500)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
             neurons=200,xmin =700, soma_radius=soma_radius)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2))
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=400, growth_cone_model="persistent_rw_critical",
+    gids = ds.create_neurons(n=400, growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
                             dendrites_params=dendrite_params,
@@ -133,14 +133,14 @@ if __name__ == '__main__':
                    'B' : 10.,
                    'T' : 1000.,
                    'E' : 0.7}
-    ds.SetStatus(gids,
+    ds.set_object_status(gids,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     fig, ax = plt.subplots()
-    # ds.plot.PlotNeuron(gid=range(100), culture=culture, soma_alpha=0.8,
+    # ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
                        # axon_color='g', gc_color="r", axis=ax, show=False)
-    # ds.plot.PlotNeuron(gid=range(100, 200), show_culture=False, axis=ax,
+    # ds.plot.plot_neurons(gid=range(100, 200), show_culture=False, axis=ax,
                        # soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        # show=True)
     # step(4000, 0, False)
@@ -149,19 +149,19 @@ if __name__ == '__main__':
     duration = time.time() - start
 
     # prepare the plot
-    ds.plot.PlotNeuron(gid=range(200), culture=culture, soma_alpha=0.8,
+    ds.plot.plot_neurons(gid=range(200), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.PlotNeuron(gid=range(200, 400), show_culture=False, axis=ax, ymax=500,
+    ds.plot.plot_neurons(gid=range(200, 400), show_culture=False, axis=ax, ymax=500,
                        soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                        show=True)
-    ds.plot.PlotNeuron(gid=range(200, 400), show_culture=False, axis=ax,
+    ds.plot.plot_neurons(gid=range(200, 400), show_culture=False, axis=ax,
                        soma_alpha=0.8, axon_color='yellow', gc_color="r",
                        show=True)
     plt.show(block=True)
     print("SIMULATION ENDED")
 
     # save
-    graph =ds.CreateGraph()
+    graph =ds.generate_network()
     save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
-    ds.SaveJson(filepath=save_path)
+    ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path,swc_resolution = 10)

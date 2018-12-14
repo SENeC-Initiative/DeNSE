@@ -55,20 +55,20 @@ def Simulation(plotn = False):
         "num_local_threads": num_omp,
         }
         
-        ds.SetKernelStatus(kernel)
+        ds.get_kernel_status(kernel)
 
         sim_time = expected_branching/rate * minute
         sim_time.ito(day)
         print(sim_time)
         neuron_params['persistence_length'] = lp * um
 
-        pop = ds.CreateNeurons(n=num_neurons, params=neuron_params,
+        pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                             num_neurites=1)
 
-        ds.Simulate(sim_time)
+        ds.simulate(sim_time)
         num_tips = []
         if plotn == True:
-            ds.PlotNeuron()
+            ds.plot_neurons()
         for n in pop:
             num_tips.append(len(n.axon.branching_points))
         print(rate, expected_branching, np.mean(num_tips), np.std(num_tips))
@@ -77,13 +77,13 @@ def Simulation(plotn = False):
         if mean > expected_branching - std/5. and mean < expected_branching + std/5.:
             print('ok')
             count += 1
-        ds.ResetKernel()
+        ds.reset_kernel()
     
     return count / test_nb
 
 
 def test_branching():
-    assert Simulate() > 0.8
+    assert simulate() > 0.8
     
 if __name__ == '__main__':
     print(Simulation(plotn = True))

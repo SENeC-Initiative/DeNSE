@@ -67,26 +67,26 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      num_neurites=3)
 
 
-ds.Simulate(2*day)
+ds.simulate(2*day)
 
-ds.NeuronToSWC("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 nrn = nm.load_neuron("chandelier-cell.swc")
 
 fig, _ = viewer.draw(nrn)
 
-print(ds.GetKernelStatus("time"))
-ds.plot.PlotNeuron(show=True)
+print(ds.get_kernel_status("time"))
+ds.plot.plot_neurons(show=True)
 
 # Turn branching on
 
@@ -110,19 +110,19 @@ axon_vp = {
     "T": 3*day,
 }
 
-ds.SetStatus(n, axon_params=axon_vp, dendrites_params=dend_vp)
+ds.set_object_status(n, axon_params=axon_vp, dendrites_params=dend_vp)
 
-ds.Simulate(12*day)
+ds.simulate(12*day)
 
-ds.NeuronToSWC("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 fig, _ = viewer.draw(nrn)
 plt.axis('off')
 fig.suptitle("")
 plt.tight_layout()
 
-print(ds.GetKernelStatus("time"))
-ds.plot.PlotNeuron(show=True)
+print(ds.get_kernel_status("time"))
+ds.plot.plot_neurons(show=True)
 
 lb_a = {
     "use_van_pelt": False,
@@ -140,23 +140,23 @@ lb = {
     "lateral_branching_angle_mean": 45.*deg
 }
 
-ds.SetStatus(n, axon_params=lb_a, dendrites_params=lb)
+ds.set_object_status(n, axon_params=lb_a, dendrites_params=lb)
 
-ds.Simulate(10*day)
+ds.simulate(10*day)
 
-print(ds.GetKernelStatus("time"))
-ds.plot.PlotNeuron(show=True)
+print(ds.get_kernel_status("time"))
+ds.plot.plot_neurons(show=True)
 
 
 end_branching = { "use_flpl_branching": False, "use_uniform_branching": False, "use_van_pelt": True, "T": 60*day}
-ds.SetStatus(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_status(n, axon_params=end_branching, dendrites_params=end_branching)
 
-ds.Simulate(20*day)
+ds.simulate(20*day)
 
-print(ds.GetKernelStatus("time"))
-ds.plot.PlotNeuron(show=True)
+print(ds.get_kernel_status("time"))
+ds.plot.plot_neurons(show=True)
 
-ds.NeuronToSWC("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 import neurom as nm
 from neurom import viewer

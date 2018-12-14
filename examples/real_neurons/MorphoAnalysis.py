@@ -34,7 +34,7 @@ if args.neuron:
     length_thresh=30
     ensembles =[]
     for neuron in args.neuron:
-        pop = ds.PopulationFromSwc(swc_file=neuron, info={})
+        pop = ds.load_swc(swc_file=neuron, info={})
         ens = ds.EnsembleRW(pop)
         pop[0].dendrites[0].remove_shorter(150)
         ens.characterizeRW("dendrite")

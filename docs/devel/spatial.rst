@@ -12,7 +12,7 @@ The obstacle are sensed at each step, through the `growth::GrowthCone` interface
 At present time only one environment can be set and it represents the physical space.
 Later chemical space and electromagnetic can be represented with more environment object.
 
-The space is managed with Geos, read more here `geometry`_.
+The space is managed with Boost:geometry, read more here `environment`_.
 
 
 `growth::GrowthCone` implements:

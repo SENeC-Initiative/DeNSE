@@ -31,13 +31,12 @@ try:
 except:
     ip_support = False
 
-import hashlib, json
 import numpy as np
-from shapely.geometry import Point, MultiLineString, LineString
+from shapely.geometry import Point, MultiLineString
 from shapely.ops import cascaded_union, linemerge
 
 from .units import ureg, _cpp_units
-from .geometry import Shape
+from .environment import Shape
 
 
 DICT_IS_ORDERED = sys.version_info >= (3, 6)
@@ -146,7 +145,7 @@ def get_neurite_angles(pos, soma_size, area, max_neurites):
 
     circle = p.buffer(soma_size.m).exterior
 
-    from .geometry import plot_shape
+    from .environment import plot_shape
     import matplotlib.pyplot as plt
 
     intersect = area.intersection(circle)
@@ -384,27 +383,6 @@ def to_cppunit(val, valname):
             print(_cpp_units.keys())
             raise e
     return val
-
-
-# ---------- #
-# Hash tools #
-# ---------- #
-
-def HashID(*args):
-    '''
-    Return the hash ID of an experiment.
-    '''
-    experiment_dict = {}
-    for num, dict_ in enumerate(args):
-        experiment_dict[num] = dict_
-    return _hash_dict(experiment_dict)
-
-
-def _hash_dict(_dict):
-    sha=hashlib.sha1()
-    sha.update(str(json.dumps(_dict, sort_keys =True)).encode('utf-8'))
-    hash_name = sha.hexdigest()
-    return hash_name[:16]
 
 
 # ----------------- #

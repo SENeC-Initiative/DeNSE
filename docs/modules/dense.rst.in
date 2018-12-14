@@ -26,7 +26,7 @@ convenience.
    analysis
    core
    generation
-   geometry
+   environment
    lib
    plot
    simulation
@@ -41,7 +41,7 @@ Example
     import dense as ds
     from dense.units import *
 
-    neuron = ds.CreateNeurons(1, params={"position": (0, 1)*um})
+    neuron = ds.create_neurons(1, params={"position": (0, 1)*um})
 
 
 Content

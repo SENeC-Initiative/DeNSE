@@ -169,8 +169,8 @@ sequence = []
 
 for k, resol in enumerate(resolutions[::-1]):
     np.random.seed(1)
-    ds.ResetKernel()
-    ds.SetKernelStatus({
+    ds.reset_kernel()
+    ds.get_kernel_status({
         "resolution": resol,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
@@ -178,7 +178,7 @@ for k, resol in enumerate(resolutions[::-1]):
     })
 
     if with_env:
-        ds.SetEnvironment(shape)
+        ds.set_environment(shape)
 
     params = {
         "growth_cone_model": gc_model,
@@ -194,12 +194,12 @@ for k, resol in enumerate(resolutions[::-1]):
     if gc_model == "run_tumble":
         params["persistence_length"] = 50.
 
-    gids = ds.CreateNeurons(n=num_neurons, num_neurites=1, params=params)
+    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
     if recording:
-        rec  = ds.CreateRecorders(gids, observable, levels="growth_cone")
+        rec  = ds.create_recorders(gids, observable, levels="growth_cone")
 
-    ds.Simulate(simtime)
+    ds.simulate(simtime)
 
     ''' Analyze the resulting neurons '''
 
@@ -227,7 +227,7 @@ for k, resol in enumerate(resolutions[::-1]):
 
     # get observable status
     if recording:
-        data = ds.GetRecording(rec, "compact")
+        data = ds.get_recording(rec, "compact")
 
         data_times[resol] = next(iter(data[observable]["times"].values()))
 
@@ -271,7 +271,7 @@ for k, resol in enumerate(resolutions[::-1]):
 
 
     if show_neurons:
-        ds.PlotNeuron(show=False, title=str(resol))
+        ds.plot_neurons(show=False, title=str(resol))
 
     # compute distrib x positions
     xs = np.concatenate(structure["growth_cones"])[:, 0]
@@ -329,6 +329,6 @@ if recording and show_rec:
 
 plt.show()
 
-#~ ds.PlotNeuron(show=True)
+#~ ds.plot_neurons(show=True)
 
 

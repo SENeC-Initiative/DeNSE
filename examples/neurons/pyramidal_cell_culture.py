@@ -12,14 +12,16 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 # parameters
 
 num_omp     = 1
-num_neurons = 1
+num_neurons = 2
+
 filename    = "pyramidal-cell.swc"
+sim_time = 5 * day
 
 pyr_nrn = {
+    "growth_cone_model" : 'cst_po_rt',
     "dendrite_diameter": 3. * um,
     "axon_diameter": 4. * um,
     "polarization_strength": 20.,
@@ -35,7 +37,7 @@ pyr_axon_i = {
     "persistence_length": 500. * um,
     "speed_growth_cone": 0.07 * um / minute,
     # diameter
-    "thinning_ratio": 1./320.,
+    #"thinning_ratio": 1./320.,
     "diameter_ratio_avg": 0.5,
     # branching
     "use_van_pelt": False,
@@ -45,7 +47,7 @@ pyr_axon_i = {
 pyr_dend_i = {
     "persistence_length": 250. * um,
     "speed_growth_cone": 0.01 * um / minute,
-    "thinning_ratio": 1./200.,
+    #"thinning_ratio": 1./200.,
     "use_uniform_branching": False,
     "use_van_pelt": True,
     "B": 1. * cpm,
@@ -65,13 +67,13 @@ pyr_axon_lb = {
 }
 
 pyr_dend_lb = {
-    "thinning_ratio": 1./100.,
+    #"thinning_ratio": 1./100.,
     "use_van_pelt": False,
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.0003 * cpm,
     "persistence_length": 100. * um,
     "speed_growth_cone": 0.01 * um / minute,
-    "lateral_branching_angle_mean": 40.,
+    "lateral_branching_angle_mean": 40.*deg,
 }
 
 # termination period (next 10 days)
@@ -89,20 +91,6 @@ dend_t = {
 }
 
 
-def show_nrn(neuron):
-    ds.NeuronToSWC(filename, gid=neuron)
-    import neurom as nm
-    from neurom import viewer
-    nrn = nm.load_neuron(filename)
-
-    fig, ax = viewer.draw(nrn)
-    plt.axis('off')
-    fig.suptitle("")
-    ax.set_title("")
-    plt.tight_layout()
-    plt.show()
-
-
 ''' Init kernel and create neurons '''
 
 kernel = {
@@ -113,33 +101,26 @@ kernel = {
     "adaptive_timestep": -1.,
 }
 
-ds.SetKernelStatus(kernel)
+ds.set_kernel_status(kernel)
 
-pyr_neuron = ds.CreateNeurons(1, params=pyr_nrn, axon_params=pyr_axon_i,
+pyr_neuron = ds.create_neurons(1, params=pyr_nrn, axon_params=pyr_axon_i,
                               dendrites_params=pyr_dend_i, num_neurites=3)
 
 # initial extension (5 days)
-
-sim_time = 5 * day
-ds.Simulate(sim_time)
-show_nrn(pyr_neuron)
-
+ds.simulate(sim_time)
+ds.plot.plot_neurons(mode="mixed")
+print(ds.get_object_status(pyr_neuron))
 # Extension and branching period (5 days)
-
-ds.SetStatus(pyr_neuron, axon_params=pyr_axon_lb, dendrites_params=pyr_dend_lb)
-
-ds.Simulate(sim_time)
-show_nrn(pyr_neuron)
+ds.set_object_status(
+    pyr_neuron, axon_params=pyr_axon_lb, dendrites_params=pyr_dend_lb)
+ds.simulate(sim_time)
+ds.plot.plot_neurons(mode="mixed")
 
 # Extension and branching period (5 more days)
-
-ds.Simulate(sim_time)
-show_nrn(pyr_neuron)
+ds.simulate(sim_time)
+ds.plot.plot_neurons(mode="mixed")
 
 # Termination period (10 days)
-
-ds.SetStatus(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
-
-ds.Simulate(2*sim_time)
-show_nrn(pyr_neuron)
-
+ds.set_object_status(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
+ds.simulate(2*sim_time)
+ds.plot.plot_neurons(mode="mixed")

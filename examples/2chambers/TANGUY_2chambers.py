@@ -82,9 +82,9 @@ Simulation
 
 
 def step(n, loop_n, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(show_nodes=True, show=True)
+        ds.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
@@ -103,13 +103,13 @@ if __name__ == '__main__':
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/2chamber_culture_sharpen.svg"
-    ds.SetKernelStatus(kernel, simulation_ID="ID")
+    ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     num_neurons = 10
 
     if kernel["environment_required"]:
-        culture = ds.SetEnvironment(culture_file, min_x=-culture_size, max_x=culture_size)
+        culture = ds.set_environment(culture_file, min_x=-culture_size, max_x=culture_size)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
             neurons=num_neurons, xmax=-220*um, soma_radius=soma_radius)
@@ -121,7 +121,7 @@ if __name__ == '__main__':
             -1000, 1000, (int(2*num_neurons), 2))
 
     print("Creating neurons")
-    gids = ds.CreateNeurons(n=int(2*num_neurons),
+    gids = ds.create_neurons(n=int(2*num_neurons),
                             growth_cone_model="persistent_rw_critical",
                             culture=culture,
                             params=neuron_params,
@@ -140,7 +140,7 @@ if __name__ == '__main__':
                    'T' : 10000.*minute,
                    'E' : 0.7}
     print(time.time() - start)
-    ds.SetStatus(gids, params=neuron_params, dendrites_params=dendrite_params,
+    ds.set_object_status(gids, params=neuron_params, dendrites_params=dendrite_params,
                  axon_params=axon_params)
     print(time.time() - start)
 
@@ -154,17 +154,17 @@ if __name__ == '__main__':
 
     # prepare the plot
     fig, ax = plt.subplots()
-    ds.plot.PlotNeuron(gid=range(num_neurons), culture=culture, soma_alpha=0.8,
+    ds.plot.plot_neurons(gid=range(num_neurons), culture=culture, soma_alpha=0.8,
                        axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.PlotNeuron(gid=range(num_neurons, 2*num_neurons), show_culture=False,
+    ds.plot.plot_neurons(gid=range(num_neurons, 2*num_neurons), show_culture=False,
                        axis=ax, soma_alpha=0.8, axon_color='darkorange',
                        gc_color="r", show=False)
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
-    ds.SaveJson(filepath=save_path)
+    ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path, swc_resolution=10)
 
-    graph = ds.CreateGraph()
+    graph = ds.generate_network()
 
     nngt.plot.draw_network(graph, show=True)

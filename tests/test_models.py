@@ -14,9 +14,9 @@ from dense.units import *
 
 def Models():
     '''
-    Simulate one neurons with each defaults models
+    simulate one neurons with each defaults models
     '''
-    models = ds.GetModels()
+    models = ds.get_models()
     
     observables = ['length',
     'num_growth_cones',
@@ -24,7 +24,7 @@ def Models():
     'speed',
     'stopped']
     
-    observables = ds.GetDefaultParameters('neuron', 'observables').values()
+    observables = ds.get_default_parameters('neuron', 'observables').values()
 
     for m in models:
         
@@ -37,17 +37,17 @@ def Models():
             "position" : [0.,0.]*um
         }
         
-        ds.SetKernelStatus(kernel)
+        ds.get_kernel_status(kernel)
     
-        gids = ds.CreateNeurons(n=1, num_neurites=3, params=params)
+        gids = ds.create_neurons(n=1, num_neurites=3, params=params)
         
-        rec = [ds.CreateRecorders(gids, obs, levels="neuron") for obs in observables]
+        rec = [ds.create_recorders(gids, obs, levels="neuron") for obs in observables]
         
-        ds.Simulate(10*hour)
+        ds.simulate(10*hour)
         
-        print(ds.GetRecording(rec))
+        print(ds.get_recording(rec))
         
-        ds.ResetKernel()
+        ds.reset_kernel()
     return 1
     
 def test_models():

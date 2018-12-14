@@ -1,17 +1,18 @@
-import DeNSE as ds
-import nngt
-import matplotlib.pyplot as plt
 import sys
+
+import matplotlib.pyplot as plt
+
+import dense as ds
+from dense.elements import Population
 
 try:
     culture_folder = sys.argv[1]
 except:
     raise("add culture folder as first argument")
 
-pop = ds.structure.Population.from_swc_population\
-        (ds.NeuronsFromSimulation(culture_folder))
+pop = Population.from_swc(ds.NeuronsFromSimulation(culture_folder))
 
-graph, intersections, synapses = ds.CreateGraph(pop,\
+graph, intersections, synapses = ds.generate_network(pop,
                                                 intersection_positions=True)
 
 

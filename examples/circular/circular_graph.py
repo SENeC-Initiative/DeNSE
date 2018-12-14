@@ -1,12 +1,13 @@
-import dense as ds
-from dense.units import *
-import nngt
 import matplotlib.pyplot as plt
 
-pop = ds.structure.Population.from_swc_population\
-        (ds.NeuronsFromSimulation("circular_swc"))
+import dense as ds
+from dense.units import *
+from dense.elements import Population
 
-graph, intersections, synapses = ds.CreateGraph(pop, intersection_positions=True)
+
+pop = Population.from_swc(ds.NeuronsFromSimulation("circular_swc"))
+
+graph, intersections, synapses = ds.generate_network(pop, intersection_positions=True)
 
 
 ### Plot the graph in 2 subplots:

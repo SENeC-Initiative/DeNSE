@@ -3,15 +3,13 @@
 
 """ Containers for Neuronal shapes """
 
-from logging import warnings
-from collections import OrderedDict, deque
+from logging import warnings as _warn
+from collections import deque as _deque
 
-import numpy as np
+import numpy as _np
 
-from .. import _pygrowth as _pg
-from .._helpers import nonstring_container
-from .._pygrowth import _to_bytes
-from ..dataIO_swc import GetSWCStructure
+from . import _pygrowth as _pg
+from ._helpers import nonstring_container as _nsc
 
 
 __all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
@@ -71,11 +69,11 @@ class Neuron(int):
 
     @property
     def has_axon(self):
-        return _pg.GetStatus(self, "has_axon")
+        return _pg.get_object_status(self, "has_axon")
 
     @property
     def total_length(self):
-        return _pg.GetState(self, variable="length")
+        return _pg.get_object_state(self, variable="length")
 
     def get_neurite(self, neurite):
         '''
@@ -113,7 +111,7 @@ class Neuron(int):
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
         '''
-        return _pg.GetStatus(self, property_name=property_name, level=level,
+        return _pg.get_object_status(self, property_name=property_name, level=level,
                              neurite=neurite, time_units=time_units)
 
     def to_swc(self, filename, resolution=10):
@@ -128,7 +126,7 @@ class Neuron(int):
             Coarse-graining factor of the structure: only one point every
             `resolution` will be kept.
         '''
-        _pg.NeuronToSWC(filename, gid=self, resolution=resolution)
+        _pg.save_to_swc(filename, gid=self, resolution=resolution)
 
     def to_nml(self, filename, resolution=10, write=True):
         '''
@@ -173,8 +171,8 @@ class Neuron(int):
             p_segment     = soma
             parent        = neuroml.SegmentParent(segments=soma.id)
             branch_seen   = {}
-            todo          = deque([branch for branch in neurite.branches])
-            indices       = deque([i for i in range(len(todo))])
+            todo          = _deque([branch for branch in neurite.branches])
+            indices       = _deque([i for i in range(len(todo))])
 
             while todo:
                 branch = todo.popleft()
@@ -193,7 +191,7 @@ class Neuron(int):
                     diameter = branch.diameter
 
                     if neurite._taper_rate is not None:
-                        dist_to_tip = np.cumsum(branch.r[::-1])[::-1]
+                        dist_to_tip = _np.cumsum(branch.r[::-1])[::-1]
                         diameter = diameter + neurite._taper_rate*dist_to_tip
                     else:
                         diameter = (diameter for _ in range(len(branch.xy)))
@@ -259,8 +257,8 @@ class Neurite(str):
         self._branches     = branches
         self.neurite_type  = neurite_type
         if parent is not None:
-            #~ self._taper_rate = _pg.GetStatus(parent, "taper_rate", neurite=name)
-            self._taper_rate = _pg.GetStatus(parent, "taper_rate", neurite=name)
+            #~ self._taper_rate = _pg.get_object_status(parent, "taper_rate", neurite=name)
+            self._taper_rate = _pg.get_object_status(parent, "taper_rate", neurite=name)
         else:
             self._taper_rate = None
         if branches:
@@ -272,7 +270,7 @@ class Neurite(str):
 
         # store last update time
         if self._has_branches:
-            self._update_time = _pg.GetKernelStatus("time")
+            self._update_time = _pg.get_kernel_status("time")
         else:
             self._update_time = None
 
@@ -289,21 +287,25 @@ class Neurite(str):
 
     @property
     def name(self):
+        ''' Name of the neurite '''
         return self._name
 
     @property
     def branches(self):
-        update = (self._update_time != _pg.GetKernelStatus("time"))
+        ''' Return the branches composing the neurite '''
+        update = (self._update_time != _pg.get_kernel_status("time"))
         if not self._has_branches or update:
             self._update_branches()
         return self._branches
 
     @property
-    def has_points(self):
+    def empty(self):
+        ''' Whether the neurite is empty or not '''
         return self._has_branches
 
     @property
     def single_branch(self):
+        ''' Whether the neurite is composed of a single branch '''
         if not self._has_branches:
             return False
         else:
@@ -311,61 +313,67 @@ class Neurite(str):
 
     @property
     def xy(self):
+        ''' Points constituting the different segments along the neurite '''
         try:
-            return np.concatenate([branch.xy for branch in self.branches])
+            return _np.concatenate([branch.xy for branch in self.branches])
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return np.array([[]])
+            return _np.array([[]])
 
     @property
     def theta(self):
+        ''' Angles of the different segments along the neurite '''
         try:
-            return np.concatenate([branch.theta for branch in self.branches])
+            return _np.concatenate([branch.theta for branch in self.branches])
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return np.array([[]])
+            return _np.array([[]])
 
     @property
     def diameter(self):
+        ''' Diameter of the different segments along the neurite '''
         try:
-            return np.concatenate([branch.diameter for branch in self.branches])
+            return _np.concatenate([branch.diameter for branch in self.branches])
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return np.array([[]])
+            return _np.array([[]])
 
     @property
     def branching_points(self):
-        return np.array([branch.xy[0] for branch in self.branches])
+        ''' Return the B locations of the branching points, shape (B, 2) '''
+        return _np.array([branch.xy[0] for branch in self.branches])
 
     @property
     def r(self):
+        ''' Length of the different segments along the neurite '''
         try:
-            return np.concatenate([branch.r for branch in self.branches])
+            return _np.concatenate([branch.r for branch in self.branches])
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return np.arry([[]])
+            return _np.array([[]])
 
     @property
     def total_length(self):
-        return _pg.GetState(self._parent, level=str(self), variable="length")
+        ''' Total length of the neurite '''
+        return _pg.get_object_state(self._parent, level=str(self), variable="length")
 
     def _update_branches(self):
-        cneurite          = _to_bytes(str(self))
+        cneurite          = _pg._to_bytes(str(self))
         self._branches    = []
 
         points, diameters, parents, nodes = _pg._get_branches_data(
             self._parent, cneurite)
 
         for p, d, parent, n in zip(points, diameters, parents, nodes):
-            data = (np.array(p).T, None, None, d)
+            data = (_np.array(p).T, None, None, d)
             self._branches.append(Branch(data, parent=parent, node_id=n))
 
         self._has_branches = True
-        self._update_time  = _pg.GetKernelStatus("time")
+        self._update_time  = _pg.get_kernel_status("time")
 
 
 class Branch(object):
@@ -389,11 +397,11 @@ class Branch(object):
         Norm of each segment in the Branch.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, np.ndarray))
+            assert (isinstance(self.xy, _np.ndarray))
             self._theta, self._r = _norm_angle_from_vectors(self.xy)
             return self._r
         else:
-            assert (isinstance(self._r, np.ndarray)), \
+            assert (isinstance(self._r, _np.ndarray)), \
                 "branch's norm is not an array, there is a mistake"
             return self._r
 
@@ -403,11 +411,11 @@ class Branch(object):
         Angle direction of each segment.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, np.ndarray))
+            assert (isinstance(self.xy, _np.ndarray))
             self._theta, self._r = _norm_angle_from_vectors(self.xy)
             return self._theta
         else:
-            assert (isinstance(self._theta, np.ndarray)), \
+            assert (isinstance(self._theta, _np.ndarray)), \
                 "branch's angles is not an array, there is a mistake"
             return self._theta
 
@@ -482,10 +490,9 @@ class Tree(dict):
         from neurom.core import Neuron as nmNeuron
         from neurom.core import Neurite as nmNeurite
         from neurom.core import Section, Soma
-        from collections import deque
 
-        root = Section(np.array([[0, 0, 0, 0]]))
-        queue  = deque(self._root.children)
+        root = Section(_np.array([[0, 0, 0, 0]]))
+        queue  = _deque(self._root.children)
         edict  = {int(self._root): root}
 
         sections = []
@@ -493,7 +500,7 @@ class Tree(dict):
         while queue:
             node   = queue.popleft()
             parent = edict[node.parent]
-            enode  = Section(np.array([[0, 0, 0, 0]]))
+            enode  = Section(_np.array([[0, 0, 0, 0]]))
             parent.add_child(enode)
             edict[node] = enode
             queue.extend(node.children)
@@ -515,7 +522,6 @@ class Tree(dict):
         '''
         from ete3 import Tree as Ete3Tree
         from ete3 import TreeStyle, NodeStyle
-        from collections import deque
 
         # make the tree from the root
         t      = Ete3Tree(dist=0, name=int(self._root))
@@ -524,7 +530,7 @@ class Tree(dict):
         ns["size"]          = 0
         t.set_style(ns)
 
-        queue  = deque(self._root.children)
+        queue  = _deque(self._root.children)
         edict  = {int(self._root): t}
 
         while queue:
@@ -564,10 +570,10 @@ class Tree(dict):
 
 
 def _norm_angle_from_vectors(vectors):
-    #~ angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
-    vectors = np.diff(vectors, axis = 0)
-    angles  = np.arctan2(vectors[:,1], vectors[:,0])
-    norms   = np.linalg.norm(vectors, axis=1)
+    #~ angles  = _np.arctan2(vectors[:, 1], vectors[:, 0])
+    vectors = _np.diff(vectors, axis = 0)
+    angles  = _np.arctan2(vectors[:,1], vectors[:,0])
+    norms   = _np.linalg.norm(vectors, axis=1)
     return angles, norms
 
 
@@ -583,7 +589,7 @@ class Population(list):
     '''
 
     @classmethod
-    def from_swc_population(cls, population, info=None):
+    def from_swc(cls, population, info=None):
         if info is not None:
             ensemble = cls(info=population['info'])
         else:
@@ -622,9 +628,9 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.GetStatus(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_status(gids, "position", return_iterable=True)
         pos  = [pos[n] for n in gids]
-        rad  = _pg.GetStatus(gids, "soma_radius", return_iterable=True)
+        rad  = _pg.get_object_status(gids, "soma_radius", return_iterable=True)
         rad  = [rad[n] for n in gids]
 
         for n, p, r in zip(gids, pos, rad):
@@ -657,7 +663,7 @@ class Population(list):
                 super(Population, pop).append(
                     super(Population, self).__getitem__(i))
             return pop
-        elif nonstring_container(key):
+        elif _nsc(key):
             pop = Population(name="subpop_" + self.name)
             for i in key:
                 super(Population, pop).append(
@@ -675,21 +681,21 @@ class Population(list):
 
     def axon_all_points(self, center_zero=False):
         if center_zero:
-            return np.vstack(
+            return _np.vstack(
                 [neuron.axon.xy - neuron.position for neuron in self
                  if neuron.axon.xy.shape[1] > 1])
         else:
-            return np.vstack(
+            return _np.vstack(
                 [neuron.axon.xy for neuron in self
                  if neuron.axon.xy.shape[1] > 1])
 
     def dendrites_all_points(self, center_zero=False):
         if center_zero:
-            return np.vstack(
+            return _np.vstack(
                 [neuron.dendrites[0].xy - neuron.position
                  for neuron in self if neuron.dendrites[0].xy.shape[1]>1])
         else:
-            return np.vstack(
+            return _np.vstack(
                 [neuron.dendrites[0].xy for neuron in self
                  if neuron.dendrites[0].xy.shape[1] > 1])
 
@@ -718,22 +724,23 @@ class Population(list):
         '''
         add population
         '''
+        from .io import GetSWCStructure as _get_swc_struct
+
         for neuron in neurons:
             gid = neurons[neuron]['gid']
-            axon, dendrites = GetSWCStructure(
-                neuron=neurons[neuron]['data'])
+            axon, dendrites = _get_swc_struct(neuron=neurons[neuron]['data'])
             try:
                 position = self.info["neurons"][str(
                     neurons[neuron]['gid'])]['position']
             except KeyError:
-                warnings.warn("Cannot retrieve `position` from info.json file "
+                _warn.warn("Cannot retrieve `position` from info.json file "
                               "setting default position to [0, 0].")
                 position = [0, 0]
             try:
                 soma_radius = self.info["neurons"][str(
                     neurons[neuron]['gid'])]['soma_radius']
             except KeyError:
-                warnings.warn("Cannot retrieve `soma_radius` from info.json file "
+                _warn.warn("Cannot retrieve `soma_radius` from info.json file "
                               "setting default radius to 8.")
                 soma_radius = 8.
             super(Population, self).append(Neuron(gid, position, soma_radius))
@@ -744,8 +751,9 @@ class Population(list):
                 raise Exception("Axon is expected to be a list of segments.")
             if dendrites is not None:
                 if isinstance(dendrites, list):
-                    dend = Neurite([Branch(dend) for dend in dendrites],
-                                   neurite_type="dendrite", name="dendrite")
+                    dendrite = Neurite(
+                        [Branch(dend) for dend in dendrites],
+                        neurite_type="dendrite", name="dendrite")
                     self[gid].dendrites[dendrite] = dend
                 else:
                     raise Exception(
@@ -784,7 +792,7 @@ class Population(list):
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
         '''
-        return _pg.GetStatus(self, property_name=property_name, level=level,
+        return _pg.get_object_status(self, property_name=property_name, level=level,
                              neurite=neurite, time_units=time_units)
 
 
@@ -799,16 +807,16 @@ def _neurite_from_skeleton(skeleton, neurite_type, parent=None):
     @todo: improve this function to compute diameter, theta, distance from soma;
     these are currently None.
     """
-    cuts   = np.where(np.isnan(skeleton[1]))[0]
-    cuts_2 = np.where(np.isnan(skeleton[0]))[0]
+    cuts   = _np.where(_np.isnan(skeleton[1]))[0]
+    cuts_2 = _np.where(_np.isnan(skeleton[0]))[0]
 
-    assert np.array_equal(cuts, cuts_2)
+    assert _np.array_equal(cuts, cuts_2)
 
-    neurite  = Neurite([], neurite_type, name=neurite_type, parent=parent)
+    neurite = Neurite([], neurite_type, name=neurite_type, parent=parent)
 
     prev_cut = 0
 
-    if len(cuts) > 0:
+    if len(cuts):
         cuts = cuts.tolist() + [len(skeleton[1])]
         for cut in cuts:
             branch = Branch(

@@ -106,6 +106,7 @@ class SpaceManager : public ManagerInterface
     void destroy_geom(GEOSGeom geom) const;
     void copy_polygon(BMultiPolygonPtr copy, const BPolygon &p);
     void copy_polygon(BMultiPolygonPtr copy, const BMultiPolygon &p);
+    BPolygon make_disk(BPoint position, double radius) const;
 
     int get_region_thread(const BPoint &position) const;
     int get_region_thread(double x, double y) const;

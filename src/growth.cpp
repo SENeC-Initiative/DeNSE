@@ -8,14 +8,14 @@ int main(int argc, char **argv)
 {
     int num_neurons = 6;
 
-    growth::init_growth(&argc, &argv);
-    growth::reset_kernel();
+    growth::init_growth_(&argc, &argv);
+    growth::reset_kernel_();
 
     growth::statusMap kernelMap;
     kernelMap.insert({"seeds", growth::Property({33.}, "")});
     kernelMap.insert({"num_local_threads", growth::Property(1, "")});
 
-    growth::set_kernel_status(kernelMap, "ID");
+    growth::set_kernel_status_(kernelMap, "ID");
 
 
     growth::statusMap mainMap;
@@ -36,14 +36,14 @@ int main(int argc, char **argv)
     vector<growth::statusMap> mainVec =
         vector<growth::statusMap>(num_neurons, mainMap);
 
-    growth::create_neurons(mainVec, emptyMap, emptyMap);
+    growth::create_neurons_(mainVec, emptyMap, emptyMap);
 
-    growth::simulate(growth::Time(200, 0, 0, 0));
+    growth::simulate_(growth::Time(200, 0, 0, 0));
 
     growth::SkelNeurite axon, dendrites, nodes, growth_cones, somas;
     std::vector<size_t> gid = {0};
     // growth::get_skeleton(axon, dendrites, nodes, growth_cones, somas, gid);
-    growth::get_swc("myswc", gid, 10);
+    growth::get_swc_("myswc", gid, 10);
 
     return 0;
 }

@@ -96,24 +96,24 @@ if __name__ == '__main__':
         "resolution": resolution * minute,
     }
 
-    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
+    ds.set_kernel_status(kernel, simulation_id="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2)) * um
-    gid = ds.CreateNeurons(
+    gid = ds.create_neurons(
         n=num_neurons, params=neuron_params, axon_params=axon_params,
         num_neurites=1)
 
-    rec = ds.CreateRecorders(gid, ["length", "resource"], levels="growth_cone")
+    rec = ds.create_recorders(gid, ["length", "resource"], levels="growth_cone")
 
-    ds.Simulate(3 * day)
+    ds.simulate(3 * day)
 
     '''
     Get recording
     '''
 
-    data  = ds.GetRecording(rec, "compact")
+    data  = ds.get_recording(rec, "compact")
     key   = (0, "axon", 1)
     times = data["resource"]["times"][key]
     resc  = data["resource"]["data"][key]

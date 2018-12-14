@@ -1,38 +1,37 @@
-#!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import os, csv, errno, json
-from os.path import join, isfile, isdir
-from os import listdir
+import csv
 import errno
+import json
+import os
+from os import listdir
+from os.path import isdir
 
-import numpy as np
-
-from . import _pygrowth as _pg
-from ._helpers import HashID, nonstring_container
+from .. import _pygrowth as _pg
+from .._helpers import nonstring_container
+from ..elements import Population
+from ..units import *
 from .dataIO_swc import ImportSwc
-from .structure.containers import Population
-from .units import *
 
 
 __all__ = [
     "ImportRecordFile",
     "ImportSwc",
     "NeuronsFromSimulation",
-    "SaveJson",
-    "SaveNeuroML",
+    "save_json_info",
+    "save_to_neuroml",
     "SaveSwc",
     "SimulationsFromFolder"
 ]
 
 
-def SaveJson(filepath="default", gid=None):
+def save_json_info(filepath="default", gid=None):
     """
     Save the simulation data to "info.json" file into the folder 'filepath'.
     filepath is usually the simulation_ID.
     """
     if filepath=="default":
-        filepath= _pg.GetSimulationID()
+        filepath= _pg.get_simulation_id()
     if not isdir(filepath):
         try:
             os.makedirs(filepath)
@@ -40,10 +39,10 @@ def SaveJson(filepath="default", gid=None):
             if e.errno != errno.EEXIST:
                 raise
     if gid is None:
-        gid = _pg.GetNeurons()
+        gid = _pg.get_neurons()
 
-    kernel  = _pg.GetKernelStatus()
-    neurons = _pg.GetStatus(gid)
+    kernel  = _pg.get_kernel_status()
+    neurons = _pg.get_object_status(gid)
 
     experiment_dict = {}
 
@@ -57,25 +56,7 @@ def SaveJson(filepath="default", gid=None):
         json.dump(experiment_dict, dumper, sort_keys =True)
 
 
-def SaveSwc(filepath="default", gid=None, swc_resolution=10):
-    '''
-    Save the morphology of each neuron to a single SWC file.
-    '''
-    if filepath=="default":
-        filepath= _pg.GetSimulationID()
-    if not isdir(filepath):
-        try:
-            os.makedirs(filepath)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-    if gid is None:
-        gid = _pg.GetNeurons()
-    _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)
-    return os.path.join(filepath,"morphology.swc")
-
-
-def SaveNeuroML(filename, gid=None, spatial_resolution=10):
+def save_to_neuroml(filename, gid=None, spatial_resolution=10):
     '''
     Save the morphology of each neuron to a single NeuroML file.
 
@@ -91,12 +72,10 @@ def SaveNeuroML(filename, gid=None, spatial_resolution=10):
     '''
     import neuroml
     import neuroml.writers as writers
-    if not filepath.endswith(".nml"):
+    if not filename.endswith(".nml"):
         filename += ".nml"
     if gid is None:
-        gid = _pg.GetNeurons()
-    _pg.NeuronToSWC(os.path.join(filepath,"morphology.swc"), gid, swc_resolution)
-    return os.path.join(filepath,"morphology.swc")
+        gid = _pg.get_neurons()
 
 
 ############################
@@ -130,7 +109,6 @@ def ImportRecordFile(file_):
             if line[0]=="branch":
                 events.append(line[1:])
     return events, steps
-
 
 
 def SimulationsFromFolder(simulation_folder):
@@ -185,9 +163,9 @@ def NeuronsFromSimulation(simulation_path):
             return line[1].rstrip()
 
     for file_ in imported_list:
-        gid              = parse_gid(file_)
+        gid          = parse_gid(file_)
         dense_format = {"gid": gid, "data":file_}
-        neurons[gid]     = dense_format
+        neurons[gid] = dense_format
     try:
         info = json.load(open(os.path.join(simulation_path,"info.json")))
     except:
@@ -206,7 +184,7 @@ def NeuronFromSwcFile(_file, info=None):
     return  {"neurons": neurons, "info": info}
 
 
-def PopulationFromSwc(swc_folder=None, swc_file=None, info=None):
+def load_swc(swc_folder=None, swc_file=None, info=None):
     """
     Import SWC files in DeNSE Population:
         the Population container retrieves all possible data
@@ -215,23 +193,22 @@ def PopulationFromSwc(swc_folder=None, swc_file=None, info=None):
         or for single neurons files.
         the format style of SWC files is the standard
 
-    Parameters:
-    ==========
-        swc_folder: path,
-                    folder containing morphology.swc or single neurons file
-    Return:
-    =======
-        Population: Population container
-                    the container can be used to post process the neuron
-                    generated with DeNSE
-                    or other neurons in general.
+    Parameters
+    ----------
+    swc_folder: str
+        Folder containing morphology.swc or single neurons file
 
+    Returns
+    -------
+    Population: Population container
+        The container can be used to post process the neuron  generated with
+        DeNSE or other neurons in general.
     """
     if swc_file is not None:
-        return Population.from_swc_population(
+        return Population.from_swc(
             NeuronFromSwcFile(swc_file,info))
     if swc_folder is not None:
-        return Population.from_swc_population(
+        return Population.from_swc(
             NeuronsFromSimulation(swc_folder))
 
 

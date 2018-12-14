@@ -83,122 +83,121 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 
 
 cdef extern from "../module.hpp" namespace "growth":
-    cdef void init_growth( int* argc, char** argv[] )
+    cdef void init_growth_(int* argc, char** argv[] )
 
-    cdef void finalize_growth()
+    cdef void finalize_growth_()
 
-    cdef size_t create_objects(const string& object_name,
-                               const vector[statusMap]& obj_params
+    cdef size_t create_objects_(const string& object_name,
+                                const vector[statusMap]& obj_params
+                                ) except +
+
+    cdef size_t create_neurons_(const vector[statusMap]& neuron_params,
+                                const vector[statusMap]& axon_params,
+                                const vector[statusMap]& dendrites_params
+                                ) except +
+
+    cdef void get_environment_(GEOSGeometry*& environment,
+                               vector[GEOSGeometry*]& areas,
+                               vector[double] heights, vector[string]& names,
+                               vector[unordered_map[string, double]]& properties
                                ) except +
 
-    cdef size_t create_neurons(const vector[statusMap]& neuron_params,
-                               const vector[statusMap]& axon_params,
-                               const vector[statusMap]& dendrites_params
-                               ) except +
-
-    cdef void get_environment(GEOSGeometry*& environment,
-                              vector[GEOSGeometry*]& areas,
-                              vector[double] heights, vector[string]& names,
-                              vector[unordered_map[string, double]]& properties
-                              ) except +
-
-    cdef void set_environment(
+    cdef void set_environment_(
         GEOSGeometry* environment, const vector[GEOSGeometry*]& areas,
         const vector[double]& heights, vector[string]& names,
         const vector[unordered_map[string, double]]& properties
         ) except +
 
-    cdef const CTime get_current_time() except +
+    cdef const CTime get_current_time_() except +
 
-    cdef statusMap get_kernel_status() except +
+    cdef statusMap get_kernel_status_() except +
 
-    cdef size_t get_num_objects() except +
+    cdef size_t get_num_objects_() except +
 
-    cdef void get_skeleton(
+    cdef void get_skeleton_(
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,
         SkelNeurite& growth_cones, SkelSomas& somas,
         vector[size_t] gids, unsigned int resolution) except +
 
-    cdef void get_geom_skeleton(
+    cdef void get_geom_skeleton_(
         vector[size_t] gids, vector[GEOSGeometry*]& axons,
         vector[GEOSGeometry*]& dendrites,
         vector[vector[double]]& somas) except +
 
 
-    cdef void get_swc(string output_file,
+    cdef void get_swc_(string output_file,
         vector[size_t] gids, unsigned int resolution) except +
 
-    cdef statusMap get_status(size_t gid) except +
+    cdef statusMap get_status_(size_t gid) except +
 
-    cdef statusMap get_neurite_status(size_t gid,
+    cdef statusMap get_neurite_status_(size_t gid,
                                       const string& n_type, const string& level,
                                       ) except +
 
-    cdef vector[size_t] get_neurons() except +
+    cdef vector[size_t] get_neurons_() except +
 
-    bool is_neuron(size_t gid) except +
-    bool is_neurite(size_t gid, const string& neurite) except +
+    cdef bool is_neuron_(size_t gid) except +
+    cdef bool is_neurite_(size_t gid, const string& neurite) except +
 
-    cdef vector[string] get_neurites(size_t gid) except +
+    cdef vector[string] get_neurites_(size_t gid) except +
 
-    cdef void get_branches_data(size_t neuron, const string& neurite_name,
-                                vector[vector[vector[double]]]& points,
-                                vector[double]& diameters,
-                                vector[int]& parents,
-                                vector[size_t]& nodes,
-                                size_t start_point) except +
+    cdef void get_branches_data_(size_t neuron, const string& neurite_name,
+                                 vector[vector[vector[double]]]& points,
+                                 vector[double]& diameters,
+                                 vector[int]& parents,
+                                 vector[size_t]& nodes,
+                                 size_t start_point) except +
 
-    cdef void get_defaults(const string& object_name,
-                           const string& object_type,
-                           const string& gc_model,
-                           bool detailed,
-                           statusMap &status) except +
+    cdef void get_defaults_(const string& object_name,
+                            const string& object_type,
+                            const string& gc_model,
+                            bool detailed,
+                            statusMap &status) except +
 
-    cdef string get_default_model() except +
+    cdef string get_default_model_() except +
 
-    cdef void get_models(unordered_map[string, string]& models,
-                         bool abbrev) except +
+    cdef void get_models_(unordered_map[string, string]& models,
+                          bool abbrev) except +
 
-    cdef void get_recorder_type(size_t gid, string& level,
-                                string& event_type) except +
+    cdef void get_recorder_type_(size_t gid, string& level,
+                                 string& event_type) except +
 
-    cdef bool get_next_recording(size_t gid, vector[Property]& ids,
-                                 vector[double]& values) except +
+    cdef bool get_next_recording_(size_t gid, vector[Property]& ids,
+                                  vector[double]& values) except +
 
-    cdef bool get_next_time(size_t gid, vector[Property]& ids,
-                            vector[double]& values,
-                            const string& time_units) except +
+    cdef bool get_next_time_(size_t gid, vector[Property]& ids,
+                             vector[double]& values,
+                             const string& time_units) except +
 
-    cdef string object_type(size_t gid) except +
+    cdef string object_type_(size_t gid) except +
 
-    cdef void reset_kernel() except +
+    cdef void reset_kernel_() except +
 
-    cdef void set_kernel_status(statusMap status_dict,
-                                string c_simulation_ID) except +
+    cdef void set_kernel_status_(statusMap status_dict,
+                                 string c_simulation_ID) except +
 
-    cdef string get_simulation_ID() except +
+    cdef string get_simulation_id_() except +
 
-    cdef double get_state(size_t gid, const string& level,
-                          const string& variable) except +
+    cdef double get_state_(size_t gid, const string& level,
+                           const string& variable) except +
 
-    cdef vector[string] get_elongation_types() except +
+    cdef vector[string] get_elongation_types_() except +
 
-    cdef vector[string] get_steering_methods() except +
+    cdef vector[string] get_steering_methods_() except +
 
-    cdef vector[string] get_direction_selection_methods() except +
+    cdef vector[string] get_direction_selection_methods_() except +
 
-    cdef void set_status(size_t gid, statusMap neuron_status,
-                         statusMap axon_status,
-                         statusMap dendrites_status) except +
+    cdef void set_status_(size_t gid, statusMap neuron_status,
+                          statusMap axon_status,
+                          statusMap dendrites_status) except +
 
-    cdef void simulate(const CTime& simtime) except +
+    cdef void simulate_(const CTime& simtime) except +
 
-    cdef void test_random_generator(vector[vector[double]]& values,
-                                    size_t size) except +
+    cdef void test_random_generator_(vector[vector[double]]& values,
+                                     size_t size) except +
 
-    cdef bool walk_neurite_tree(
-        size_t neuron, string neurite,
-        NodeProp& np) except +
+    cdef bool walk_neurite_tree_(size_t neuron, string neurite,
+                                 NodeProp& np) except +
 
 
 # ---------------------- #

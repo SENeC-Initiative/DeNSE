@@ -1,7 +1,10 @@
-import dense as ds
-import nngt
-import matplotlib.pyplot as plt
 import sys
+
+import matplotlib.pyplot as plt
+
+import dense as ds
+from dense.elements import Population
+
 
 try:
     culture_folder = sys.argv[1]
@@ -11,7 +14,7 @@ except:
 pop = ds.structure.Population.from_swc_population\
         (ds.NeuronsFromSimulation(culture_folder))
 
-graph, intersections, synapses = ds.CreateGraph(pop,\
+graph, intersections, synapses = ds.generate_network(pop,\
                                                 intersection_positions=True,
                                                 do_graph=False)
 

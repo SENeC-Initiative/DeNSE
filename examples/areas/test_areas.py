@@ -9,7 +9,7 @@ import nngt
 
 import dense as ds
 from dense.units import *
-from dense import geometry as geom
+from dense import environment as env
 
 
 '''
@@ -18,14 +18,14 @@ Creating the environment: a disk and a weird structure
 
 fname = "mask_high.svg"
 
-shape = geom.Shape.disk(radius=3000*um)
-masks = geom.shapes_from_file(fname, min_x=-2950*um, max_x=2600*um)
+shape = env.Shape.disk(radius=3000*um)
+masks = env.shapes_from_file(fname, min_x=-2950*um, max_x=2600*um)
 
 
 for i, m in enumerate(masks):
     shape.add_area(m, height=30., name="top_{}".format(i+1))
 
-geom.plot_shape(shape, show=True)
+env.plot_shape(shape, show=True)
 
 
 '''
@@ -37,7 +37,7 @@ resol   = 2.*minute
 
 nngt.seed(0)
 
-ds.SetKernelStatus({
+ds.set_kernel_status({
     "resolution": resol, "num_local_threads": num_omp,
     "seeds": [2*i+1 for i in range(num_omp)],
     # ~ "seeds": [11, 6, 7, 9],
@@ -45,13 +45,13 @@ ds.SetKernelStatus({
 
 np.random.seed(1)
 
-ds.SetEnvironment(shape)
+ds.set_environment(shape)
 
-shape = ds.GetEnvironment()
+shape = ds.get_environment()
 
 # ~ for a in shape.areas.values():
-    # ~ geom.plot_shape(a, show=False)
-# ~ geom.plot_shape(shape, show=True)
+    # ~ env.plot_shape(a, show=False)
+# ~ env.plot_shape(shape, show=True)
 
 # seed the neurons on top
 top_areas = [k for k in shape.areas.keys() if k.find("default_area") != 0]
@@ -67,14 +67,14 @@ params = {
 dend_params = params.copy()
 dend_params["speed_growth_cone"] = 0.001 * um / minute
 
-# ~ ds.CreateNeurons(n=100, on_area=top_areas, num_neurites=2)
-# ~ gids = ds.CreateNeurons(n=100, on_area=top_areas, num_neurites=1, params=params)
-ds.CreateNeurons(n=1, on_area="default_area", num_neurites=1, params=params)
+# ~ ds.create_neurons(n=100, on_area=top_areas, num_neurites=2)
+# ~ gids = ds.create_neurons(n=100, on_area=top_areas, num_neurites=1, params=params)
+ds.create_neurons(n=1, on_area="default_area", num_neurites=1, params=params)
 
-# ~ ds.Simulate(400*minute)
-# ~ ds.Simulate(600*mniute)
+# ~ ds.simulate(400*minute)
+# ~ ds.simulate(600*mniute)
 for i in range(15):
-    ds.Simulate(22*minute)
-    ds.PlotNeuron(show=True)
+    ds.simulate(22*minute)
+    ds.plot_neurons(show=True)
 
-ds.PlotNeuron(show=True)
+ds.plot_neurons(show=True)

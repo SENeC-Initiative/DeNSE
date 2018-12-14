@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-""" Helper functions for geometry"""
+""" Helper functions for environment"""
 
-from .geometry import Shape
+from .environment import Shape
 
 
 def _get_wall_area(area, name, culture, env_buffer, width):

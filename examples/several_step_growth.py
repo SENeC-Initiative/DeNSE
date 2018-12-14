@@ -43,7 +43,7 @@ if __name__ =='__main__':
         "environment_required": False
     }
 
-    ds.SetKernelStatus(kernel)
+    ds.get_kernel_status(kernel)
 
     '''
     Create neurons
@@ -51,7 +51,7 @@ if __name__ =='__main__':
 
     neuron_params['position'] = (0, 0)
 
-    gids = ds.CreateNeurons(n=1, growth_cone_model='random_walk',
+    gids = ds.create_neurons(n=1, growth_cone_model='random_walk',
                             params = neuron_params,
                             dendrites_params=dendrite_params,
                             num_neurites=3)
@@ -60,14 +60,14 @@ if __name__ =='__main__':
     Create recorders
     '''
 
-    gids_rec = ds.CreateRecorders(gids, "length", levels="growth_cone")
+    gids_rec = ds.create_recorders(gids, "length", levels="growth_cone")
 
     '''
-    Simulate first non-branching period
+    simulate first non-branching period
     '''
 
-    ds.Simulate(hours=20)
-    ds.PlotNeuron(show_nodes=True, show=True)
+    ds.simulate(hours=20)
+    ds.plot_neurons(show_nodes=True, show=True)
 
 
     '''
@@ -89,12 +89,12 @@ if __name__ =='__main__':
     dend_params = vp_params.copy()
     #~ dend_params["T"] = 1e-8
 
-    ds.SetStatus(gids, params=vp_params, dendrites_params=dend_params)
-    # pprint(ds.GetStatus(gids))
+    ds.set_object_status(gids, params=vp_params, dendrites_params=dend_params)
+    # pprint(ds.get_object_status(gids))
 
-    ds.Simulate(hours=12, days=1)
+    ds.simulate(hours=12, days=1)
     print("Simulation done")
-    ds.PlotNeuron(show_nodes=True, show=True)
+    ds.plot_neurons(show_nodes=True, show=True)
 
 
     '''
@@ -119,9 +119,9 @@ if __name__ =='__main__':
     })
 
 
-    ds.SetStatus(gids, params=lat_params, dendrites_params=dlat_params)
+    ds.set_object_status(gids, params=lat_params, dendrites_params=dlat_params)
 
-    ds.Simulate(days=1)
-    ds.PlotNeuron(show_nodes=True, show=True)
+    ds.simulate(days=1)
+    ds.plot_neurons(show_nodes=True, show=True)
 
-    #~ pprint(ds.GetStatus(gids_rec))
+    #~ pprint(ds.get_object_status(gids_rec))

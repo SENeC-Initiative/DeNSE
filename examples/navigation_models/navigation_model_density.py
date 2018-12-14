@@ -11,29 +11,29 @@ num_neurons = 40
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(
+        ds.plot_neurons(
             show_nodes=True, save_path=save_path)
 
 def run_dense(neuron_params,axes,letter,single=False):
 
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
-    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
     neuron_params["position"]=np.zeros((num_neurons,2)) * um
     simulated_neurons = num_neurons
     if single:
         simulated_neurons = 1.
         neuron_params["position"]=np.array([0,0]) * um
-    gids = ds.CreateNeurons(n=simulated_neurons,
+    gids = ds.create_neurons(n=simulated_neurons,
                                    params=neuron_params,
                                    num_neurites=1,
                                    position=[]
                                    )
 
     step(1000*second, 1, os.path.join(os.getcwd(), "primo"),plot=False)
-    neurons    = ds.GetNeurons()
+    neurons    = ds.get_neurons()
     structure  = ds.NeuronStructure(neurons)
     population = ds.Population.from_structure(structure)
     axons= population.axon_all_points()
@@ -55,7 +55,7 @@ def run_dense(neuron_params,axes,letter,single=False):
         axes.set_title("path density for\n {}".format(neuron_params["growth_cone_model"]))
     else:
         axes.plot(axons[:,0],axons[:,1],c='r')
-    ds.ResetKernel()
+    ds.reset_kernel()
 
 if __name__ == '__main__':
     kernel = {

@@ -1,6 +1,6 @@
 import numpy as np
 
-def CreateGraph(population=None, gids=None, method="intersection",intersection_proba=1.):
+def generate_network(population=None, gids=None, method="intersection",intersection_proba=1.):
     """
     Create the
     """

@@ -30,7 +30,7 @@ namespace ba = boost::adaptors;
 namespace growth
 {
 
-size_t create_objects(const std::string &object_name,
+size_t create_objects_(const std::string &object_name,
                       const std::vector<statusMap> &obj_params)
 {
     size_t gid = 0;
@@ -63,9 +63,9 @@ size_t create_objects(const std::string &object_name,
  *
  * @return the gid of the neuron created.
  */
-size_t create_neurons(const std::vector<statusMap> &neuron_params,
-                      const std::vector<statusMap> &axon_params,
-                      const std::vector<statusMap> &dendrites_params)
+size_t create_neurons_(const std::vector<statusMap> &neuron_params,
+                       const std::vector<statusMap> &axon_params,
+                       const std::vector<statusMap> &dendrites_params)
 {
     size_t num_created = kernel().neuron_manager.create_neurons(
         neuron_params, axon_params, dendrites_params);
@@ -81,7 +81,7 @@ size_t create_neurons(const std::vector<statusMap> &neuron_params,
  * Init/Finalize and simulation functions
  */
 
-void init_growth(int *argc, char **argv[])
+void init_growth_(int *argc, char **argv[])
 {
     KernelManager::create_kernel_manager();
     kernel().parallelism_manager.mpi_init(argc, argv);
@@ -89,14 +89,14 @@ void init_growth(int *argc, char **argv[])
 }
 
 
-void finalize_growth()
+void finalize_growth_()
 {
     kernel().parallelism_manager.mpi_finalize();
     KernelManager::destroy_kernel_manager();
 }
 
 
-void simulate(const Time &simtime)
+void simulate_(const Time &simtime)
 {
     try
     {
@@ -105,24 +105,24 @@ void simulate(const Time &simtime)
     catch (...)
     {
         std::string message = "Error occurred in `simulate`.\n";
-        get_backtrace(message, 0);
+        get_backtrace_(message, 0);
 
         throw std::runtime_error(message);
     }
 }
 
 
-void reset_kernel() { kernel().reset(); }
+void reset_kernel_() { kernel().reset(); }
 
 
-std::string get_simulation_ID() { return kernel().get_simulation_ID(); }
+std::string get_simulation_id_() { return kernel().get_simulation_ID(); }
 
 
 /*
  * Environment
  */
 
-void set_environment(
+void set_environment_(
     GEOSGeometry * environment, const std::vector<GEOSGeometry *> &areas,
     std::vector<double> heights, const std::vector<std::string> &names,
     const std::vector<std::unordered_map<std::string, double>> &properties)
@@ -132,7 +132,7 @@ void set_environment(
 }
 
 
-void get_environment(
+void get_environment_(
     GEOSGeometry *&environment, std::vector<GEOSGeometry *> &areas,
     std::vector<double> &heights, std::vector<std::string> &names,
     std::vector<std::unordered_map<std::string, double>> &properties)
@@ -147,15 +147,15 @@ void get_environment(
  */
 
 
-void set_kernel_status(const statusMap &status_dict, std::string simulation_ID)
+void set_kernel_status_(const statusMap &status_dict, std::string simulation_ID)
 {
     kernel().set_simulation_ID(simulation_ID);
     kernel().set_status(status_dict);
 }
 
 
-void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
-                statusMap dendrites_status)
+void set_status_(size_t gid, statusMap neuron_status, statusMap axon_status,
+                 statusMap dendrites_status)
 {
     // @todo: do this in parallel
     auto neuron = kernel().neuron_manager.get_neuron(gid);
@@ -185,26 +185,26 @@ void set_status(size_t gid, statusMap neuron_status, statusMap axon_status,
  */
 
 
-void get_models(std::unordered_map<std::string, std::string> &models,
-                bool abbrev)
+void get_models_(std::unordered_map<std::string, std::string> &models,
+                 bool abbrev)
 {
     kernel().model_manager.get_models(models, abbrev);
 }
 
 
-std::vector<std::string> get_elongation_types()
+std::vector<std::string> get_elongation_types_()
 {
     return kernel().model_manager.get_elongation_types();
 }
 
 
-std::vector<std::string> get_steering_methods()
+std::vector<std::string> get_steering_methods_()
 {
     return kernel().model_manager.get_steering_methods();
 }
 
 
-std::vector<std::string> get_direction_selection_methods()
+std::vector<std::string> get_direction_selection_methods_()
 {
     return kernel().model_manager.get_direction_selection_methods();
 }
@@ -214,13 +214,16 @@ std::vector<std::string> get_direction_selection_methods()
  * Getter functions
  */
 
-const Time get_current_time() { return kernel().simulation_manager.get_time(); }
+const Time get_current_time_()
+{
+    return kernel().simulation_manager.get_time();
+}
 
 
-statusMap get_kernel_status() { return kernel().get_status(); }
+statusMap get_kernel_status_() { return kernel().get_status(); }
 
 
-statusMap get_status(size_t gid)
+statusMap get_status_(size_t gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
     {
@@ -238,8 +241,8 @@ statusMap get_status(size_t gid)
 }
 
 
-double get_state(size_t gid, const std::string& level,
-                 const std::string& variable)
+double get_state_(size_t gid, const std::string& level,
+                  const std::string& variable)
 {
     const char* cvar = variable.c_str();
 
@@ -255,25 +258,25 @@ double get_state(size_t gid, const std::string& level,
 }
 
 
-size_t get_num_objects() { return kernel().get_num_objects(); }
+size_t get_num_objects_() { return kernel().get_num_objects(); }
 
 
-statusMap get_neurite_status(size_t gid, const std::string &neurite,
+statusMap get_neurite_status_(size_t gid, const std::string &neurite,
                              const std::string &level)
 {
     return kernel().neuron_manager.get_neurite_status(gid, neurite, level);
 }
 
 
-std::string get_default_model()
+std::string get_default_model_()
 {
     return kernel().model_manager.default_model;
 }
 
 
-void get_defaults(const std::string &object_name,
-                  const std::string &object_type, const std::string &gc_model,
-                  bool detailed, statusMap &status)
+void get_defaults_(const std::string &object_name,
+                   const std::string &object_type, const std::string &gc_model,
+                   bool detailed, statusMap &status)
 {
     GCPtr gc = nullptr;
 
@@ -300,19 +303,19 @@ void get_defaults(const std::string &object_name,
 }
 
 
-bool is_neuron(size_t gid)
+bool is_neuron_(size_t gid)
 {
     return kernel().neuron_manager.is_neuron(gid);
 }
 
 
-bool is_neurite(size_t gid, const std::string& neurite)
+bool is_neurite_(size_t gid, const std::string& neurite)
 {
     return kernel().neuron_manager.get_neuron(gid)->is_neurite(neurite);
 }
 
 
-std::string object_type(size_t gid)
+std::string object_type_(size_t gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
     {
@@ -332,10 +335,13 @@ std::string object_type(size_t gid)
 // ------------------------------------------------------------------------- //
 // Neuron/structure related
 
-std::vector<size_t> get_neurons() { return kernel().neuron_manager.get_gids(); }
+std::vector<size_t> get_neurons_()
+{
+    return kernel().neuron_manager.get_gids();
+}
 
 
-std::vector<std::string> get_neurites(size_t gid)
+std::vector<std::string> get_neurites_(size_t gid)
 {
     std::vector<std::string> neurite_names;
 
@@ -356,11 +362,11 @@ std::vector<std::string> get_neurites(size_t gid)
 }
 
 
-void get_branches_data(size_t neuron, const std::string &neurite_name,
-                       std::vector<std::vector<std::vector<double>>> &points,
-                       std::vector<double> &diameters,
-                       std::vector<int> &parents, std::vector<size_t> &nodes,
-                       size_t start_point)
+void get_branches_data_(size_t neuron, const std::string &neurite_name,
+                        std::vector<std::vector<std::vector<double>>> &points,
+                        std::vector<double> &diameters,
+                        std::vector<int> &parents, std::vector<size_t> &nodes,
+                        size_t start_point)
 {
     NeuronPtr n            = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
@@ -434,9 +440,10 @@ void get_branches_data(size_t neuron, const std::string &neurite_name,
 }
 
 
-void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
-                  SkelNeurite &growth_cones, SkelSomas &somas,
-                  std::vector<size_t> gids, unsigned int resolution)
+void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
+                   SkelNeurite &nodes, SkelNeurite &growth_cones,
+                   SkelSomas &somas, std::vector<size_t> gids,
+                   unsigned int resolution)
 {
     std::vector<NeuronPtr> neurons_vector;
     for (const auto &neuron_gid : gids)
@@ -471,10 +478,10 @@ void get_skeleton(SkelNeurite &axon, SkelNeurite &dendrites, SkelNeurite &nodes,
 }
 
 
-void get_geom_skeleton(std::vector<size_t> gids,
-                       std::vector<GEOSGeometry*>& axons,
-                       std::vector<GEOSGeometry*>& dendrites,
-                       std::vector< std::vector<double> >& somas)
+void get_geom_skeleton_(std::vector<size_t> gids,
+                        std::vector<GEOSGeometry*>& axons,
+                        std::vector<GEOSGeometry*>& dendrites,
+                        std::vector< std::vector<double> >& somas)
 {
     std::vector<GEOSGeometry *> vec;
     //~ std::vector<BPolygon> vec_tmp;
@@ -485,6 +492,7 @@ void get_geom_skeleton(std::vector<size_t> gids,
     GEOSWKTReader *reader  = GEOSWKTReader_create_r(ch);
     GEOSGeometry *geom_tmp, *geom_union;
     std::stringstream s;
+    BMultiPolygon mp;
     std::string wkt;
     size_t num_poly;
 
@@ -511,41 +519,6 @@ void get_geom_skeleton(std::vector<size_t> gids,
                     geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
                     vec.push_back(geom_tmp);
                 }
-                //~ auto srange  = node_it->second->segment_range();
-                //~ size_t ssize = srange.size();
-                //~ for (size_t i=0; i < ssize; i += 2 )
-                //~ {
-                    //~ if (i < ssize - 1)
-                    //~ {
-                        //~ bg::union_(*(srange[i].get()), *(srange[i+1].get()), vec_tmp);
-                    //~ }
-                    //~ else
-                    //~ {
-                        //~ vec_tmp.push_back(*(srange.back().get()));
-                    //~ }
-                //~ }
-                //~ while (vec_tmp.size() >= 2)
-                //~ {
-                    //~ std::vector<BPolygon> vec_tmp2;
-                    //~ size_t old_size;
-
-                    //~ for (size_t i=0; i < vec_tmp.size(); i += 2 )
-                    //~ {
-                        //~ if (i < vec_tmp.size() - 1)
-                        //~ {
-                            //~ old_size = vec_tmp2.size();
-                            //~ bg::union_(vec_tmp[i], vec_tmp[i+1], vec_tmp2);
-
-                            //~ vec_tmp2.resize(old_size + 1);
-                        //~ }
-                        //~ else
-                        //~ {
-                            //~ vec_tmp2.push_back(vec_tmp.back());
-                        //~ }
-                    //~ }
-
-                    //~ vec_tmp.swap(vec_tmp2);
-                //~ }
 
                 if (vec_tmp.size())
                 {
@@ -564,69 +537,21 @@ void get_geom_skeleton(std::vector<size_t> gids,
                     vec.push_back(geom_tmp);
                 }
 
-                //~ auto srange  = gc.second->segment_range();
-                //~ size_t ssize = srange.size();
-                //~ for (size_t i=0; i < ssize; i += 2 )
-                //~ {
-                    //~ if (i < ssize - 1)
-                    //~ {
-                        //~ printf("union\n");
-                        //~ bg::union_(*(srange[i].get()), *(srange[i+1].get()), vec_tmp);
-                        //~ printf("done\n");
-                    //~ }
-                    //~ else
-                    //~ {
-                        //~ printf("push_back\n");
-                        //~ vec_tmp.push_back(*(srange.back().get()));
-                        //~ printf("done\n");
-                    //~ }
-                //~ }
-                //~ while (vec_tmp.size() >= 2)
-                //~ {
-                    //~ std::vector<BPolygon> vec_tmp2;
-                    //~ size_t old_size;
-
-                    //~ for (size_t i=0; i < vec_tmp.size(); i += 2 )
-                    //~ {
-                        //~ if (i < vec_tmp.size() - 1)
-                        //~ {
-                            //~ old_size = vec_tmp2.size();
-                            //~ bg::union_(vec_tmp[i], vec_tmp[i+1], vec_tmp2);
-
-                            //~ vec_tmp2.resize(old_size + 1);
-                        //~ }
-                        //~ else
-                        //~ {
-                            //~ vec_tmp2.push_back(vec_tmp.back());
-                        //~ }
-                    //~ }
-
-                    //~ vec_tmp.swap(vec_tmp2);
-                //~ }
-
-                //~ if (vec_tmp.size())
-                //~ {
-                    //~ vec_geom.push_back(vec_tmp.back());
-                //~ }
+                // to nicely finish the neurite, we add a disk to mark the
+                // growth cone position
+                BPolygon disk = kernel().space_manager.make_disk(
+                    gc.second->get_position(), 0.5*gc.second->get_diameter());
+                
+                s.str("");
+                s << std::setprecision(12) << bg::wkt(disk);
+                geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
+                vec.push_back(geom_tmp);
             }
-
-            //~ for (auto geom : vec_geom)
-            //~ {
-                //~ s.str("");
-                //~ s << std::setprecision(12) << bg::wkt(geom);
-                //~ geom_tmp = GEOSWKTReader_read_r(ch, reader, s.str().c_str());
-                //~ vec.push_back(geom_tmp);
-            //~ }
 
             //~ // create the stupid collection to make the union
             geom_tmp = GEOSGeom_createCollection_r(ch, GEOS_MULTIPOLYGON,
                                                    vec.data(), vec.size());
             geom_union = GEOSUnaryUnion_r(ch, geom_tmp);
-
-            //~ double area = 0.;
-            //~ if (GEOSisValid_r(ch, geom_union))
-            //~ GEOSArea_r(ch, geom_union, &area);
-            //~ printf("valid union %i of area %f\n", GEOSisValid_r(ch, geom_union), area);
 
             GEOSGeom_destroy_r(ch, geom_tmp);
 
@@ -652,8 +577,8 @@ void get_geom_skeleton(std::vector<size_t> gids,
 }
 
 
-void get_swc(std::string output_file, std::vector<size_t> gids,
-             unsigned int resolution)
+void get_swc_(std::string output_file, std::vector<size_t> gids,
+              unsigned int resolution)
 {
     std::sort(gids.begin(), gids.end());
     Swc swc(output_file, resolution);
@@ -672,21 +597,21 @@ void get_swc(std::string output_file, std::vector<size_t> gids,
 // ------------------------------------------------------------------------- //
 // Recorder related
 
-bool get_next_recording(size_t gid, std::vector<Property> &ids,
-                        std::vector<double> &values)
+bool get_next_recording_(size_t gid, std::vector<Property> &ids,
+                         std::vector<double> &values)
 {
     return kernel().record_manager.get_next_recording(gid, ids, values);
 }
 
 
-bool get_next_time(size_t gid, std::vector<Property> &ids,
-                   std::vector<double> &values, const std::string &time_units)
+bool get_next_time_(size_t gid, std::vector<Property> &ids,
+                    std::vector<double> &values, const std::string &time_units)
 {
     return kernel().record_manager.get_next_time(gid, ids, values, time_units);
 }
 
 
-void get_recorder_type(size_t gid, std::string &level, std::string &event_type)
+void get_recorder_type_(size_t gid, std::string &level, std::string &event_type)
 {
     kernel().record_manager.get_recorder_type(gid, level, event_type);
 }
@@ -728,7 +653,7 @@ void _fill_swc(const SkelNeurite &source_container,
 }
 
 
-bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np)
+bool walk_neurite_tree_(size_t neuron, std::string neurite, NodeProp& np)
 {
     NeuronPtr n                = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite_ptr = n->get_neurite(neurite);
@@ -737,7 +662,7 @@ bool walk_neurite_tree(size_t neuron, std::string neurite, NodeProp& np)
 }
 
 
-void get_backtrace(std::string &msg, int depth = 0)
+void get_backtrace_(std::string &msg, int depth = 0)
 {
     try
     {
@@ -754,7 +679,7 @@ void get_backtrace(std::string &msg, int depth = 0)
         }
         catch (...)
         {
-            get_backtrace(msg, ++depth);
+            get_backtrace_(msg, ++depth);
         }
     }
     catch (const std::nested_exception &ne)
@@ -770,7 +695,7 @@ void get_backtrace(std::string &msg, int depth = 0)
         }
         catch (...)
         {
-            get_backtrace(msg, ++depth);
+            get_backtrace_(msg, ++depth);
         }
     }
     catch (...)
@@ -784,7 +709,7 @@ void get_backtrace(std::string &msg, int depth = 0)
 }
 
 
-void test_random_generator(Random_vecs &values, size_t size)
+void test_random_generator_(Random_vecs &values, size_t size)
 {
     kernel().simulation_manager.test_random_generator(values, size);
     printf("%lu number generated from rng\n", values[0].size());

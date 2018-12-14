@@ -56,21 +56,21 @@ kernel = {
     "num_local_threads": num_omp,
 }
 
-ds.SetKernelStatus(kernel)
+ds.get_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.CreateNeurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
                      axon_params=axon_params, dendrites_params=dend_params,
                      num_neurites=2)
 
 # first, elongation
 
-ds.Simulate(10000)
-print(ds.GetKernelStatus()["time"])
+ds.simulate(10000)
+print(ds.get_kernel_status()["time"])
 
-#~ ds.plot.PlotNeuron(show=True)
+#~ ds.plot.plot_neurons(show=True)
 
 
 # then branching
@@ -96,12 +96,12 @@ dend_params = {
     "lateral_branching_angle_mean": 40.,
 }
 
-ds.SetStatus(n, dendrites_params=dend_params, axon_params=lb_axon)
+ds.set_object_status(n, dendrites_params=dend_params, axon_params=lb_axon)
 
-ds.Simulate(30000)
-print(ds.GetKernelStatus()["time"])
+ds.simulate(30000)
+print(ds.get_kernel_status()["time"])
 
-#~ ds.plot.PlotNeuron(show=True)
+#~ ds.plot.plot_neurons(show=True)
 
 # then further branching
 
@@ -121,14 +121,14 @@ dend_params = {
     "gc_split_angle_mean": 30.,
 }
 
-ds.SetStatus(n, dendrites_params=dend_params, axon_params=vp_axon)
+ds.set_object_status(n, dendrites_params=dend_params, axon_params=vp_axon)
 
-ds.Simulate(70000)
-print(ds.GetKernelStatus()["time"])
+ds.simulate(70000)
+print(ds.get_kernel_status()["time"])
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.plot_neurons(show=True)
 
-ds.NeuronToSWC("pyramidal-cell.swc", gid=n)
+ds.save_to_swc("pyramidal-cell.swc", gid=n)
 
 n[0].to_nml("bipolar_cell.nml")
 

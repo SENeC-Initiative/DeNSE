@@ -102,13 +102,13 @@ Analysis
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=True)
         else:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=False, save_path=save_path)
 
 def run_dense(neuron_params):
@@ -117,24 +117,24 @@ def run_dense(neuron_params):
 
     #~ np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution * minute
-    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
+    ds.set_kernel_status(kernel, simulation_id="case_neuron")
     neuron_params['growth_cone_model'] = gc_model
     print(neuron_params['growth_cone_model'])
     
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (num_neurons, 2)) * um
     print(neuron_params['growth_cone_model'])
-    gid = ds.CreateNeurons(n=num_neurons,
+    gid = ds.create_neurons(n=num_neurons,
                                   params=neuron_params,
                                   axon_params=axon_params,
                                   dendrites_params=dendrite_params,
                                   num_neurites=1,
                                   )
     print(neuron_params['growth_cone_model'])
-    # ~ rec = ds.CreateRecorders(gid, ["speed", "resource"], levels="growth_cone")
-    rec = ds.CreateRecorders(gid, ["resource"], levels="growth_cone")
+    # ~ rec = ds.create_recorders(gid, ["speed", "resource"], levels="growth_cone")
+    rec = ds.create_recorders(gid, ["resource"], levels="growth_cone")
     print(neuron_params['growth_cone_model'])
-    # ds.SetStatus(gid, params=neuron_params,
+    # ds.set_object_status(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3./resolution * minute, 1, False, False)
     step(500./resolution * minute, 1, False, False)
@@ -145,7 +145,7 @@ def run_dense(neuron_params):
     axon_params['flpl_branching_rate'] = 0.001 * cpm
     neuron_params.pop('growth_cone_model')
     print(dendrite_params)
-    ds.SetStatus(gid,
+    ds.set_object_status(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -164,14 +164,14 @@ def run_dense(neuron_params):
         "CR_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    ds.SetStatus(gid,
+    ds.set_object_status(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
     step(3000./resolution * minute, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001 * cpm
-    # ds.SetStatus(gid,params = neuron_params,
+    # ds.set_object_status(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -186,19 +186,19 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.SetStatus(gid,params = neuron_params,
+    # ds.set_object_status(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     #~ ds.SaveSwc(swc_resolution=5)
-    #~ ds.SaveJson()
-    ds.plot.PlotRecording(rec, show=False)
+    #~ ds.save_json_info()
+    ds.plot.plot_recording(rec, show=False)
 
-    swc_file = ds.GetSimulationID()
+    swc_file = ds.get_simulation_id()
     # print(swc_file)
 
-    # ds.ResetKernel()
+    # ds.reset_kernel()
     return swc_file
 
 

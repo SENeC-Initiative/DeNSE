@@ -64,21 +64,21 @@ def Simulation(plot = False):
         "num_local_threads": num_omp,
         }
 
-        ds.SetKernelStatus(kernel)
+        ds.get_kernel_status(kernel)
 
         sim_time = expected_branching/rate * minute
         sim_time.ito(day)
         
         neuron_params[branching_rate] = rate * cpm
 
-        pop = ds.CreateNeurons(n=num_neurons, params=neuron_params,
+        pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                                num_neurites=1)
         
-        rec = ds.CreateRecorders(pop, 'num_growth_cones', levels = 'neuron')
+        rec = ds.create_recorders(pop, 'num_growth_cones', levels = 'neuron')
         
-        ds.Simulate(sim_time)
+        ds.simulate(sim_time)
 
-        branch_times = ds.GetRecording(rec)['num_growth_cones']['times']
+        branch_times = ds.get_recording(rec)['num_growth_cones']['times']
         Dt = []
         for bn in branch_times.values():
             if len(bn) > 1:
@@ -90,7 +90,7 @@ def Simulation(plot = False):
         er.append(2.576*mean[-1]/np.sqrt(len(Dt)))
         Nb.append(len(Dt))
             
-        ds.ResetKernel()
+        ds.reset_kernel()
         
     test1 = (1/rates > mean - er)
     test2 = (1/rates < mean + er)

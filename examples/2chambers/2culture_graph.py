@@ -1,12 +1,12 @@
-import dense as ds
-import nngt
 import matplotlib.pyplot as plt
 
+import dense as ds
+from dense.elements import Population
 
-pop = ds.structure.Population.from_swc_population\
-        (ds.NeuronsFromSimulation("2culture_swc"))
 
-graph, intersections, synapses = ds.CreateGraph(pop)
+pop = Population.from_swc(ds.NeuronsFromSimulation("2culture_swc"))
+
+graph, intersections, synapses = ds.generate_network(pop)
 
 
 ### Plot the graph in 2 subplots:

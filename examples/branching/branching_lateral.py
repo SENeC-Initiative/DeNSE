@@ -63,39 +63,39 @@ def article_distribution():
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=True)
         else:
-            ds.PlotNeuron(
+            ds.plot_neurons(
                 show_nodes=False, save_path=save_path)
 
 
 def lateral_branching(neuron_params):
-    ds.ResetKernel()
+    ds.reset_kernel()
     np.random.seed(kernel['seeds'])
-    ds.SetKernelStatus(kernel, simulation_ID="uniform_branching")
+    ds.set_kernel_status(kernel, simulation_id="uniform_branching")
     neuron_params['growth_cone_model'] = 'run_tumble'
     neuron_params[use_type] = False
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2)) * um
-    gid = ds.CreateNeurons(n=num_neurons,
+    gid = ds.create_neurons(n=num_neurons,
                            params=neuron_params,
                            num_neurites=2)
 
     step(1*hour, 1, False, False)
     neuron_params[use_type] = True
-    ds.SetStatus(gid,params = neuron_params)
+    ds.set_object_status(gid,params = neuron_params)
                         # ~ axon_params=neuron_params)
     step(2 * day, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
     ds.SaveSwc(swc_resolution=5)
-    ds.SaveJson()
+    ds.save_json_info()
 
-    swc_file =ds.GetSimulationID()
+    swc_file =ds.get_simulation_id()
     # print(swc_file)
     return swc_file
 
@@ -109,9 +109,9 @@ if __name__ == '__main__':
     }
     swc_file=lateral_branching(neuron_params)
 
-    ds.PlotNeuron(show=True)
+    ds.plot_neurons(show=True)
 
-    pop = ds.GetNeurons()
+    pop = ds.get_neurons()
     n   = pop[0]
 
     tree = n.axon.get_tree()

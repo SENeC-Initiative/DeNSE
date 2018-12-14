@@ -73,20 +73,20 @@ Simulation
 '''
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
-        ds.PlotNeuron(
+        ds.plot_neurons(
             show_nodes=False, save_path=save_path)
 
 
 def random_walk_axon(neuron_params):
     np.random.seed(kernel['seeds'])
-    ds.SetKernelStatus(kernel, simulation_ID="random_walk_axons")
+    ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
     neuron_params['growth_cone_model'] = 'random_walk'
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
-    ds.CreateNeurons(n=num_neurons,
+    ds.create_neurons(n=num_neurons,
                             params=neuron_params,
                             num_neurites=1,
                             position=[]
@@ -94,7 +94,7 @@ def random_walk_axon(neuron_params):
     name = str (neuron_params["persistence_length"])
     step(1000, 1, os.path.join(os.getcwd(),"random_walk_axon_"+name))
 
-    ds.ResetKernel()
+    ds.reset_kernel()
 
 
 if __name__ == '__main__':

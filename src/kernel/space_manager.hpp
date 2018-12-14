@@ -120,6 +120,7 @@ class SpaceManager : public ManagerInterface
     void num_threads_changed(int num_omp);
 
     bool has_environment() const;
+    bool interactions_on() const;
 
   private:
     // buffer strategies

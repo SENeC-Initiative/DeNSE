@@ -41,6 +41,7 @@ class GrowthCone : public TopologicalNode,
     std::string neurite_name_;
     const std::string model_;
     bool using_environment_; // whether we're embedded in space
+    bool sensing_required_;
     double resol_;
     double sqrt_resol_;
     double adaptive_timestep_;
@@ -114,9 +115,9 @@ class GrowthCone : public TopologicalNode,
     void prune(size_t cone_n);
 
     // compute direction
-    bool sense_environment(std::vector<double> &directions_weights,
-                           std::vector<bool> &wall_presence, double substep,
-                           mtPtr rnd_engine);
+    bool sense_surroundings(std::vector<double> &directions_weights,
+                            std::vector<bool> &wall_presence, double substep,
+                            mtPtr rnd_engine);
 
     virtual void
     compute_direction_probabilities(std::vector<double> &directions_weights,

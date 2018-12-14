@@ -194,11 +194,6 @@ void Branching::set_branching_event(Event &ev, signed char ev_type,
     size_t neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
 
-    // std::cout << "event type is " << ev_type << std::endl;
-    // std::cout << ev_step << " " << current_step << " " << ev_substep << " "
-    //           << current_substep << " " << duration << " "
-    //           << (ev_step - current_step) * resol +
-    //              ev_substep - current_substep << std::endl;
     assert(ev_substep >= 0);
     assert(std::abs((ev_step - current_step) * resol +
                     (ev_substep - current_substep) - duration) < 1e-6);
@@ -275,6 +270,7 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
 
     // note that critical resource splitting is instantaneous and unplanned
     // thus it is never communicated through branching events
+    // @todo change that
 
     return success;
 }
@@ -417,9 +413,10 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
             branching_point = x;
 
-            // actuate lateral branching on the elected node through the NEURITE.
+            // lateral branching on the elected node through the NEURITE.
             success = neurite_->lateral_branching(
                 branching_node, branching_point, new_node, rnd_engine);
+
             next_flpl_event_ = invalid_ev;
         }
 

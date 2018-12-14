@@ -157,8 +157,8 @@ GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
     // update containing area
     new_cone->current_area_ =
         using_environment_
-            ? kernel().space_manager.get_containing_area(position)
-            : "";
+        ? kernel().space_manager.get_containing_area(position)
+        : "";
 
     if (using_environment_)
     {

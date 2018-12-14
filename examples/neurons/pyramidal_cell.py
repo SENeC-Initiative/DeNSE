@@ -23,8 +23,10 @@ neuron_params = {
     "axon_diameter": 4.*um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
     "polarization_strength": 20.,
+    "sensing_angle": 90.*deg,
     "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
-    "growth_cone_model": "cst_mem_nwa"
+    "filopodia_finger_length": 20.*um,
+    "growth_cone_model": "cst_po_nwa"
 }
 
 axon_params = {
@@ -54,7 +56,10 @@ kernel = {
     "seeds": [8],
     "environment_required": False,
     "num_local_threads": num_omp,
+    "interactions": True,
 }
+
+np.random.seed(0)
 
 ds.SetKernelStatus(kernel)
 
@@ -73,12 +78,12 @@ rec = ds.CreateRecorders(n, "num_growth_cones")
 ds.Simulate(7*day)
 
 
-print(dense.GetKernelStatus('time'))
+print(ds.GetKernelStatus('time'))
 
 recording = ds.GetRecording(rec, record_format="compact")
 print(recording)
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.PlotNeuron(mode="mixed", show=True)
 
 
 # then branching
@@ -106,9 +111,9 @@ ds.SetStatus(n, dendrites_params=dend_params, axon_params=lb_axon)
 
 ds.Simulate(20*day + 5*hour)
 
-print(dense.GetKernelStatus('time'))
+print(ds.GetKernelStatus('time'))
 
-ds.plot.PlotNeuron(show=True)
+ds.plot.PlotNeuron(mode="mixed", show=True)
 
 # then further branching
 
@@ -128,11 +133,11 @@ dend_params = {
     "gc_split_angle_mean": 30.*deg,
 }
 
-ds.SetStatus(n, dendrites_params=dend_params, axon_params=vp_axon)
-ds.Simulate(40*day)
-print(dense.GetKernelStatus('time'))
+# ds.SetStatus(n, dendrites_params=dend_params, axon_params=vp_axon)
+# ds.Simulate(40*day)
+# print(dense.GetKernelStatus('time'))
 
-# ~ ds.plot.PlotNeuron(show=True)
+# ds.plot.PlotNeuron(mode="mixed", show=True)
 
 # ~ ds.NeuronToSWC("pyramidal-cell.swc", gid=n)
 

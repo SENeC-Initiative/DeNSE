@@ -582,28 +582,42 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     BPoint p(cos(new_cone_angle)*dist_to_parent,
              sin(new_cone_angle)*dist_to_parent);
     bg::add_point(p, xy);
+    // check if the branching is viable
+
+    if (new_diameter - taper_rate_*dist_to_parent <= 0)
+    {
+        return nullptr;
+    }
 
     if (not kernel().space_manager.env_contains(p))
     {
         return nullptr;
     }
 
-    if (std::isnan(growth_cones_.begin()->second->get_self_affinity()))
+    if (kernel().space_manager.interactions_on())
     {
-        // check that the target point is not inside its own neurite
-        BPolygon poly;
-
-        if (kernel().space_manager.is_inside(p, parent_.lock()->get_gid(),
-            name_, 0.5*nodes_[0]->get_diameter(), poly))
+        if (std::isnan(growth_cones_.begin()->second->get_self_affinity()))
         {
-            return nullptr;
+            // check that the target point is not inside its own neurite
+            BPolygon poly;
+
+            if (kernel().space_manager.is_inside(p, parent_.lock()->get_gid(),
+                name_, 0.5*nodes_[0]->get_diameter(), poly))
+            {
+#ifndef NDEBUG
+                printf("target point is inside the neurite\n");
+                std::cout << bg::wkt(p) << std::endl;
+                std::cout << bg::wkt(poly) << std::endl;
+#endif
+                return nullptr;
+            }
         }
     }
 
     // create a new growth cone
     GCPtr sibling = growth_cones_.begin()->second->clone(
         new_node, shared_from_this(), dist_to_parent,
-        branching_node->get_treeID() + "1", xy, -3.14);
+        branching_node->get_treeID() + "1", p, new_cone_angle);
 
     // Here we copy model and status from a random growth cone
     // in the neurite since all the growth cones have same status and
@@ -615,14 +629,35 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     new_node->children_.push_back(branching_node);
     new_node->children_.push_back(sibling);
 
+    // make the branch (start from parent branch then add new point just
+    // outside the old branch radius)
     double parent_to_soma      = new_node->get_distance_to_soma();
     BranchPtr b                = std::make_shared<Branch>(xy, parent_to_soma);
-    sibling->move_.angle       = new_cone_angle;
+
+    int omp_id      = kernel().parallelism_manager.get_thread_local_id();
+    ObjectInfo info = std::make_tuple(
+        parent_.lock()->get_gid(), name_, num_created_nodes_, 0);
+
+    // update diameter properties
     sibling->TopologicalNode::set_diameter(new_diameter);
+    new_diameter -= dist_to_parent*taper_rate_;
     sibling->set_diameter(new_diameter);
 
-    sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
-    sibling->set_position(xy, parent_to_soma + dist_to_parent, b);
+    // update branch and assign it to the new growth cone
+    kernel().space_manager.add_object(
+        xy, p, new_diameter, dist_to_parent, taper_rate_, info, b, omp_id);
+
+    sibling->set_position(p, parent_to_soma + dist_to_parent, b);
+
+    // double parent_to_soma      = new_node->get_distance_to_soma();
+    // BranchPtr b                = std::make_shared<Branch>(xy, parent_to_soma);
+    // sibling->move_.angle       = new_cone_angle;
+
+    // sibling->TopologicalNode::set_diameter(new_diameter);
+    // sibling->set_diameter(new_diameter);
+
+    // sibling->set_first_point(xy, parent_to_soma + dist_to_parent);
+    // sibling->set_position(xy, parent_to_soma + dist_to_parent, b);
 
     add_cone(sibling);
 
@@ -654,9 +689,11 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
     {
         // Locate the event and the event parameters
         double branch_direction(0), distance_to_soma(0);
+        BranchPtr branch = branching_node->get_branch();
         BPoint xy;
+
         locate_from_idx(xy, branch_direction, distance_to_soma,
-                        branching_node->get_branch(), branch_point);
+                        branch, branch_point);
 
         char branching_side = 1;
         if (uniform_(*(rnd_engine).get()) < 0.5)
@@ -671,18 +708,57 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         // create the new node at position xy, which is at a distance_to_soma,
         // create a new node and update the node counter
         new_node = std::make_shared<Node>(*branching_node);
-        double distance  =
-            branching_node->get_branch()->final_distance_to_soma()
-            - distance_to_soma;
+        double distance  = branch->final_distance_to_soma() - distance_to_soma;
         // compute the local diameter on the branch
         double new_diam  = branching_node->get_diameter() +
                            taper_rate_*distance;
 
         // create the new growth cone just outside the local diameter
+        // to do so, first get the polygons around the branching point
+        // get the properties of the neighboring geometries
+        BPoint line_end = BPoint(2*new_diam*cos(branch_direction + angle),
+                                 2*new_diam*sin(branch_direction + angle));
+        bg::add_point(line_end, xy);
+        BLineString ls({xy, line_end});
+
+        std::vector<ObjectInfo> neighbors_info;
+        kernel().space_manager.get_objects_in_range(line_end, 1.5*new_diam,
+                                                    neighbors_info);
+
+        size_t gid = parent_.lock()->get_gid();
+        size_t nid = branching_node->get_nodeID();
+        BMultiPoint mp;
+
+        for (auto info : neighbors_info)
+        {
+            if (std::get<0>(info) == gid and std::get<1>(info) == name_
+                and std::get<2>(info) == nid)
+            {
+                bg::intersection(
+                    *(branch->get_segment_at(std::get<3>(info)).get()), ls, mp);
+            }
+        }
+
+        double max_distance = std::numeric_limits<double>::min();
+        double dist;
+
+        for (BPoint p : mp)
+        {
+            dist = bg::distance(xy, p);
+
+            if (dist > max_distance)
+            {
+                max_distance = dist;
+            }
+        }
+
+        // get distance (a little more to avoid being inside)
+        double dist_to_bp = 1.05*max_distance;
         // @todo set diameter fraction
         double new_cone_diam = 0.5*new_diam;
+
         auto sibling = create_branching_cone(
-            branching_node, new_node, new_cone_diam, new_cone_diam, xy,
+            branching_node, new_node, dist_to_bp, new_cone_diam, xy,
             branch_direction + angle);
         
         // check if sibling could indeed be created
@@ -691,11 +767,16 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
             // update topology
             update_parent_nodes(new_node, branching_node);
 
-            printf("Branching for %lu %s %lu; old branch size: %lu\n", parent_.lock()->get_gid(), name_.c_str(), branching_node->get_nodeID(), branching_node->get_branch()->size());
+#ifndef NDEBUG
+            printf("Branching for %lu %s %lu; old branch size: %lu\n",
+                   parent_.lock()->get_gid(), name_.c_str(),
+                   branching_node->get_nodeID(),
+                   branching_node->get_branch()->size());
+#endif
 
             // update the existing growth cone
             branching_node->biology_.branch =
-                new_node->biology_.branch->resize_head(branch_point + 1);
+                new_node->biology_.branch->resize_head(branch_point);
             branching_node->set_first_point(xy, distance_to_soma);
             branching_node->TopologicalNode::set_diameter(new_diam);
 
@@ -704,7 +785,12 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
             new_node->get_branch()->resize_tail(branch_point + 1);
             new_node->set_position(xy, distance_to_soma, new_node->get_branch());
             new_node->set_diameter(new_diam);
-            printf("new branches sizes: %lu - %lu\n", new_node->get_branch()->size(), branching_node->get_branch()->size());
+
+#ifndef NDEBUG
+            printf("new branches sizes: %lu - %lu\n",
+                   new_node->get_branch()->size(),
+                   branching_node->get_branch()->size());
+#endif
 
             // modify subsequent nodes
             update_tree_structure(new_node);
@@ -715,12 +801,11 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
             assert(new_node->get_child(1) == sibling);
 
             return true;
-        }
 
 #ifndef NDEBUG
-        printf("angle is %f\n", angle * 180 / M_PI);
-        printf("angle is %f\n", sibling->move_.angle * 180 / M_PI);
-        printf("angle is %f\n", branch_direction * 180 / M_PI);
+        printf("angle is %f deg\n", angle * 180 / M_PI);
+        printf("angle is %f deg\n", sibling->move_.angle * 180 / M_PI);
+        printf("angle is %f deg\n", branch_direction * 180 / M_PI);
         printf("xy: %f, %f, id_x: %lu,  and direction %f \n",
                new_node->get_position().x(), new_node->get_position().y(),
                branch_point, branch_direction * 180 / M_PI);
@@ -747,6 +832,7 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
                sibling->get_centrifugal_order(),
                branching_node->get_centrifugal_order());
 #endif /* NDEBUG */
+        }
     }
 
     return false;
@@ -821,10 +907,12 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 
             return true;
         }
+#ifndef NDEBUG
         else
         {
             std::cout << "split aborted\n" << std::endl;
         }
+#endif
     }
 
     return false;

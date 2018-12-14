@@ -293,13 +293,13 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
             // check environment and mechanical interactions
             try
             {
-                interacting_ = sense_environment(
+                interacting_ = sense_surroundings(
                     directions_weights, wall_presence, substep, rnd_engine);
             }
             catch (const std::exception &except)
             {
                 std::throw_with_nested(std::runtime_error(
-                    "Passed from `GrowthCone::sense_environment`."));
+                    "Passed from `GrowthCone::sense_surroundings`."));
             }
 
             // if interacting with obstacles, and adaptive timestep, switch
@@ -647,11 +647,11 @@ void GrowthCone::prune(size_t cone_n)
  *
  * @return distance between GC and closest obstacle
  */
-bool GrowthCone::sense_environment(std::vector<double> &directions_weights,
-                              std::vector<bool> &wall_presence, double substep,
-                              mtPtr rnd_engine)
+bool GrowthCone::sense_surroundings(std::vector<double> &directions_weights,
+                                    std::vector<bool> &wall_presence,
+                                    double substep, mtPtr rnd_engine)
 {
-    if (using_environment_)
+    if (sensing_required_)
     {
         double up_move = scale_up_move_ == 0 ? std::nan("") : scale_up_move_;
 
@@ -1117,6 +1117,8 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
 void GrowthCone::update_kernel_variables()
 {
     using_environment_ = kernel().using_environment();
+    sensing_required_  = using_environment_
+                         or kernel().space_manager.interactions_on();
 
     // check change in resolution
     double old_resol = resol_;

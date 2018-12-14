@@ -111,27 +111,32 @@ void Branch::retract()
     points_[2].pop_back();
 
     // recover the new last points
-    std::vector<BPoint> new_lp;
-
-    BPolygonPtr last_poly = segments_.back();
-    segments_.pop_back();
-
     if (not segments_.empty())
     {
-        BPolygonPtr new_last_poly = segments_.back();
+        std::vector<BPoint> new_lp;
 
-        for (BPoint p : last_poly->outer())
+        BPolygonPtr last_poly = segments_.back();
+        BRing ring            = last_poly->outer();
+
+        segments_.pop_back();
+
+        if (not segments_.empty())
         {
-            if (bg::covered_by(p, *(new_last_poly.get())))
+            BPolygonPtr new_last_poly = segments_.back();
+
+            for (size_t i=0; i < ring.size() - 1; i++)
             {
-                new_lp.push_back(p);
+                if (bg::covered_by(ring[i], *(new_last_poly.get())))
+                {
+                    new_lp.push_back(ring[i]);
+                }
             }
+
+            assert(new_lp.size() == 2);
+
+            last_points_.first  = new_lp[0];
+            last_points_.second = new_lp[1];
         }
-
-        assert(new_lp.size() == 2);
-
-        last_points_.first  = new_lp[0];
-        last_points_.second = new_lp[1];
     }
 }
 
@@ -144,14 +149,40 @@ void Branch::resize_tail(size_t new_size)
     points_[1].resize(new_size);
     points_[2].resize(new_size);
 
+    // for segment, set new size
     size_t size_seg = new_size == 0 ? 0 : new_size - 1;
+
+    // recover the new last points
+    if (size_seg > 0 and size_seg < segments_.size())
+    {
+        std::vector<BPoint> new_lp;
+
+        BPolygonPtr end_poly = segments_[size_seg];
+        BPolygonPtr last_poly = segments_[size_seg - 1];
+
+        auto ring = end_poly->outer();
+
+        for (size_t i=0; i < ring.size() - 1; i++)
+        {
+            if (bg::covered_by(ring[i], *(last_poly.get())))
+            {
+                new_lp.push_back(ring[i]);
+            }
+        }
+
+        assert(new_lp.size() == 2);
+
+        last_points_.first  = new_lp[0];
+        last_points_.second = new_lp[1];
+    }
+
     segments_.resize(size_seg);
 }
 
 
 /**
- * @brief Resize the head of the Branch, last segment stays, first segment is
- * cut out
+ * @brief Resize the head of the Branch, last segment stay, first segments are
+ * cut out.
  *
  * @param id_x  first element of new Branch
  *
@@ -161,21 +192,25 @@ BranchPtr Branch::resize_head(size_t id_x) const
 {
     assert(size() > id_x);
     BranchPtr new_branch = std::make_shared<Branch>();
-    new_branch->points_[0].insert(new_branch->points_[0].end(),
-                                 points_[0].cbegin() + id_x, points_[0].cend());
+
+    new_branch->points_[0].insert(
+        new_branch->points_[0].end(), points_[0].cbegin() + id_x,
+        points_[0].cend());
     new_branch->points_[1].insert(new_branch->points_[1].end(),
                                  points_[1].cbegin() + id_x, points_[1].cend());
     new_branch->points_[2].insert(new_branch->points_[2].end(),
                                  points_[2].cbegin() + id_x, points_[2].cend());
 
-    size_t idx_seg = id_x == 0 ? 0 : id_x - 1;
+    // resize segments
     new_branch->segments_.insert(new_branch->segments_.end(),
-                                 segments_.cbegin() + idx_seg,
+                                 segments_.cbegin() + id_x,
                                  segments_.cend());
 
-    // done in neurite branching
-    //~ Point new_init_point = Point(points_[0].at(id_x), points_[1].at(id_x));
-    //~ new_branch->set_first_point(new_init_point, points_[2].at(id_x));
+    // set points
+    new_branch->initial_point_ = BPoint(new_branch->points_[0][0],
+                                        new_branch->points_[0][1]);
+
+    new_branch->last_points_ = last_points_;
 
     return new_branch;
 }

@@ -25,11 +25,8 @@ def step(n, loop_n, plot=True):
     print("done")
     if plot:
         fig, ax = plt.subplots()
-        ds.PlotNeuron(subsample=1, axis=ax, show_nodes=True,
-                      show_neuron_id=True,
-                    #   show=True)
-                      show=False)
-        ds.NewPlotNeuron(axis=ax, show=True)
+        ds.plot.PlotNeuron(mode='mixed', subsample=1, axis=ax, show_nodes=True,
+                           show_neuron_id=True, show=True)
 
 
 current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -45,7 +42,7 @@ np.random.seed(0)
 
 simtime     = 50.*hour + 30.*minute
 soma_radius = 5.
-num_neurons = 20
+num_neurons = 1
 
 # gc_model = 'run-and-tumble'
 # gc_model = 'simple-random-walk'
@@ -126,7 +123,7 @@ if __name__ == '__main__':
         # ~ "num_local_threads": 2,
         # ~ "resolution": 30.*minute
     # ~ }
-    kernel["environment_required"] = True
+    kernel["environment_required"] = False
 
     ds.SetKernelStatus(kernel, simulation_ID="ID")
     gids, culture = None, None
@@ -154,16 +151,16 @@ if __name__ == '__main__':
     rec = ds.CreateRecorders(gids, "num_growth_cones")
 
     start = time.time()
-    # ~ for i in range(10):
-        # ~ step(1 * day, 0, True)
+    for i in range(1):
+        step(1 * day, 0, True)
 
     dendrite_params.update({"speed_growth_cone" : 0.04 * um / minute,
-                            "use_van_pelt" : True})
+                            "use_van_pelt" : False})
 
     axon_params.update({"speed_growth_cone" : 0.1 * um / minute,
                         "use_van_pelt" : False,
-                        "use_uniform_branching": False,
-                        "uniform_branching_rate": 0.01 * cpm,})
+                        "use_uniform_branching": True,
+                        "uniform_branching_rate": 0.1 * cph,})
 
     ds.SetStatus(gids,
                  params=neuron_params,

@@ -70,6 +70,7 @@ KernelManager::KernelManager()
     , record_enabled_(false)
     , env_required_(true)
     , num_objects_(0)
+    , num_created_objects_(0)
     , adaptive_timestep_(-1.)
     , version_("0.1.0")
 {
@@ -95,8 +96,9 @@ void KernelManager::initialize()
     // models_manager init_models() must come before neuron_manager
     model_manager.init_models();
     neuron_manager.initialize();
-    num_objects_ = 0;
-    initialized_ = true;
+    num_objects_         = 0;
+    num_created_objects_ = 0;
+    initialized_         = true;
 }
 
 
@@ -163,6 +165,12 @@ std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
 size_t KernelManager::get_num_objects() const { return num_objects_; }
 
 
+size_t KernelManager::get_num_created_objects() const
+{
+    return num_created_objects_;
+}
+
+
 double KernelManager::get_adaptive_timestep() const
 {
     return adaptive_timestep_;
@@ -172,10 +180,12 @@ double KernelManager::get_adaptive_timestep() const
 bool KernelManager::using_environment() const { return env_required_; }
 
 
-void KernelManager::update_num_objects()
+void KernelManager::update_num_objects(size_t num_new_objects)
 {
-    num_objects_ = neuron_manager.num_neurons();
-    num_objects_ += record_manager.num_recorders();
+    num_objects_          = neuron_manager.num_neurons();
+    num_objects_         += record_manager.num_recorders();
+
+    num_created_objects_ += num_new_objects;
 }
 
 

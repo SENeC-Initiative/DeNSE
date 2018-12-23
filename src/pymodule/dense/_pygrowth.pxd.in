@@ -96,6 +96,18 @@ cdef extern from "../module.hpp" namespace "growth":
                                 const vector[statusMap]& dendrites_params
                                 ) except +
 
+    cdef void create_neurites_(const vector[size_t]& neurons,
+                               size_t num_neurites,
+                               const vector[statusMap]& params,
+                               const vector[string]& neurite_types,
+                               const vector[double]& angles,
+                               const vector[string]& names) except +
+
+    cdef void delete_neurons_(const vector[size_t] &neurons) except +
+
+    cdef void delete_neurites_(const vector[size_t] &neurons,
+                               const vector[string] &names) except +
+
     cdef void get_environment_(GEOSGeometry*& environment,
                                vector[GEOSGeometry*]& areas,
                                vector[double] heights, vector[string]& names,
@@ -113,6 +125,8 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef statusMap get_kernel_status_() except +
 
     cdef size_t get_num_objects_() except +
+
+    cdef size_t get_num_created_objects_() except +
 
     cdef void get_skeleton_(
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,

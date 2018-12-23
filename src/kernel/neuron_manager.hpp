@@ -37,6 +37,8 @@ class NeuronManager : public ManagerInterface
     size_t create_neurons(const std::vector<statusMap> &neuron_params,
                           const std::vector<statusMap> &axon_params,
                           const std::vector<statusMap> &dendrites_params);
+  
+    void delete_neurons(const std::vector<size_t> &gids);
 
     NeuronPtr get_neuron(size_t gid);
     void get_all_neurons(std::vector<NeuronPtr> &);
@@ -67,6 +69,7 @@ class NeuronManager : public ManagerInterface
     modelMap model_map_;
 
   private:
+    size_t num_created_neurons_;
     NeuronPtr model_neuron_;          // unused model neuron for get_defaults
     gidNeuronMap neurons_;            // get neuron from gid
     threadNeurons neurons_on_thread_; // group neurons by thread

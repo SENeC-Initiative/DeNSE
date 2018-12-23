@@ -64,7 +64,7 @@ void RecordManager::finalize()
 size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
 {
     // get new gid value from kernel
-    size_t first_gid   = kernel().get_num_objects();
+    size_t first_gid   = kernel().get_num_created_objects();
     size_t num_created = 0;
 
     size_t gid;
@@ -228,7 +228,7 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
     }
 
     // update kernel count
-    kernel().update_num_objects();
+    kernel().update_num_objects(num_created);
 
     return num_created;
 }
@@ -348,6 +348,31 @@ void RecordManager::new_branching_event(const Event &ev)
             {
                 c_recorders_[rec_gid]->record(ev);
             }
+        }
+    }
+}
+
+
+void RecordManager::neurons_deleted(const std::vector<size_t> &gids)
+{
+    for (size_t neuron : gids)
+    {
+        auto cit = c_recorders_.find(neuron);
+
+        if (cit != c_recorders_.end())
+        {
+            cit->second->neuron_deleted(neuron);
+            c_recorders_.erase(neuron);
+            neuron_to_c_recorder_.erase(neuron);
+        }
+
+        auto dit = d_recorders_.find(neuron);
+
+        if (dit != d_recorders_.end())
+        {
+            dit->second->neuron_deleted(neuron);
+            d_recorders_.erase(neuron);
+            neuron_to_d_recorder_.erase(neuron);
         }
     }
 }

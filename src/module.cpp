@@ -4,6 +4,7 @@
 // C++ include
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 
@@ -25,6 +26,8 @@
 
 
 namespace ba = boost::adaptors;
+
+const int INVALID_AXON_NAME(1);
 
 
 namespace growth
@@ -74,6 +77,143 @@ size_t create_neurons_(const std::vector<statusMap> &neuron_params,
     kernel().simulation_manager.set_max_resolution();
 
     return num_created;
+}
+
+
+void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
+                      const std::vector<statusMap> &params,
+                      const std::vector<std::string> &neurite_types,
+                      const std::vector<double> &angles,
+                      const std::vector<std::string> &names)
+{
+    int num_omp = kernel().parallelism_manager.get_num_local_threads();
+    std::vector< std::vector<size_t> > omp_neuron_vec(num_omp);
+
+    for (size_t i=0; i < neurons.size(); i++)
+    {
+        int omp_id = kernel().neuron_manager.get_neuron_thread(neurons[i]);
+        omp_neuron_vec[omp_id].push_back(i);
+    }
+
+#pragma omp parallel
+    {
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+        mtPtr rng  = kernel().rng_manager.get_rng(omp_id);
+        std::string gc_model;
+        bool gc_model_set;
+        GCPtr gc_ptr;
+
+        for (size_t i : omp_neuron_vec[omp_id])
+        {
+            NeuronPtr neuron = kernel().neuron_manager.get_neuron(neurons[i]);
+            statusMap status = params[i];
+
+            size_t existing_neurites = neuron->get_num_neurites();
+            bool has_axon            = neuron->has_axon();
+
+            gc_model_set = get_param(status, "growth_cone_model", gc_model);
+
+            if (not gc_model_set)
+            {
+                gc_model = neuron->get_gc_model();
+            }
+
+            gc_ptr = kernel().model_manager.get_model(gc_model);
+
+            if (neurite_types.empty())
+            {
+                for (size_t j=0; j < num_neurites; j++)
+                {
+                    if ((names.empty() and has_axon
+                        and existing_neurites + j == 0) or names[j] == "axon")
+                    {
+                        neuron->new_neurite("axon", "axon", gc_ptr ,rng);
+                        neuron->set_neurite_status("axon", status);
+                    }
+                    else
+                    {
+                        std::string name =
+                            names.empty() ?
+                            "dendrite_" + std::to_string(existing_neurites + j)
+                            : names[j];
+                        neuron->new_neurite(name, "dendrite", gc_ptr, rng);
+                        neuron->set_neurite_status(name, status);
+                    }
+                }
+            }
+            else
+            {
+                for (size_t j=0; j < num_neurites; j++)
+                {
+                    if (neurite_types[j] == "axon")
+                    {
+                        if (not names.empty() and names[j] != "axon")
+                        {
+                            exit(INVALID_AXON_NAME);
+                        }
+
+                        neuron->new_neurite("axon", "axon", gc_ptr, rng);
+                        neuron->set_neurite_status("axon", status);
+                    }
+                    else
+                    {
+                        std::string name =
+                            names.empty() ?
+                            "dendrite_" + std::to_string(existing_neurites + j)
+                            : names[j];
+                        neuron->new_neurite(name, "dendrite", gc_ptr, rng);
+                        neuron->set_neurite_status(name, status);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void delete_neurons_(const std::vector<size_t> &gids)
+{
+    if (gids.empty())
+    {
+        kernel().neuron_manager.finalize();
+        kernel().record_manager.finalize();
+
+        kernel().neuron_manager.initialize();
+        kernel().record_manager.initialize();
+    }
+    else
+    {
+        // first delete the pointers to the neurons
+        kernel().record_manager.neurons_deleted(gids);
+        // then delete the neurons
+        kernel().neuron_manager.delete_neurons(gids);
+    }
+}
+
+
+void delete_neurites_(const std::vector<size_t> &gids,
+                      const std::vector<std::string> &names)
+{
+    if (gids.empty())
+    {
+        std::vector<NeuronPtr> neurons;
+
+        kernel().neuron_manager.get_all_neurons(neurons);
+
+        for (NeuronPtr neuron : neurons)
+        {
+            neuron->delete_neurites(names);
+        }
+    }
+    else
+    {
+        for (size_t neuron : gids)
+        {
+            NeuronPtr nptr = kernel().neuron_manager.get_neuron(neuron);
+
+            nptr->delete_neurites(names);
+        }
+    }
 }
 
 
@@ -261,6 +401,9 @@ double get_state_(size_t gid, const std::string& level,
 size_t get_num_objects_() { return kernel().get_num_objects(); }
 
 
+size_t get_num_created_objects_() { return kernel().get_num_created_objects(); }
+
+
 statusMap get_neurite_status_(size_t gid, const std::string &neurite,
                              const std::string &level)
 {
@@ -359,6 +502,12 @@ std::vector<std::string> get_neurites_(size_t gid)
     }
 
     return neurite_names;
+}
+
+
+bool neuron_has_axon_(size_t gid)
+{
+    return kernel().neuron_manager.get_neuron(gid)->has_axon();
 }
 
 

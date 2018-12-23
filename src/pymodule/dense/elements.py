@@ -35,11 +35,10 @@ class Neuron(int):
         '''
         Return the :class:`Neurite` container for the axon.
         '''
-        if self._axon is None:
-            neurites = _pg._get_neurites(self)
-            if "axon" in neurites:
-                self._axon = Neurite(None, "axon", name="axon", parent=self)
-        return self._axon
+        neurites = _pg._get_neurites(self)
+        if "axon" in neurites:
+            return Neurite(None, "axon", name="axon", parent=self)
+        return None
 
     @property
     def dendrites(self):
@@ -47,13 +46,12 @@ class Neuron(int):
         Return a dict containing one :class:`Neurite` container for each
         dendrite, with its name as key.
         '''
-        if not self._dendrites:
-            neurites = [k for k in _pg._get_neurites(self) if k != "axon"]
-            self._dendrites = {}
-            for name in neurites:
-                self._dendrites[name] = Neurite(
-                    None, "dendrite", name=name, parent=self)
-        return self._dendrites.copy()  # shallow copy of the content
+        neurites = [k for k in _pg._get_neurites(self) if k != "axon"]
+        dendrites = {}
+        for name in neurites:
+            dendrites[name] = Neurite(
+                None, "dendrite", name=name, parent=self)
+        return dendrites
 
     @property
     def neurites(self):

@@ -72,6 +72,8 @@ class BaseRecorder
     void reset_iterations();
     virtual void final_timestep(size_t step);
 
+    void neuron_deleted(size_t gid);
+
     void get_status(statusMap &status) const;
     virtual void set_status(const statusMap &status);
 

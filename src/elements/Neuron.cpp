@@ -108,13 +108,14 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     {
         if (nas.size() != num_neurites)
         {
-            throw InvalidParameter("`neurite_angles` must contain one entry per "
-                                   "neurite.",  __FUNCTION__, __FILE__, __LINE__);
+            throw InvalidParameter("`neurite_angles` must contain one entry "
+                                   "per neurite.",  __FUNCTION__, __FILE__, __LINE__);
         }
         if (has_axon_ and nas.find("axon") == nas.end())
         {
-            throw InvalidParameter("`neurite_angles` does not contain an entry for "
-                                   "'axon'.",  __FUNCTION__, __FILE__, __LINE__);
+            throw InvalidParameter("`neurite_angles` does not contain an entry "
+                                   "for 'axon'.",  __FUNCTION__, __FILE__,
+                                   __LINE__);
         }
 
         neurite_angles_ = nas;
@@ -525,7 +526,55 @@ std::string Neuron::new_neurite(const std::string &name,
     neurites_[name]->nodes_[0]->children_.push_back(first_gc);
     neurites_[name]->update_tree_structure(neurites_[name]->get_first_node());
 
+    if (name == "axon")
+    {
+        has_axon_ = true;
+    }
+
     return name;
+}
+
+
+void Neuron::delete_neurites(const std::vector<std::string> &names)
+{
+    if (names.empty())
+    {
+        neurites_.clear();
+        has_axon_ = false;
+    }
+    else
+    {
+        for (const std::string &neurite_name : names)
+        {
+            auto it = neurites_.find(neurite_name);
+
+            if (it != neurites_.end())
+            {
+                NeuritePtr neurite = neurites_[neurite_name];
+                // break circular dependency of neurite/branching model
+                neurite->branching_model_ = nullptr;
+                // clear all neurite containers to free growth cones and nodes
+                neurite->nodes_.clear();
+                neurite->growth_cones_.clear();
+                neurite->growth_cones_tmp_.clear();
+                neurite->growth_cones_inactive_.clear();
+                neurite->growth_cones_inactive_tmp_.clear();
+
+                // remove from neurites
+                neurites_.erase(it);
+
+                if (neurite_name == "axon")
+                {
+                    has_axon_ = false;
+                }
+            }
+            else
+            {
+                throw std::runtime_error("Neurite '" + neurite_name + "' does "
+                                         "not exist.");
+            }
+        }
+    }
 }
 
 
@@ -812,6 +861,9 @@ BPoint Neuron::get_position() const { return soma_->get_position(); }
 
 
 size_t Neuron::get_gid() const { return gid_; }
+
+
+bool Neuron::has_axon() const { return has_axon_; };
 
 
 bool Neuron::is_neurite(const std::string& neurite)

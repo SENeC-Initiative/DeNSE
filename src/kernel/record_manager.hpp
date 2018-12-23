@@ -39,6 +39,8 @@ class RecordManager : public ManagerInterface
     void num_threads_changed(int num_omp);
     void new_branching_event(const Event &ev);
 
+    void neurons_deleted(const std::vector<size_t> &gids);
+
     statusMap get_recorder_status(size_t gid) const;
     void get_recorder_type(size_t gid, std::string &level,
                            std::string &event_type) const;

@@ -34,7 +34,7 @@ void init_growth_(int *argc, char **argv[]);
 void reset_kernel_();
 
 
-/* Creation */
+/* Creation and deletion */
 
 size_t create_objects_(const std::string &object_name,
                        const std::vector<statusMap> &obj_params);
@@ -43,6 +43,20 @@ size_t create_objects_(const std::string &object_name,
 size_t create_neurons_(const std::vector<statusMap> &neuron_params,
                        const std::vector<statusMap> &axon_params,
                        const std::vector<statusMap> &dendrites_params);
+
+
+void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
+                      const std::vector<statusMap> &params,
+                      const std::vector<std::string> &neurite_types,
+                      const std::vector<double> &angles,
+                      const std::vector<std::string> &names);
+
+
+void delete_neurons_(const std::vector<size_t> &gids);
+
+
+void delete_neurites_(const std::vector<size_t> &gids,
+                      const std::vector<std::string> &names);
 
 
 /* Setters */
@@ -101,6 +115,9 @@ Property get_kernel_status_(const std::string &key);
 size_t get_num_objects_();
 
 
+size_t get_num_created_objects_();
+
+
 double get_state_(size_t gid, const std::string& level,
                   const std::string& variable);
 
@@ -123,6 +140,9 @@ std::vector<size_t> get_neurons_();
 
 
 std::vector<std::string> get_neurites_(size_t gid);
+
+
+bool neuron_has_axon_(size_t gid);
 
 
 void get_branches_data_(size_t neuron, const std::string &neurite,

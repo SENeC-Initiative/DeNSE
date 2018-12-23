@@ -87,6 +87,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
                             const std::string &neurite_type,
                             const GCPtr gc_model, mtPtr rnd_engine);
 
+    void delete_neurites(const std::vector<std::string> &names);
 
     // Getter/setter functions
     BaseNodePtr get_soma() const;
@@ -106,6 +107,8 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void get_neurite_status(statusMap &status, std::string neurite_type,
                             const std::string &level);
     void update_kernel_variables();
+
+    bool has_axon() const;
 
     // constant iterator to neurites map
     inline std::unordered_map<std::string, NeuritePtr>::const_iterator

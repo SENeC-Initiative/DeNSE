@@ -20,6 +20,7 @@ NeuronManager::NeuronManager() {}
 void NeuronManager::initialize()
 {
     // create default neuron with two neurites (axon + dendrite)
+    num_created_neurons_ = 0;
     statusMap empty_params;
     statusMap params({{names::num_neurites, Property(2, "")},
                       {names::growth_cone_model, Property("", "")},
@@ -54,6 +55,7 @@ void NeuronManager::finalize()
     neurons_.clear();
     neurons_on_thread_.clear();
     model_map_.clear();
+    num_created_neurons_ = 0;
 }
 
 
@@ -67,7 +69,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
                               const std::vector<statusMap> &axon_params,
                               const std::vector<statusMap> &dendrites_params)
 {
-    size_t first_id             = kernel().get_num_objects();
+    size_t first_id             = kernel().get_num_created_objects();
     size_t previous_num_neurons = neurons_.size();
 
     // put the neurons on the thread list they belong to
@@ -115,6 +117,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         std::vector<size_t> gids(thread_neurons[omp_id]);
+
         for (size_t gid : gids)
         {
             size_t idx       = gid - first_id;
@@ -134,6 +137,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
 
             local_neurons.push_back(neuron);
         }
+
 #pragma omp critical
         {
             for (size_t i = 0; i < gids.size(); i++)
@@ -152,8 +156,39 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
     }
 
     // tell the kernel manager to update the number of objects
-    kernel().update_num_objects();
-    return neurons_.size() - previous_num_neurons;
+    size_t num_created = neurons_.size() - previous_num_neurons;
+    kernel().update_num_objects(num_created);
+
+    return num_created;
+}
+
+
+void NeuronManager::delete_neurons(const std::vector<size_t> &gids)
+{
+    for (size_t neuron : gids)
+    {
+        auto it = neurons_.find(neuron);
+
+        NeuronPtr n = neurons_[neuron];
+
+        if (it != neurons_.end())
+        {
+            for (auto v : neurons_on_thread_)
+            {
+                for (size_t i=0; i < v.size(); i++)
+                {
+                    if (v[i] == n)
+                    {
+                        v.erase(v.begin() + i);
+                        break;
+                    }
+                }
+            }
+
+            thread_of_neuron_.erase(neuron);
+            neurons_.erase(it);
+        }
+    }
 }
 
 
@@ -273,10 +308,13 @@ const statusMap NeuronManager::get_neuron_status(size_t gid) const
 
 std::vector<size_t> NeuronManager::get_gids() const
 {
-    size_t n = neurons_.size();
     std::vector<size_t> gids;
-    for (auto it = neurons_.begin(); it != neurons_.end(); it++)
-        gids.push_back(it->first);
+
+    for (auto it : neurons_)
+    {
+        gids.push_back(it.first);
+    }
+
     return gids;
 }
 

@@ -108,6 +108,17 @@ void BaseRecorder::reset_iterations()
 }
 
 
+void BaseRecorder::neuron_deleted(size_t gid)
+{
+    auto it = targets_.find(gid);
+
+    if (it != targets_.end())
+    {
+        targets_.erase(it);
+    }
+}
+
+
 /**
  * Constructor for NeuronContinuousRecorder
  */

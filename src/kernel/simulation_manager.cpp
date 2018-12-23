@@ -582,6 +582,7 @@ void SimulationManager::set_max_resolution()
     // get max speed modifier from areas
     if (kernel().using_environment())
     {
+        printf("use env\n");
         std::unordered_map<std::string, double> prop;
         for (auto name : kernel().space_manager.get_area_names())
         {

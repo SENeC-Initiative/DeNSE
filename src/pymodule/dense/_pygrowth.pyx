@@ -23,8 +23,11 @@ from ._pygrowth cimport *
 
 
 __all__ = [
+    "create_neurites",
     "create_neurons",
     "create_recorders",
+    "delete_neurons",
+    "delete_neurites",
     "generate_model",
     "generate_simulation_id",
     "get_default_parameters",
@@ -287,6 +290,106 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         return gids
 
 
+def create_neurites(neurons, num_neurites=1, params=None, angles=None,
+                    neurite_types=None, names=None):
+    '''
+    Create neurites on the specified neurons.
+
+    Parameters
+    ----------
+    neurons : :class:`~dense.elements.Neuron`, list, or GIDs
+        Neurons on which neurites should be created.
+    num_neurites : int, optional (default: 1)
+        Number of neurites that will be added to each neuron.
+    params : dict, optional (default: None)
+        Parameters of the neurites.
+    angle : list, optional (default: automatically positioned)
+        Angles of the newly created neurites.
+    neurite_types : str or list, optional
+        Types of the neurites, either "axon" or "dendrite". If not provided,
+        the first neurite will be an axon if the neuron has no existing neurites
+        and its `has_axon` variable is True, all other neurites will be
+        dendrites.
+    names : list, optional (default: "axon" and "dendrite_X")
+        Names of the created neurites.
+
+    Note
+    ----
+    When using this function, the same number and types of neurites will be
+    created for each neuron; to create varying numbers, types, or relative
+    angles for the neurites, the function must be called separately on the
+    different sets of neurons.
+
+    .. warning ::
+
+        Axon name must always be "axon", trying to name it differently will
+        immediately crash the kernel.
+    '''
+    cdef:
+        vector[size_t] cneurons
+        vector[double] cangles
+        vector[string] cneurite_types, cneurite_names
+        statusMap common_params
+        vector[statusMap] cparams
+
+    params = {} if params is None else params
+
+    if not nonstring_container(neurons):
+        neurons = [neurons]
+    for n in neurons:
+        cneurons.push_back(int(n))
+
+    if angles is not None:
+        for theta in angles:
+            cangles.push_back(theta)
+
+    if neurite_types is not None:
+        if not nonstring_container(neurite_types):
+            neurite_types = [neurite_types]
+
+        assert len(neurite_types) == num_neurites, \
+            "`neurite_types` must contain exactly `num_neurites` entries."
+
+        for s in neurite_types:
+            assert s in ("axon", "dendrite"), \
+                "Only 'axon' and 'dendrite' are allowed in `neurite_types`."
+            cneurite_types.push_back(_to_bytes(s))
+
+    if names is not None:
+        assert len(names) == num_neurites, \
+            "`names` must contain exactly `num_neurites` entries."
+
+        assert len(names) == len(set(names)), "`names` are not unique."
+
+        for s in names:
+            if s == "axon":
+                for n in cneurons:
+                    has_axon = neuron_has_axon_(n)
+                    neurites = get_neurites_(n)
+                    assert has_axon, \
+                        "To create a neurite called 'axon', the neurons " +\
+                        "have their `has_axon` parameter to True, and " +\
+                        "should not already possess an axon. Neuron " +\
+                        "{} has `has_axon` to False.".format(n)
+                    assert b"axon" not in list(neurites), \
+                        "To create a neurite called 'axon', the neurons " +\
+                        "have their `has_axon` parameter to True, and " +\
+                        "should not already possess an axon. Neuron " +\
+                        "{} already has an axon.".format(n)
+
+            cneurite_names.push_back(_to_bytes(s))
+
+    _check_params(params, "neurite")
+
+    common_params = _get_scalar_status(params, num_neurites)
+    cparams       = vector[statusMap](num_neurites, common_params)
+
+    _set_vector_status(cparams, params)
+
+    create_neurites_(cneurons, num_neurites, cparams, cneurite_types, cangles,
+                     cneurite_names)
+
+
 def create_recorders(targets, observables, sampling_intervals=None,
                      start_times=None, end_times=None, levels="auto",
                      restrict_to=None, record_to="memory", buffer_size=100):
@@ -344,7 +447,7 @@ def create_recorders(targets, observables, sampling_intervals=None,
         size_t num_obj, num_created, num_obs
 
     # get initial number of objects
-    num_obj = get_num_objects_()
+    num_obj = get_num_created_objects_()
 
     # switch targets and observables to lists
     targets     = list(targets) if nonstring_container(targets) else [targets]
@@ -381,6 +484,56 @@ def create_recorders(targets, observables, sampling_intervals=None,
                                    "a bug on our issue tracker."
 
     return tuple([num_obj + i for i in range(num_created)])
+
+
+def delete_neurons(neurons=None):
+    '''
+    Delete neurons.
+
+    Parameters
+    ----------
+    neurons : list of neurons, optional (default: all neurons)
+        Neurons to delete.
+    '''
+    cdef vector[size_t] cneurons
+
+    if neurons is not None:
+        if not nonstring_container(neurons):
+            neurons = [neurons]
+        for n in neurons:
+            cneurons.push_back(int(n))
+
+    delete_neurons_(cneurons)
+
+
+def delete_neurites(neurite_names=None, neurons=None):
+    '''
+    Delete neurites.
+
+    Parameters
+    ----------
+    neurite_names : str or list, optional (default: all neurites)
+        Neurites which will be deleted.
+    neurons : list of neurons, optional (default: all neurons)
+        Neurons for which the neurites will be deleted.
+    '''
+    cdef:
+        vector[size_t] cneurons
+        vector[string] cnames
+
+    if neurons is not None:
+        if not nonstring_container(neurons):
+            neurons = [neurons]
+        for n in neurons:
+            cneurons.push_back(int(n))
+
+    if neurite_names is not None:
+        if not nonstring_container(neurite_names):
+            neurite_names = [neurite_names]
+        for name in neurite_names:
+            cnames.push_back(_to_bytes(name))
+
+    delete_neurites_(cneurons, cnames)
 
 
 def generate_model(elongation_type, steering_method, direction_selection):
@@ -708,9 +861,20 @@ def get_object_type(gid):
 
 
 def get_neurons(as_ints=False):
-    ''' Return the neuron ids. '''
+    '''
+    Return the neurons
+
+    Parameters
+    ----------
+    as_ints : bool, optional (default: False)
+        If True, only the GIDs of the neurons are returned (saves memory)
+
+    Returns
+    -------
+    neurons : :class:`~dense.elements.Population` or list of ints
+    '''
     if as_ints:
-        return np.array(get_neurons_(), dtype=int)
+        return get_neurons_()
     else:
         from .elements import Population
         return Population.from_gids(get_neurons_())
@@ -1341,7 +1505,7 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
         statusMap base_neuron_status, base_axon_status, base_dendrites_status
         string description
 
-    num_objects = get_num_objects_()
+    num_objects = get_num_created_objects_()
     # neuronal parameters (make default statusMap with scalar values which are
     # the same for all neurons)
     base_neuron_status = _get_scalar_status(params, n)
@@ -1390,10 +1554,12 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     else:
         from .elements import Neuron, Population
         neurons = []
+
         for i in range(n):
             pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
             rad = neuron_params[i][b"soma_radius"].d
             neurons.append(Neuron(num_objects + i, pos, rad))
+
         return Population(neurons)
 
 

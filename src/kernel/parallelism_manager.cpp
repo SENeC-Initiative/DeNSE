@@ -27,6 +27,7 @@ ParallelismManager::ParallelismManager()
 {
 }
 
+
 void ParallelismManager::mpi_init(int *argc, char **argv[])
 {
 #ifdef WITH_MPI
@@ -48,6 +49,7 @@ void ParallelismManager::mpi_init(int *argc, char **argv[])
 #endif /* #ifdef HAVE_MPI */
 }
 
+
 /**
  * Finish off MPI routines
  */
@@ -62,6 +64,7 @@ void ParallelismManager::mpi_finalize()
 #endif /* #ifdef HAVE_MPI */
 }
 
+
 void ParallelismManager::initialize()
 {
 #ifdef WITH_OMP
@@ -72,7 +75,9 @@ void ParallelismManager::initialize()
     set_num_local_threads(1);
 }
 
+
 void ParallelismManager::finalize() {}
+
 
 void ParallelismManager::set_num_local_threads(int n_threads)
 {
@@ -87,6 +92,7 @@ void ParallelismManager::set_num_local_threads(int n_threads)
 #endif
     num_omp_ = n_threads;
 }
+
 
 void ParallelismManager::set_status(const statusMap &status)
 {
@@ -156,6 +162,7 @@ void ParallelismManager::set_status(const statusMap &status)
         kernel().rng_manager.create_rngs_();
     }
 }
+
 
 void ParallelismManager::get_status(statusMap &status) const
 {

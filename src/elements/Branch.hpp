@@ -28,8 +28,8 @@ class Branch
   public:
     Branch(const Branch &copy);
     //! Create a branch with initial position and if necesary an initial length
-    Branch(const BPoint &);
-    Branch(const BPoint &, double);
+    Branch(const BPoint &origin);
+    Branch(const BPoint &origin, double initial_length);
     //! default constructor
     Branch();
     ~Branch();

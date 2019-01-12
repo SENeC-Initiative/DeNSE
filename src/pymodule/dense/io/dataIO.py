@@ -30,8 +30,8 @@ def save_json_info(filepath="default", gid=None):
     Save the simulation data to "info.json" file into the folder 'filepath'.
     filepath is usually the simulation_ID.
     """
-    if filepath=="default":
-        filepath= _pg.get_simulation_id()
+    if filepath == "default":
+        filepath =  _pg.get_simulation_id()
     if not isdir(filepath):
         try:
             os.makedirs(filepath)
@@ -52,7 +52,9 @@ def save_json_info(filepath="default", gid=None):
     # convert the quantities to strings
     _q_to_dict(experiment_dict)
 
-    with open (os.path.join(filepath,"info.json"), "w") as dumper:
+    path = os.path.join(filepath, "info.json")
+
+    with open(path, "w") as dumper:
         json.dump(experiment_dict, dumper, sort_keys =True)
 
 
@@ -98,16 +100,18 @@ def ImportRecordFile(file_):
     ------
     events, steps
     """
-    events=[]
-    steps=[]
+    events = []
+    steps  = []
+
     with open(file_) as csv_file:
-        record_reader= csv.reader(csv_file, delimiter=" ", quotechar="#")
+        record_reader = csv.reader(csv_file, delimiter=" ", quotechar="#")
         for line in record_reader:
             line = [word for word in line if word.strip()]
             if line[0] =="step":
                 steps.append(line[1:])
             if line[0]=="branch":
                 events.append(line[1:])
+
     return events, steps
 
 
@@ -153,7 +157,7 @@ def NeuronsFromSimulation(simulation_path):
             if f.endswith(".swc") and f != "morphology.swc"
         ]
 
-    gids= len(imported_list)
+    gids = len(imported_list)
 
     def parse_gid(_file):
         with open(file_,'r') as fp:
@@ -206,7 +210,7 @@ def load_swc(swc_folder=None, swc_file=None, info=None):
     """
     if swc_file is not None:
         return Population.from_swc(
-            NeuronFromSwcFile(swc_file,info))
+            NeuronFromSwcFile(swc_file, info))
     if swc_folder is not None:
         return Population.from_swc(
             NeuronsFromSimulation(swc_folder))

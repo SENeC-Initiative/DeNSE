@@ -48,14 +48,13 @@ Neuron::Neuron(size_t gid)
     , has_axon_(true)
     , polarization_strength_(POLA_STRENGTH)
     , axon_polarization_weight_(AXON_POLA_WEIGHT)
-    , random_rotation_angles_(true)
+    , random_rotation_angles_(false)
     , rnd_angle_(0.)
+    , uniform_(0., 1.)
+    , normal_(0., 1.)
 {
     // initialize the soma
     soma_          = std::make_shared<BaseNode>();
-    soma_->somaID_ = "soma";
-    uniform_       = std::uniform_real_distribution<double>(0., 1.);
-    normal_        = std::normal_distribution<double>(0., 1.);
 }
 
 
@@ -510,7 +509,7 @@ std::string Neuron::new_neurite(const std::string &name,
     neurites_[name]->growth_cone_model_ = growth_cone_model_;
     GCPtr first_gc = gc_model->clone(neurites_[name]->get_first_node(),
                                      neurites_[name], details.soma_radius,
-                                     name + "0", cone_start_point, angle);
+                                     cone_start_point, angle);
 
     neurites_[name]->add_cone(first_gc);
 

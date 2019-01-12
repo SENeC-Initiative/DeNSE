@@ -35,9 +35,9 @@ SimulationManager::SimulationManager()
     , substep_()            //!< Precise time inside current step
     , final_substep_(0.)    //!< Last substep, updated once per simulation call
     , final_step_(0)        //!< Last step, updated once per simulation call
-    , initial_time_(Time()) //!< Initial time (day, hour, min, sec)
-    , final_time_(Time())   //!< Final time (day, hour, min, sec)
-    , maximal_time_(Time()) //!< Maximal time (day, hour, min, sec)
+    , initial_time_()       //!< Initial time (day, hour, min, sec)
+    , final_time_()         //!< Final time (day, hour, min, sec)
+    , maximal_time_()       //!< Maximal time (day, hour, min, sec)
     , terminate_(false)     //!< Terminate on signal or error
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
@@ -496,8 +496,17 @@ void SimulationManager::set_status(const statusMap &status)
 {
     if (status.find("resolution") != status.end())
     {
+        get_param(status, names::max_allowed_resolution, max_resol_);
         double resolution;
-        get_param(status, "resolution", resolution);
+        get_param(status, names::resolution, resolution);
+
+        if (resolution > max_resol_)
+        {
+            throw std::invalid_argument(
+                "`" + names::resolution + "` must be smaller or equal to `" +
+                names::max_allowed_resolution + "`, which is currently " +
+                std::to_string(max_resol_) + " minute.");
+        }
 
         if (initial_time_ == Time(0., 0, 0, 0))
         {
@@ -512,8 +521,8 @@ void SimulationManager::set_status(const statusMap &status)
 
 void SimulationManager::get_status(statusMap &status) const
 {
-    set_param(status, "resolution", Time::RESOLUTION, "minute");
-    set_param(status, "max_allowed_resolution", max_resol_, "minute");
+    set_param(status, names::resolution, Time::RESOLUTION, "minute");
+    set_param(status, names::max_allowed_resolution, max_resol_, "minute");
 
     // initial time is always up to date
     set_param(status, "second", initial_time_.get_sec(), "second");
@@ -537,7 +546,7 @@ double SimulationManager::get_current_minutes() const
 /**
  * Gives initial time.
  */
-Time SimulationManager::get_initial_time() const
+const Time& SimulationManager::get_initial_time() const
 {
     return initial_time_;
 }

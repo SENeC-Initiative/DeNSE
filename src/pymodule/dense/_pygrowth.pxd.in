@@ -9,6 +9,7 @@ from libc.stdint cimport uintptr_t
 from libcpp cimport bool
 
 from libcpp.pair cimport pair
+from libcpp.set cimport set as cset
 from libcpp.string cimport string
 from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
@@ -135,9 +136,23 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void get_geom_skeleton_(
         vector[size_t] gids, vector[GEOSGeometry*]& axons,
-        vector[GEOSGeometry*]& dendrites,
+        vector[GEOSGeometry*]& dendrites, vector[size_t]& dendrite_gids,
         vector[vector[double]]& somas) except +
-
+    
+    cdef void generate_synapses_(
+        bool crossings_only, double density,
+        bool only_new_syn, bool autapse_allowed,
+        const cset[size_t] &presyn_pop, const cset[size_t] &postsyn_pop,
+        vector[size_t] &presyn_neurons, vector[size_t] &postsyn_neurons,
+        vector[string] &presyn_neurites, vector[string] &postsyn_neurites,
+        vector[size_t] &presyn_nodes, vector[size_t] &postsyn_nodes,
+        vector[size_t] &presyn_segments, vector[size_t] &postsyn_segments,
+        vector[double] &pre_syn_x, vector[double] &pre_syn_y,
+        vector[double] &post_syn_x, vector[double] &post_syn_y) except +
+    
+    cdef void get_distances_(size_t gid, const string &neurite, size_t node,
+                             size_t segment, double &dist_to_parent,
+                             double &dist_to_soma) except +
 
     cdef void get_swc_(string output_file,
         vector[size_t] gids, unsigned int resolution) except +

@@ -99,7 +99,7 @@ extern const std::string points_per_circle;
 
 #define DURATION_RETRACTION 4.
 #define FILOPODIA_MIN_NUM 24
-#define FILOPODIA_FINGER_LENGTH 50.
+#define FILOPODIA_FINGER_LENGTH 12.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1
 #define FILOPODIA_WALL_AFFINITY 2.
 #define MAX_SENSING_ANGLE 1.5707963267948966 // 180 degrees max for 1 s resol
@@ -108,11 +108,13 @@ extern const std::string points_per_circle;
 #define PROBA_DOWN_MOVE 0.008
 #define PERSISTENCE_LENGTH 500.
 #define SCALE_UP_MOVE 20.
-#define SENSING_ANGLE 0.1433
+#define SENSING_ANGLE 1.2217 // approximately 70 deg
 #define SPEED_RATIO_RETRACTION 0.2
-#define SPEED_GROWTH_CONE 0.01  // um/min
+#define SPEED_GROWTH_CONE 0.05  // um/min
 #define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
 #define DEFAULT_POINTS_PER_CIRCLE 12 // number of points used to create a circle
+#define MIN_FILOPODIA_FINGER_LENGTH 5. // WARNING: THIS VALUE *MUST* BE EQUAL TO
+                                       // MAX_MAX_SYN_DIST
 
 
 /*
@@ -314,13 +316,16 @@ extern const std::string num_growth_cones;
 
 
 /*
- * Kernel
+ * Kernel and space
  */
 
-extern const std::string max_allowed_resolution;
 extern const std::string interactions;
+extern const std::string max_allowed_resolution;
+extern const std::string max_synaptic_distance;
+extern const std::string resolution;
 
 #define DEFAULT_MAX_RESOL 30.
+#define MAX_MAX_SYN_DIST 5.
 
 
 } // namespace names

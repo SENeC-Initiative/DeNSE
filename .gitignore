@@ -19,6 +19,7 @@ Makefile
 **/cmake_install.cmake
 src/pymodule/setup.py
 src/libgrowth/config.hpp
+src/libgrowth/spatial_types.hpp
 local_install
 install_test
 src/pymodule/dense/_pygrowth.cpp

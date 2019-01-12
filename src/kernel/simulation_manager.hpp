@@ -36,7 +36,7 @@ class SimulationManager : public ManagerInterface
     bool simulating() const;
 
     Time get_time() const;
-    Time get_initial_time() const;
+    const Time& get_initial_time() const;
     double get_resolution() const;
     double get_current_minutes() const;
     size_t get_current_step() const;

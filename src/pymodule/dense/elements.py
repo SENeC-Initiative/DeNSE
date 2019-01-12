@@ -670,6 +670,11 @@ class Population(list):
         else:
             return super(Population, self).__getitem__(self._idx[key])
 
+    @property
+    def size(self):
+        ''' Number of neurons in the Population '''
+        return len(self)
+
     def append(self, val):
         super(Population, self).append(val)
         self.sort()
@@ -698,7 +703,7 @@ class Population(list):
                  if neuron.dendrites[0].xy.shape[1] > 1])
 
     @property
-    def gids(self):
+    def ids(self):
         return [int(n) for n in self]
 
     @property
@@ -752,16 +757,10 @@ class Population(list):
                     dendrite = Neurite(
                         [Branch(dend) for dend in dendrites],
                         neurite_type="dendrite", name="dendrite")
-                    self[gid].dendrites[dendrite] = dend
+                    self[gid].dendrites[dendrite] = dendrite
                 else:
                     raise Exception(
                         "Dendrites are expected to be a list of segments.")
-
-    def get_gid(self, gids):
-        if isinstance(gids, list):
-            return gids, [self[n] for n in gids]
-        if isinstance(gids, int):
-            return [gids], [self[gids]]
 
     def get_status(self, property_name=None, level=None, neurite=None,
                    time_units="hours"):

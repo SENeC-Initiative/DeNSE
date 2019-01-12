@@ -11,6 +11,18 @@
 namespace growth
 {
 
+BaseNode::BaseNode() : geometry_{}
+{}
+
+BaseNode::BaseNode(const BPoint &position, double distance_to_parent,
+         double distance_to_soma)
+  : geometry_{position, distance_to_soma, distance_to_parent}
+{}
+
+BaseNode::BaseNode(const BaseNode &copy)
+  : geometry_(copy.geometry_)
+{}
+
 // BaseNode functions
 
 void BaseNode::set_position(const BPoint &pos) { geometry_.position = pos; }
@@ -23,9 +35,6 @@ BPoint BaseNode::get_position() const { return geometry_.position; }
 
 
 int BaseNode::get_centrifugal_order() const { return -1; }
-
-
-std::string BaseNode::get_treeID() const { return somaID_; }
 
 
 size_t BaseNode::get_nodeID() const { return 0; }
@@ -41,16 +50,15 @@ double BaseNode::get_distance_parent() const
 //
 
 TopologicalNode::TopologicalNode()
-    : topology_{}
-    , geometry_{}
+    : BaseNode()
+    , topology_{}
     , biology_{}
-{
-}
+{}
 
 
 TopologicalNode::TopologicalNode(const TopologicalNode &tnode)
-    : topology_(tnode.topology_)
-    , geometry_(tnode.geometry_)
+    : BaseNode(tnode)
+    , topology_(tnode.topology_)
     , biology_(tnode.biology_)
 {
     topology_.has_child = false;
@@ -58,21 +66,16 @@ TopologicalNode::TopologicalNode(const TopologicalNode &tnode)
 
 
 TopologicalNode::TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
-                                 const BPoint &position,
-                                 const std::string &binaryID)
-    : topology_{parent, parent.lock()->get_centrifugal_order() + 1, false, 0,
-                binaryID}
-    , geometry_{position, distanceToParent,
-                parent.lock()->get_distance_parent() +
-                    parent.lock()->get_distance_to_soma()}
+                                 const BPoint &position)
+    : BaseNode(position, distanceToParent,
+               distanceToParent + parent.lock()->get_distance_to_soma())
+    , topology_{parent, parent.lock()->get_centrifugal_order() + 1, false, 0}
     , biology_{false, std::make_shared<Branch>(), nullptr, 1}
-{
-}
+{}
 
 
 void TopologicalNode::topological_advance()
 {
-    topology_.binaryID = topology_.binaryID + "0";
     topology_.centrifugal_order++;
 }
 
@@ -145,9 +148,8 @@ Growth cone constructor:
 \param BranchParentID is the relative name respect to the parent,
 necessary for build the Id
 */
-Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &position,
-           std::string binaryID)
-    : TopologicalNode(parent, distance, position, binaryID)
+Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &pos)
+  : TopologicalNode(parent, distance, pos)
 {
     topology_.has_child = true;
 }
@@ -159,13 +161,13 @@ Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &position,
  * event.
  */
 Node::Node(const TopologicalNode &copyTopoNode)
-    : TopologicalNode(copyTopoNode)
+  : TopologicalNode(copyTopoNode)
 {
 }
 
 
 Node::Node(const Node &copyNode)
-    : TopologicalNode(copyNode)
+  : TopologicalNode(copyNode)
 {
     topology_.has_child = true;
 }

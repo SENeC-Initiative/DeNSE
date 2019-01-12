@@ -16,53 +16,11 @@ from scipy.special import digamma
 from .. import _pygrowth as _pg
 
 
-# ============================
-#  Correlation futions
-# ============================
+# -------------------- #
+#  Correlation futions #
+# -------------------- #
 
-def local_tortuosity(theta, rho, first=1):
-    """
-    Measure the local tortuosity as defined in u
-    'Computation of tortuosity vessels' 10.1109/ICAPR.2015.7050711
-
-    Parameters
-    ----------
-    theta: array of size N
-        Relative angle between subsequent segments
-    rho:   array of size N
-        Length of each segment
-    first: int, optional (default: 1)
-        First element to process, skip previous.
-
-    Returns
-    -------
-    tortuosity : array of size N - first
-    """
-    theta   = np.abs(theta[first:] - theta[:-first])
-    rho     = rho[:, :]
-    max_len = rho.shape[1]
-
-    tortuosity_local = np.zeros((max_len, len(percentiles)))
-    length_local = np.zeros((max_len, len(percentiles)))
-
-    # since distance needs to be greater thean 1, first elements are skipped
-    for shift in range(first, max_len):
-        somma = np.sum(theta[:, first:shift], axis =1)
-        tortuosity_local[shift-first,1:]= np.percentile(
-            somma, q=percentiles, axis=0, interpolation='midpoint')
-        tortuosity_local[shift-first,0] = np.mean(somma)
-        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-        somma = np.sum(rho[:, first:shift], axis=1)
-        length_local[shift-first,1:] = np.percentile(somma, q=[75, 25], axis=0, interpolation='midpoint')
-        length_local[shift-first,0] =np.mean(somma, axis=0)
-
-    length_local[0]     = np.array([1, 1, 1])
-    tortuosity_local    = tortuosity_local / length_local
-    tortuosity_local[0] = np.array([1., 1.2, 0.8])
-    return tortuosity_local
-
-
-def tortuosity_local(theta, rho, percentiles=(50, 75, 25), first=1):
+def local_tortuosity(theta, rho, percentiles=(50, 75, 25), first=1):
     """
     Measure the local tortuosity as defined in u
     'Computation of tortuosity vessels' 10.1109/ICAPR.2015.7050711
@@ -247,7 +205,6 @@ def tree_asymmetry(neurite, neuron=None):
         tree = neurite.get_tree().neurom_tree()
     except AttributeError:
         nrn = _pg.get_neurons(neuron)[0]
-        nrt = nrn.get_neurite(neurite)
         tree = neurite.get_tree().neurom_tree()
     asyms = nm.get("partition_asymmetry", tree)
     return np.average(asyms) / _max_asym(len(neurite.get_tree().tips))

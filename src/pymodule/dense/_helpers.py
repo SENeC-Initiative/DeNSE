@@ -67,9 +67,31 @@ class Time(namedtuple("Time", time_units)):
         p.text(str_pretty)
 
 
-model_blocks = ("elongation_type", "steering_type", "direction_selection")
+model_blocks = ("elongation_type", "steering_method", "direction_selection")
 
-Model = namedtuple("Model", model_blocks)
+
+class Model(namedtuple("Model", model_blocks)):
+
+    ''' Class to represent growth cone models '''
+
+    def __str__(self):
+        return "_".join(self)
+
+    def __repr__(self):
+        return "Model(elongation={el}, steering={st}, direction={dir})".format(
+            el=self.elongation_type, st=self.steering_method,
+            dir=self.direction_selection
+        )
+    
+    def _repr_pretty_(self,  p, cycle):
+        p.text("Model(")
+        p.begin_group(6, "")
+        p.text("elongation=" + self.elongation_type + ",")
+        p.breakable(" ")
+        p.text("steering=" + self.steering_method + ",")
+        p.breakable(" ")
+        p.text("direction=" + self.direction_selection)
+        p.end_group(6, ")")
 
 
 # ---- #
@@ -276,7 +298,7 @@ def dict_formatter(obj, p, cycle):
         return p.text('{...}')
     start = '{'
     end   = '}'
-    step = 2
+    step  = 2
     p.begin_group(step, start)
     keys = obj.keys()
     max_len = 0
@@ -294,10 +316,12 @@ def dict_formatter(obj, p, cycle):
         if idx:
             p.text(',')
             p.breakable()
+        p.begin_group(max_len + step + 2, "")
         p.pretty(key)
         wlen = max_len-len(str(key))
         p.text(' '*wlen + ': ')
         p.pretty(obj[key])
+        p.end_group(max_len + step + 2, "")
     if obj:
         p.end_group(step, '')
         p.breakable()

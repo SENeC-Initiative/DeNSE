@@ -3,11 +3,10 @@
 
 """ Generate the morphology of a pyramidal cell """
 
+import numpy as np
+
 import dense as ds
 from dense.units import *
-
-import numpy as np
-import os
 
 # parameters
 
@@ -49,7 +48,7 @@ dend_params = {
 }
 
 kernel = {
-    "resolution": 50.*minute,
+    "resolution": 30.*minute,
     "seeds": [8],
     "environment_required": False,
     "num_local_threads": num_omp,

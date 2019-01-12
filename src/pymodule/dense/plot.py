@@ -610,11 +610,13 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 
     # plot the elements
     if mode in ("sticks", "mixed"):
-        for a in axons:
+        for a in axons.values():
             plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2,            alpha=axon_alpha, show=False)
 
-        for d in dendrites:
-            plot_shape(d, axis=ax, fc=dendrite_color, show_contour=False,                  alpha=dend_alpha, zorder=2, show=False)
+        for vd in dendrites.values():
+            for d in vd:
+                plot_shape(d, axis=ax, fc=dendrite_color, show_contour=False,
+                           alpha=dend_alpha, zorder=2, show=False)
 
     if mode in ("lines", "mixed"):
         ax.plot(axon_lines[0], axon_lines[1], ls="-", c=axon_color)
@@ -667,15 +669,16 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
             xx = []
             yy = []
 
-            for a in axons:
+            for a in axons.values():
                 xmin, ymin, xmax, ymax = a.bounds
                 xx.extend((xmin, xmax))
                 yy.extend((ymin, ymax))
 
-            for d in dendrites:
-                xmin, ymin, xmax, ymax = d.bounds
-                xx.extend((xmin, xmax))
-                yy.extend((ymin, ymax))
+            for vd in dendrites.values():
+                for d in vd:
+                    xmin, ymin, xmax, ymax = d.bounds
+                    xx.extend((xmin, xmax))
+                    yy.extend((ymin, ymax))
 
             _set_ax_lim(ax, xx, yy, offset=2*r_max)
 

@@ -102,12 +102,12 @@ class GrowthCone : public TopologicalNode,
     GrowthCone(const GrowthCone &copy);
 
     virtual GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
-                        double distanceToParent, std::string binaryID,
-                        const BPoint &position, double angle) = 0;
+                        double distanceToParent, const BPoint &position,
+                        double angle) = 0;
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
-                         float distanceToParent, const std::string &binaryID,
-                         const BPoint &position, double angle);
+                         float distanceToParent, const BPoint &position,
+                         double angle);
 
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);

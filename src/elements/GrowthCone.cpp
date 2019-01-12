@@ -167,11 +167,10 @@ GrowthCone::~GrowthCone()
  */
 void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
                                  float distance_to_parent,
-                                 const std::string &binaryID,
                                  const BPoint &position, double angle)
 {
     topology_ = NodeTopology(parent, parent.lock()->get_centrifugal_order() + 1,
-                             false, 0, binaryID);
+                             false, 0);
     geometry_ = NodeGeometry(
         position, parent.lock()->get_distance_to_soma() + distance_to_parent,
         distance_to_parent);
@@ -759,7 +758,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
         // check forbidden overlap with other neurites
         for (auto obstacle : current_neighbors_)
         {            
-            if (bg::covered_by(p, *(obstacle.second.get())))
+            if (bg::crosses(p, *(obstacle.second.get())))
             {
                 // stop at "radius" from the obstacle
                 kernel().space_manager.get_point_at_distance(
@@ -901,10 +900,21 @@ void GrowthCone::set_status(const statusMap &status)
 {
 
     get_param(status, names::filopodia_wall_affinity, filopodia_.wall_affinity);
-    get_param(status, names::filopodia_finger_length, filopodia_.finger_length);
-    assert(filopodia_.finger_length > 0);
     get_param(status, names::scale_up_move, scale_up_move_);
     get_param(status, names::filopodia_min_number, min_filopodia_);
+
+    double finger_length (filopodia_.finger_length);
+    get_param(status, names::filopodia_finger_length, finger_length);
+
+    if (finger_length < MIN_FILOPODIA_FINGER_LENGTH)
+    {
+        throw std::invalid_argument(names::filopodia_finger_length + " must " +
+                                    "be greater or equal to " +
+                                    std::to_string(MIN_FILOPODIA_FINGER_LENGTH)
+                                    + ".");
+    }
+    
+    filopodia_.finger_length = finger_length;
 
     if (min_filopodia_ < 10)
     {

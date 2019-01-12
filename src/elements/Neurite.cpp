@@ -39,7 +39,7 @@ namespace growth
  * The neurite has no points but branches, so the constructor will call a
  * growthConebuild which will instanciate an branch with a random angle.
  */
-Neurite::Neurite(std::string name, const std::string &neurite_type,
+Neurite::Neurite(const std::string &name, const std::string &neurite_type,
                  const std::string &gc_model, NeuronWeakPtr p)
     : parent_(p)
     , branching_model_(std::make_shared<Branching>())
@@ -107,10 +107,10 @@ Neurite::~Neurite()
  * @param neurite_name
  */
 void Neurite::init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
-                              std::string name, double soma_radius,
+                              const std::string &name, double soma_radius,
                               double neurite_diameter)
 {
-    auto firstNode = std::make_shared<Node>(soma, 0, pos, name);
+    auto firstNode = std::make_shared<Node>(soma, 0, pos);
     firstNode->set_diameter(neurite_diameter);
     firstNode->topology_.has_child         = true;
     firstNode->topology_.centrifugal_order = 0;
@@ -616,8 +616,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 
     // create a new growth cone
     GCPtr sibling = growth_cones_.begin()->second->clone(
-        new_node, shared_from_this(), dist_to_parent,
-        branching_node->get_treeID() + "1", p, new_cone_angle);
+        new_node, shared_from_this(), dist_to_parent, p, new_cone_angle);
 
     // Here we copy model and status from a random growth cone
     // in the neurite since all the growth cones have same status and
@@ -809,25 +808,21 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         printf("xy: %f, %f, id_x: %lu,  and direction %f \n",
                new_node->get_position().x(), new_node->get_position().y(),
                branch_point, branch_direction * 180 / M_PI);
-        printf("parent_node has get_treeID: %lu and ID: %s\n",
-               new_node->get_parent().lock()->get_nodeID(),
-               new_node->get_parent().lock()->get_treeID().c_str());
         printf("biology_.branchsize newcone: %lu               \n"
-               " branch size    %s         branch size   \n"
+               " branch size               branch size   \n"
                " oldNode        @@@        newNode/Cone  \n"
                "      %lu       ||             %lu       \n"
-               "               || (%.2f)%.2f              \n "
-               "    ==========(%s)============>%.2f %s     \n "
+               "                || (%.2f)%.2f              \n "
+               "    ==========================>%.2f      \n "
                "                                       \n"
                "the centrifugal order of new node is %i \n"
                "the centrifugal order of new cone is %i \n"
                "the centrifugal order of old node is %i \n",
-               sibling->get_branch()->size(), sibling->get_treeID().c_str(),
+               sibling->get_branch()->size(),
                new_node->get_branch()->size(),
                branching_node->get_branch()->size(), angle * 180 / M_PI,
                angle * 180 / M_PI + branch_direction * 180 / M_PI,
-               new_node->get_treeID().c_str(), branch_direction * 180 / M_PI,
-               branching_node->get_treeID().c_str(),
+               branch_direction * 180 / M_PI,
                new_node->get_centrifugal_order(),
                sibling->get_centrifugal_order(),
                branching_node->get_centrifugal_order());
@@ -934,10 +929,6 @@ void Neurite::update_tree_structure(TNodePtr root)
             NodePtr mynode = std::dynamic_pointer_cast<Node>(node);
             for (size_t i = 0; i < mynode->children_.size(); i++)
             {
-                std::stringstream ss;
-                ss << i;
-                mynode->children_[i]->topology_.binaryID =
-                    mynode->topology_.binaryID + ss.str();
                 mynode->children_[i]->topology_.centrifugal_order =
                     mynode->get_centrifugal_order() + 1;
                 nodes.push_back(mynode->children_[i]);
@@ -1160,6 +1151,31 @@ const std::string& Neurite::get_name() const { return name_; }
 
 
 const std::string& Neurite::get_type() const { return neurite_type_; }
+
+
+void Neurite::get_distances(size_t node, size_t segment, double &dist_to_parent,
+                            double &dist_to_soma) const
+{
+    TNodePtr tnode;
+
+    auto n = nodes_.find(node);
+
+    if (n == nodes_.end())
+    {
+        auto gc = growth_cones_.find(node);
+        tnode   = gc->second;
+    }
+    else
+    {
+        tnode   = n->second;
+    }
+
+    BranchPtr branch         = tnode->get_branch();
+    double init_dist_to_soma = branch->initial_distance_to_soma();
+
+    dist_to_soma   = branch->at(segment)[2];
+    dist_to_parent = dist_to_soma - init_dist_to_soma;
+}
 
 
 //###################################################

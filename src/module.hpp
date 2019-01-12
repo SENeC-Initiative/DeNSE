@@ -155,7 +155,25 @@ void get_branches_data_(size_t neuron, const std::string &neurite,
 void get_geom_skeleton_(std::vector<size_t> gids,
                         std::vector<GEOSGeometry*>& axons,
                         std::vector<GEOSGeometry*>& dendrites,
+                        std::vector<size_t>& dendrite_gids,
                         std::vector< std::vector<double> >& somas);
+
+
+void generate_synapses_(
+  bool crossings_only, double density, bool only_new_syn, bool autapse_allowed,
+  const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
+  std::vector<size_t> &presyn_neurons, std::vector<size_t> &postsyn_neurons,
+  std::vector<std::string> &presyn_neurites,
+  std::vector<std::string> &postsyn_neurites,
+  std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
+  std::vector<size_t> &presyn_segments, std::vector<size_t> &postsyn_segments,
+  std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
+  std::vector<double> &post_syn_x, std::vector<double> &post_syn_y);
+
+
+void get_distances_(size_t gid, const std::string &neurite_name, size_t node,
+                    size_t segment, double &dist_to_parent,
+                    double &dist_to_soma);
 
 
 // parameters and recordings

@@ -88,6 +88,7 @@ const std::string max_allowed_resolution("max_allowed_resolution");
 const std::string max_arbor_length("max_arbor_length");
 const std::string max_gc_number("max_gc_number");
 const std::string max_sensing_angle("max_sensing_angle");
+const std::string max_synaptic_distance("max_synaptic_distance");
 
 const std::string neurite_angles("neurite_angles");
 const std::string noise_amplitude("noise_amplitude");
@@ -101,6 +102,7 @@ const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 
 const std::string random_walk_submodel("random_walk_submodel");
+const std::string resolution("resolution");
 const std::string resource("resource");
 const std::string rigidity_factor("rigidity_factor");
 const std::string rw_memory_tau("rw_memory_tau");

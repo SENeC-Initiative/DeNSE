@@ -52,8 +52,8 @@ class GrowthConeModel
     create_gc_model(const std::string &model);
 
     GCPtr clone(BaseWeakNodePtr parent, NeuritePtr neurite,
-                double distanceToParent, std::string binaryID,
-                const BPoint &position, double angle) override final;
+                double distanceToParent, const BPoint &position,
+                double angle) override final;
 
     void compute_speed(mtPtr rnd_engine, double substep) override final;
 
@@ -133,15 +133,14 @@ GrowthConeModel<ElType, SteerMethod, DirSelMethod>::create_gc_model(
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
-    BaseWeakNodePtr parent, NeuritePtr neurite,
-    double distanceToParent, std::string binaryID,
+    BaseWeakNodePtr parent, NeuritePtr neurite, double distanceToParent,
     const BPoint &position, double angle)
 {
     auto new_cone = std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(*this);
     
     // update topology
     int omp_id   = kernel().parallelism_manager.get_thread_local_id();
-    new_cone->update_topology(parent, neurite, distanceToParent, binaryID,
+    new_cone->update_topology(parent, neurite, distanceToParent,
                               position, angle);
 
     // init the compontents

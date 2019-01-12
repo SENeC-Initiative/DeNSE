@@ -150,6 +150,8 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     When specifying `num_neurites`, the first neurite created is an axon, the
     subsequent neurites are dendrites.
     '''
+    assert isinstance(params, dict), "`params` must be a dictionary."
+
     params       = {} if params is None else params.copy()
     ax_params    = {} if axon_params is None else axon_params.copy()
     dend_params  = {} if dendrites_params is None else dendrites_params.copy()
@@ -169,6 +171,8 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     # set growth_cone_model for neurites if not present
     if "growth_cone_model" not in params:
         params["growth_cone_model"] = "default"
+    elif isinstance(params["growth_cone_model"], Model):
+        params["growth_cone_model"] = str(params["growth_cone_model"])
     if "growth_cone_model" not in ax_params:
         ax_params["growth_cone_model"] = \
             params.get("growth_cone_model", params["growth_cone_model"])
@@ -910,7 +914,7 @@ def get_default_parameters(obj, property_name=None, settables_only=True,
         string ctype, cname
         statusMap default_params
 
-    gc_models = get_models("growth_cones")
+    gc_models = get_models(abbrev=False)
 
     if obj in gc_models.values():
         obj = "{}_{}_{}".format(obj.elongation_type, obj.steering_method,
@@ -1642,7 +1646,7 @@ def _get_geom_skeleton(gid):
     cdef:
         vector[GEOSGeometry*] axons, dendrites
         vector[vector[double]] somas
-        vector[size_t] gids
+        vector[size_t] gids, dendrite_gids
 
     if gid is None:
         gids = get_neurons()
@@ -1657,21 +1661,78 @@ def _get_geom_skeleton(gid):
             gids.push_back(<size_t>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
-    get_geom_skeleton_(gids, axons, dendrites, somas)
+    get_geom_skeleton_(gids, axons, dendrites, dendrite_gids, somas)
 
-    py_axons, py_dendrites = [], []
+    py_axons, py_dendrites = {}, {}
 
-    for a in axons:
+    for i in range(axons.size()):
+        a           = axons[i]
         pygeos_geom = <uintptr_t>a
         if a is not NULL:
-            py_axons.append(geom_factory(pygeos_geom))
+            py_axons[gids[i]] = geom_factory(pygeos_geom)
 
-    for d in dendrites:
+    for i in range(dendrites.size()):
+        d           = dendrites[i]
+        gid_d       = dendrite_gids[i]
         pygeos_geom = <uintptr_t>d
         if d is not NULL:
-            py_dendrites.append(geom_factory(pygeos_geom))
+            if gid_d in py_dendrites:
+                py_dendrites[gid_d].append(geom_factory(pygeos_geom))
+            else:
+                py_dendrites[gid_d] = [geom_factory(pygeos_geom)]
 
     return py_axons, py_dendrites, np.array(somas).T
+
+
+def _generate_synapses(bool crossings_only, double density, bool only_new_syn,
+                       bool autapse_allowed, source_neurons, target_neurons):
+    '''
+    Generate the synapses from the neurons' morphologies.
+    '''
+    cdef:
+        vector[size_t] presyn_neurons, postsyn_neurons
+        vector[string] presyn_neurites, postsyn_neurites
+        vector[size_t] presyn_nodes, postsyn_nodes
+        vector[size_t] presyn_segments, postsyn_segments
+        vector[double] pre_syn_x, pre_syn_y, post_syn_x, post_syn_y
+        cset[size_t] presyn_pop  = source_neurons
+        cset[size_t] postsyn_pop = target_neurons
+
+    generate_synapses_(crossings_only, density, only_new_syn, autapse_allowed,
+                       presyn_pop, postsyn_pop, presyn_neurons, postsyn_neurons,
+                       presyn_neurites, postsyn_neurites, presyn_nodes,
+                       postsyn_nodes, presyn_segments, postsyn_segments,
+                       pre_syn_x, pre_syn_y, post_syn_x, post_syn_y)
+
+    data = {
+        "source_neuron": presyn_neurons,
+        "target_neuron": postsyn_neurons,
+        "source_neurite": presyn_neurites,
+        "target_neurite": postsyn_neurites,
+        "source_node": presyn_nodes,
+        "target_node": postsyn_nodes,
+        "source_segment": presyn_segments,
+        "target_segment": postsyn_segments,
+        "source_pos_x": pre_syn_x,
+        "target_pos_x": post_syn_x,
+        "source_pos_y": pre_syn_y,
+        "target_pos_y": post_syn_y,
+    }
+
+    return data
+
+
+def _get_parent_and_soma_distances(neuron, neurite, node, segment):
+    '''
+    Get the distance between a segment and its parent node as well as with the
+    soma.
+    '''
+    cdef double distance_to_parent, distance_to_soma
+
+    get_distances_(neuron, neurite, node, segment, distance_to_parent,
+                   distance_to_soma)
+
+    return distance_to_parent, distance_to_soma
 
 
 def _neuron_to_swc(filename, gid=None, resolution=10):
@@ -2252,8 +2313,10 @@ def _check_params(params, object_name, gc_model=None):
     Check the types and validity of the parameters passed.
     '''
     gc_model = \
-        _to_string(get_default_model_()) if gc_model is None else gc_model
-    assert gc_model in get_models(), "Unknown growth cone `" + gc_model + "`."
+        _to_string(get_default_model_()) if gc_model is None else str(gc_model)
+
+    assert gc_model in get_models(False), \
+        "Unknown growth cone `" + gc_model + "`."
 
     cdef:
         string ctype
@@ -2262,7 +2325,7 @@ def _check_params(params, object_name, gc_model=None):
         statusMap default_params
         Property prop
 
-    if object_name in get_models("growth_cones"):
+    if object_name in get_models(False):
         ctype = _to_bytes("growth_cone")
     elif object_name == "neuron":
         ctype = _to_bytes("neuron")
@@ -2296,20 +2359,28 @@ def _check_params(params, object_name, gc_model=None):
             py_value = py_defaults[key]
             prop     = default_params[_to_bytes(key)]
             if prop.data_type == BOOL:
+                if nonstring_container(val):
+                    val = val[0]
                 assert val is True or val is False or val == 0 or val == 1, \
-                    "'{}' should be boolean.".format(key)
+                    "'{}' should be a (list of) boolean.".format(key)
             elif prop.data_type == STRING:
+                if nonstring_container(val):
+                    val = val[0]
                 assert is_string(val), "'{}' should be a string.".format(key)
             elif prop.data_type == VEC_STRING:
                 assert nonstring_container(val), \
-                    "'{}' should be a list.".format(key)
+                    "'{}' should be a (list of) list.".format(key)
                 if val:
+                    if nonstring_container(val):
+                        val = val[0]
                     for v in val:
                         assert is_string(v), \
                             "'{}' values should be a string.".format(key)
             elif prop.data_type == MAP_DOUBLE:
+                if not isinstance(val, dict) and nonstring_container(val):
+                    val = val[0]
                 assert isinstance(val, dict), \
-                    "'{}' should be a dict.".format(key)
+                    "'{}' should be a (list of) dict.".format(key)
                 for k, v in val.items():
                     assert is_string(k), "dict keys must be strings."
                     if isinstance(v, ureg.Quantity):
@@ -2340,22 +2411,32 @@ def _check_params(params, object_name, gc_model=None):
                             "dimensionless number for {}.".format(key)
 
                 if prop.data_type == DOUBLE:
+                    if nonstring_container(val):
+                        val = val[0]
                     assert isinstance(val, (float, np.floating)), \
-                        "'{}' should be float.".format(key)
+                        "'{}' should be (list of) float.".format(key)
                 elif prop.data_type == INT:
+                    if nonstring_container(val):
+                        val = val[0]
                     assert isinstance(val, (int, np.integer)), \
-                        "'{}' should be integer.".format(key)
+                        "'{}' should be (list of) integer.".format(key)
                 elif prop.data_type == SIZE:
+                    if nonstring_container(val):
+                        val = val[0]
                     assert isinstance(val, (int, np.integer)) and val >= 0, \
-                        "'{}' should be positive integer.".format(key)
+                        "'{}' should be (list of) positive integer.".format(key)
                 elif prop.data_type in (VEC_SIZE, VEC_LONG):
                     assert nonstring_container(val), \
-                        "'{}' should be a list.".format(key)
+                        "'{}' should be a (list of) list.".format(key)
                     if val:
+                        if nonstring_container(val):
+                            val = val[0]
                         for v in val:
                             assert isinstance(v, (int, np.integer)), \
                                 "'{}' values should be integers.".format(key)
                 elif prop.data_type == MAP_DOUBLE:
+                    if isinstance(val, dict) and nonstring_container(val):
+                        val = val[0]
                     assert isinstance(val, dict), \
                         "'{}' should be a dict.".format(key)
                     for k, v in val.items():

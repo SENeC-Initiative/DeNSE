@@ -17,6 +17,12 @@ configure_file(
     @ONLY
 )
 
+configure_file(
+    ${PROJECT_SOURCE_DIR}/libgrowth/spatial_types.hpp.in
+    ${PROJECT_SOURCE_DIR}/libgrowth/spatial_types.hpp
+    @ONLY
+)
+
 add_library( libgrowth STATIC ${libgrowth_sources} )
 
 set_target_properties( libgrowth PROPERTIES POSITION_INDEPENDENT_CODE ON )

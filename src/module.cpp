@@ -511,6 +511,10 @@ bool neuron_has_axon_(size_t gid)
 }
 
 
+/*
+ * Morphology data
+ */
+
 void get_branches_data_(size_t neuron, const std::string &neurite_name,
                         std::vector<std::vector<std::vector<double>>> &points,
                         std::vector<double> &diameters,
@@ -630,6 +634,7 @@ void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
 void get_geom_skeleton_(std::vector<size_t> gids,
                         std::vector<GEOSGeometry*>& axons,
                         std::vector<GEOSGeometry*>& dendrites,
+                        std::vector<size_t>& dendrite_gids,
                         std::vector< std::vector<double> >& somas)
 {
     std::vector<GEOSGeometry *> vec;
@@ -712,6 +717,7 @@ void get_geom_skeleton_(std::vector<size_t> gids,
             else
             {
                 dendrites.push_back(geom_union);
+                dendrite_gids.push_back(gid);
                 //~ dendrites.insert(dendrites.end(), vec.begin(), vec.end());
             }
 
@@ -722,6 +728,61 @@ void get_geom_skeleton_(std::vector<size_t> gids,
 
         BPoint soma = neuron->get_position();
         somas.push_back({soma.x(), soma.y(), neuron->get_soma_radius()});
+    }
+}
+
+
+void generate_synapses_(
+  bool crossings_only, double density, bool only_new_syn, bool autapse_allowed,
+  const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
+  std::vector<size_t> &presyn_neurons, std::vector<size_t> &postsyn_neurons,
+  std::vector<std::string> &presyn_neurites,
+  std::vector<std::string> &postsyn_neurites,
+  std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
+  std::vector<size_t> &presyn_segments, std::vector<size_t> &postsyn_segments,
+  std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
+  std::vector<double> &post_syn_x, std::vector<double> &post_syn_y)
+{
+    if (crossings_only)
+    {
+        kernel().space_manager.generate_synapses_crossings(
+            density, only_new_syn, autapse_allowed, presyn_pop, postsyn_pop,
+            presyn_neurons, postsyn_neurons, presyn_neurites, postsyn_neurites,
+            presyn_nodes, postsyn_nodes, presyn_segments, postsyn_segments,
+            pre_syn_x, pre_syn_y);
+        
+        post_syn_x = pre_syn_x;
+        post_syn_y = pre_syn_y;
+    }
+    else
+    {
+        kernel().space_manager.generate_synapses_all(
+            density, only_new_syn, autapse_allowed, presyn_pop, postsyn_pop,
+            presyn_neurons, postsyn_neurons, presyn_neurites, postsyn_neurites,
+            presyn_nodes, postsyn_nodes, presyn_segments, postsyn_segments,
+            pre_syn_x, pre_syn_y, post_syn_x, post_syn_y);
+    }
+}
+
+
+void get_distances_(size_t gid, const std::string &neurite_name, size_t node,
+                    size_t segment, double &dist_to_parent,
+                    double &dist_to_soma)
+{
+    NeuronPtr neuron = kernel().neuron_manager.get_neuron(gid);
+
+    if (neurite_name.empty())
+    {
+        // we got the soma
+        dist_to_parent = 0.;
+        dist_to_soma   = 0.;
+    }
+    else
+    {
+        NeuriteWeakPtr neurite = neuron->get_neurite(neurite_name);
+
+        neurite.lock()->get_distances(node, segment, dist_to_parent,
+                                      dist_to_soma);
     }
 }
 

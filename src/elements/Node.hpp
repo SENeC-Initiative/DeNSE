@@ -20,22 +20,20 @@ typedef struct NodeTopology
     int centrifugal_order;
     bool has_child;
     size_t nodeID;
-    std::string binaryID;
+
     NodeTopology()
         : parent(std::make_shared<BaseNode>())
         , centrifugal_order(-1)
         , has_child(false)
         , nodeID(0)
-        , binaryID("default")
     {
     }
     NodeTopology(BaseWeakNodePtr parent, int centrifugal_order, bool has_child,
-                 int nodeID, std::string binaryID)
+                 int nodeID)
         : parent(parent)
         , centrifugal_order(centrifugal_order)
         , has_child(has_child)
         , nodeID(nodeID)
-        , binaryID(binaryID)
     {
     }
 } NodeTopology;
@@ -100,10 +98,12 @@ class BaseNode
   protected:
     NodeGeometry geometry_;
 
-  private:
-    std::string somaID_;
-
   public:
+    BaseNode();
+    BaseNode(const BPoint &position, double distance_to_parent,
+             double distance_to_soma);
+    BaseNode(const BaseNode &copy);
+
     /**
      * @brief Set the position of the node
      *
@@ -116,7 +116,6 @@ class BaseNode
     virtual BPoint get_position() const;
     virtual double get_distance_to_soma() const;
     virtual double get_distance_parent() const;
-    virtual std::string get_treeID() const;
     virtual size_t get_nodeID() const;
 };
 
@@ -127,18 +126,16 @@ class TopologicalNode : public BaseNode
 
   protected:
     NodeTopology topology_;
-    NodeGeometry geometry_;
     NodeBiology biology_;
 
   public:
     TopologicalNode();
     TopologicalNode(const TopologicalNode &tnode);
     TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
-                    const BPoint &position, const std::string &binaryID);
+                    const BPoint &position);
 
-    // typedef of method pointer, used in Branching.cpp
     /**
-     * @brief Update the binaryId and the centrifugal order
+     * @brief Update the centrifugal order
      */
     void topological_advance();
     void set_first_point(const BPoint &p, double length);
@@ -165,10 +162,6 @@ class TopologicalNode : public BaseNode
     }
     inline bool has_child() const { return topology_.has_child; }
     inline size_t get_nodeID() const override { return topology_.nodeID; }
-    inline std::string get_treeID() const override
-    {
-        return topology_.binaryID;
-    }
 
     seg_range segment_range() const;
 
@@ -191,13 +184,11 @@ class Node : public TopologicalNode
     std::vector<TNodePtr> children_;
 
   public:
-    typedef size_t (Node::*Get_method)(void) const;
-    Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &position,
-         std::string binaryID);
+    Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &pos);
 
-    Node(const Node &);
+    Node(const Node &copy);
 
-    Node(const TopologicalNode &);
+    Node(const TopologicalNode &copy);
 
     TNodePtr get_child(int) const;
 

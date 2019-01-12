@@ -24,7 +24,6 @@ namespace growth
 {
 
 typedef std::unordered_map<size_t, GCPtr> gc_map;
-typedef std::unordered_map<size_t, GCPtr>::const_iterator gc_const_it;
 typedef boost::range::joined_range<const gc_map, const gc_map> gc_it_range;
 
 
@@ -66,13 +65,13 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
   public:
     Neurite() = delete;
-    Neurite(std::string name, const std::string &neurite_type_,
+    Neurite(const std::string &name, const std::string &neurite_type_,
             const std::string &gc_model, NeuronWeakPtr neuron);
     ~Neurite();
 
     // Init and finalize functions
     void init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
-                         std::string neurite_name, double soma_radius,
+                         const std::string &neurite_name, double soma_radius,
                          double neurite_diameter);
     void set_soma_angle(const double angle);
     double get_soma_angle() const;
@@ -107,6 +106,9 @@ class Neurite : public std::enable_shared_from_this<Neurite>
                                   double &new_diameter);
 
     const Branching *get_branching_model() const;
+
+    void get_distances(size_t node, size_t segment, double &dist_to_parent,
+                       double &dist_to_soma) const;
 
     //@TODO
     void update_actin_waves(mtPtr rnd_engine, double substep);

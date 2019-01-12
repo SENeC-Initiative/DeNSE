@@ -85,7 +85,7 @@ GCPtr GrowthCone_SelfReferentialForces::clone(
 #endif
     auto newCone = std::make_shared<GrowthCone_SelfReferentialForces>(*this);
     int omp_id   = kernel().parallelism_manager.get_thread_local_id();
-    newCone->update_topology(parent, neurite, distanceToParent, binaryID,
+    newCone->update_topology(parent, neurite, distanceToParent,
                              position, angle);
 
     // update containing area

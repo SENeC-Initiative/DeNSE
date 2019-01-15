@@ -3,6 +3,9 @@
 
 """ Testing network generation """
 
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 import numpy as np
 
 np.random.seed(0)
@@ -15,11 +18,9 @@ def test_2neuron_network(plot=False):
     '''
     Most simple network of 2 neurons
     '''
-    # ds.set_kernel_status("environment_required", False)
-    ds.set_kernel_status({
-        "environment_required": False, "interactions": True,
-        "resolution": 10.*minute
-    })
+    ds.reset_kernel()
+    ds.set_kernel_status("resolution", 10.*minute)
+
     num_neurons = 2
     positions   = [(0, 0), (20, -20)]*um
     params      = {
@@ -49,10 +50,11 @@ def test_network(plot=False):
     '''
     Bigger network
     '''
+    ds.reset_kernel()
     ds.set_kernel_status({
-        "environment_required": False, "interactions": True,
         "resolution": 10.*minute, "num_local_threads": 6,
     })
+
     num_neurons = 100
     positions   = np.random.uniform(-200, 200, (num_neurons, 2))*um
     params      = {

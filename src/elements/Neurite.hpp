@@ -33,9 +33,9 @@ class Branching;
 class Neuron;
 
 
-typedef struct CR_Neurite
+typedef struct res_Neurite
 {
-    // CR_params
+    // res_params
     double target_cr;
     double eq_cr;
     double tau_generation;
@@ -47,12 +47,12 @@ typedef struct CR_Neurite
     double typical_gc_support;
     double increase_slope;
 
-    // CR_run time variable
+    // res_run time variable
     double available;
     double tot_demand;
     double tau; // t^-1 = t_A ^-1 t_d^-1
     double stochastic_tmp;
-} CR_Neurite;
+} res_Neurite;
 
 
 //! Neurite class,
@@ -177,7 +177,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     // competition
     bool use_critical_resource_;
-    CR_Neurite cr_neurite_;
+    res_Neurite cr_neurite_;
 
     //! branch direction parameters
     double diameter_ratio_avg_;

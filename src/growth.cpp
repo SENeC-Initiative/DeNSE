@@ -28,7 +28,6 @@ int main(int argc, char **argv)
     mainMap.insert({"E", growth::Property(0.05, "")});
     mainMap.insert({"S", growth::Property(2., "")});
     mainMap.insert({"T", growth::Property(0.1, "minute")});
-    mainMap.insert({"use_critical_resource", growth::Property(false, "")});
     mainMap.insert({"num_neurites", growth::Property(2, "")});
     mainMap.insert({"speed_growth_cone", growth::Property(20., "micrometer / minute")});
 

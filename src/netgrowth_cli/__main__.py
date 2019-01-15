@@ -42,16 +42,16 @@ neuron_params = {
     "gc_split_angle_mean": 30.3,
 
     "use_critical_resource": False,
-    "CR_speed_factor": 0.10,
-    "CR_amount": 1.,
-    "CR_leakage": 0.05,
-    "CR_retraction_th": 0.30,
-    "CR_elongation_th": 0.50,
-    "CR_split_th": 0.80,
-    "CR_demand_correlation": 0.9910,
-    "CR_demand_stddev": 0.2,
-    "CR_demand_mean": 1.,
-    "CR_use_ratio": 0.7
+    "res_speed_factor": 0.10,
+    "res_amount": 1.,
+    "res_leakage": 0.05,
+    "res_retraction_threshold": 0.30,
+    "res_elongation_threshold": 0.50,
+    "res_split_th": 0.80,
+    "res_demand_correlation": 0.9910,
+    "res_demand_stddev": 0.2,
+    "res_demand_mean": 1.,
+    "res_use_ratio": 0.7
 }
 
 dendrite_params = {
@@ -74,16 +74,16 @@ dendrite_params = {
 
     "gc_split_angle_mean": 10.3,
 
-    "CR_speed_factor": 0.1,
-    "CR_amount": 1.,
-    "CR_leakage": 0.05,
-    "CR_retraction_th": 0.30,
-    "CR_elongation_th": 0.50,
-    "CR_split_th": 0.80,
-    "CR_demand_correlation": 0.9910,
-    "CR_demand_stddev": 0.2,
-    "CR_demand_mean": 1.,
-    "CR_use_ratio": 0.7
+    "res_speed_factor": 0.1,
+    "res_amount": 1.,
+    "res_leakage": 0.05,
+    "res_retraction_threshold": 0.30,
+    "res_elongation_threshold": 0.50,
+    "res_split_th": 0.80,
+    "res_demand_correlation": 0.9910,
+    "res_demand_stddev": 0.2,
+    "res_demand_mean": 1.,
+    "res_use_ratio": 0.7
 }
 
 
@@ -182,7 +182,7 @@ if '__main__' is __name__:
     if args.simulate:
         step(100, 1, False)
         neuron_params["use_van_pelt"] = True
-        ds.set_object_status(gids,
+        ds.set_object_parameters(gids,
                             axon_params = neuron_params,
                             dendrites_params= neuron_params,
                             params = neuron_params)

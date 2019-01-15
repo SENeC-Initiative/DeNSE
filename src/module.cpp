@@ -95,6 +95,18 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
         omp_neuron_vec[omp_id].push_back(i);
     }
 
+    // if (not names.empty())
+    // {
+    //     for (std::string name : names)
+    //     {
+    //         printf("%s\n", name.c_str());
+    //     }
+    // }
+    // else
+    // {
+    //     printf("names empty\n");
+    // }
+
 #pragma omp parallel
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
@@ -125,7 +137,8 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
                 for (size_t j=0; j < num_neurites; j++)
                 {
                     if ((names.empty() and has_axon
-                        and existing_neurites + j == 0) or names[j] == "axon")
+                        and existing_neurites + j == 0) or
+                        (not names.empty() and names[j] == "axon"))
                     {
                         neuron->new_neurite("axon", "axon", gc_ptr ,rng);
                         neuron->set_neurite_status("axon", status);
@@ -320,6 +333,14 @@ void set_status_(size_t gid, statusMap neuron_status, statusMap axon_status,
 }
 
 
+void set_neurite_status_(size_t neuron, std::string neurite, statusMap status)
+{
+    NeuronPtr nptr = kernel().neuron_manager.get_neuron(neuron);
+
+    nptr->set_neurite_status(neurite, status);
+}
+
+
 /*
  * Models
  */
@@ -332,9 +353,9 @@ void get_models_(std::unordered_map<std::string, std::string> &models,
 }
 
 
-std::vector<std::string> get_elongation_types_()
+std::vector<std::string> get_extension_types_()
 {
-    return kernel().model_manager.get_elongation_types();
+    return kernel().model_manager.get_extension_types();
 }
 
 

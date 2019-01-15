@@ -15,13 +15,13 @@ set( models_sources
     models_manager.hpp models_manager.cpp
     # complete model and interfaces
     complete_gc_model.hpp
-    elongation_interface.hpp
+    extension_interface.hpp
     steering_interface.hpp
     direction_select_interface.hpp
-    # elongation algorithms
-    elongation_cst.hpp
-    elongation_gfluct.hpp elongation_gfluct.cpp
-    elongation_resource_based.hpp elongation_resource_based.cpp
+    # extension algorithms
+    extension_cst.hpp
+    extension_gfluct.hpp extension_gfluct.cpp
+    extension_resource_based.hpp extension_resource_based.cpp
     # steering methods
     steering_pull_only.hpp
     steering_memory_based.hpp steering_memory_based.cpp

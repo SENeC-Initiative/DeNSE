@@ -45,6 +45,22 @@ Python part:
 * say that sphinx and breathe are via pip
 * use sudo apt install python-tk python-matplotlib
 
+On a debian-based linux install
+-------------------------------
+
+Non-python part:
+* Need g++ + python-dev to compile matplotlib (maybe also automake)
+* say that doxygen is via apt
+* say that we need to install python and python-dev
+* sudo apt install libgeos-X.Y.Z et libgeos-dev libgeos++-dev
+
+Python part:
+
+* Install pip
+* Install setuptools, then python libraries
+* say that sphinx and breathe are via pip
+* use sudo apt install python-tk python-matplotlib
+
 Install
 =======
 

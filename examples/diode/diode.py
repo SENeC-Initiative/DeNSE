@@ -133,10 +133,10 @@ if __name__ == '__main__':
                    'B' : 10. * cpm,
                    'T' : 1000. * minute,
                    'E' : 0.7}
-    ds.set_object_status(gids,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params,
-                        axon_params=axon_params)
+    ds.set_object_parameters(gids,
+                             params=neuron_params,
+                             dendrites_params=dendrite_params,
+                             axon_params=axon_params)
     fig, ax = plt.subplots()
     # ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
                        # axon_color='g', gc_color="r", axis=ax, show=False)

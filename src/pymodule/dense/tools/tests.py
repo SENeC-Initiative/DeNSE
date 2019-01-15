@@ -3,8 +3,8 @@
 
 """ Tools to test the results of simulations """
 
-import collections
-import warnings
+
+
 try:
     from collections.abc import Container as _container
 except:

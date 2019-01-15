@@ -27,23 +27,22 @@ neuron_params = {
 
 dend_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
 
     "persistence_length": 150.0,
     "thinning_ratio": 1./150.,
 
     # Cr model
-    "CR_retraction_factor": 0.005,
-    "CR_elongation_factor": 0.005,
-    "CR_retraction_th": 0.01,
-    "CR_elongation_th": 0.3,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 2500.,
-    "CR_correlation": 0.2,
-    "CR_variance": 0.01,
-    "CR_use_ratio": 0.16,
-    # "CR_weight": 0.0,
+    "res_retraction_factor": 0.005,
+    "res_elongation_factor": 0.005,
+    "res_retraction_threshold": 0.01,
+    "res_elongation_threshold": 0.3,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 2500.,
+    "res_correlation": 0.2,
+    "res_variance": 0.01,
+    "res_use_ratio": 0.16,
+    # "res_weight": 0.0,
 
     # Best model
     "gc_split_angle_mean": 1.,
@@ -55,7 +54,6 @@ dend_params = {
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
     "use_flpl_branching": False,
 
@@ -66,17 +64,17 @@ axon_params = {
     "persistence_length": 250.0,
 
     # Cr model
-    "CR_retraction_factor": 0.0010,
-    "CR_elongation_factor": 0.01,
-    # "CR_weight": 0.0,
-    "CR_retraction_th": 0.10,
-    "CR_elongation_th": 0.3,
-    # "CR_split_th": 0.80,
-    "CR_neurite_generated": 2500.,
-    "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.4,
-    "CR_variance": 0.04,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.0010,
+    "res_elongation_factor": 0.01,
+    # "res_weight": 0.0,
+    "res_retraction_threshold": 0.10,
+    "res_elongation_threshold": 0.3,
+    # "res_split_th": 0.80,
+    "res_neurite_generated": 2500.,
+    "res_neurite_delivery_tau": 50.,
+    "res_correlation": 0.4,
+    "res_variance": 0.04,
+    "res_use_ratio": 0.1,
 
     # Best model
     "gc_split_angle_mean": 1.2,
@@ -113,12 +111,12 @@ rec = ds.create_recorders(n, ["angle", "length"], levels="growth_cone")
 # Turn branching on
 
 #~ vp_branching = {'use_van_pelt': True}
-resource_branching = {'CR_branching_th': 80., 'CR_branching_proba': 0.0005}
-d_rsrc_branching = {'CR_branching_th': 60., 'CR_branching_proba': 0.0003}
+resource_branching = {'res_branching_threshold': 80., 'res_branching_proba': 0.0005}
+d_rsrc_branching = {'res_branching_threshold': 60., 'res_branching_proba': 0.0003}
 
-#~ ds.set_object_status(n, params=vp_branching)
-#~ ds.set_object_status(n, params=resource_branching)
-ds.set_object_status(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
+#~ ds.set_object_parameters(n, params=vp_branching)
+#~ ds.set_object_parameters(n, params=resource_branching)
+ds.set_object_parameters(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 for i in range(10):
     ds.simulate(2000)
@@ -127,7 +125,7 @@ for i in range(10):
 
 
 lb = {
-    'CR_branching_th': np.inf, "use_flpl_branching": True,
+    'res_branching_threshold': np.inf, "use_flpl_branching": True,
     "flpl_branching_rate": 0.0003, 
     "lateral_branching_angle_mean": 50.
 }
@@ -135,14 +133,14 @@ lb = {
 lb_axon = lb.copy()
 lb_axon["flpl_branching_rate"] = 0.0008
 
-ds.set_object_status(n, axon_params=lb_axon, dendrites_params=lb)
+ds.set_object_parameters(n, axon_params=lb_axon, dendrites_params=lb)
 
 ds.simulate(50000)
 ds.plot.plot_neurons(show=True)
 
 
-end_branching = {"CR_branching_th": 500., 'CR_branching_proba': 0.0005}
-ds.set_object_status(n, axon_params=end_branching, dendrites_params=end_branching)
+end_branching = {"res_branching_threshold": 500., 'res_branching_proba': 0.0005}
+ds.set_object_parameters(n, axon_params=end_branching, dendrites_params=end_branching)
 
 ds.simulate(100000)
 

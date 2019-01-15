@@ -40,7 +40,6 @@ neuron_params = {
     branching_rate: rate,
 
     "use_van_pelt": False,
-    "use_critical_resource": False,
 }
 
 
@@ -88,7 +87,7 @@ def lateral_branching(neuron_params):
 
     step(1*hour, 1, False, False)
     neuron_params[use_type] = True
-    ds.set_object_status(gid,params = neuron_params)
+    ds.set_object_parameters(gid,params = neuron_params)
                         # ~ axon_params=neuron_params)
     step(2 * day, 1, False, False)
     # neuron_params['use_lateral_branching'] = True

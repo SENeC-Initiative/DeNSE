@@ -68,7 +68,7 @@ KernelManager::KernelManager()
     // settings
     , simulation_ID_("Kernel_ID_00000000")
     , record_enabled_(false)
-    , env_required_(true)
+    , env_required_(false)
     , num_objects_(0)
     , num_created_objects_(0)
     , adaptive_timestep_(-1.)

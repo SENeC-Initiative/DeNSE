@@ -120,7 +120,7 @@ for k, resol in enumerate(resolutions):
     # ~ ds.plot_neurons(show=False, title="Resolution: {}".format(resol), aspect=1)
 
     affinities.append(
-        ds.get_object_status(0, "axon_params")["filopodia_wall_affinity"])
+        ds.get_object_parameters(0, "axon_params")["filopodia_wall_affinity"])
 
     fractions.append(fraction_neurites_near_walls(
         gids, shape, width, percentiles=(85, 70, 50, 30, 15)))

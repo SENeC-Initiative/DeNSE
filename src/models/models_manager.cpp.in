@@ -20,7 +20,7 @@ namespace growth
 {{
 
 ModelManager::ModelManager()
-  : elongation_types({{{elongation_list}    }})
+  : extension_types({{{extension_list}    }})
   , steering_methods({{{steering_list}    }})
   , direction_selection({{{direction_selection_list}    }})
   , abbrev_to_full({{{abbrev_to_full}    }})
@@ -35,12 +35,12 @@ void ModelManager::init_models()
 {{{init_models}}}
 
 
-std::vector<std::string> ModelManager::get_elongation_types()
+std::vector<std::string> ModelManager::get_extension_types()
 {{
     std::vector<std::string> keys;
-    keys.reserve(elongation_types.size());
+    keys.reserve(extension_types.size());
 
-    for(auto const& etype: elongation_types)
+    for(auto const& etype: extension_types)
     {{
         keys.push_back(etype);
         keys.push_back(full_to_abbrev.at(etype));
@@ -92,7 +92,7 @@ void ModelManager::get_models(std::unordered_map<std::string, std::string> &mode
     // abbreviated names
     std::string abbrev_name, full_name;
 
-    for (auto const& el : elongation_types)
+    for (auto const& el : extension_types)
     {{
         for (auto const& steer : steering_methods)
         {{

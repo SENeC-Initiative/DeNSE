@@ -1,8 +1,18 @@
-.. _models:
+.. _CXXmodels:
 
 ================
 Models structure
 ================
+
+.. toctree::
+   :maxdepth: 1
+
+   devel/branching
+   devel/critical
+   devel/direction
+
+
+
 
 |name| offers the chance to set different models for neuronal outgrowth.
 Models are structured in order to allow the user to enable or discard some
@@ -27,9 +37,9 @@ model, while is possible to turn off/on the neurite branching model (uniform,
 actin wave, van pelt)
 It's possible to set the same parameters for dendrites and axon or to specify
 them, passing a dictionary with the respective name "axon_params" or
-"dendrite_params" to the :func:`~dense._pygrowth.Create` function.
+"dendrite_params" to the :func:`~dense.create_neurons` function.
 This can also be done during the simulation with
-:func:`~dense._pygrowth.set_object_status`
+:func:`~dense._pygrowth.set_object_parameters`
 
 Parameters are set when kernel is initiated and the process is recursive.
 Each neuron is created with a ``StatusMap``, which is a dictionary with all the

@@ -1,6 +1,19 @@
 =======================
-Save simualtion results
+Save simulation results
 =======================
+
+
+Recording
+=========
+
+The data required to record a branching event is:
+* the GID of the branching neuron
+* the neurite on which the branching happen
+* the time at which it happened (timestep + substep)
+
+
+Data to SWC format
+==================
 
 The data generated from a DeNSE simulation can be stored on your machine to be reused after.
 

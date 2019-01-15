@@ -64,12 +64,21 @@ Neurite::Neurite(const std::string &name, const std::string &neurite_type,
     , diameter_ratio_std_(DIAM_RATIO_STD)
     , diameter_ratio_avg_(DIAMETER_RATIO_AVG)
     // parameters for critical_resource-driven growth
-    , use_critical_resource_(false)
     , cr_neurite_{
         CRITICAL_GENERATED, CRITICAL_GENERATED, CRITICAL_GEN_TAU,
         CRITICAL_DEL_TAU, CRITICAL_GEN_VAR, CRITICAL_GEN_CORR,
         CRITICAL_GC_SUPPORT, CRITICAL_SLOPE, 0, 0, 0, 0}
 {
+    // check if the growth cone model requires resource
+    if (growth_cone_model_.find("resource-based") == 0)
+    {
+        use_critical_resource_ = true;
+    }
+    else
+    {
+        use_critical_resource_ = false;
+    }
+
     uniform_   = std::uniform_real_distribution<double>(0., 1.);
     poisson_   = std::poisson_distribution<>(0);
     normal_    = std::normal_distribution<double>(0, 1);
@@ -80,7 +89,7 @@ Neurite::Neurite(const std::string &name, const std::string &neurite_type,
 //! destructor
 Neurite::~Neurite()
 {
-    // it's important to clear actinwaves and growthcones
+    // it's important to clear actin waves and growth cones
     // to use properly the SmartPointers
     growth_cones_.clear();
     growth_cones_tmp_.clear();
@@ -320,7 +329,7 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
             //~ for (auto &gc : growth_cones_)
             //~ {
                 //~ gcc = std::dynamic_pointer_cast<GrowthCone_Critical>(gc.second);
-                //~ cr_neurite_.tot_demand += gcc->get_CR_demand();
+                //~ cr_neurite_.tot_demand += gcc->get_res_demand();
             //~ }
 
             //~ assert(cr_neurite_.tot_demand >= 0.);
@@ -1237,21 +1246,19 @@ void Neurite::set_status(const statusMap &status)
     //                 Critical Resource Params
     //###################################################
 
-    get_param(status, names::use_critical_resource, use_critical_resource_);
-
     if (use_critical_resource_)
     {
-        get_param(status, names::CR_neurite_generated, cr_neurite_.target_cr);
-        get_param(status, names::CR_neurite_variance, cr_neurite_.var);
-        get_param(status, names::CR_neurite_generated_tau,
+        get_param(status, names::res_neurite_generated, cr_neurite_.target_cr);
+        get_param(status, names::res_neurite_variance, cr_neurite_.var);
+        get_param(status, names::res_neurite_generated_tau,
                   cr_neurite_.tau_generation);
-        get_param(status, names::CR_neurite_delivery_tau,
+        get_param(status, names::res_neurite_delivery_tau,
                   cr_neurite_.tau_delivery);
-        get_param(status, names::CR_typical_gc_support,
+        get_param(status, names::res_typical_gc_support,
                   cr_neurite_.typical_gc_support);
-        get_param(status, names::CR_increase_slope,
+        get_param(status, names::res_increase_slope,
                   cr_neurite_.increase_slope);
-        // get_param(status, names::CR_neurite_correlation, cr_neurite_.tau);
+        // get_param(status, names::res_neurite_correlation, cr_neurite_.tau);
         //
         // optimize variable for less computation:
         cr_neurite_.tau   = 1. / (1. / cr_neurite_.tau_delivery +
@@ -1272,15 +1279,13 @@ void Neurite::set_status(const statusMap &status)
                "%s : %f \n"
                "%s : %f \n"
                "%s : %f \n",
-               names::CR_neurite_available.c_str(), cr_neurite_.available,
+               names::res_neurite_available.c_str(), cr_neurite_.available,
                names::gc_split_angle_mean.c_str(),
                gc_split_angle_mean_ * 180 / M_PI,
                names::gc_split_angle_std.c_str(),
                gc_split_angle_std_ * 180 / M_PI);
 #endif
     }
-
-    get_param(status, names::use_critical_resource, use_critical_resource_);
 
     if (use_critical_resource_)
     {
@@ -1333,21 +1338,19 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
         branching_model_->get_status(status);
 
         // critical resource properties
-        set_param(status, names::use_critical_resource, use_critical_resource_,
-                  "");
         if (use_critical_resource_)
         {
-            set_param(status, names::CR_neurite_generated,
+            set_param(status, names::res_neurite_generated,
                       cr_neurite_.target_cr, "micromole / liter");
-            set_param(status, names::CR_neurite_variance, cr_neurite_.var,
+            set_param(status, names::res_neurite_variance, cr_neurite_.var,
                       "micromole / liter / minute**0.5");
-            set_param(status, names::CR_neurite_generated_tau,
+            set_param(status, names::res_neurite_generated_tau,
                       cr_neurite_.tau_generation, "minute");
-            set_param(status, names::CR_neurite_delivery_tau,
+            set_param(status, names::res_neurite_delivery_tau,
                       cr_neurite_.tau_delivery, "minute");
-            set_param(status, names::CR_typical_gc_support,
+            set_param(status, names::res_typical_gc_support,
                       cr_neurite_.typical_gc_support, "");
-            set_param(status, names::CR_increase_slope,
+            set_param(status, names::res_increase_slope,
                       cr_neurite_.increase_slope, "");
         }
     }

@@ -11,8 +11,6 @@ import dense as ds
 
 
 neuron_params = {
-    "use_critical_resource": False,
-
     # #lateral branching model
     "lateral_branching_angle_mean": 50.,
     "lateral_branching_angle_std": 20.,
@@ -63,11 +61,7 @@ if __name__ =='__main__':
 
     num_neurons = 1
 
-    if not neuron_params['use_critical_resource']:
-        #~ neuron_params['growth_cone_model'] = 'random_walk'
-        neuron_params['growth_cone_model'] = 'default'
-    else:
-        neuron_params['growth_cone_model'] = 'random_walk'
+    neuron_params['growth_cone_model'] = 'default'
 
     neuron_params['position'] = np.random.uniform(-10000, 10000, (num_neurons, 2))
 
@@ -94,5 +88,5 @@ if __name__ =='__main__':
 
     ds.plot_neurons(show_nodes=True, show=True)
 
-    #~ pprint(ds.get_object_status(gids_rec))
+    #~ pprint(ds.get_object_parameters(gids_rec))
     ds.plot_recording(rec_ngc, time_units="minutes")

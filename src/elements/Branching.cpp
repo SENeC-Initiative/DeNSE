@@ -644,7 +644,6 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 /**
  * @brief Growth Cone split when critical_resource value exceed the treshold
  * @details
- * This function is enable with the flag 'use_critical_resource'
  * The GC is selected in Branching::branching_event with the chosen condition
  * This function implement the branchin throught
  * @function growth_cone_split(...)
@@ -655,13 +654,13 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
  * @param rnd_engine
  * @param splitting_cone the cone who is going to split
  */
-void Branching::CR_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+void Branching::res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                               size_t &branching_point, mtPtr rnd_engine)
 {
     //~ std::shared_ptr<GrowthCone_Critical> gcc =
         //~ std::dynamic_pointer_cast<GrowthCone_Critical>(splitting_cone);
 
-    //~ double new_length = gcc->get_CR_speed_factor() * gcc->get_CR_received();
+    //~ double new_length = gcc->get_res_speed_factor() * gcc->get_res_received();
     //~ double new_angle, old_angle;
     //~ double old_diameter = splitting_cone->get_diameter();
     //~ double new_diameter = old_diameter;

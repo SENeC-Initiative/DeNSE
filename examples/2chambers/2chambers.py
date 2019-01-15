@@ -46,7 +46,6 @@ soma_radius = 8.
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
-use_critical_resource=False
 
 gc_model = 'run-and-tumble'
 

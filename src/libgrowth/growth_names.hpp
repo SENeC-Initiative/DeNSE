@@ -158,46 +158,46 @@ extern const std::string resource;
 //! @param tub_topo_coefficient   0.1    [natural]
 extern const std::string use_critical_resource;
 #define USE_CRITICAL false
-extern const std::string CR_use_ratio;
+extern const std::string res_use_ratio;
 #define CRITICAL_USE_RATIO 1.
-extern const std::string CR_leakage;
+extern const std::string res_leakage;
 #define CRITICAL_LEAKAGE 6.
-extern const std::string CR_correlation;
+extern const std::string res_correlation;
 #define CRITICAL_CORRELATION 0.
-extern const std::string CR_variance;
+extern const std::string res_variance;
 #define CRITICAL_VARIANCE 0.1 //
-extern const std::string CR_weight_diameter;
+extern const std::string res_weight_diameter;
 #define CRITICAL_WEIGHT_DIAMETER 1.
-extern const std::string CR_weight_centrifugal;
+extern const std::string res_weight_centrifugal;
 #define CRITICAL_WEIGHT_CENTRIFUGAL 0.
 
-extern const std::string CR_elongation_factor;
+extern const std::string res_elongation_factor;
 #define CRITICAL_ELONGATION_FACTOR 0.5
-extern const std::string CR_elongation_th;
+extern const std::string res_elongation_threshold;
 #define CRITICAL_ELONGATION_TH 0.35
-extern const std::string CR_retraction_factor;
+extern const std::string res_retraction_factor;
 #define CRITICAL_RETRACTION_FACTOR 0.1
-extern const std::string CR_retraction_th;
+extern const std::string res_retraction_threshold;
 #define CRITICAL_RETRACTION_TH 0.15
-extern const std::string CR_branching_th;
+extern const std::string res_branching_threshold;
 #define CRITICAL_BRANCHING_TH std::numeric_limits<double>::infinity()
-extern const std::string CR_branching_proba;
+extern const std::string res_branching_proba;
 #define CRITICAL_BRANCHING_PROBA 0.1
 
-extern const std::string CR_neurite_available;
-#define CRITICAL_AVAILABLE .
-extern const std::string CR_neurite_variance;
+extern const std::string res_neurite_available;
+#define CRITICAL_AVAILABLE 0.
+extern const std::string res_neurite_variance;
 #define CRITICAL_GEN_VAR 5.
-extern const std::string CR_neurite_generated;
+extern const std::string res_neurite_generated;
 #define CRITICAL_GENERATED 150.
-extern const std::string CR_neurite_generated_tau;
+extern const std::string res_neurite_generated_tau;
 #define CRITICAL_GEN_TAU 100.
-extern const std::string CR_neurite_delivery_tau;
+extern const std::string res_neurite_delivery_tau;
 #define CRITICAL_DEL_TAU 50.
 #define CRITICAL_GEN_CORR 0.
-extern const std::string CR_increase_slope;
+extern const std::string res_increase_slope;
 #define CRITICAL_SLOPE 1.
-extern const std::string CR_typical_gc_support;
+extern const std::string res_typical_gc_support;
 #define CRITICAL_GC_SUPPORT 8.
 
 

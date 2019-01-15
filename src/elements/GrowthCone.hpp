@@ -112,7 +112,8 @@ class GrowthCone : public TopologicalNode,
     // growth
     void grow(mtPtr rnd_engine, size_t cone_n, double substep);
     void retraction(double distance, size_t cone_n, int omp_id);
-    void prune(size_t cone_n);
+
+    virtual void prune(size_t cone_n);
 
     // compute direction
     bool sense_surroundings(std::vector<double> &directions_weights,
@@ -133,7 +134,7 @@ class GrowthCone : public TopologicalNode,
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
 
-    // elongation
+    // extension
     void compute_module(double substep);
     virtual void compute_speed(mtPtr rnd_engine, double substep) = 0;
 

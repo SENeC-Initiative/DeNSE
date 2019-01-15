@@ -27,7 +27,6 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
 
     "filopodia_wall_affinity": 2.,
@@ -37,18 +36,18 @@ dendrite_params = {
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
-    "CR_retraction_factor": 0.10,
-    "CR_elongation_factor": 0.10,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.01,
-    "CR_elongation_th": 0.3,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 2500.,
-    "CR_correlation": 0.2,
-    "CR_variance": 0.01,
-    "CR_use_ratio": 0.16,
+    "res_retraction_factor": 0.10,
+    "res_elongation_factor": 0.10,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.01,
+    "res_elongation_threshold": 0.3,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 2500.,
+    "res_correlation": 0.2,
+    "res_variance": 0.01,
+    "res_use_ratio": 0.16,
 
-    # "CR_weight": 0.0,
+    # "res_weight": 0.0,
 
     # Best model
     "gc_split_angle_mean": 1.,
@@ -60,7 +59,6 @@ dendrite_params = {
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
     "use_flpl_branching": False,
 
@@ -72,17 +70,17 @@ axon_params = {
 
 
     # Cr model
-    "CR_retraction_factor": 0.010,
-    "CR_elongation_factor": 0.10,
-    # "CR_weight": -.0,
-    "CR_retraction_th": 0.10,
-    "CR_elongation_th": 0.3,
-    # "CR_split_th": 0.80,
-    "CR_neurite_generated": 2500.,
-    "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.4,
-    "CR_variance": 0.04,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.010,
+    "res_elongation_factor": 0.10,
+    # "res_weight": -.0,
+    "res_retraction_threshold": 0.10,
+    "res_elongation_threshold": 0.3,
+    # "res_split_th": 0.80,
+    "res_neurite_generated": 2500.,
+    "res_neurite_delivery_tau": 50.,
+    "res_correlation": 0.4,
+    "res_variance": 0.04,
+    "res_use_ratio": 0.1,
 
     # Best model
     "gc_split_angle_mean": 1.2,
@@ -129,7 +127,7 @@ def run_dense(kernel,neuron_params,ID,plot):
                                   position=[]
                                   )
 
-    # ds.set_object_status(gid, params=neuron_params,
+    # ds.set_object_parameters(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3./resolution, 1, False, plot)
     step(300./resolution, 1, False, plot)
@@ -138,7 +136,7 @@ def run_dense(kernel,neuron_params,ID,plot):
     dendrite_params['use_van_pelt'] = True
     axon_params['use_flpl_branching'] = False
     axon_params['flpl_branching_rate'] = 0.001
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -146,18 +144,18 @@ def run_dense(kernel,neuron_params,ID,plot):
     axon_migated = {
         'use_van_pelt' : True,
         # "flpl_branching_rate" : 0.004,
-        "CR_retraction_th": 0.4,
-        "CR_elongation_th": 0.15,
-        "CR_elongation_factor": 0.6,
+        "res_retraction_threshold": 0.4,
+        "res_elongation_threshold": 0.15,
+        "res_elongation_factor": 0.6,
         # 'use_van_pelt' : True,
-        "CR_neurite_generated": 4500.,
-        "CR_neurite_delivery_tau": 50.,
-        "CR_correlation": 0.15,
-        "CR_variance": 0.02,
-        "CR_use_ratio": 0.3,
+        "res_neurite_generated": 4500.,
+        "res_neurite_delivery_tau": 50.,
+        "res_correlation": 0.15,
+        "res_variance": 0.02,
+        "res_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)

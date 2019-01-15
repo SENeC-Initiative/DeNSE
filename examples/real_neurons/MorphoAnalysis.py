@@ -30,13 +30,23 @@ def printhelp():
     print("the first argument is the folder with the simulation, \n"
             "the second argument is the max length to analyse")
 
+
+def remove_shorter(neurite, threshold):
+    popper=[]
+    for enum, branch in enumerate(neurite.branches):
+        if branch.xy.shape[0]< threshold:
+            popper.append(enum)
+    for n in sorted(popper, reverse=True):
+        neurite.branches.pop(n)
+    
+
 if args.neuron:
     length_thresh=30
     ensembles =[]
     for neuron in args.neuron:
         pop = ds.load_swc(swc_file=neuron, info={})
         ens = ds.EnsembleRW(pop)
-        pop[0].dendrites[0].remove_shorter(150)
+        remove_shorter(pop[0].dendrites[0], 150)
         ens.characterizeRW("dendrite")
         ens.fit()
         ensembles.append(ens)

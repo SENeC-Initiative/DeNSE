@@ -564,21 +564,25 @@ Windows
 Known errors
 ============
 
+* For git users, an inability to import ``_pygrowth`` from a missing
+  ``environment`` module. This means that the ``environment`` submodule has
+  not been initialized with git. To do so, run "git submodule init", then
+  "git submodule update".
 * CMake Error at /usr/share/cmake-3.5/Modules/FindBoost.cmake:1677 (message):
-   Unable to find the requested Boost libraries.
-   Boost version: 1.62.0
-   Boost include path: /usr/local/include
-   Detected version of Boost is too old.  Requested version was 1.63 (or
-   newer).
-   - this means that you should upgrade your version of boost; for old
-     Linux distributions, manuall install is described in the "Manual
-     Boost installation" section.
+  Unable to find the requested Boost libraries.
+  Boost version: 1.62.0
+  Boost include path: /usr/local/include
+  Detected version of Boost is too old.  Requested version was 1.63 (or
+  newer).
+  - this means that you should upgrade your version of boost; for old
+    Linux distributions, manuall install is described in the "Manual
+    Boost installation" section.
 * Linker error LNK1112 (conflict between module and target machine type)
-   - on Windows, this usually means that you are not compiling with the correct
-     version of MSVC. Check that (on a 64-bit platform, you are using the x64
-     version, or the x86 on a 32-bit platform). If everything is correct, add
-     "-DCMAKE_GENERATOR_PLATFORM=xAB", where AB is either 64 or 86, to force the
-     correct compiler.
+  - on Windows, this usually means that you are not compiling with the correct
+    version of MSVC. Check that (on a 64-bit platform, you are using the x64
+    version, or the x86 on a 32-bit platform). If everything is correct, add
+    "-DCMAKE_GENERATOR_PLATFORM=xAB", where AB is either 64 or 86, to force the
+    correct compiler.
 * CMake Error at src/cmake_install.cmake:42 (file):
   file INSTALL cannot copy file
   "/home/mallory/Documents/Software/netgrowth/build/src/growth" to

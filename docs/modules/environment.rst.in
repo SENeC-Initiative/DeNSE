@@ -2,8 +2,27 @@
 The ``environment`` module
 ==========================
 
-.. currentmodule:: environment
+This module is used to create and manage spatial environments where the neurons
+can develop.
 
+.. warning::
+
+    For people using |name| from git, this module is remotely tracked from SENeC
+    PyNCulture_ repository, which means that you have to initialize and pull it
+    separately.
+    The first time, the repository must also be initialized with ::
+
+        git submodule init
+        git submodule update
+    
+    To update it later on, just run ::
+
+        git submodule update --remote --merge
+
+
+The module contains the following functions and classes:
+
+.. currentmodule:: environment
 
 .. autosummary::
 
@@ -14,3 +33,8 @@ The ``environment`` module
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+.. Links
+
+.. _PyNCulture : https://github.com/SENeC-Initiative/PyNCulture

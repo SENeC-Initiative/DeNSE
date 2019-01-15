@@ -195,27 +195,27 @@ void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
  * Core function for the simulation, it shouldn't be overwritten
  *
  * Explanation:
- * 1.   Compute the module of the next step
- *      It will be done from the elongation model, critical_resourcee or
- * random_walk
+ * 1. Compute the module of the next step
+ *    It will be done from the extension model, critical_resourcee or
+ *    random_walk
  *
- * 2.   If module is positive, compute the angle and elongate:
- *      To grow it has to sense the environment and then convolve with the
- *      particular intrinsic distribution (e.g. random walk model)
- *      as set in the grwth cone model.
- *      'sense_environment' and 'accesible_environment'
- *      are defined in the abstract class GrowthCone (here),
- *      but it is required they are called inside the function
- *      'compute_directions' overriden by the GrowthCone model.
- *      This requirement is due to:
- *          + the functions need the sigma (persistence_length) defined in the
- *          models
- *          + some models required to perform a rotation before sense the
- *          environment
+ * 2. If module is positive, compute the angle and elongate:
+ *    To grow it has to sense the environment and then convolve with the
+ *    particular intrinsic distribution (e.g. random walk model)
+ *    as set in the grwth cone model.
+ *    'sense_environment' and 'accesible_environment'
+ *    are defined in the abstract class GrowthCone (here),
+ *    but it is required they are called inside the function
+ *    'compute_directions' overriden by the GrowthCone model.
+ *    This requirement is due to:
+ *    - the functions need the sigma (persistence_length) defined in the
+ *      models
+ *    - some models required to perform a rotation before sense the
+ *      environment
  *
- * 3.   If module is negative retract:
- *      The retraction of a 0 length branch will imply the pruning of the
- *      GrowthCone
+ * 3. If module is negative retract:
+ *    The retraction of a 0 length branch will imply the pruning of the
+ *    GrowthCone
  *
  * @param rnd_engine
  */

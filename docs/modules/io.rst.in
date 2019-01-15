@@ -1,0 +1,15 @@
+=================
+The ``io`` module
+=================
+
+.. currentmodule:: io
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.io
+   :members:
+   :undoc-members:

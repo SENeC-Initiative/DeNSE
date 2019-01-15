@@ -7,9 +7,16 @@ Environment and geometry
 To simulate neuronal growth inside a complex environment, the |name| simulator
 provides a special module called `environment`, which corresponds to the
 PyNCulture_ library.
-
 This :mod:`~dense.environment` module provides all the necessary tools to
 generate cultures of various sizes, shapes, and patterns.
+
+In this part, we will detail how to set up a spatial environment in |name|, then
+explain how the spatial information is sensed by the developing neurons.
+
+.. contents::
+    :local:
+    :depth: 2
+    :backlinks: none
 
 
 Importing the environment from a file
@@ -73,6 +80,28 @@ just select the content of a block, then use `Tools > Modify > Explode`.
 you must look for the "main" block behavior first, apply "explode", then move
 downwards to sub-blocks (if any), and apply explode **only** on the elements
 contained in theses sub-blocks, one after the other.
+
+
+Environment sensing
+===================
+
+The surroundings of the neurons are explored by the elongating protrusions, the
+neurites, and more specifically, they are sampled via the filopodia.
+The filopodia are the thin finger-like protrusions extending from each growth
+cone at the tips of neurites.
+
+@todo, finish explanation
+
+Computing the affinity list
+---------------------------
+
+Neurite-neurite interactions
+----------------------------
+
+Environment-induced states
+--------------------------
+
+Stopped, stuck, environment-caused retraction.
 
 
 .. References

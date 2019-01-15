@@ -26,23 +26,22 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
 
     "persistence_length": 300.0,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
-    "CR_retraction_factor": 0.010,
-    "CR_elongation_factor": 0.0371,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.001,
-    "CR_elongation_th": 0.2,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 4500.,
-    "CR_correlation": 0.5,
-    "CR_variance": 0.01,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.010,
+    "res_elongation_factor": 0.0371,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.001,
+    "res_elongation_threshold": 0.2,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 4500.,
+    "res_correlation": 0.5,
+    "res_variance": 0.01,
+    "res_use_ratio": 0.1,
 
 
     # Best model
@@ -55,21 +54,20 @@ dendrite_params = {
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "sensing_angle": 0.5495,
     "persistence_length": 80.,
     "use_flpl_branching": False,
-    "CR_retraction_factor": 0.02,
-    "CR_elongation_factor": 0.50,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.001,
-    "CR_elongation_th": 0.3,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 4500.,
-    "CR_correlation": 0.5,
-    "CR_weight_diameter": 50.,
-    "CR_variance": 0.3,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.02,
+    "res_elongation_factor": 0.50,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.001,
+    "res_elongation_threshold": 0.3,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 4500.,
+    "res_correlation": 0.5,
+    "res_weight_diameter": 50.,
+    "res_variance": 0.3,
+    "res_use_ratio": 0.1,
 }
 
 
@@ -122,7 +120,7 @@ def run_dense(neuron_params):
 
     dendrite_params.update(arborization)
     axon_params.update(arborization_axon)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -130,25 +128,25 @@ def run_dense(neuron_params):
     elongation = {
         "use_van_pelt": False,
         "persistence_length":30.,
-    "CR_retraction_factor": 0.01,
-    "CR_elongation_factor": 0.1,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.1,
-    "CR_elongation_th": 0.2,
-    "CR_leakage": 30.0,
-    "CR_neurite_generated": 4500.,
-    "CR_correlation": 0.05,
-    "CR_variance": 0.002,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.01,
+    "res_elongation_factor": 0.1,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.1,
+    "res_elongation_threshold": 0.2,
+    "res_leakage": 30.0,
+    "res_neurite_generated": 4500.,
+    "res_correlation": 0.05,
+    "res_variance": 0.002,
+    "res_use_ratio": 0.1,
     }
-    elongation_axon = {"CR_elongation_factor": 0.5}
+    elongation_axon = {"res_elongation_factor": 0.5}
 
     dendrite_params.update(elongation)
     axon_params.update(elongation_axon)
 
     print("elongation")
 
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -156,12 +154,11 @@ def run_dense(neuron_params):
 
     # stop the dendrites
     stortignation = {"use_van_pelt": False,
-                     "use_critical_resource":False,
         "persistence_length":10.,
-    "CR_retraction_factor": 0.0,
-    "CR_elongation_factor": 0.0,
-    "CR_retraction_th": 0.000,
-    "CR_elongation_th": 10.,
+    "res_retraction_factor": 0.0,
+    "res_elongation_factor": 0.0,
+    "res_retraction_threshold": 0.000,
+    "res_elongation_threshold": 10.,
     }
 
     stortignation_axon={
@@ -170,24 +167,24 @@ def run_dense(neuron_params):
     "persistence_length": 91.,
     "flpl_branching_rate" : 0.002,
     "use_flpl_branching": True,
-    "CR_retraction_factor": 0.02,
-    "CR_elongation_factor": 0.2910,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.0001,
-    "CR_elongation_th": 0.10,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 45000.,
-    "CR_correlation": 0.05,
-    "CR_weight_diameter": 0.,
-    "CR_variance": 0.001,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.02,
+    "res_elongation_factor": 0.2910,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.0001,
+    "res_elongation_threshold": 0.10,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 45000.,
+    "res_correlation": 0.05,
+    "res_weight_diameter": 0.,
+    "res_variance": 0.001,
+    "res_use_ratio": 0.1,
       }
 
     print("stortignation")
 
     dendrite_params.update(stortignation)
     axon_params.update(stortignation_axon)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)

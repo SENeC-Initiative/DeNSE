@@ -19,7 +19,6 @@ neuron_params = {
     # "T" : 0.01,
     #~ "axon_angle":0.,
 
-    "use_critical_resource": False,
     # #critical_resource model
     # "critical_resource_amount":100.,
     # "critical_resource_initial_demand":1.,
@@ -74,12 +73,7 @@ if __name__ =='__main__':
     Create neurons
     '''
 
-    if not neuron_params['use_critical_resource']:
-        #~ neuron_params['growth_cone_model'] = 'random_walk'
-        neuron_params['growth_cone_model'] = 'default'
-    else:
-        neuron_params['growth_cone_model'] = 'random_walk'
-
+    neuron_params['growth_cone_model'] = 'default'
 
     neuron_params['position'] = np.random.uniform(-1000, 1000, (5, 2))
 
@@ -90,7 +84,7 @@ if __name__ =='__main__':
                             num_neurites=2)
 
     pprint("neuron status")
-    pprint(ds.get_object_status(gids[0]))
+    pprint(ds.get_object_parameters(gids[0]))
 
     '''
     Create recorders
@@ -98,7 +92,7 @@ if __name__ =='__main__':
 
     gids_rec = ds.create_recorders(gids, "length", levels="neurite")
 
-    print(gids_rec, ds.get_object_status(gids_rec))
+    print(gids_rec, ds.get_object_parameters(gids_rec))
 
     print("start simu")
 

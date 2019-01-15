@@ -42,7 +42,7 @@ def save_json_info(filepath="default", gid=None):
         gid = _pg.get_neurons()
 
     kernel  = _pg.get_kernel_status()
-    neurons = _pg.get_object_status(gid)
+    neurons = _pg.get_object_parameters(gid)
 
     experiment_dict = {}
 

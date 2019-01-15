@@ -51,7 +51,6 @@ print(AM, am)
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
     "use_flpl_branching": False,
 
@@ -63,19 +62,19 @@ axon_params = {
 
     # Cr model
     "resource": am * uM,
-    "CR_retraction_factor": 10. *um / minute,
-    "CR_elongation_factor": 20. * um / minute,
-    # "CR_weight": -.0,
-    "CR_retraction_th": theta_r * uM,
-    "CR_elongation_th": theta_e * uM,
-    # "CR_split_th": 0.80,
-    "CR_neurite_generated": Am * uM,
-    "CR_neurite_delivery_tau": td * minute,
-    "CR_neurite_generated_tau": tA * minute,
-    "CR_correlation": 0.,
-    "CR_variance": 0.4 * uM / minute ** 0.5,
-    "CR_use_ratio": u * cpm,
-    "CR_leakage": tl * minute,
+    "res_retraction_factor": 10. *um / minute,
+    "res_elongation_factor": 20. * um / minute,
+    # "res_weight": -.0,
+    "res_retraction_threshold": theta_r * uM,
+    "res_elongation_threshold": theta_e * uM,
+    # "res_split_th": 0.80,
+    "res_neurite_generated": Am * uM,
+    "res_neurite_delivery_tau": td * minute,
+    "res_neurite_generated_tau": tA * minute,
+    "res_correlation": 0.,
+    "res_variance": 0.4 * uM / minute ** 0.5,
+    "res_use_ratio": u * cpm,
+    "res_leakage": tl * minute,
 
     # Best model
     "gc_split_angle_mean": 1.2*rad,
@@ -122,8 +121,8 @@ if __name__ == '__main__':
     # plot resource probability distribution
     fig, ax = plt.subplots()    
     sns.distplot(resc, hist=False, kde=True, rug=True)
-    ax.axvline(axon_params["CR_elongation_th"].m, c="g")
-    ax.axvline(axon_params["CR_retraction_th"].m, c="r")
+    ax.axvline(axon_params["res_elongation_threshold"].m, c="g")
+    ax.axvline(axon_params["res_retraction_threshold"].m, c="r")
     ax.axvline(am, ls="--", c="k")
     ax.set_ylabel("Probability")
     ax.set_xlabel("Resource $a$ ($\mu$M)")
@@ -156,8 +155,8 @@ if __name__ == '__main__':
     ax2.plot(times, leng, c="orange")
     ax2.set_ylabel("Length ($\mu$m)")
 
-    ax.axhline(axon_params["CR_elongation_th"].m, c="g")
-    ax.axhline(axon_params["CR_retraction_th"].m, c="r")
+    ax.axhline(axon_params["res_elongation_threshold"].m, c="g")
+    ax.axhline(axon_params["res_retraction_threshold"].m, c="r")
     ax.axhline(am, ls="--", c="k")
 
     plt.tight_layout()

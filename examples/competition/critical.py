@@ -14,7 +14,6 @@ Main parameters
 S = 0.901
 E = 0.3
 num_neurons = 1
-use_critical_resource = True
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = True
@@ -36,8 +35,6 @@ neuron_params = {
     "use_van_pelt": use_vp,
 
     "gc_split_angle_mean": 10.3,
-
-    "use_critical_resource": use_critical_resource,
 }
 
 axon_params = {
@@ -56,8 +53,6 @@ axon_params = {
     "use_van_pelt": use_vp,
 
     "gc_split_angle_mean": 10.3,
-
-    "use_critical_resource": use_critical_resource,
 }
 
 '''
@@ -67,17 +62,17 @@ Check for optional parameters
 if use_critical_resource:
     gc_model = gc_model+"_critical"
     cr_params = {
-        "CR_leakage": 0.05 * minute,
-        "CR_retraction_th": 0.30 * uM,
-        "CR_elongation_th": 0.91 * uM,
-        "CR_split_th": 0.80,
-        "CR_neurite_generated": 550. * uM,
-        "CR_correlation": 0.,
-        "CR_variance": 0.01 * uM / minute ** 0.5,
-        "CR_use_ratio": 0.26 * cpm
+        "res_leakage": 0.05 * minute,
+        "res_retraction_threshold": 0.30 * uM,
+        "res_elongation_threshold": 0.91 * uM,
+        "res_split_th": 0.80,
+        "res_neurite_generated": 550. * uM,
+        "res_correlation": 0.,
+        "res_variance": 0.01 * uM / minute ** 0.5,
+        "res_use_ratio": 0.26 * cpm
     }
     # ~ neuron_params.update(cr_params)
-    axon_params.update({"CR_retraction_factor": 0.10 * um / minute})
+    axon_params.update({"res_retraction_factor": 0.10 * um / minute})
     # ~ axon_params.update(cr_params) 
     
 if use_vp:
@@ -128,14 +123,14 @@ def run_dense(neuron_params):
     neuron_params['use_van_pelt'] = False
     neuron_params['use_flpl_branching'] = False
 
-    ds.set_object_status(gid, params=neuron_params,
-                        axon_params=axon_params)
+    ds.set_object_parameters(gid, params=neuron_params,
+                             axon_params=axon_params)
     step(200./resolution * minute, 1, False, True)
     neuron_params['use_van_pelt'] = True
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    ds.set_object_status(gid, params=neuron_params,
-                        axon_params=neuron_params)
+    ds.set_object_parameters(gid, params=neuron_params,
+                             axon_params=neuron_params)
     step(1000./resolution * minute, 1, False, True)
     step(1000./resolution * minute, 1, False, True)
     step(1000./resolution * minute, 1, False, True)
@@ -149,7 +144,7 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.set_object_status(gid,params = neuron_params,
+    # ds.set_object_parameters(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)

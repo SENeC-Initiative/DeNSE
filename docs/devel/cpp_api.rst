@@ -12,10 +12,4 @@ rationale behind the architecture and models implementations.
     implementation
     neuron_dynamics
     models
-
-
-.. Links
-
-.. _Architecture: architecture
-.. _`Implementation choices`: implementation
-.. _Models: models
+    recording

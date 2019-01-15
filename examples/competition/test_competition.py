@@ -31,7 +31,6 @@ neuron_params = {
 
     # axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": True,
     "use_flpl_branching": False,
 
@@ -44,18 +43,18 @@ neuron_params = {
     "gc_split_angle_std": 0.3,
 
     # Cr model
-    "CR_retraction_factor": 0.10 * um / minute,
-    "CR_elongation_factor": 0.10 * um / minute,
-    "CR_weight_centrifugal": 0.,
-    "CR_weight_diameter": 0.01 * um,
-    "CR_retraction_th": 0.010 * uM,
-    "CR_elongation_th": 0.4 * uM,
-    # "CR_split_th": 0.80,
-    "CR_neurite_generated": 2000. * uM,
-    "CR_neurite_delivery_tau": 50. * minute,
-    "CR_correlation": 0.89,
-    "CR_variance": 0.331 * uM / minute ** 0.5,
-    "CR_use_ratio": 0.1,
+    "res_retraction_factor": 0.10 * um / minute,
+    "res_elongation_factor": 0.10 * um / minute,
+    "res_weight_centrifugal": 0.,
+    "res_weight_diameter": 0.01 * um,
+    "res_retraction_threshold": 0.010 * uM,
+    "res_elongation_threshold": 0.4 * uM,
+    # "res_split_th": 0.80,
+    "res_neurite_generated": 2000. * uM,
+    "res_neurite_delivery_tau": 50. * minute,
+    "res_correlation": 0.89,
+    "res_variance": 0.331 * uM / minute ** 0.5,
+    "res_use_ratio": 0.1,
 
     # Best model
     "B": 30. * cpm,

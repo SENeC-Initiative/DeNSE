@@ -87,12 +87,12 @@ n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params
 # Turn branching on
 
 #~ vp_branching = {'use_van_pelt': True}
-resource_branching = {'CR_branching_th': 80., 'CR_branching_proba': 0.0005}
-d_rsrc_branching = {'CR_branching_th': 60., 'CR_branching_proba': 0.0003}
+resource_branching = {'res_branching_threshold': 80., 'res_branching_proba': 0.0005}
+d_rsrc_branching = {'res_branching_threshold': 60., 'res_branching_proba': 0.0003}
 
-#~ ds.set_object_status(n, params=vp_branching)
-#~ ds.set_object_status(n, params=resource_branching)
-ds.set_object_status(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
+#~ ds.set_object_parameters(n, params=vp_branching)
+#~ ds.set_object_parameters(n, params=resource_branching)
+ds.set_object_parameters(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 ds.simulate(20000)
 
@@ -100,19 +100,19 @@ ds.plot.plot_neurons(show=True)
 
 lb = {
     "use_van_pelt": False,
-    'CR_branching_th': np.inf, "use_flpl_branching": True,
+    'res_branching_threshold': np.inf, "use_flpl_branching": True,
     "flpl_branching_rate": 0.001, 
     "lateral_branching_angle_mean": 45.
 }
 
 no_b = {"use_van_pelt": False}
 
-ds.set_object_status(n, axon_params=lb, dendrites_params=no_b)
+ds.set_object_parameters(n, axon_params=lb, dendrites_params=no_b)
 
 ds.simulate(50000)
 
 end_branching = { "use_flpl_branching": False, "use_van_pelt": True, "T": 60000.}
-ds.set_object_status(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_parameters(n, axon_params=end_branching, dendrites_params=end_branching)
 
 ds.simulate(100000)
 

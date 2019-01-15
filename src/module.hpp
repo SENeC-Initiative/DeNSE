@@ -74,6 +74,9 @@ void set_status_(size_t gid, statusMap status, statusMap axon_status,
                 statusMap dendrites_status);
 
 
+void set_neurite_status_(size_t neuron, std::string neurite, statusMap status);
+
+
 /* Simulation */
 
 void simulate_(const Time &simtime);
@@ -187,7 +190,7 @@ void get_models_(std::unordered_map<std::string, std::string> &models,
                  bool abbrev);
 
 
-std::vector<std::string> get_elongation_types_();
+std::vector<std::string> get_extension_types_();
 
 
 std::vector<std::string> get_steering_methods_();

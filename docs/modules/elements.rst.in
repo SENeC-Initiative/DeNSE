@@ -1,0 +1,15 @@
+=======================
+The ``elements`` module
+=======================
+
+.. currentmodule:: elements
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.elements
+   :members:
+   :undoc-members:

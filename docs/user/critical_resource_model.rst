@@ -1,97 +1,183 @@
-===============
- Critical Resource Model:
-===============
+.. _elongation-models-user:
 
-The Critical Resource model is a competition model with noise.
+
+========================
+Critical Resource Models
+========================
+
+The Critical Resource model is a competition model with noise accounting for elongation speed.
 The competing resource is the critical_resource, some authors [VPVO]_ suggest this is the tubulin, the protein required for microtubule
 synthesis, other [MAP2]_ relays on MAP2 phosphorilation and calcium influx.
 We simpliefied and generalized the problem to a critical resource crucial for the outgrowth of the neurite.
 In the first case the author offered a compartimental model which satisfies two properties:
 
-    +It's harder to get the resoruce with distance from the soma
-    +The closer elements feel the competition stronger
+- It's harder to get the resoruce with distance from the soma
+- The closer elements feel the competition stronger
 
-Envioronmental model of pulling:
---------------------------------
-Since in the free space case there is no active pulling of the dendrite, DeNSE will
-model a general pulling with a correlated gaussian where the user can choose the variance, the mean and the correlation
-factor. For a better understanding of this distribution we remind to: [correlatedgaussian]_
 
-    +param `growth::names::CR_demand_correlation`
-    +param `growth::names::CR_demand_mean`
-    +param `growth::names::CR_demand_stddev`
+Envioronmental model of pulling
+-------------------------------
+Since in the isotropic space case there is no active pulling of the dendrite, DeNSE will
+model a general pulling with a correlated gaussian whom the user can choose the variance and the correlation
+factor (colored noise).
 
-Then it's possible to set parameters to affect the distribution of the critical resource on
-the base of some general factors:
 
-Topological, biological and geometrical attenuation factors:
-------------------------------------------------------------
-Set values to 0 will neutralize the behaviour, negative values will enanche farer nodes
+Topological, biological and geometrical attenuation factors
+-----------------------------------------------------------
+It is an experimental evidence the elongation rate depends by the relative position of the growth cone in the neurite tree and the diameter of the neurite.
+ to 0 will neutralize the behaviour, negative values will enanche farer nodes
 The attenuation factor will act as a coefficient in the form :math:`2^{-att_coeff * property}`
 
-    +\param  `growth::CR_attenuation_geometrical`: this factor couples with the distance from the soma
-    +\param  `growth::CR_attenuation_geometrical`: this factor couples with the neurite diameter
-    +\param  `growth::CR_attenuation_geometrical`  this factor couples with centrifugal order
+    `res_weight_diameter`: this factor couples with the topological distance from the soma
 
-Algorithms:
-------------
+    `res_weight_centrifugal`: this factor couples with the neurite diameter
 
-Two algorithms are implemented, their properties are:
-The soma produce a certain amount of resource `s` and the neurite request will saturate this production
+Set the parameters to zero (default) to be ineffective, positive to enhance the amount of received resource and negative otherwise.
 
-    1. The VanOoyen algorithm deals with concentration and assume a diffusive-advective flux of CR from the soma to
-           the neurites.
-           The competition is in the dynamic of soma concentration and it's related to the diminuished amount of
-           available resource.
-    2. The ConstantRate algorithm implement a constant production
+const std::string res_branching_proba("res_branching_proba");
+const std::string res_leakage("res_leakage");
+const std::string res_neurite_split_threshold("res_neurite_split_threshold");
+const std::string res_neurite_available("res_neurite_available");
+const std::string res_neurite_variance("res_neurite_variance");
 
-**Demand**
-Once the demand is computed based on the environmentl pulling each growth con has a certain demand which can
-be corrected and refined through the attenuation factors. This phase end with a set of :math:`{d_i}_N`
+const std::string res_use_ratio("res_use_ratio");
 
-**Receive**
-There are 3 implemented algorithm:
 
-1.
+Critical Resource Algorithm
+---------------------------
 
-1.  Critical resource with stock
-    Our critical_resource model follows a multiplicative random walk:
-    x_(n+1) = x_n * (1 - sigma * xi)
-    where xi is normal distributed N(0,1)
+In the following the algorithm implemented in the model will be qualitatively described. The underlying idea is the following:
+The soma produce a certain amount of resource `CR` and the neurite request will saturate this production, since the resource is not synthetized as it comes, it is stored and employed successively, while in the growth cone stock it can degrade or leak.
+The competition lies in the fraction of received resource. For an exhaustive description of this model see :ref:`elongation-models-devel`
 
-    +\param critical_resource_std 0.01         : sigma
+This model is described by a system of coupled differential equations:
 
-**Critical resource stockage**
-+\param critical_resource_initial_demand   : x_0
+.. math::
 
-###Biological parameters
-These parameters, together with the 'critical_resource_amount' will affect the physics of
-the neurite:
+	\begin{array}{r c l}
+		\dot{a_i} & = & \displaystyle{-a_i \left( \underbrace{u + \frac{1}{\tau_l}}_\kappa \right)(1 + \chi_i) + \frac{A}{\tau_d} \frac{\zeta_i \kappa a_i}{\sum \zeta_j \kappa a_j}} \label{cr_rceived}
 
-    +\param  `growth::GrowthCone_Tubuline::critical_resource_speed_factor` 10 micrometer/second:
 
-It transform the critical_resource quantity received from the GC in an elongation
-speed.
+		\dot{A}   & = & \displaystyle{\frac{A_m - A}{\tau_A} - \frac{A}{\tau_d} + \xi} \quad = \quad \frac{1}{\tau}(A_M - A) + \xi
 
-In the default configuration the critical_resource avalaible amount is 1, then the
-first growth cone, consuming the whole available critical_resource, will reach this speed. All the
-children wil go slower.
+	\end{array}
 
-**Retraction / elongation threshold**
-    +\param  critical_resource_amount        1
-    It's the critical_resource available to the whole neurite and it grows with the number
-of growth cone as:
-    critical_resource_amount = critical_resource_initial_amount * (1 + log(n_cones))
 
-    +\param  `growth::GrowthCone_Tubuline::critical_resource_retraction_th_` 0.01
-    this is the threshold of received critical_resource which will implicate the
-microtubules dissolution
-    +\param  `growth::GrowthCone_Tubuline::critical_resource_elongation_th_` 0.5
-    over this threshold the growth cone will syntethize critical_resource and grows.
+:math:`a_i` is the quantity of resource available,
 
-.. [VPVO] Van Pelt and Van Ooyen and collaborators.
-A study on the effect of critical_resource competition, or generally of a limiting resource are offered in this article.
+:math:`u` is the consumption rate,
 
-    Competitive dynamics during resource-driven neurite outgrowth. PLoS One 9,
-    (2014).
+:math:`\tau_l` is the leak timescale,
+
+:math:`\zeta_i` is the weight factor (geometrical) of the GC,
+
+:math:`A` is the amount of resource available inside the neurite and which can be delivered to the GCs,
+
+:math:`\tau` is such that :math:`\tau^{-1} = \tau_A^{-1} + \tau_d^{-1}`
+
+:math:`A_M = \tau_A^{-1} \tau A_m`
+
+**Demand CR**
+The demand is computed by the amount of previously stored (*rich get richer* dynamics) and the environmental pulling (the *consumption rate*). The latter can be influenced by biological or geometrical factors.
+
+    `res_use_ratio` set baseline consumption rate
+
+**Receive CR**:
+The neurite compute the overall request of CR and dispense a proportional fraction of its produced CR to each growth cone, the received and stored CR is subject to leakage
+
+    `res_leakage` factor of leakage for stored CR
+
+    `res_neurite_generated` set the amount of critical resource generated by the neurite
+
+    `res_neurite_generated_tau` set the characteristic time of resource generation
+
+    `res_neurite_delivery_tau` set the characteristic time of resource delivery
+
+**Consume CR**
+The Critical resource is eventually consumed by the outgrowing cone, if the CR already accumulated plus the new CR received is more then consumed the GC will elongate, stall or retract otherwise. The stored CR undergoes fluctuations: sometimes the burned CR is more then consumed, sometimes is less, as described by the differential equations.
+Two parameters govern the stochasticity:
+
+    `res_correlation`
+
+    `res_stddev`
+
+**Elongation**
+The elongation or retraction rate is computed over the amount of available CR. The rate which convert CR into elongation speed is the threadmilling  two thresholds: the remaining, `stored`, CR is compared with these thresholds and elongate (retract) as the respective rate prescribes:
+
+    `res_branching_threshold`
+
+    `res_elongation_factor`
+
+    `res_elongation_threshold`
+
+    `res_increase_slope`
+
+    `res_retraction_factor`
+
+    `res_retraction_threshold`
+
+The elongation rate :math:`v_i` is:
+
+.. math::
+
+    \begin{array}{r c l}
+    \frac{a_i u-\theta_{rs}}{\theta_{rs}}  v_r < 0      & \text{if} & a_i u < \theta_{rs}                     \\
+		0                                               & \text{if} & \theta_{rs} \leq a_i u \leq \theta_{se} \\
+    \frac{a_i u-\theta_{se}}{A u - \theta_{se}}v_e > 0  & \text{if} & \theta_{se} < a_i u
+    \end{array}
+
+
+:math:`v_r` is the maximum retraction speed when a GC gets 0 resource
+
+:math:`v_e` is the maximum elongation speed when a GC gets all the resource generated by the soma
+
+Example
+=======
+
+The following code produces a neuron whose neurites elongate by the critical resource model:
+
+
+Default model
+=============
+.. _Default values:
+
+  ========================      ==============      ========================
+  Parameter                     Default value       Units
+  ========================      ==============      ========================
+  'res_weight_diameter'          1.0,
+  'res_correlation'              0.0,
+  'res_leakage'                  6.0                 minute,
+  'res_variance'                 0.1                 micromole / liter / minute ** 0.5,
+  'res_use_ratio'                1.0                 1 / minute,
+  'res_elongation_factor'        0.5                 micrometer / minute,
+  'res_weight_centrifugal'       0.0,
+  'res_retraction_factor'        0.1                 micrometer / minute,
+  'res_branching_proba'          0.1,
+  'resource'                    0.35                micromole / liter,
+  'res_elongation_threshold'            0.35                micromole / liter,
+  'res_retraction_threshold'            0.15                micromole / liter,
+  'res_branching_threshold'             inf                 micromole / liter
+  ========================      ==============      ========================
+
+For this model the observables that can be set in the recorder are:
+    ==================
+    Observables
+    ==================
+    *angle*,
+    *length*,
+    *resource*,
+    *retraction_time*,
+    *speed*,
+    *stopped*
+    ==================
+
+see :ref:`recorder` for further details
+
+References
+==========
+.. [VPVO] Van Pelt, Van Ooyen and collaborators. A study on the effect of critical_resource competition, or generally of a limiting resource are offered in this article.
+    `Competitive dynamics during resource-driven neurite outgrowth. PLoS One 9,
+    (2014).`
+
+.. [MAP2] Hely, T. G. B. `A Computational Model of Dendrite Elongation and Branching Based on MAP2 Phosphorylation Journal of Theoretical Biology, 2001 , 210 , 375-384`
 

@@ -104,6 +104,18 @@ for f in inputs:
     gen_autosum(f, target, module, 'summary')
 
 
+# mock _growth if not compiled
+try:
+    import dense
+except:
+    autodoc_mock_imports = ["dense._pygrowth"]
+
+# General information about the project.
+project = u'@PY_NAME@'
+copyright = u'2017--2018, SENeC'
+author = u'SENeC'
+
+
 # -- Set doxygen/breathe --------------------------------------------------
 
 root_path = os.path.abspath("..")
@@ -114,14 +126,9 @@ sys.path.append(doxypath)
 sys.path.insert(0, root_path)
 sys.path.insert(0, "@PYTHON_INSTALL_DIR@")
 
-# mock _growth if not compiled
-try:
-    import dense
-except:
-    autodoc_mock_imports = ["dense._pygrowth"]
-
-# run doxygen
-call(["doxygen", "Doxyfile"])
+if @CPP_DOCS_AVAILABLE@:
+    # run doxygen
+    call(["doxygen", "Doxyfile"])
 
 
 # -- General configuration ------------------------------------------------
@@ -142,13 +149,10 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'breathe'
 ]
 
-# General information about the project.
-project = u'@PY_NAME@'
-copyright = u'2017--2018, SENeC'
-author = u'SENeC'
+if @CPP_DOCS_AVAILABLE@:
+    extensions.append('breathe')
 
 breathe_projects = {project: doxypath}
 breathe_default_project = project
@@ -244,7 +248,7 @@ if with_bootstrap:
 
         # Fix navigation bar to top of page?
         # Values: "true" (default) or "false"
-        'navbar_fixed_top': "true",
+        'navbar_fixed_top': "false",
 
         # Location of link to source.
         # Options are "nav" (default), "footer" or anything else to exclude.

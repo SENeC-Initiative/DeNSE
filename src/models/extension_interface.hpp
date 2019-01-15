@@ -16,12 +16,12 @@
 namespace growth
 {
 
-class ElongationModel;
-typedef std::shared_ptr<ElongationModel> EMPtr;
+class ExtensionModel;
+typedef std::shared_ptr<ExtensionModel> EMPtr;
 
 
 /**
- * @brief Elongation interface, from which all elongation models must inherit.
+ * @brief Extension interface, from which all elongation models must inherit.
  *
  * This class serves as a guide for developers wanting to create a new
  * elongation model:
@@ -31,18 +31,18 @@ typedef std::shared_ptr<ElongationModel> EMPtr;
  *   :cpp:class:`growth::GrowthCone` and :cpp:class:`growth::Neurite`
  *   shared pointer to store in `gc_weakptr_` and `neurite_ptr_`.
  * - If necessary, the correct constructor should update the `observables_` and
- *   override the :cpp:func:`growth::ElongationModel::get_state` function.
+ *   override the :cpp:func:`growth::ExtensionModel::get_state` function.
  * - There is only one method that has to be implemented for an elongation
  *   model to be valid, which is
- *   :cpp:func:`growth::ElongationModel::compute_speed`.
+ *   :cpp:func:`growth::ExtensionModel::compute_speed`.
  *
  * See also
  * --------
- * :cpp:class:`growth::CstElongationModel` or
- * :cpp:class:`growth::ResourceBasedElongationModel` for complete model
+ * :cpp:class:`growth::CstExtensionModel` or
+ * :cpp:class:`growth::ResourceBasedExtensionModel` for complete model
  * declarations.
  */
-class ElongationModel
+class ExtensionModel
 {
   protected:
     // GrowthCone must be destructed upon release by Neurite (don't keep it
@@ -53,13 +53,13 @@ class ElongationModel
     std::vector<std::string> observables_;
 
   public:
-    ElongationModel() = delete;
-    ElongationModel(const ElongationModel& copy) = delete;
+    ExtensionModel() = delete;
+    ExtensionModel(const ExtensionModel& copy) = delete;
 
-    ElongationModel(GCPtr gc, NeuritePtr neurite)
+    ExtensionModel(GCPtr gc, NeuritePtr neurite)
       : gc_weakptr_(GCPtr(gc)), neurite_ptr_(neurite) {};
 
-    ElongationModel(const ElongationModel& copy, GCPtr gc, NeuritePtr neurite)
+    ExtensionModel(const ExtensionModel& copy, GCPtr gc, NeuritePtr neurite)
       : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
 
     virtual double compute_speed(mtPtr rnd_engine, double substep) = 0;
@@ -71,7 +71,9 @@ class ElongationModel
 
     virtual void prepare_for_split() {};
     virtual void after_split() {};
-    virtual double get_state(const char *observable) const { return std::nan(""); };
+    virtual double get_state(const char *observable) const {
+        return std::nan("");
+    };
     virtual void set_status(const statusMap &status) = 0;
     virtual void get_status(statusMap &status) const = 0;
 };

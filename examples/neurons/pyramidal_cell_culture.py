@@ -109,9 +109,9 @@ pyr_neuron = ds.create_neurons(1, params=pyr_nrn, axon_params=pyr_axon_i,
 # initial extension (5 days)
 ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
-print(ds.get_object_status(pyr_neuron))
+print(ds.get_object_parameters(pyr_neuron))
 # Extension and branching period (5 days)
-ds.set_object_status(
+ds.set_object_parameters(
     pyr_neuron, axon_params=pyr_axon_lb, dendrites_params=pyr_dend_lb)
 ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
@@ -121,6 +121,6 @@ ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
 
 # Termination period (10 days)
-ds.set_object_status(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
+ds.set_object_parameters(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
 ds.simulate(2*sim_time)
 ds.plot.plot_neurons(mode="mixed")

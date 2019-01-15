@@ -126,10 +126,6 @@ What needs improving:
 Create an ``init_neurite`` function that does PROPERLY `Neuron.cpp#L265-281`!!
 @CheckStatus
 
-Let the user decide on which neurites are created (axon does not always have to
-exist, specify neurite names and address them to set parameters)
-@ToDo
-
 
 ### Visualization
 
@@ -144,7 +140,7 @@ Let user choose the units it wants as output
 
 ### Statuses
 
-* Clean up `set_status` and python `set_object_status`
+* Clean up `set_status` and python `set_object_parameters`
 
 @CheckStatus
 
@@ -249,6 +245,7 @@ Done
 * Check culture in create_neurons
 * Set growth stop conditions (diameter, stuck)
 * Made the models combinable
+* Let the user decide on which neurites are created
 
 
 Documentation

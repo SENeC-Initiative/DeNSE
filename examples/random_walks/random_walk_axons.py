@@ -12,7 +12,6 @@ Main parameters
 
 num_neurons           = 4
 use_vp                = False
-use_critical_resource = False
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
@@ -30,8 +29,6 @@ neuron_params = {
     "use_van_pelt": use_vp,
 
     "gc_split_angle_mean": 10.3,
-
-    "use_critical_resource": use_critical_resource,
 }
 
 
@@ -41,16 +38,16 @@ Check for optional parameters
 
 if use_critical_resource:
     cr_params = {
-        "CR_speed_factor": 0.10,
-        "CR_amount": 1.,
-        "CR_leakage": 0.05,
-        "CR_retraction_th": 0.30,
-        "CR_elongation_th": 0.50,
-        "CR_split_th": 0.80,
-        "CR_demand_correlation": 0.9910,
-        "CR_demand_stddev": 0.2,
-        "CR_demand_mean": 1.,
-        "CR_use_ratio": 0.7
+        "res_speed_factor": 0.10,
+        "res_amount": 1.,
+        "res_leakage": 0.05,
+        "res_retraction_threshold": 0.30,
+        "res_elongation_threshold": 0.50,
+        "res_split_th": 0.80,
+        "res_demand_correlation": 0.9910,
+        "res_demand_stddev": 0.2,
+        "res_demand_mean": 1.,
+        "res_use_ratio": 0.7
     }
     neuron_params.update(cr_params)
     dendrite_params["critical_resource_speed_factor"] = 0.05

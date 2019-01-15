@@ -28,7 +28,7 @@ class ModelComponent(namedtuple("component", mc_args)):
 '''
 List of algorithms
 ------------------
-Each of the three lists (elongation, steering, direction selection) contains
+Each of the three lists (extension, steering, direction selection) contains
 all the possible variants for one component.
 Each method variant is described by a `ModelComponent` object containing:
 - the complete name of the method (`method` argument),
@@ -40,19 +40,19 @@ Note
 The `method` argument must not contain underscores.
 '''
 
-# list of elongation methods
-elongation_methods = [
+# list of extension methods
+extension_methods = [
     ModelComponent(method="constant",
-                   filename="elongation_cst.hpp",
-                   classname="CstElongationModel"),
+                   filename="extension_cst.hpp",
+                   classname="CstExtensionModel"),
 
     ModelComponent(method="gaussian-fluctuations",
-                   filename="elongation_gfluct.hpp",
-                   classname="GFluctElongationModel"),
+                   filename="extension_gfluct.hpp",
+                   classname="GFluctExtensionModel"),
 
     ModelComponent(method="resource-based",
-                   filename="elongation_resource_based.hpp",
-                   classname="ResourceBasedElongationModel"),
+                   filename="extension_resource_based.hpp",
+                   classname="ResourceBasedExtensionModel"),
 ]
 
 # list of steering methods
@@ -127,8 +127,8 @@ def generate_models_manager():
         mm_input = f.read()
 
     default_model            = '"run-and-tumble"'
-    model_includes           = "// elongation methods\n"
-    elongation_list          = "\n"
+    model_includes           = "// extension methods\n"
+    extension_list          = "\n"
     steering_list            = "\n"
     direction_selection_list = "\n"
     abbrev_to_full           = "\n"
@@ -137,8 +137,8 @@ def generate_models_manager():
     init_str                 = ""
 
     # fill lists and includes
-    for el in elongation_methods:
-        elongation_list += "      " + '"' + el.method + '"' + ",\n"
+    for el in extension_methods:
+        extension_list += "      " + '"' + el.method + '"' + ",\n"
         model_includes  += include.format(el.filename)
 
     model_includes += "// steering methods\n"
@@ -162,7 +162,7 @@ def generate_models_manager():
         special_map += translate_str.format(k, v)
 
     # fill 'init_models' function
-    for el in elongation_methods:
+    for el in extension_methods:
         for steer in steering_methods:
             for dirsel in direction_selection_methods:
                 # make model name
@@ -178,7 +178,7 @@ def generate_models_manager():
     # format file string
     mm_input = mm_input.format(
         model_includes=model_includes,
-        elongation_list=elongation_list,
+        extension_list=extension_list,
         steering_list=steering_list,
         direction_selection_list=direction_selection_list,
         abbrev_to_full=abbrev_to_full,

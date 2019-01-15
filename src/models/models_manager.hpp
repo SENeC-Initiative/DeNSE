@@ -19,7 +19,7 @@ typedef std::shared_ptr<GrowthCone> GCPtr;
 class ModelManager
 {
   public:
-    const std::vector<std::string> elongation_types;
+    const std::vector<std::string> extension_types;
     const std::vector<std::string> steering_methods;
     const std::vector<std::string> direction_selection;
 
@@ -38,7 +38,7 @@ class ModelManager
 
     void init_models();
 
-    std::vector<std::string> get_elongation_types();
+    std::vector<std::string> get_extension_types();
     std::vector<std::string> get_steering_methods();
     std::vector<std::string> get_direction_selection_methods();
 

@@ -42,9 +42,9 @@ from .environment import Shape
 DICT_IS_ORDERED = sys.version_info >= (3, 6)
 
 
-# ------- #
-# Classes #
-# ------- #
+# ------------------------ #
+# Classes (Time and Model) #
+# ------------------------ #
 
 time_units = ("day", "hour", "minute", "second")
 
@@ -67,12 +67,11 @@ class Time(namedtuple("Time", time_units)):
         p.text(str_pretty)
 
 
-model_blocks = ("elongation_type", "steering_method", "direction_selection")
+# Models
 
+model_blocks = ("extension", "steering", "direction_selection")
 
 class Model(namedtuple("Model", model_blocks)):
-
-    ''' Class to represent growth cone models '''
 
     def __str__(self):
         return "_".join(self)
@@ -82,16 +81,19 @@ class Model(namedtuple("Model", model_blocks)):
             el=self.elongation_type, st=self.steering_method,
             dir=self.direction_selection
         )
-    
-    def _repr_pretty_(self,  p, cycle):
-        p.text("Model(")
-        p.begin_group(6, "")
-        p.text("elongation=" + self.elongation_type + ",")
-        p.breakable(" ")
-        p.text("steering=" + self.steering_method + ",")
-        p.breakable(" ")
-        p.text("direction=" + self.direction_selection)
-        p.end_group(6, ")")
+
+    def _repr_pretty_(self, p, cycle):
+        p.begin_group(4, "Model(")
+        p.breakable("")
+        p.text("extension={},".format(self.extension))
+        p.breakable()
+        p.text("steering={},".format(self.steering))
+        p.breakable()
+        p.text("direction_selection={}".format(self.direction_selection))
+        p.end_group(4, '')
+        p.breakable("")
+        p.text(")")
+        
 
 
 # ---- #
@@ -253,6 +255,14 @@ def format_dict(obj, start=None):
     for k, v in obj.items():
         wlen = max_len-len(str(k))
         if isinstance(v, str):
+            # data    = ["{}'{}'{}: {},\n".format(start, k, ' '*wlen, repr(v))]
+            # idx_lim = data[-1].find(":")
+            # # cut at long lines
+            # while len(data[-1]) > 82:
+            #    tmp = data[-1]
+            #    # locate space before 80
+            #    idx_sp    = tmp[:80].rfind(" ")
+            #    idx_paren = tmp[:80].rfind("(")
             strout += "{}'{}'{}: {},\n".format(start, k, ' '*wlen, repr(v))
         elif isinstance(v, dict):
             strout += "{}'{}'{}: {},\n".format(start, k, ' '*wlen,
@@ -320,8 +330,12 @@ def dict_formatter(obj, p, cycle):
         p.pretty(key)
         wlen = max_len-len(str(key))
         p.text(' '*wlen + ': ')
-        p.pretty(obj[key])
-        p.end_group(max_len + step + 2, "")
+        if isinstance(obj[key], Model):
+            p.begin_group(max_len + step + 2)
+            p.pretty(obj[key])
+            p.end_group(max_len + step + 2)
+        else:
+            p.pretty(obj[key])
     if obj:
         p.end_group(step, '')
         p.breakable()
@@ -442,7 +456,8 @@ def neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
     if culture is None:
         if rnd_pos:
             raise RuntimeError("Cannot seed neurons randomly in space when "
-                               "no spatial environment exists.")
+                               "no spatial environment exists. Please set the "
+                               "'position' entry in `params`.")
         if "position" not in param:
                 raise RuntimeError("`position` entry required in `params` if "
                                    "no `culture` is provided.")

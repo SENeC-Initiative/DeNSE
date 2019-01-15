@@ -89,7 +89,7 @@ dend_params = {
     "gc_split_angle_std": 3. * deg,
 }
 
-ds.set_object_status(n, dendrites_params=dend_params)
+ds.set_object_parameters(n, dendrites_params=dend_params)
 
 ds.simulate(20.*day)
 

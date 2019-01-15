@@ -28,25 +28,24 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
 
     "persistence_length": 60.0,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
-    "CR_retraction_factor": 0.010,
-    "CR_elongation_factor": 0.0371,
-    # "CR_leakage": 0.05,
-    "CR_retraction_th": 0.001,
-    "CR_elongation_th": 0.3,
-    "CR_leakage": 10.0,
-    "CR_neurite_generated": 4500.,
-    "CR_correlation": 0.5,
-    "CR_variance": 0.1,
-    "CR_use_ratio": 0.16,
+    "res_retraction_factor": 0.010,
+    "res_elongation_factor": 0.0371,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.001,
+    "res_elongation_threshold": 0.3,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 4500.,
+    "res_correlation": 0.5,
+    "res_variance": 0.1,
+    "res_use_ratio": 0.16,
 
-    "CR_weight_diameter": 60.,
+    "res_weight_diameter": 60.,
 
     # Best model
     "gc_split_angle_mean": 1.,
@@ -58,11 +57,10 @@ dendrite_params = {
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
     "use_flpl_branching": False,
-    "CR_retraction_factor": 0.000,
-    "CR_elongation_factor": 0.00,
+    "res_retraction_factor": 0.000,
+    "res_elongation_factor": 0.00,
 }
 
 
@@ -115,27 +113,27 @@ def run_dense(neuron_params):
     "T": 10000.,
      }
     dendrite_params.update(splitting_dendrites)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params)
     step(2000./resolution, 1, False, True)
     arborization =    {'use_van_pelt': False,
     'use_flpl_branching' : False,
     "persistence_length": 30.0,
-    "CR_weight_diameter": 0.1,
-    "CR_retraction_th": 0.01,
-    "CR_elongation_th": 0.12,
-    "CR_elongation_factor": 0.0612,
-    "CR_retraction_factor": 10.,
+    "res_weight_diameter": 0.1,
+    "res_retraction_threshold": 0.01,
+    "res_elongation_threshold": 0.12,
+    "res_elongation_factor": 0.0612,
+    "res_retraction_factor": 10.,
     # 'use_van_pelt' : True,
-    "CR_neurite_generated": 9500.,
-    "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.15,
-    "CR_variance": 0.02,
-    "CR_use_ratio": 0.3,
+    "res_neurite_generated": 9500.,
+    "res_neurite_delivery_tau": 50.,
+    "res_correlation": 0.15,
+    "res_variance": 0.02,
+    "res_use_ratio": 0.3,
      }
     dendrite_params.update(arborization)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -145,19 +143,19 @@ def run_dense(neuron_params):
     # 'use_flpl_branching' : True,
     "flpl_branching_rate" : 0.00036,
     "persistence_length":5.0,
-    "CR_retraction_th": 0.1,
-    "CR_weight_diameter": 0.001,
-    "CR_elongation_th": 0.14,
-    "CR_elongation_factor": 0.12,
+    "res_retraction_threshold": 0.1,
+    "res_weight_diameter": 0.001,
+    "res_elongation_threshold": 0.14,
+    "res_elongation_factor": 0.12,
     # 'use_van_pelt' : True,
-    "CR_neurite_generated": 9500.,
-    "CR_neurite_delivery_tau": 50.,
-    "CR_correlation": 0.5,
-    "CR_variance": 0.2,
-    "CR_use_ratio": 0.4,
+    "res_neurite_generated": 9500.,
+    "res_neurite_delivery_tau": 50.,
+    "res_correlation": 0.5,
+    "res_variance": 0.2,
+    "res_use_ratio": 0.4,
      }
     dendrite_params.update(arborization)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -165,7 +163,7 @@ def run_dense(neuron_params):
     step(2000./resolution, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    # ds.set_object_status(gid,params = neuron_params,
+    # ds.set_object_parameters(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -180,7 +178,7 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.set_object_status(gid,params = neuron_params,
+    # ds.set_object_parameters(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)

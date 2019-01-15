@@ -32,10 +32,10 @@ During the growing process, the main active unit is the
 * it moves in space, either elongating, remaining at the same place, or
   retracting,
 * it can split into two different :cpp:class:`growth::GrowthCone` objects,
-* it can be absorbed back into the neurite (it dies).
+* it can be absorbed back into the neurite (it is pruned).
 
 The motion is implemented through different models that are detailed in the
-:ref:`models` section.
+:ref:`CXXmodels` section.
 
 The split event belongs to the more general class of branching events.
 

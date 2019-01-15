@@ -28,7 +28,6 @@ soma_radius = 3.
 use_uniform_branching = False
 use_vp = False
 use_run_tumble = True
-use_critical_resource = False
 
 gc_model = 'persistent_random_walk'
 

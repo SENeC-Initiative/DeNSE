@@ -20,16 +20,18 @@ NeuronManager::NeuronManager() {}
 void NeuronManager::initialize()
 {
     // create default neuron with two neurites (axon + dendrite)
+    // set growth cone model to resource-based to get these parameters
     num_created_neurons_ = 0;
     statusMap empty_params;
     statusMap params({{names::num_neurites, Property(2, "")},
-                      {names::growth_cone_model, Property("", "")},
+                      {names::growth_cone_model, Property(
+                          "resource-based_pull-only_run-and-tumble", "")},
                       {"x", Property(0., "micrometer")},
                       {"y", Property(0., "micrometer")}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
-    std::vector<std::string> options({"use_critical_resource", "use_van_pelt",
+    std::vector<std::string> options({"use_van_pelt",
                                       "use_uniform_branching",
                                       "use_flpl_branching"});
 

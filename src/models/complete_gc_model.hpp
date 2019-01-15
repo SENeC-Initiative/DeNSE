@@ -5,7 +5,7 @@
 #include "GrowthCone.hpp"
 
 // models
-#include "elongation_interface.hpp"
+#include "extension_interface.hpp"
 #include "steering_interface.hpp"
 #include "direction_select_interface.hpp"
 
@@ -19,8 +19,8 @@ namespace growth
  * The GrowthConeModel class inherits from :cpp:class:`GrowthCone`. It overrides
  * the pure virtual functions responsible for:
  *
- * - elongation through the `ElType` class (`elongator_` member, inherits from
- *   :cpp:class:`ElongationModel` interface),
+ * - extension through the `ElType` class (`elongator_` member, inherits from
+ *   :cpp:class:`ExtensionModel` interface),
  * - steering through the `SteerMethod` class (`steerer_` member, inherits from
  *   :cpp:class:`SteeringModel` interface),
  * - direction selection through the `DirSelMethod` class (`dir_selector_`

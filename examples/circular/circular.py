@@ -24,7 +24,7 @@ def step(n, loop_n, plot=True):
     ds.simulate(n)
     print("done")
     if plot:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ds.plot.plot_neurons(mode='mixed', subsample=1, axis=ax,
                              show_nodes=True, show_neuron_id=True, show=True)
 
@@ -160,10 +160,10 @@ if __name__ == '__main__':
                         "use_uniform_branching": True,
                         "uniform_branching_rate": 0.1 * cph,})
 
-    ds.set_object_status(gids,
-                 params=neuron_params,
-                 dendrites_params=dendrite_params,
-                 axon_params=axon_params)
+    ds.set_object_parameters(gids,
+                             params=neuron_params,
+                             dendrites_params=dendrite_params,
+                             axon_params=axon_params)
 
     # ~ for i in range(2):
         # ~ step(4.*day, 0, True)

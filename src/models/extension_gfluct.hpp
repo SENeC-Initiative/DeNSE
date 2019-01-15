@@ -2,13 +2,13 @@
 #define GFLUCT_EL_H
 
 // elements
-#include "elongation_interface.hpp"
+#include "extension_interface.hpp"
 
 
 namespace growth
 {
 
-class GFluctElongationModel : public virtual ElongationModel
+class GFluctExtensionModel : public virtual ExtensionModel
 {
   protected:
     double speed_gc_avg_;
@@ -17,9 +17,9 @@ class GFluctElongationModel : public virtual ElongationModel
     std::normal_distribution<double> normal_;
 
   public:
-    GFluctElongationModel(GCPtr gc, NeuritePtr neurite);
-    GFluctElongationModel(const GFluctElongationModel &copy) = delete;
-    GFluctElongationModel(const GFluctElongationModel &copy, GCPtr gc, NeuritePtr neurite);
+    GFluctExtensionModel(GCPtr gc, NeuritePtr neurite);
+    GFluctExtensionModel(const GFluctExtensionModel &copy) = delete;
+    GFluctExtensionModel(const GFluctExtensionModel &copy, GCPtr gc, NeuritePtr neurite);
 
     double compute_speed(mtPtr rnd_engine, double substep) override final;
 

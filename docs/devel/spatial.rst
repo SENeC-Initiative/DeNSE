@@ -1,6 +1,16 @@
-====================
+.. _spatial-interactions:
+
+========================
 Spatial interactions
-====================
+========================
+
+The spatial navigation of growth cones is powered by a geometric engine library, `GEOS
+<http://https://trac.osgeo.org/geos>`_, the spatial library is compatible with multithreading library `OpenMP`.
+The spatial manager supervises growth cones' elongation and wall interactions.
+The spatial implementation is detailed in :ref:`geometry`.
+Extension to `MPI` and neurite-neurite interactions are work in progress.
+
+
 
 
 Sensing walls
@@ -12,7 +22,7 @@ The obstacle are sensed at each step, through the `growth::GrowthCone` interface
 At present time only one environment can be set and it represents the physical space.
 Later chemical space and electromagnetic can be represented with more environment object.
 
-The space is managed with Boost:geometry, read more here `environment`_.
+The space is managed with Boost:geometry, read more here `geometry`_.
 
 
 `growth::GrowthCone` implements:

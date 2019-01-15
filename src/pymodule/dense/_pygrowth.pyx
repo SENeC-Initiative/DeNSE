@@ -38,11 +38,12 @@ __all__ = [
     "get_object_type",
     "get_recording",
     "get_simulation_id",
-    "get_object_status",
+    "get_object_parameters",
     "reset_kernel",
     "set_environment",
     "set_kernel_status",
-    "set_object_status",
+    "set_neurite_parameters",
+    "set_object_parameters",
     "simulate",
 ]
 
@@ -129,26 +130,34 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
 
     Returns
     -------
-    neurons : tuple of :class:`Neuron` objects or of ints
-        GIDs of the objects created.
+    neurons : Neuron, Population, or ints
+        By default, returns a :class:`~dense.elements.Neuron` object if a
+        single neuron is requested, a :class:`~dense.elements.Popuulation` if
+        several neurons are created, or a tuple of the neurons' GIDs if 
+        `return_ints` is True.
 
     Example
     -------
     Creating one neuron: ::
 
         neuron_prop = {
-            "position": (5., 12.),
-            "description": "pyramidal_neuron"
+            "position": (5., 12.)*um,
+            "description": "my_special_neuron"
         }
-        axon_prop = {"average_rate": 70., "std_rate": 7., "persistence": 90.}
-        gids = dense.Create(
+        axon_prop = {
+            "speed_growth_cone": 1.*um/hour,
+            "persistence_length": 300.*um
+        }
+
+        neuron = ds.create_neurons(
             params=neuron_prop, num_neurites=3, # axon + 2 dendrites
             axon_params=axon_prop)
 
     Note
     ----
-    When specifying `num_neurites`, the first neurite created is an axon, the
-    subsequent neurites are dendrites.
+    When specifying `num_neurites`, the first neurite created is an axon unless
+    `has_axon` is set to False, the subsequent neurites are dendrites.
+    If `has_axon` is set to False, then only dendrites are created.
     '''
     assert isinstance(params, dict), "`params` must be a dictionary."
 
@@ -211,7 +220,7 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     if not params:
         params = get_default_parameters("neuron", settables=True)
         params.update(get_default_parameters(params["growth_cone_model"],
-                                           settables=True))
+                                             settables=True))
         if culture is None:
             if n == 1:
                 params['position'] = (0., 0.)
@@ -360,6 +369,9 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
             cneurite_types.push_back(_to_bytes(s))
 
     if names is not None:
+        if not nonstring_container(names):
+            names = [names]
+
         assert len(names) == num_neurites, \
             "`names` must contain exactly `num_neurites` entries."
 
@@ -398,6 +410,8 @@ def create_recorders(targets, observables, sampling_intervals=None,
                      start_times=None, end_times=None, levels="auto",
                      restrict_to=None, record_to="memory", buffer_size=100):
     '''
+    @TODO : LIST OF THE POSSIBLE OBSERVABLES
+    
     Create recorders to monitor the state of target neurons in the environment.
     One recorder is created on each thread containing target neurons for every
     observable.
@@ -454,7 +468,8 @@ def create_recorders(targets, observables, sampling_intervals=None,
     num_obj = get_num_created_objects_()
 
     # switch targets and observables to lists
-    targets     = list(targets) if nonstring_container(targets) else [targets]
+    targets     = list(targets) if nonstring_container(targets) \
+                  else [int(targets)]
     observables = list(observables) if nonstring_container(observables) \
                   else [observables]
     num_obs = len(observables)
@@ -545,16 +560,16 @@ def generate_model(elongation_type, steering_method, direction_selection):
     Returns a Model object giving the method to use for each of the three main
     properties:
 
-    - the elongation type (how the growth cone speed is computed)
+    - the extension type (how the growth cone speed is computed)
     - the steering method (how forces are exerted on the growth cone)
     - the direction selection method (how the new direction is chosen at each
       step)
 
     Parameters
     ----------
-    elongation_type : str
+    extension : str
         Among "constant", "gaussian-fluctuations", or "resource-based".
-    steering_method : str
+    steering : str
         Among "pull-only", "memory-based", or "self-referential-forces"
         (not yet).
     direction_selection : str
@@ -566,21 +581,18 @@ def generate_model(elongation_type, steering_method, direction_selection):
 
     Note
     ----
-    The properties of the model can be obtained through
-    ``model.elongation_type``, ``model.steering_method`` and
-    ``model.direction_selection``.
+    The properties of the model can be obtained through ``model.extension``,
+    ``model.steering`` and ``model.direction_selection``.
 
     For more information on the models, see :ref:`pymodels`.
     '''
-    etypes = [_to_string(et) for et in get_elongation_types_()]
+    etypes = [_to_string(et) for et in get_extension_types_()]
     stypes = [_to_string(st) for st in get_steering_methods_()]
     dtypes = [_to_string(dt) for dt in get_direction_selection_methods_()]
 
-    assert elongation_type in etypes, \
-        "Invalid `elongation_type` " + elongation_type + "."
+    assert extension in etypes,  "Invalid `extension` " + elongation_type + "."
 
-    assert steering_method in stypes, \
-        "Invalid `steering_method` " + steering_method + "."
+    assert steering in stypes,  "Invalid `steering` " + steering_method + "."
 
     assert direction_selection in dtypes, \
         "Invalid `direction_selection` " + direction_selection + "."
@@ -699,10 +711,10 @@ def get_simulation_id():
     return _to_string(c_simulation_id)
 
 
-def get_object_status(gids, property_name=None, level=None, neurite=None,
-                      time_units="hours", return_iterable=False):
+def get_object_parameters(gids, property_name=None, level=None, neurite=None,
+                          return_iterable=False):
     '''
-    Get the object's properties.
+    Return the object's properties.
 
     Parameters
     ----------
@@ -719,8 +731,6 @@ def get_object_status(gids, property_name=None, level=None, neurite=None,
         `dendrites`). By default, both dictionaries are returned inside the
         neuronal status dictionary. If `neurite` is specified, only the
         parameters of this neurite will be returned.
-    time_units : str, optional (default: hours)
-        Unit for the time, among "seconds", "minutes", "hours", and "days".
     return_iterable : bool, optional (default: False)
         If true, returns a dict or an array, even if only one gid is passed.
 
@@ -730,27 +740,24 @@ def get_object_status(gids, property_name=None, level=None, neurite=None,
         Properties of the objects' status:
 
         * single value if `gids` contained only one node and
-        `property_name` was specified (unless )
+          `property_name` was specified (unless `return_iterable` is True)
         * ``dict`` if `gids` contained only one node and `property_name` was
-        not specified.
+          not specified.
         * array of values if `gids` contained several nodes and `property_name`
-        was specified.
+          was specified.
         * array of ``dict``s if `gids` contained several nodes and
-        `property_name` was not specified.
+          `property_name` was not specified.
     '''
     cdef:
         statusMap c_status
-        string clevel, cneurite, event_type, ctime_units
-
-    valid_time_units = ("seconds", "minutes", "hours", "days")
-    assert time_units in valid_time_units, \
-        "`time_units` should be among: {}.".format(valid_time_units)
-    ctime_units = _to_bytes(time_units)
+        string clevel, cneurite, event_type
 
     status = {}
-    if isinstance(gids, int):
+
+    if not nonstring_container(gids):
         #creates a vector of size 1
         gids = vector[size_t](1, <size_t>gids)
+
     for gid in gids:
         if get_object_type(gid) == "neuron":
             # get level
@@ -860,22 +867,38 @@ def get_object_state(gids, variable, level="neuron"):
 
 
 def get_object_type(gid):
-    ''' Return the type of the object. '''
+    '''
+    Return the type of the object associated to `gid`.
+    An error is thrown if the GID does not exist.
+
+    Parameters
+    ----------
+    gid : int
+        The object GID in the simulator
+
+    Returns
+    -------
+    A string describing the object, e.g. "neuron" or "recorder".
+    '''
     return _to_string(object_type_(gid))
 
 
 def get_neurons(as_ints=False):
     '''
-    Return the neurons
+    Return the existing neurons
 
     Parameters
     ----------
     as_ints : bool, optional (default: False)
-        If True, only the GIDs of the neurons are returned (saves memory)
+        Whether only the ids of the neurons should be returned instead of
+        :class:`~dense.elements.Neuron` objects. Useful for large simulations
+        to reduce the memory footprint.
 
     Returns
     -------
-    neurons : :class:`~dense.elements.Population` or list of ints
+    A :class:~dense.elements.Population` object if several neurons are created,
+    a :class:`~dense.elements.Neuron` if a single neuron is created, or a tuple
+    of ints if `as_ints` is True.
     '''
     if as_ints:
         return get_neurons_()
@@ -1010,18 +1033,25 @@ def get_recording(recorder, record_format="detailed"):
     At neurite level:
 
     >>> get_recording(rec)
-    >>> {observable: {
-    >>>     neuron0: {"axon": [...], "dendrite1": [...], ...},
-    >>>     neuron1: {"axon": [...], "dendrite1": [...], ...}, ...},
-    >>>  "times": [...]}
+    >>> {
+    >>>     observable: {
+    >>>         neuron0: {"axon": [...], "dendrite1": [...], ...},
+    >>>         neuron1: {"axon": [...], "dendrite1": [...], ...}, ...
+    >>>     },
+    >>>     "times": [...]
+    >>> }
 
     >>> get_recording(rec, "compact")
-    >>> {observable: {
-    >>>     "data": {
-    >>>         (neuron0, "axon"): [...],
-    >>>         (neuron0, "dendrite1"): [...], ...
-    >>>         (neuron1, "axon"): [...], ...}
-    >>>     "times": [...]}}
+    >>> {
+    >>>     observable: {
+    >>>         "data": {
+    >>>             (neuron0, "axon"): [...],
+    >>>             (neuron0, "dendrite1"): [...], ...
+    >>>             (neuron1, "axon"): [...], ...
+    >>>          },
+    >>>          "times": [...]}
+    >>>     }
+    >>> }
     '''
     recording   = {}
     ctime_units = "minutes"
@@ -1030,7 +1060,7 @@ def get_recording(recorder, record_format="detailed"):
         recorder = [recorder]
 
     for rec in recorder:
-        rec_status = get_object_status(rec)
+        rec_status = get_object_parameters(rec)
 
         observable = rec_status["observable"]
         level      = rec_status["level"]
@@ -1150,15 +1180,11 @@ def set_environment(culture, min_x=None, max_x=None, unit='um',
     keyword arguments are only used if `culture` refers to a file which will
     be loaded through :func:`~dense.environment.culture_from_file`.
     """
-    # make sure that, if neurons exist, their growth cones are not using the
-    # `simple_random_walk` model, which is not compatible.
+    # make sure that, neurons do not exist
     neurons = get_neurons()
 
     if neurons:
-        for n in neurons:
-            assert get_object_status_(n, "growth_cone_model") != "simple_random_walk", \
-                "The `simple_random_walk` model, is not compatible with " +\
-                "complex environments."
+        raise RuntimeError("Cannot create the environment after the neurons.")
 
     if is_string(culture):
         from .environment import culture_from_file
@@ -1190,6 +1216,9 @@ def set_environment(culture, min_x=None, max_x=None, unit='um',
 
     culture._return_quantity = True
 
+    # tell the kernel manager that environment is required
+    set_kernel_status("environment_required", True)
+
     return culture
 
 
@@ -1211,12 +1240,18 @@ def set_kernel_status(status, value=None, simulation_id=None):
     ----
     Available options are:
 
-    * ``"resolution"`` (float) - the simulation timestep.
+    * ``"adaptive_timestep"`` (float) - Value by which the step should be
+      divided when growth cones are interacting. Set to -1 to disable adaptive
+      timestep.
+    * ``"environment_required"`` (bool) - Whether a spatial environment should
+      be provided or not.
+    * ``"interactions"`` (bool) - Whether neurites interact with one another.
+    * ``"max_allowed_resolution"`` (time) - Maximum timestep allowed.
     * ``"num_local_threads"`` (int) - the number of OpenMP thread per MPI
       process.
-    * ``"num_mpi_processes"`` (int) - number of MPI processes.
     * ``"print_time"`` (bool) - whether time should be printed
       during the simulation.
+    * ``"resolution"`` (time) - the simulation timestep.
     * ``"seeds"`` (array) - array of seeds for the random number
       generators (one per processus, total number needs to be the
       same as `num_virtual_processes`)
@@ -1241,7 +1276,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
             neurons = get_neurons()
             if neurons:
                 for n in neurons:
-                    assert get_object_status(
+                    assert get_object_parameters(
                         n, "growth_cone_model") != "simple_random_walk", \
                         "The `simple_random_walk` model, is not compatible " +\
                         "with complex environments."
@@ -1256,20 +1291,11 @@ def set_kernel_status(status, value=None, simulation_id=None):
         for key, value in internal_status.items():
             assert key in get_kernel_status(), \
                 "`" + key + "` option unknown."
+
             if key == "resolution":
                 assert isinstance(value, ureg.Quantity), \
                     "`resolution` must be a time quantity."
                 internal_status[key] = value.m_as("minute")
-
-        if internal_status.get("environment_required", False):
-            # make sure that, if neurons exist, their growth cones are not using
-            # the `simple_random_walk` model, which is not compatible.
-            neurons = get_neurons()
-            if neurons:
-                for n in neurons:
-                    assert get_object_status(n, "growth_cone_model") != "simple_random_walk", \
-                        "The `simple_random_walk` model, is not compatible with " +\
-                        "complex environments."
 
         for key, value in internal_status.items():
             key = _to_bytes(key)
@@ -1282,27 +1308,25 @@ def set_kernel_status(status, value=None, simulation_id=None):
     set_kernel_status_(c_status, c_simulation_id)
 
 
-def set_object_status(gids, params=None, axon_params=None,
-                      dendrites_params=None):
+def set_object_parameters(objects, params=None, axon_params=None,
+                          dendrites_params=None):
     '''
-    Update the status of the objects indexes by `gids` using the parameters
-    contained in `params`.
-
-    @todo: clean up params creation, one common function with _create_neurons
-    + make set_status accept vectors.
+    Update the status of the `objects` using the parameters contained in
+    `params`.
 
     Parameters
     ----------
-    gids : tuple
-        GIDs of the objects which will be updated.
+    objects : object or int
+        Objects to update.
     params : dict or list of dicts
         New parameters of the objects.
     axon_params :  dict or list of dicts, optional (default: None)
-        New axon parameters.
+        New axon parameters if `objects` are neurons.
     dendrites_params :  dict or list of dicts, optional (default: None)
-        New dendrites parameters.
+        New dendrites parameters if `objects` are neurons.
     '''
-    gids             = list(gids) if nonstring_container(gids) else [gids]
+    gids             = list(objects) if nonstring_container(objects)\
+                       else [objects]
     num_objects      = len(gids)
     params           = {} if params is None else params
     axon_params      = {} if axon_params is None else axon_params
@@ -1330,12 +1354,12 @@ def set_object_status(gids, params=None, axon_params=None,
             def_model    = p.get("growth_cone_model", "default")
             _check_params(p, object_name)
 
-            astat        = get_object_status(gid, neurite="axon")
+            astat        = get_object_parameters(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_a, "neurite", gc_model=gc_model)
 
-            dstat        = get_object_status(gid, neurite="dendrites")
+            dstat        = get_object_parameters(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_d, "neurite", gc_model=gc_model)
@@ -1343,7 +1367,7 @@ def set_object_status(gids, params=None, axon_params=None,
         for gid, p, p_a in zip(gids, it_p, it_a):
             object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            astat        = get_object_status(gid, neurite="axon")
+            astat        = get_object_parameters(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
@@ -1352,7 +1376,7 @@ def set_object_status(gids, params=None, axon_params=None,
         for gid, p, p_d in zip(gids, it_p, it_d):
             object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            dstat        = get_object_status(gid, neurite="dendrites")
+            dstat        = get_object_parameters(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
@@ -1394,19 +1418,37 @@ def set_object_status(gids, params=None, axon_params=None,
                     dendrites_statuses[i])
 
 
+def set_neurite_parameters(neuron, neurite, params):
+    '''
+    Set the status of a specific neurite on a specific neuron.
+
+    Parameters
+    ----------
+    neuron : :class:`~dense.elements.Neuron` or GID
+        Neuron containing the neurite to update.
+    neurite : :class:`~dense.elements.Neuron` or str
+        Neurite to update.
+    params : dict
+        Parameters of the neurite.
+    '''
+    neuron  = int(neuron)
+    neurite = _to_bytes(str(neurite))
+
+    _check_params(params, "neurite")
+
+    cdef statusMap cparams = _get_scalar_status(params, 1)
+
+    set_neurite_status_(neuron, neurite, cparams)
+
+
 def simulate(time, force_resol=False):
     '''
-    simulate the growth of a culture.
+    Simulate the growth of the neurons.
 
     Parameters
     ----------
     time : float or int (dimensionned quantity)
         Duration of the simulation.
-
-    Notes
-    -----
-    All parameters are added, i.e. ``dense.simulate(25.4, 2)`` will lead
-    to a 145.4-second long simulation.
     '''
     assert is_quantity(time), "`time` must have units."
 
@@ -1563,8 +1605,10 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
             pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
             rad = neuron_params[i][b"soma_radius"].d
             neurons.append(Neuron(num_objects + i, pos, rad))
-
-        return Population(neurons)
+        if n == 1:
+            return neurons[0]
+        else:
+            return Population(neurons)
 
 
 def _get_pyskeleton(gid, unsigned int resolution=10):
@@ -1767,7 +1811,7 @@ def _get_tree(neuron, neurite):
     Return a tree describing a neurite.
     '''
     from .elements import Node, Tree
-    pos  = get_object_status(neuron, property_name="position")
+    pos  = get_object_parameters(neuron, property_name="position")
     tree = Tree(neuron, neurite)
 
     keep_going = True
@@ -1936,6 +1980,7 @@ cdef statusMap _get_scalar_status(dict params, int n) except *:
             if is_scalar(val[0]) and n != 1:
                 raise ValueError("Neurons cannot have same position: "
                                  "`position` entry must be a (N,2) array.")
+
             elif not is_scalar(val[0]) and n == 1:
                 assert is_quantity(val[0][0]), "Positions must have units."
                 x = float(val[0][0].to('micrometer').magnitude)
@@ -2192,15 +2237,15 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 # we work at neurite or gc level
                 if level == "auto":
                     for new_lvl in ("neurite", "growth_cone"):
-                        valid_obs = get_object_status(
+                        valid_obs = get_object_parameters(
                             n, "observables", neurite=rt, level=new_lvl)
                         if obs in valid_obs:
                             pos_auto.append(i)
                             new_level.append(new_lvl)
                             break
                 else:
-                    valid_obs = get_object_status(n, "observables", neurite=rt,
-                                                  level=level)
+                    valid_obs = get_object_parameters(n, "observables",
+                                                      neurite=rt, level=level)
                     if obs not in valid_obs:
                         raise RuntimeError(
                             "Valid observables for neurite `"
@@ -2214,22 +2259,22 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                         neurites =  _get_neurites(n)
                         if "axon" in neurites:
                             valid_obs  = set(
-                                get_object_status(n, "observables",
-                                                  neurite="axon",
-                                                  level=new_lvl))
+                                get_object_parameters(n, "observables",
+                                                      neurite="axon",
+                                                      level=new_lvl))
                             neurites = [nrt for nrt in neurites if nrt != "axon"]
                             if neurites:
                                 valid_obs = valid_obs.intersection(
-                                    get_object_status(
+                                    get_object_parameters(
                                         n, "observables", neurite="dendrites",
                                         level=new_lvl))
                         elif neurites:
-                            valid_obs = get_object_status(
+                            valid_obs = get_object_parameters(
                                 n, "observables", neurite="dendrites",
                                 level=new_lvl)
                     else:
-                        valid_obs = get_object_status(n, "observables",
-                                                      level=new_lvl)
+                        valid_obs = get_object_parameters(n, "observables",
+                                                         level=new_lvl)
                     if obs in valid_obs:
                         pos_auto.append(i)
                         new_level.append(new_lvl)
@@ -2239,22 +2284,23 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 neurites  =  _get_neurites(n)
                 if "axon" in neurites:
                     valid_obs  = set(
-                        get_object_status(n, "observables", neurite="axon",
-                                          level=level))
+                        get_object_parameters(n, "observables", neurite="axon",
+                                              level=level))
                     neurites = [nrt for nrt in neurites if nrt != "axon"]
                     if neurites:
-                        valid_obs = valid_obs.intersection(get_object_status(
-                            n, "observables", neurite="dendrites",
-                            level=level))
+                        valid_obs = valid_obs.intersection(
+                            get_object_parameters(
+                                n, "observables", neurite="dendrites",
+                                level=level))
                 elif neurites:
-                    valid_obs = get_object_status(n, "observables",
+                    valid_obs = get_object_parameters(n, "observables",
                                                   neurite="dendrites",
                                                   level=level)
                 if obs not in valid_obs:
                     raise RuntimeError("Valid observables at level `"
                                        "{}` are {}".format(level, valid_obs))
             else:
-                if obs not in get_object_status(n, "observables", level=level):
+                if obs not in get_object_parameters(n, "observables", level=level):
                     valid_lvl = []
                     for k, v in valid_levels.items():
                         if obs in v:
@@ -2312,11 +2358,15 @@ def _check_params(params, object_name, gc_model=None):
     '''
     Check the types and validity of the parameters passed.
     '''
-    gc_model = \
-        _to_string(get_default_model_()) if gc_model is None else str(gc_model)
+    default_model = _to_string(get_default_model_())
+    gc_model      = default_model if gc_model is None else gc_model
+    
+    valid_models            = get_models()
+    valid_models["default"] = valid_models[default_model]
 
-    assert gc_model in get_models(False), \
-        "Unknown growth cone `" + gc_model + "`."
+    assert gc_model in valid_models, "Unknown growth cone `" + gc_model + "`."
+
+    gc_model = "_".join(valid_models[gc_model])
 
     cdef:
         string ctype
@@ -2339,13 +2389,10 @@ def _check_params(params, object_name, gc_model=None):
                            "get_models.")
 
     get_defaults_(cname, ctype, cgcmodel, True, default_params)
-    py_defaults = _statusMap_to_dict(default_params)
 
-    if ("growth_cone_model" in params):
-        get_defaults_(_to_bytes(params["growth_cone_model"]),
-                      _to_bytes("growth_cone"),
-                      _to_bytes(params["growth_cone_model"]), False,
-                      default_params)
+    if object_name != "recorder":
+        get_defaults_(cgcmodel, _to_bytes("growth_cone"),
+                      cgcmodel, False, default_params)
 
     py_defaults = _statusMap_to_dict(default_params)
 

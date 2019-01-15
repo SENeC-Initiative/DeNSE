@@ -1,0 +1,15 @@
+=========================
+The ``morphology`` module
+=========================
+
+.. currentmodule:: morphology
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.morphology
+   :members:
+   :undoc-members:

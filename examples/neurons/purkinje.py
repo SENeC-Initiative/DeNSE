@@ -27,25 +27,24 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
 
     "persistence_length": 60.0 * um,
     # "use_flpl_branching": use_uniform_branching,
 
     # Cr model
-    # ~ "CR_retraction_factor": 0.010 * um / minute ,
-    # ~ "CR_elongation_factor": 0.0371 * um / minute,
-    # ~ # "CR_leakage": 0.05 * minute,
-    # ~ "CR_retraction_th": 10. * uM ,
-    # ~ "CR_elongation_th": 50. * uM,
-    # ~ "CR_leakage": 10.0 * minute,
-    # ~ "CR_neurite_generated": 4500. * uM,
-    # ~ "CR_correlation": 0.,
-    # ~ "CR_variance": 0.1 * uM / minute ** 0.5,
-    # ~ "CR_use_ratio": 0.16 * cpm,
+    # ~ "res_retraction_factor": 0.010 * um / minute ,
+    # ~ "res_elongation_factor": 0.0371 * um / minute,
+    # ~ # "res_leakage": 0.05 * minute,
+    # ~ "res_retraction_threshold": 10. * uM ,
+    # ~ "res_elongation_threshold": 50. * uM,
+    # ~ "res_leakage": 10.0 * minute,
+    # ~ "res_neurite_generated": 4500. * uM,
+    # ~ "res_correlation": 0.,
+    # ~ "res_variance": 0.1 * uM / minute ** 0.5,
+    # ~ "res_use_ratio": 0.16 * cpm,
 
-    # ~ "CR_weight_diameter": 0.,
+    # ~ "res_weight_diameter": 0.,
 
     # Best model
     "gc_split_angle_mean": 1.*rad,
@@ -57,11 +56,10 @@ dendrite_params = {
 
 axon_params = {
     "growth_cone_model": gc_model,
-    "use_critical_resource": True,
     "use_van_pelt": False,
     "use_flpl_branching": False,
-    # ~ "CR_retraction_factor": 0.000 * um / minute,
-    # ~ "CR_elongation_factor": 0.00 * um / minute,
+    # ~ "res_retraction_factor": 0.000 * um / minute,
+    # ~ "res_elongation_factor": 0.00 * um / minute,
 }
 
 
@@ -113,7 +111,7 @@ def run_dense(neuron_params):
      }
 
     dendrite_params.update(splitting_dendrites)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params)
     step(2000.*minute, 1, False, True)
@@ -121,20 +119,20 @@ def run_dense(neuron_params):
     arborization =    {'use_van_pelt': False,
     'use_flpl_branching' : False,
     "persistence_length": 30.0 * um,
-    "CR_weight_diameter": 0.,
-    "CR_retraction_th": 10. * uM,
-    "CR_elongation_th": 50. * uM,
-    "CR_elongation_factor": 0.0612 * um / minute,
-    "CR_retraction_factor": 0.1 * um / minute,
+    "res_weight_diameter": 0.,
+    "res_retraction_threshold": 10. * uM,
+    "res_elongation_threshold": 50. * uM,
+    "res_elongation_factor": 0.0612 * um / minute,
+    "res_retraction_factor": 0.1 * um / minute,
     # 'use_van_pelt' : True,
-    "CR_neurite_generated": 9500. * uM,
-    "CR_neurite_delivery_tau": 50.*minute,
-    "CR_correlation": 0.,
-    "CR_variance": 0.02 * uM / minute ** 0.5,
-    "CR_use_ratio": 0.3 * cpm,
+    "res_neurite_generated": 9500. * uM,
+    "res_neurite_delivery_tau": 50.*minute,
+    "res_correlation": 0.,
+    "res_variance": 0.02 * uM / minute ** 0.5,
+    "res_use_ratio": 0.3 * cpm,
      }
     dendrite_params.update(arborization)
-    ds.set_object_status(gid,
+    ds.set_object_parameters(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -144,19 +142,19 @@ def run_dense(neuron_params):
     # ~ # 'use_flpl_branching' : True,
     # ~ "flpl_branching_rate" : 0.00036,
     # ~ "persistence_length":5.0,
-    # ~ "CR_retraction_th": 0.1,
-    # ~ "CR_weight_diameter": 0.001,
-    # ~ "CR_elongation_th": 0.14 * uM,
-    # ~ "CR_elongation_factor": 0.12 * um / minute,
+    # ~ "res_retraction_threshold": 0.1,
+    # ~ "res_weight_diameter": 0.001,
+    # ~ "res_elongation_threshold": 0.14 * uM,
+    # ~ "res_elongation_factor": 0.12 * um / minute,
     # ~ # 'use_van_pelt' : True,
-    # ~ "CR_neurite_generated": 9500. * uM,
-    # ~ "CR_neurite_delivery_tau": 50.,
-    # ~ "CR_correlation": 0.5,
-    # ~ "CR_variance": 0.2,
-    # ~ "CR_use_ratio": 0.4 * cpm,
+    # ~ "res_neurite_generated": 9500. * uM,
+    # ~ "res_neurite_delivery_tau": 50.,
+    # ~ "res_correlation": 0.5,
+    # ~ "res_variance": 0.2,
+    # ~ "res_use_ratio": 0.4 * cpm,
      # ~ }
     # ~ dendrite_params.update(arborization)
-    # ~ ds.set_object_status(gid,
+    # ~ ds.set_object_parameters(gid,
                         # ~ params=neuron_params,
                         # ~ dendrites_params=dendrite_params,
                         # ~ axon_params=axon_params)
@@ -164,7 +162,7 @@ def run_dense(neuron_params):
     # ~ step(2000./resolution, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    # ds.set_object_status(gid,params = neuron_params,
+    # ds.set_object_parameters(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -179,7 +177,7 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.set_object_status(gid,params = neuron_params,
+    # ds.set_object_parameters(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)

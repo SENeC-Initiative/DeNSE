@@ -1,4 +1,4 @@
-#include "elongation_resource_based.hpp"
+#include "extension_resource_based.hpp"
 
 // c++ includes
 #include <cmath>
@@ -12,8 +12,8 @@
 
 namespace growth
 {
-ResourceBasedElongationModel::ResourceBasedElongationModel(GCPtr gc, NeuritePtr neurite)
-    : ElongationModel(gc, neurite)
+ResourceBasedExtensionModel::ResourceBasedExtensionModel(GCPtr gc, NeuritePtr neurite)
+    : ExtensionModel(gc, neurite)
     , stochastic_tmp_(0)
     , received_(0)
     , sqrt_corr_(0)
@@ -40,8 +40,8 @@ ResourceBasedElongationModel::ResourceBasedElongationModel(GCPtr gc, NeuritePtr 
 }
 
 
-ResourceBasedElongationModel::ResourceBasedElongationModel(const ResourceBasedElongationModel &copy, GCPtr gc, NeuritePtr neurite)
-    : ElongationModel(copy, gc, neurite)
+ResourceBasedExtensionModel::ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite)
+    : ExtensionModel(copy, gc, neurite)
     , stochastic_tmp_(0)
     , received_(copy.received_)
     , sqrt_corr_(copy.sqrt_corr_)
@@ -66,7 +66,7 @@ ResourceBasedElongationModel::ResourceBasedElongationModel(const ResourceBasedEl
 }
 
 
-void ResourceBasedElongationModel::initialize_CR()
+void ResourceBasedExtensionModel::initialize_CR()
 {
     sqrt_corr_ = sqrt(1 - correlation_ * correlation_);
     stored_    = (stored_ == 0) ? 1.5 * elongation_th_ : stored_;
@@ -79,7 +79,7 @@ void ResourceBasedElongationModel::initialize_CR()
  *
  * This function is overwritten by each mode.
  */
-void ResourceBasedElongationModel::prepare_for_split()
+void ResourceBasedExtensionModel::prepare_for_split()
 {
     stored_ *= 0.5;
     received_ *= 0.5;
@@ -92,14 +92,14 @@ void ResourceBasedElongationModel::prepare_for_split()
  *
  * This function is overwritten by each model.
  */
-void ResourceBasedElongationModel::after_split() {}
+void ResourceBasedExtensionModel::after_split() {}
 
 
-void ResourceBasedElongationModel::compute_CR_received(double substep)
+void ResourceBasedExtensionModel::compute_res_received(double substep)
 {
     received_ = neurite_ptr_->get_available_cr() *
                 // local demand (weighted)
-                get_CR_demand() *
+                get_res_demand() *
                 // normalization factor for the neurite
                 neurite_ptr_->get_quotient_cr();
 }
@@ -110,9 +110,9 @@ void ResourceBasedElongationModel::compute_CR_received(double substep)
  *
  * @param rnd_engine
  *
- * @return CR_demand
+ * @return res_demand
  */
-double ResourceBasedElongationModel::get_CR_demand()
+double ResourceBasedExtensionModel::get_res_demand()
 {
     double current_demand = stored_ * consumption_rate_;
     // weight by centrifugal order and diameter if required
@@ -137,7 +137,7 @@ double ResourceBasedElongationModel::get_CR_demand()
  * average speed over the substep, i.e. it has be set previously using the
  * results of compute_cr_speed and does not need to be recomputed here.
  */
-double ResourceBasedElongationModel::compute_speed(mtPtr rnd_engine, double substep)
+double ResourceBasedExtensionModel::compute_speed(mtPtr rnd_engine, double substep)
 {
     double speed = 0;
 
@@ -157,13 +157,13 @@ double ResourceBasedElongationModel::compute_speed(mtPtr rnd_engine, double subs
 }
 
 
-double ResourceBasedElongationModel::compute_CR(
+double ResourceBasedExtensionModel::compute_CR(
   mtPtr rnd_engine, double substep, double step_length, bool stuck)
 {
     if (not stuck)
     {
         // compute received CR from the soma, with respect to other GC.
-        compute_CR_received(substep);
+        compute_res_received(substep);
 
         // correlated gaussian (unit standard deviation)
         noise_ =
@@ -209,24 +209,24 @@ double ResourceBasedElongationModel::compute_CR(
     return stored_;
 }
 
-void ResourceBasedElongationModel::reset_CR_demand()
+void ResourceBasedExtensionModel::reset_res_demand()
 {
     //.demand = critical_.initial_demand;
 }
 
-double ResourceBasedElongationModel::get_speed() const { return elongation_factor_; }
+double ResourceBasedExtensionModel::get_speed() const { return elongation_factor_; }
 
 
-double ResourceBasedElongationModel::get_CR_received() const { return received_; }
+double ResourceBasedExtensionModel::get_res_received() const { return received_; }
 
 
-double ResourceBasedElongationModel::get_CR_speed_factor() const
+double ResourceBasedExtensionModel::get_res_speed_factor() const
 {
     return elongation_factor_;
 }
 
 
-void ResourceBasedElongationModel::printinfo() const
+void ResourceBasedExtensionModel::printinfo() const
 {
     printf("################ \n");
     printf("CR stored %f \n", stored_);
@@ -243,27 +243,27 @@ void ResourceBasedElongationModel::printinfo() const
 }
 
 
-void ResourceBasedElongationModel::set_status(const statusMap &status)
+void ResourceBasedExtensionModel::set_status(const statusMap &status)
 {
     // state parameters
     get_param(status, names::resource, stored_);
 
     // speed-related stuff
-    get_param(status, names::CR_elongation_factor, elongation_factor_);
-    get_param(status, names::CR_retraction_factor, retraction_factor_);
-    get_param(status, names::CR_elongation_th, elongation_th_);
-    get_param(status, names::CR_retraction_th, retraction_th_);
+    get_param(status, names::res_elongation_factor, elongation_factor_);
+    get_param(status, names::res_retraction_factor, retraction_factor_);
+    get_param(status, names::res_elongation_threshold, elongation_th_);
+    get_param(status, names::res_retraction_threshold, retraction_th_);
 
-    get_param(status, names::CR_branching_th, branching_th_);
-    get_param(status, names::CR_branching_proba, branching_proba_);
+    get_param(status, names::res_branching_threshold, branching_th_);
+    get_param(status, names::res_branching_proba, branching_proba_);
 
     // use and leakage
-    get_param(status, names::CR_use_ratio, use_ratio_);
-    get_param(status, names::CR_leakage, leakage_);
-    get_param(status, names::CR_correlation, correlation_);
-    get_param(status, names::CR_variance, variance_);
-    get_param(status, names::CR_weight_diameter, weight_diameter_);
-    get_param(status, names::CR_weight_centrifugal, weight_centrifugal_);
+    get_param(status, names::res_use_ratio, use_ratio_);
+    get_param(status, names::res_leakage, leakage_);
+    get_param(status, names::res_correlation, correlation_);
+    get_param(status, names::res_variance, variance_);
+    get_param(status, names::res_weight_diameter, weight_diameter_);
+    get_param(status, names::res_weight_centrifugal, weight_centrifugal_);
 
     consumption_rate_ = use_ratio_ + 1. / leakage_;
 
@@ -275,34 +275,34 @@ void ResourceBasedElongationModel::set_status(const statusMap &status)
 }
 
 
-void ResourceBasedElongationModel::get_status(statusMap &status) const
+void ResourceBasedExtensionModel::get_status(statusMap &status) const
 {
     // state parameters
     set_param(status, names::resource, stored_, "micromole / liter");
 
     // speed-related
-    set_param(status, names::CR_elongation_factor, elongation_factor_, "micrometer / minute");
-    set_param(status, names::CR_retraction_factor, retraction_factor_, "micrometer / minute");
-    set_param(status, names::CR_elongation_th, elongation_th_, "micromole / liter");
-    set_param(status, names::CR_retraction_th, retraction_th_, "micromole / liter");
+    set_param(status, names::res_elongation_factor, elongation_factor_, "micrometer / minute");
+    set_param(status, names::res_retraction_factor, retraction_factor_, "micrometer / minute");
+    set_param(status, names::res_elongation_threshold, elongation_th_, "micromole / liter");
+    set_param(status, names::res_retraction_threshold, retraction_th_, "micromole / liter");
 
-    set_param(status, names::CR_branching_th, branching_th_, "micromole / liter");
-    set_param(status, names::CR_branching_proba, branching_proba_, "");
+    set_param(status, names::res_branching_threshold, branching_th_, "micromole / liter");
+    set_param(status, names::res_branching_proba, branching_proba_, "");
 
     // use and leakage
-    set_param(status, names::CR_use_ratio, use_ratio_, "1 / minute");
-    set_param(status, names::CR_leakage, leakage_, "minute");
-    set_param(status, names::CR_correlation, correlation_, "");
-    set_param(status, names::CR_variance, variance_, "micromole / liter / minute**0.5");
-    set_param(status, names::CR_weight_diameter, weight_diameter_, "");
-    set_param(status, names::CR_weight_centrifugal, weight_centrifugal_, "");
+    set_param(status, names::res_use_ratio, use_ratio_, "1 / minute");
+    set_param(status, names::res_leakage, leakage_, "minute");
+    set_param(status, names::res_correlation, correlation_, "");
+    set_param(status, names::res_variance, variance_, "micromole / liter / minute**0.5");
+    set_param(status, names::res_weight_diameter, weight_diameter_, "");
+    set_param(status, names::res_weight_centrifugal, weight_centrifugal_, "");
 }
 
 
 /**
  * @brief Get the current value of one of the observables
  */
-double ResourceBasedElongationModel::get_state(const char *observable) const
+double ResourceBasedExtensionModel::get_state(const char *observable) const
 {
     double value = 0.;
 

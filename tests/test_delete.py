@@ -74,7 +74,8 @@ def test_delete_neurites():
     ds.set_kernel_status("environment_required", False)
 
     # create and delete
-    neurons = ds.create_neurons(num_neurons, params={"position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um, "growth_cone_model": "res_po_rt"},
+    pos     = np.random.uniform(-1000, 1000, (num_neurons, 2))*um
+    neurons = ds.create_neurons(num_neurons, params={"position": pos},
                                 num_neurites=2)
 
     ds.delete_neurites("axon")

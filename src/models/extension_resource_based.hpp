@@ -1,13 +1,13 @@
 #ifndef RB_EL_H
 #define RB_EL_H
 
-#include "elongation_interface.hpp"
+#include "extension_interface.hpp"
 
 
 namespace growth
 {
 
-class ResourceBasedElongationModel : public virtual ElongationModel
+class ResourceBasedExtensionModel : public virtual ExtensionModel
 {
     friend class Neurite;
 
@@ -44,26 +44,26 @@ class ResourceBasedElongationModel : public virtual ElongationModel
     std::normal_distribution<double> normal_;
 
   public:
-    ResourceBasedElongationModel(GCPtr gc, NeuritePtr neurite);
-    ResourceBasedElongationModel(const ResourceBasedElongationModel &) = delete;
-    ResourceBasedElongationModel(const ResourceBasedElongationModel &copy, GCPtr gc, NeuritePtr neurite);
+    ResourceBasedExtensionModel(GCPtr gc, NeuritePtr neurite);
+    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &) = delete;
+    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite);
 
     void initialize_CR();
     void prepare_for_split() override;
     void after_split() override;
-    void reset_CR_demand();
+    void reset_res_demand();
 
     double compute_speed(mtPtr rnd_engine, double substep) override;
 
-    void compute_CR_received(double substep);
+    void compute_res_received(double substep);
     double compute_CR(mtPtr rnd_engine, double substep, double step_length,
                       bool stuck);
 
     // getter functions
     void printinfo() const;
-    double get_CR_demand();
-    double get_CR_received() const;
-    double get_CR_speed_factor() const;
+    double get_res_demand();
+    double get_res_received() const;
+    double get_res_speed_factor() const;
     double get_speed() const;
 
     // status

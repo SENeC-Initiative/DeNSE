@@ -15,25 +15,47 @@ from ._helpers import nonstring_container as _nsc
 __all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
 
 
-class Neuron(int):
+class Neuron(object):
 
     '''
-    Container to facilitate post processing of SWC files
+    Container allowing direct access to a neuron.
     '''
-
-    def __new__(cls, gid, soma_position, soma_radius):
-        return super(Neuron, cls).__new__(cls, gid)
 
     def __init__(self, gid, soma_position, soma_radius):
         self.position    = soma_position
         self.soma_radius = soma_radius
         self._axon       = None
         self._dendrites  = {}
+        self.__gid       = gid
+
+    def __int__(self):
+        return self.__gid
+
+    def __lt__(self, other):
+        return int(self) < int(other)
+
+    def __le__(self, other):
+        return int(self) <= int(other)
+
+    def __gt__(self, other):
+        return int(self) > int(other)
+
+    def __ge__(self, other):
+        return int(self) >= int(other)
+    
+    def __str__(self):
+        return str(self.__gid)
+    
+    def __repr__(self):
+        return "Neuron {}".format(self.__gid)
+    
+    def _repr_pretty_(self, p, cycle):
+        p.text("Neuron({})".format(self.__gid))
 
     @property
     def axon(self):
         '''
-        Return the :class:`Neurite` container for the axon.
+        Return the :class:`~dense.elements.Neurite` container for the axon.
         '''
         neurites = _pg._get_neurites(self)
         if "axon" in neurites:
@@ -43,8 +65,8 @@ class Neuron(int):
     @property
     def dendrites(self):
         '''
-        Return a dict containing one :class:`Neurite` container for each
-        dendrite, with its name as key.
+        Return a dict containing one :class:`~dense.elements.Neurite` container
+        for each dendrite, with its name as key.
         '''
         neurites = [k for k in _pg._get_neurites(self) if k != "axon"]
         dendrites = {}
@@ -56,8 +78,8 @@ class Neuron(int):
     @property
     def neurites(self):
         '''
-        Return a dict containing one :class:`Neurite` container for each
-        neurite, with its name as key.
+        Return a dict containing one :class:`~dense.elements.Neurite` container
+        for each neurite, with its name as key.
         '''
         neurites = self.dendrites
         if self.has_axon:
@@ -67,11 +89,64 @@ class Neuron(int):
 
     @property
     def has_axon(self):
-        return _pg.get_object_status(self, "has_axon")
+        '''
+        Whether the neuron has an axon or not.
+
+        Note
+        ----
+        For a neuron with no neurites, `has_axon` determines whether the first
+        created neurite will be an axon or a dendrite.
+        '''
+        return _pg.get_object_parameters(self, "has_axon")
 
     @property
     def total_length(self):
+        ''' Total arbor length of the neuron '''
         return _pg.get_object_state(self, variable="length")
+    
+    def create_neurites(self, num_neurites=1, params=None, angles=None,
+                        neurite_types=None, names=None):
+        '''
+        Create new neurites.
+
+        Parameters
+        ----------
+        num_neurites : int, optional (default: 1)
+            Number of neurites that will be added to the neuron.
+        params : dict, optional (default: None)
+            Parameters of the neurites.
+        angle : list, optional (default: automatically positioned)
+            Angles of the newly created neurites.
+        neurite_types : str or list, optional
+            Types of the neurites, either "axon" or "dendrite". If not provided,
+            the first neurite will be an axon if the neuron has no existing
+            neurites and its `has_axon` variable is True, all other neurites
+            will be dendrites.
+        names : str or list, optional (default: "axon" and "dendrite_X")
+            Names of the created neurites.
+        
+        See also
+        --------
+        :func:`~dense.create_neurites`.
+        '''
+        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
+                            angles=angles, neurite_types=neurite_types,
+                            names=names)
+
+    def delete_neurites(self, neurite_names=None):
+        '''
+        Delete neurites.
+
+        Parameters
+        ----------
+        neurite_names : str or list, optional (default: all neurites)
+            Neurites which will be deleted.
+
+        See also
+        --------
+        :func:`~dense.delete_neurites`
+        '''
+        _pg.delete_neurites(neurite_names=neurite_names, neurons=self)
 
     def get_neurite(self, neurite):
         '''
@@ -79,11 +154,9 @@ class Neuron(int):
         '''
         if "axon" in neurite:
             return self.axon
-        else:
-            return self.dendrites[neurite]
+        return self.dendrites[neurite]
 
-    def get_status(self, property_name=None, level=None, neurite=None,
-                   time_units="hours"):
+    def get_parameters(self, property_name=None, level=None, neurite=None):
         '''
         Get the object's properties.
 
@@ -100,17 +173,45 @@ class Neuron(int):
             By default, both dictionaries are returned inside the
             neuronal status dictionary. If `neurite` is specified, only the
             parameters of this neurite will be returned.
-        time_units : str, optional (default: hours)
-            Unit for the time, among "seconds", "minutes", "hours", and "days".
 
         Returns
         -------
         status : variable
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
+        
+        See also
+        --------
+        :func:`~dense.get_object_parameters`,
+        :func:`~dense.elements.Neurite.get_parameters`,
+        :func:`~dense.elements.Neuron.set_parameters`.
         '''
-        return _pg.get_object_status(self, property_name=property_name, level=level,
-                             neurite=neurite, time_units=time_units)
+        return _pg.get_object_parameters(self, property_name=property_name,
+                                         level=level, neurite=neurite)
+
+    def set_parameters(self, params=None, axon_params=None,
+                       dendrites_params=None):
+        '''
+        Update the neuronal parameters using the entries contained in `params`.
+
+        Parameters
+        ----------
+        params : dict
+            New neuron parameters.
+        axon_params : dict, optional (default: None)
+            New axon parameters.
+        dendrites_params : dict, optional (default: None)
+            New dendrites parameters.
+
+        See also
+        --------
+        :func:`~dense.set_object_parameters`,
+        :func:`~dense.elements.Neurite.set_parameters`,
+        :func:`~dense.elements.Neuron.get_parameters`.
+        '''
+        return _pg.set_object_parameters(
+            self, params=params, axon_params=axon_params,
+            dendrites_params=dendrites_params)
 
     def to_swc(self, filename, resolution=10):
         '''
@@ -126,7 +227,7 @@ class Neuron(int):
         '''
         _pg.save_to_swc(filename, gid=self, resolution=resolution)
 
-    def to_nml(self, filename, resolution=10, write=True):
+    def to_neuroml(self, filename, resolution=10, write=True):
         '''
         Save the neuron as a NeuroML (.nml) object.
 
@@ -188,9 +289,9 @@ class Neuron(int):
                 if parent is not None:
                     diameter = branch.diameter
 
-                    if neurite._taper_rate is not None:
+                    if neurite.taper_rate is not None:
                         dist_to_tip = _np.cumsum(branch.r[::-1])[::-1]
-                        diameter = diameter + neurite._taper_rate*dist_to_tip
+                        diameter = diameter + neurite.taper_rate*dist_to_tip
                     else:
                         diameter = (diameter for _ in range(len(branch.xy)))
 
@@ -207,7 +308,7 @@ class Neuron(int):
                         n_segment = neuroml.Segment(proximal=p, distal=d,
                                                     parent=parent)
 
-                        n_segment.id   = seg_id            
+                        n_segment.id   = seg_id
                         n_segment.name = '{}_segment_{}'.format(neurite, seg_id)
 
                         # set as next parent
@@ -240,31 +341,25 @@ class Neuron(int):
         return cell
 
 
-class Neurite(str):
+class Neurite(object):
 
     '''
-    Container to facilitate post processing of SWC files
+    Container to allow direct access to neurites.
+
+    Also facilitates post processing of SWC files.
     branch path is a tuple with (xy, r, theta, diameter)
     '''
-
-    def __new__(cls, branches, neurite_type, name="neurite", parent=None):
-        return super(Neurite, cls).__new__(cls, name)
 
     def __init__(self, branches, neurite_type, name="neurite", parent=None):
         self._parent       = None if parent is None else int(parent)
         self._branches     = branches
         self.neurite_type  = neurite_type
-        if parent is not None:
-            #~ self._taper_rate = _pg.get_object_status(parent, "taper_rate", neurite=name)
-            self._taper_rate = _pg.get_object_status(parent, "taper_rate", neurite=name)
-        else:
-            self._taper_rate = None
+        self.__name        = name
+
         if branches:
             self._has_branches = True
         else:
             self._has_branches = False
-
-        self._name = name
 
         # store last update time
         if self._has_branches:
@@ -272,21 +367,16 @@ class Neurite(str):
         else:
             self._update_time = None
 
+    def __str__(self):
+        return self.__name
+
     def get_tree(self):
         return _pg._get_tree(self._parent, str(self))
-
-    def remove_shorter(self, threshold):
-        popper=[]
-        for enum, branch in enumerate(self.branches):
-            if branch.xy.shape[0]< threshold:
-                popper.append(enum)
-        for n in sorted(popper, reverse=True):
-            self.branches.pop(n)
 
     @property
     def name(self):
         ''' Name of the neurite '''
-        return self._name
+        return self.__name
 
     @property
     def branches(self):
@@ -358,6 +448,59 @@ class Neurite(str):
     def total_length(self):
         ''' Total length of the neurite '''
         return _pg.get_object_state(self._parent, level=str(self), variable="length")
+
+    @property
+    def taper_rate(self):
+        if self._parent is not None:
+            return _pg.get_object_parameters(self._parent, "taper_rate",
+                                             neurite=self.name)
+        return None
+
+    def get_parameters(self, property_name=None, level=None):
+        '''
+        Get the object's properties.
+
+        Parameters
+        ----------
+        property_name : str, optional (default: None)
+            Name of the property that should be queried. By default, the full
+            dictionary is returned.
+        level : str, optional (default: highest)
+            Level at which the status should be obtained.
+            Should be among "neurite", or "growth_cone".
+
+        Returns
+        -------
+        status : variable
+            Properties of the objects' status: a single value if
+            `property_name` was specified, the full status ``dict`` otherwise.
+        
+        See also
+        --------
+        :func:`~dense.get_object_parameters`,
+        :func:`~dense.elements.Neuron.get_parameters`,
+        :func:`~dense.elements.Neurite.set_parameters`.
+        '''
+        return _pg.get_object_parameters(
+            self._parent, property_name=property_name,
+            level=level, neurite=str(self))
+
+    def set_parameters(self, params):
+        '''
+        Update the neuronal parameters using the entries contained in `params`.
+
+        Parameters
+        ----------
+        params : dict
+            New neurite parameters.
+
+        See also
+        --------
+        :func:`~dense.set_neurite_parameters`,
+        :func:`~dense.elements.Neuron.set_parameters`,
+        :func:`~dense.elements.Neurite.get_parameters`.
+        '''
+        return _pg.set_neurite_parameters(self._parent, self, params=params)
 
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
@@ -626,9 +769,10 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_status(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_parameters(gids, "position", return_iterable=True)
         pos  = [pos[n] for n in gids]
-        rad  = _pg.get_object_status(gids, "soma_radius", return_iterable=True)
+        rad  = _pg.get_object_parameters(gids, "soma_radius",
+                                         return_iterable=True)
         rad  = [rad[n] for n in gids]
 
         for n, p, r in zip(gids, pos, rad):
@@ -757,13 +901,12 @@ class Population(list):
                     dendrite = Neurite(
                         [Branch(dend) for dend in dendrites],
                         neurite_type="dendrite", name="dendrite")
-                    self[gid].dendrites[dendrite] = dendrite
+                    self[gid].dendrites[str(dendrite)] = dendrite
                 else:
                     raise Exception(
                         "Dendrites are expected to be a list of segments.")
 
-    def get_status(self, property_name=None, level=None, neurite=None,
-                   time_units="hours"):
+    def get_parameters(self, property_name=None, level=None, neurite=None):
         '''
         Get the neurons's properties.
 
@@ -780,8 +923,6 @@ class Population(list):
             By default, both dictionaries are returned inside the
             neuronal status dictionary. If `neurite` is specified, only the
             parameters of this neurite will be returned.
-        time_units : str, optional (default: hours)
-            Unit for the time, among "seconds", "minutes", "hours", and "days".
 
         Returns
         -------
@@ -789,8 +930,8 @@ class Population(list):
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
         '''
-        return _pg.get_object_status(self, property_name=property_name, level=level,
-                             neurite=neurite, time_units=time_units)
+        return _pg.get_object_parameters(self, property_name=property_name,
+                                         level=level, neurite=neurite)
 
 
 # ------------- #

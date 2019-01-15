@@ -15,8 +15,6 @@ Main parameters
 
 num_neurons = 1000
 
-use_critical_resource = True
-
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
 
@@ -37,8 +35,6 @@ neuron_params = {
     "diameter_ratio_avg": 1.,
 
     "gc_split_angle_mean": 10.3,
-
-    "use_critical_resource": use_critical_resource,
 }
 
 
@@ -51,20 +47,20 @@ b_th = 100.
 if use_critical_resource:
     cr_params = {
         # Cr model
-        "CR_retraction_factor": 1.,
-        "CR_elongation_factor": 2.,
-        # "CR_leakage": 0.05,
-        "CR_retraction_th": 0.01,
-        "CR_elongation_th": 0.3,
-        "CR_leakage": 10.0,
-        "CR_neurite_generated": 2500.,
-        "CR_correlation": 0.2,
-        "CR_variance": 0.01,
-        "CR_use_ratio": 0.16,
-        "CR_branching_th": b_th,
-        "CR_branching_proba": 0.1,
-        "CR_weight_centrifugal": 0.,
-        "CR_weight_diameter": 0.5,
+        "res_retraction_factor": 1.,
+        "res_elongation_factor": 2.,
+        # "res_leakage": 0.05,
+        "res_retraction_threshold": 0.01,
+        "res_elongation_threshold": 0.3,
+        "res_leakage": 10.0,
+        "res_neurite_generated": 2500.,
+        "res_correlation": 0.2,
+        "res_variance": 0.01,
+        "res_use_ratio": 0.16,
+        "res_branching_threshold": b_th,
+        "res_branching_proba": 0.1,
+        "res_weight_centrifugal": 0.,
+        "res_weight_diameter": 0.5,
     }
     neuron_params.update(cr_params)
 
@@ -89,7 +85,7 @@ def resource_branching(neuron_params):
     np.random.seed(kernel['seeds'])
     ds.set_kernel_status(kernel, simulation_id="van_pelt_branching")
     neuron_params['growth_cone_model'] = 'run_tumble_critical'
-    neuron_params['CR_branching_th'] = np.inf
+    neuron_params['res_branching_threshold'] = np.inf
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
@@ -98,8 +94,8 @@ def resource_branching(neuron_params):
         num_neurites=1, position=[])
 
     step(10, 1, False, False)
-    neuron_params['CR_branching_th'] = b_th
-    ds.set_object_status(gid,params = neuron_params,
+    neuron_params['res_branching_threshold'] = b_th
+    ds.set_object_parameters(gid,params = neuron_params,
                         axon_params=neuron_params)
     step(5000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True

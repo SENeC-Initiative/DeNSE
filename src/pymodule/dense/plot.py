@@ -351,7 +351,7 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
         The axes of the plots.
     '''
     import matplotlib.pyplot as plt
-    status      = _pg.get_object_status(recorder, time_units=time_units)
+    status      = _pg.get_object_parameters(recorder, time_units=time_units)
 
     num_rec     = 1
     num_neurons = 0

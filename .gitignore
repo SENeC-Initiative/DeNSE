@@ -43,7 +43,11 @@ docs/_build
 docs/doxyfiles/
 docs/conf.py
 docs/modules/dense.rst
+docs/modules/elements.rst
 docs/modules/environment.rst
+docs/modules/io.rst
+docs/modules/morphology.rst
+docs/modules/plot.rst
 
 
 # DeNSE run files
@@ -59,6 +63,7 @@ src/pymodule/dense/ve
 
 **/tags
 *.swo
+.idea/
 *.swp
 *.swn
 .ycm_extra_conf.py

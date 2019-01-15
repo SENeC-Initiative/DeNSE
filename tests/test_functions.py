@@ -28,7 +28,7 @@ def functions():
     gn = ds.create_neurons(params=pp)
 
     n  = ds.get_neurons()
-    ns = ds.get_object_status(n)
+    ns = ds.get_object_parameters(n)
     si = ds.get_simulation_id()
     ds.simulate(20*hour)
     ni = ds.get_neurons()

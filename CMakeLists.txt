@@ -31,6 +31,7 @@ option( cythonize-pybindings "Use Cython to cythonize `_growth.pyx`. If OFF, DeN
 option( with-docs OFF "Compile documentation (requires `doxygen`, `breathe` and `sphinx`. [default=OFF]" )
 option( with-debug OFF "Compile with debug symbols. [default=OFF]" )
 option( python-develop OFF "Python compiler allows to modify the code. [default=OFF]" )
+set( with-sphinx "" CACHE STRING "Path to sphinx-build. [default=autodetect]" )
 
 # These includes publish function names.
 include( ConfigureSummary )
@@ -73,8 +74,7 @@ cgrowth_get_color_flags()
 
 # check prefix
 
-# @todo, for Windows, install to site.USER_BASE (done)
-# + get the PythonXY/site-packages (is this really necessary?)
+# @todo get the PythonXY/site-packages (is this really necessary?)
 # + copy dll to the lib folder (probably in setup.py)
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; import os; print(os.path.abspath(site.USER_BASE))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)

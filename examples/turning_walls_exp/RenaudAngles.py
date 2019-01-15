@@ -29,7 +29,6 @@ neuron_params = {
     #~ "axon_angle":0.,
 
     "axon_angle": 0.*deg,
-    "use_critical_resource": False,
     "use_uniform_branching": False,
     # #critical_resource model
     # "critical_resource_amount":100.,

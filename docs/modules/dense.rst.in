@@ -1,3 +1,6 @@
+
+.. _module-documentation:
+
 ======
 |name|
 ======
@@ -23,13 +26,11 @@ convenience.
    :hidden:
    :glob:
 
-   analysis
-   core
-   generation
-   environment
-   lib
+   elements
+   io
+   morphology
    plot
-   simulation
+   units
 
 
 Example
@@ -37,11 +38,10 @@ Example
 
 ::
 
-    import numpy as np
     import dense as ds
     from dense.units import *
 
-    neuron = ds.create_neurons(1, params={"position": (0, 1)*um})
+    neuron = ds.create_neurons(params={"position": (0, 1)*um})
 
 
 Content

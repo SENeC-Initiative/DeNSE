@@ -1,0 +1,15 @@
+==========================
+The ``plot`` module
+==========================
+
+.. currentmodule:: plot
+
+
+.. autosummary::
+
+%autosum%
+
+
+.. automodule:: dense.plot
+   :members:
+   :undoc-members:

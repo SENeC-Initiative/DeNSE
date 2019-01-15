@@ -79,7 +79,7 @@ class Branching
     void compute_flpl_event(mtPtr rnd_engine);
 
     // critical_resource functions
-    void CR_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+    void res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                        size_t &branching_point, mtPtr rnd_engine);
     void initialize_next_event(mtPtr rnd_engine, double new_resolution,
                                size_t previous_step);

@@ -460,6 +460,8 @@ std::string Neuron::new_neurite(const std::string &name,
                         }
 
                         dtheta = std::abs(other_angle - angles[i]);
+                        // Be more explicit in this function: the axon has different direction of resting neurites,
+                        // which is the weigth scale of axon polarization weigtV
                         if (has_axon_ and (
                                 std::abs(other_angle - neurite_angles_["axon"])
                                 < 0.0001 or std::abs(angles[i] -
@@ -717,25 +719,24 @@ void Neuron::set_status(const statusMap &status)
 }
 
 
-void Neuron::set_neurite_status(const std::string &neurite_type,
+void Neuron::set_neurite_status(const std::string &neurite,
                                 const statusMap &status)
 {
-    if (neurite_type == "axon")
-    {
-        auto it = neurites_.find("axon");
+    auto it = neurites_.find(neurite);
 
-        if (it != neurites_.end())
-        {
-            neurites_["axon"]->set_status(status);
-        }
+    if (it != neurites_.end())
+    {
+        // we are setting the properties of a specific neurite
+        it->second->set_status(status);
     }
     else
     {
-        for (auto &neurite : neurites_)
+        // set the properties of all neurites for which the type is `neurite`
+        for (auto &neur : neurites_)
         {
-            if (neurite.second->neurite_type_ == neurite_type)
+            if (neur.second->neurite_type_ == neurite)
             {
-                neurite.second->set_status(status);
+                neur.second->set_status(status);
             }
         }
     }

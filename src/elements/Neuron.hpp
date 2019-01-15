@@ -102,7 +102,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     bool is_neurite(const std::string& neurite);
 
     void set_status(const statusMap &status);
-    void set_neurite_status(const std::string &neurite_type,
+    void set_neurite_status(const std::string &neurite,
                             const statusMap &status);
     void get_neurite_status(statusMap &status, std::string neurite_type,
                             const std::string &level);

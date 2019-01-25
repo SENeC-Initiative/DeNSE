@@ -306,7 +306,13 @@ class SpatialMultiNetwork(object):
 
 try:
     import nngt
-    assert nngt.__version__ >= "1.2", "NNGT >= 1.2 is required, please update."
+
+    if nngt.__version__ < "1.1.1":
+        import warnings
+        warnings.warn("NNGT 1.1.1 or above is required, please update to a "
+                      "more recent version to get full graph functionalities.")
+        raise ImportError("NNGT version is too old.")
+
     _with_nngt   = True
     _BaseNetwork = nngt.SpatialGraph
 except ImportError:

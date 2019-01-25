@@ -50,7 +50,7 @@ Before installation, several tools must be pre-installed, including
     * svg.path and dxfgrabber to load SVG and DXF files to create complex
       environments
     * PyOpenGL to efficiently seed neurons in complex environments
-    * ipython to 
+    * ipython or jupyter for better interactive sessions
 
 
 Automatic installation
@@ -69,28 +69,28 @@ with your internet browser.
 Debian-based systems (Ubuntu, Mint...)
 --------------------------------------
 
-The whole procedure can be performed directly by running
+The whole procedure can be performed directly by running::
 
     ./install_debian.sh
 
 Once this is over, go to the "Launching" part.
 
-Otherwise, first install the required tools
+Otherwise, first install the required tools::
 
     sudo apt install cmake g++ python python-dev python-pip libboost-dev libgeos++-dev
 
-Then use pip to install the required python libraries
+Then use pip to install the required python libraries::
 
     pip install --user setuptools
     pip install --user cython
     pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
 
-If you want to compile the documentation, also run
+If you want to compile the documentation, also run::
 
     sudo apt install doxygen
     pip install --user sphinx breathe sphinx-bootstrap-theme
 
-To install the optional modules run
+To install the optional modules run::
 
     pip install --user networkx nngt svg.path
     sudo apt install python-matplotlib python-tk
@@ -101,28 +101,28 @@ Once this is done, you can try to run the generic linux install.
 Arch-based systems
 ------------------
 
-The whole procedure can be performed directly by running
+The whole procedure can be performed directly by running::
 
     ./install_arch.sh
 
 Once this is over, go to the "Launching" part.
 
-Otherwise, first install the required tools
+Otherwise, first install the required tools::
 
     sudo pacman -S cmake gcc python python-pip geos
 
-Then use pip to install the required python libraries
+Then use pip to install the required python libraries::
 
     pip install --user setuptools
     pip install --user cython
     pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
 
-If you want to compile the documentation, also run
+If you want to compile the documentation, also run::
 
     sudo pacman -S doxygen python-sphinx
     pip install --user breathe sphinx-bootstrap-theme
 
-To install the optional modules run
+To install the optional modules run::
 
     pip install --user networkx nngt
     sudo pacman -S python-matplotlib
@@ -136,40 +136,41 @@ CentOS, Fedora, and RedHat systems
 Unfortunately, it seems that for most RedHat systems, the available versions
 of GEOS are still 3.4, which is not sufficient to build DeNSE.
 
-In case this changes, the whole procedure could be performed directly by running
+In case this changes, the whole procedure could be performed directly by
+running::
 
     ./install_centos.sh
 
 Once this is over, go to the "Launching" part.
 
 Still, if it gets updated to GEOS 3.5+, on CentOS, GEOS can be made available by
-getting the Fedora repositories first.
+getting the Fedora repositories first::
 
     sudo yum install epel-release
     sudo yum repolist
 
-Theoretically, you can then run ./install_fedora.sh.
+Theoretically, you can then run ``./install_fedora.sh``.
 
-Otherwize, you can then install the required tools
+Otherwise, you can then install the required tools::
 
     sudo yum install gcc gcc-c++ cmake python python-devel python-pip
 
 However, you will then have to install GEOS yourself (see
-https://trac.osgeo.org/geos/ to get the source and find out about the
+`geos <https://trac.osgeo.org/geos/>`_ to get the source and find out about the
 installation)
 
-Then use pip to install the required python libraries
+Then use pip to install the required python libraries::
 
     pip install --user setuptools
     pip install --user cython
     pip install --user numpy scipy shapely pint svg.path dxfgrabber PyOpenGL
 
-If you want to compile the documentation, also run
+If you want to compile the documentation, also run::
 
     sudo yum install doxygen python-sphinx
     pip install --user breathe sphinx-bootstrap-theme
 
-To install the optional modules run
+To install the optional modules run::
 
     pip install --user networkx nngt
     sudo yum install python-matplotlib
@@ -178,11 +179,11 @@ Once this is done, you can try to run the generic linux install.
 
 
 Generic installation of DeNSE on Linux
-----------------------------------------
+--------------------------------------
 
 If you did not already run a complete install such as "install_debian.sh" but
 have installed all required software, you can directly run the generic
-installation of DeNSE through
+installation of DeNSE through::
 
     ./install_linux.sh
 
@@ -192,11 +193,11 @@ Otherwise, you can follow the step-by-step procedure in "Manual installation".
 MacOS
 -----
 
-The whole procedure can be performed directly by running
+The whole procedure can be performed directly by running::
 
     ./install_macos.sh
 
-If the automatic install fails with a message like:
+If the automatic install fails with a message like::
 
     curl: (35) error:XXX:SSL routines:SSL23_GET_SERVER_HELLO:tlsv1 alert protocol version
 
@@ -231,13 +232,13 @@ Unpack the file, then go to the "geos-X.Y.Z" folder and create a new "build"
 folder.
 
 Open the VisualStudio prompt (e.g. "xAB Native Tools Command Prompt for VS 2017"
-in the startup menu, with AB your system config, either 64 or 86), then type
+in the startup menu, with AB your system config, either 64 or 86), then type::
 
     cd C:\path\to\geos-X.Y.Z\build\
     cmake .. -DCMAKE_INSTALL_PREFIX=geos_prefix
     cmake --build . --config Release --target INSTALL
 
-where "geos_prefix" is the path where you want GEOS to be installed.
+where``geos_prefix`` is the path where you want GEOS to be installed.
 This should compile and install GEOS.
 
 Add to the PATH:
@@ -258,7 +259,7 @@ You can add them to the PATH using the previous procedure, otherwise you will
 have to "cd" to the directories every time you want to execute either Python or
 pip.
 
-From then on, install the required python packages:
+From then on, install the required python packages::
 
     pip install --user cython
     pip install --user numpy scipy pint shapely PyOpenGL svg.path dxfgrabber
@@ -268,7 +269,7 @@ Same as before, you will need to add Cython to the PATH (but pip will warn you
 about that, giving you the path that you need to add).
 
 Once everything is ready, go to the source folder of DeNSE, create a "build"
-directory, then
+directory, then::
 
     cd X:/path/to/DeNSE/build
     set DISTUTILS_USE_SDK 1
@@ -295,13 +296,13 @@ it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
 Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
 (include Linux tools to get C++ for CMake)
 
-Once in the Anaconda Prompt, run:
+Once in the Anaconda Prompt, run::
 
     conda install cmake geos
     pip install cython
     pip install shapely pint PyOpenGL svg.path dxfgrabber
 
-Then
+Then::
 
     mkdir build
     cd build
@@ -359,7 +360,7 @@ the following packages:
 * search for gtk3 (in Libs) and select libgtk3-devel and libgt3_0
 
 Click next, check the list of packages to install, then click next again.
-Once the Cygwin install is complete, open Cygwin terminal and type
+Once the Cygwin install is complete, open Cygwin terminal and type::
 
     pip3 install scipy pint breathe PyGObject matplotlib sphinx-bootstrap-theme shapely svg.path dxfgrabber
 
@@ -369,7 +370,7 @@ then type "cd " in the Cygwin terminal, paste (it should write the path,
 something like "/cygdrive/c/Users/YourUserName/Documents/DeNSE/"), and press
 enter.
 You should see the correct path appearing at the beginning of the terminal line,
-if so, run:
+if so, run::
 
 	./install_cygwin.sh
 
@@ -389,7 +390,7 @@ dependencies of DeNSE listed in "Requirements".
 Making a build directory
 ------------------------
 
-Open a terminal in the current folder, then type:
+Open a terminal in the current folder, then type::
 
     mkdir build
     cd build
@@ -410,7 +411,7 @@ empty (i.e. that you are performing a "clean" install). This will avoid numerous
 problems linked to partial configurations including outdated paths, binaries, or
 libraries.
 
-Once you made sure the "build" directory is empy, run
+Once you made sure the "build" directory is empy, run::
 
     cmake ..
 
@@ -433,7 +434,7 @@ options can be added after "cmake ..", separated by spaces, and include
 * local compilation of the documentation through "-Dwith-docs=ON",
 * any other valid CMake argument.
 
-As an example, the following command
+As an example, the following command::
 
     cmake .. -DCMAKE_INSTALL_PREFIX=/home/me/Software/DeNSE_install -Dwith-python=3.7
 
@@ -444,7 +445,7 @@ bin, and lib subfolders) and set to be run using python 3.7.
 Compiling
 ---------
 
-Upon proper completion of the configuration step, you should see the lines
+Upon proper completion of the configuration step, you should see the lines::
 
     You can now build and install DeNSE with
       make
@@ -454,7 +455,7 @@ Upon proper completion of the configuration step, you should see the lines
     -- Generating done
     -- Build files have been written to: /the/current/build/folder
 
-As advised, you can now compile by running
+As advised, you can now compile by running::
 
     make && make install
 
@@ -469,7 +470,7 @@ First, download the latest version of Boost (or any version greater or
 equal to 1.62) on https://www.boost.org/users/download/.
 
 Expand the archive, and open a terminal in the "boost_1_XY_Z/" folder.
-Once there, type
+Once there, type::
 
     ./bootstrap.sh
     sudo ./b2 install
@@ -490,13 +491,13 @@ path, you will need to add declare this path to the system; it may also
 happen that the automatic install picked a non-default folder, requiring
 you to manually edit the system's path to be able to launch DeNSE.
 
-In that case, just execute
+In that case, just execute::
 
     ./set_dense_vars.sh
 
 In the unlikely event where this still does not solve the problem (even
 after rebooting the system) then open the "update_system_path.sh" file
-and copy the
+and copy the::
 
     export PYTHONPATH="path_to_python_install_dir:$PYTHONPATH"
     export LD_LIBRARY_PATH="path_to_lib_install_dir:$LD_LIBRARY_PATH"
@@ -520,11 +521,11 @@ launching it into a Python terminal.
 Linux and MacOs
 ---------------
 
-Open a terminal and run
+Open a terminal and run::
 
     python
 
-(or ipython), then in the following console, input
+(or ipython), then in the following console, input::
 
     import dense as ds
 
@@ -532,7 +533,7 @@ If the command runs fine, then congratulations, you're done!
 If you get an error saying "ImportError: No module named dense", then go back up
 to the section on "Configuring the paths".
 
-To run scripts saved in a python file (e.g. in the examples), run
+To run scripts saved in a python file (e.g. in the examples), run::
 
     python the_script_name.py
 
@@ -541,52 +542,98 @@ Windows
 -------
 
 * Minimal install:
-   - to run interactively, either install ipython (pip install --user ipython)
-     or start Python (Python or Python Idle in the statup menu)
-   - to run a script, open a prompt (preferably a Visual Studio one) and
-     type "python the_script_name.py"
+
+  - to run interactively, either install ipython (pip install --user ipython)
+    or start Python (Python or Python Idle in the statup menu)
+  - to run a script, open a prompt (preferably a Visual Studio one) and
+    type "python the_script_name.py"
 
 * Anaconda:
-   - open the anaconda prompt and type "ipython" to run interactively,
-   - otherwise type "python the_script_name.py".
+
+  - open the anaconda prompt and type "ipython" to run interactively,
+  - otherwise type "python the_script_name.py".
 
 * Cygwin:
-   - first open a Cygwin terminal,
-   - if you want to run it with interactive plotting (matplotlib), then:
-       - type "startxwin >/dev/null 2>&1 &" and press enter, to start the
-         graphical interface
-       - type "export DISPLAY=:0.0" and press enter to select the screen
-   - whether you want to plot or not:
-       - to run DeNSE interactively, run "ipython3", then "import dense as ds"
-       - to run a script, type "python3 the_script_name.py"
+
+  - first open a Cygwin terminal,
+  - if you want to run it with interactive plotting (matplotlib), then:
+ 
+    - type "startxwin >/dev/null 2>&1 &" and press enter, to start the
+      graphical interface
+    - type "export DISPLAY=:0.0" and press enter to select the screen
+
+  - whether you want to plot or not:
+ 
+    - to run DeNSE interactively, run "ipython3", then "import dense as ds"
+    - to run a script, type ``python3 the_script_name.py``
 
 
 Known errors
 ============
 
-* For git users, an inability to import ``_pygrowth`` from a missing
-  ``environment`` module. This means that the ``environment`` submodule has
-  not been initialized with git. To do so, run "git submodule init", then
-  "git submodule update".
+On configure (cmake)
+--------------------
+
+* Any random error message:
+  make sure you did not forget to empty the ``build`` folder before reexecuting
+  cmake/make!
 * CMake Error at /usr/share/cmake-3.5/Modules/FindBoost.cmake:1677 (message):
   Unable to find the requested Boost libraries.
   Boost version: 1.62.0
   Boost include path: /usr/local/include
-  Detected version of Boost is too old.  Requested version was 1.63 (or
+  Detected version of Boost is too old. Requested version was 1.63 (or
   newer).
+
   - this means that you should upgrade your version of boost; for old
     Linux distributions, manuall install is described in the "Manual
     Boost installation" section.
+
+* CMake Error at src/cmake_install.cmake:42 (file):
+  file INSTALL cannot copy file
+  "/path/to/DeNSE/build/src/growth" to "/usr/local/bin/growth".
+
+  - on some CMake versions, the path variable is not properly initialized to
+    its default value and CMake tries to install it to the administrator path.
+    Just clear the build folder and run the configuration and compilation
+    again.
+
+
+During the install (make/make install)
+--------------------------------------
+
+* Any random error message:
+  Make sure you did not forget to empty the ``build`` folder before reexecuting
+  cmake/make!
 * Linker error LNK1112 (conflict between module and target machine type)
+
   - on Windows, this usually means that you are not compiling with the correct
     version of MSVC. Check that (on a 64-bit platform, you are using the x64
     version, or the x86 on a 32-bit platform). If everything is correct, add
     "-DCMAKE_GENERATOR_PLATFORM=xAB", where AB is either 64 or 86, to force the
     correct compiler.
-* CMake Error at src/cmake_install.cmake:42 (file):
-  file INSTALL cannot copy file
-  "/home/mallory/Documents/Software/netgrowth/build/src/growth" to
-  "/usr/local/bin/growth".
-   - on some Cmake versions, a variable is not shown as default, just
-     clear the build folder and run the configuration and compilation
-     again.
+
+* ``ModuleNotFoundError: No module named 'dense.environment'``
+  For git users, an inability to import ``_pygrowth`` from a missing
+  ``environment`` module means that the ``environment`` submodule has
+  not been initialized with git. To do so, run ``git submodule init``, then
+  ``git submodule update``.
+
+
+Upon execution of a script
+--------------------------
+
+* Script runs into
+  ``Assertion failed: (!static_cast<bool>("should never be reached"))``.
+
+  - This is due to a bug in Shapely (#553_) and can be fixed by installing it
+    without its binaries: ``pip install --no-binary shapely, shapely``
+    (note that you first have to uninstall it before reinstalling it).
+
+* Segmentation fault at the end of the script, after all the code has run:
+
+  - This often seems to be a matplotlib bug for which the fix is unknown, but
+    it does not worry us too much because, as mentioned, all the code is
+    executed properly...
+  - Alternatively, for people importing NNGT and with NEST installed, it can
+    be caused by an error in the finalize function of NEST, so again, nothing
+    to worry about.

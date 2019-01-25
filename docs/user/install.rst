@@ -4,131 +4,85 @@
 Installing the library
 ======================
 
-The configuration and installation of |name| is provided by a ``cmake_``
-script which provides a convenient multiplatform experience.
+This file contains a brief summary or the steps needed to install DeNSE on
+various platforms.
+
+It is divided into:
+
+- details on the software required to install and run DeNSE,
+- specific installation procedures for Linux, MacOS, and Windows,
+- details about the manual installation and additional options that can be
+  passed to configure and install DeNSE,
+- details about configuring the various paths that may be required to make your
+  system aware of the existence of DeNSE.
+
+The configuration and installation of |name| is provided by a CMake_
+script which should provide a convenient multiplatform experience, made even
+easier by the automatic install scripts available on most platforms.
 
 **NB** if you run against some bugs after the installation, please first have
-a look at the `Known bugs`_ section, in case it is not already listed there.
+a look at the `Known errors`_ section, in case it is not already listed there.
+
+
+.. contents:: :depth: 2
 
 
 Requirements
 ============
 
-Main library:
+Before installation, several tools must be pre-installed, including
 
-* cmake_ 3.6+, python_ 2.7+, GEOS_ 3.5+ (install both binary and header/dev files via apt on debian/ubuntu or rpm/pacman on other linux distributions)
-* numpy_, scipy_, shapely_, pint_ (install via ``pip install --user numpy scipy shapely pint``)
+1. A set of software and libraries
 
-Optional:
+   * CMake_
+   * A C and C++11-compliant compiler such as GCC (4.8.1+)
+   * Python (2.7 or 3.3+) and its header/development files
+   * GEOS_ (3.5+) and its header/development files
+   * Boost Geometry and Range (Boost 1.62 or higher)
+   * Cython_
 
-* cython_ (``pip install --user cython``)
-* doxygen_ (other than 1.8.13), sphinx_, and breathe_ for local documentation,
-* matplotlib_ for graphical representation (``pip install --user matplotlib``).
-* seaborn_  for graphical representation (``pip2 install --user seaborn``)
-* neurom_ for graphical representation (``pip2 install --user neurom``)
-* h5py_ for neurom ( ``apt install libhdf5-dev`` then ``pip2 install --user h5py``)
+2. Some python modules
 
+   * setuptools
+   * numpy_
+   * scipy_
+   * shapely_
+   * pint_
 
-On a debian-based linux install
--------------------------------
+3. Doxygen_, Sphinx_, and Breathe_ to compile the documentation locally
 
-Non-python part:
-* Need g++ + python-dev to compile matplotlib (maybe also automake)
-* say that doxygen is via apt
-* say that we need to install python and python-dev
-* sudo apt install libgeos-X.Y.Z et libgeos-dev libgeos++-dev
+4. Optional python modules are also required to use DeNSE to full capability
 
-Python part:
-
-* Install pip
-* Install setuptools, then python libraries
-* say that sphinx and breathe are via pip
-* use sudo apt install python-tk python-matplotlib
-
-On a debian-based linux install
--------------------------------
-
-Non-python part:
-* Need g++ + python-dev to compile matplotlib (maybe also automake)
-* say that doxygen is via apt
-* say that we need to install python and python-dev
-* sudo apt install libgeos-X.Y.Z et libgeos-dev libgeos++-dev
-
-Python part:
-
-* Install pip
-* Install setuptools, then python libraries
-* say that sphinx and breathe are via pip
-* use sudo apt install python-tk python-matplotlib
-
-Install
-=======
-
-Commands
---------
-
-I will consider that you downloaded the sources into a folder called
-``DeNSE`` and that you created a ``dense_install`` folder somewhere.::
-
-    cd DeNSE
-    mkdir build
-    cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX:PATH=/absolute/path/to/dense_install
-    make && make install
-
-.. warning::
-    ``-DCMAKE_INSTALL_PREFIX:PATH`` is **required** and **must** be given as
-    an absolute path!
+   * NNGT_ to interface the graph libraries with DeNSE
+   * networkx_, igraph_, or graph-tool_ to analyze generated networks
+   * matplotlib_ or seaborn_ to plot neurons and results
+   * svg.path and dxfgrabber to load SVG and DXF files to create complex
+     environments
+   * PyOpenGL to efficiently seed neurons in complex environments
+   * ipython or jupyter for better interactive sessions
 
 
-Options
--------
-
-You can provide the following options to cmake using ``-Doption_name``, where
-``option_name`` can be:
-
-* ``with-python``, which should be either ``2`` or ``3`` depending on the
-  version of Python you want to use,
-* ``with-docs`` -- ``ON`` (default) or ``OFF`` if you do not want to install
-  the documentation on your computer,
-* ``with-openmp`` -- ``ON`` (default) or ``OFF`` if you do not want to use
-  multithreading.
-* ``with-debug`` -- ``ON`` to compile with debug symbols or ``OFF`` (default).
-
-
-Known bugs
-==========
-
-* Any random error message
-    - you forgot to empty the ``build`` folder before reexecuting cmake/make?
-* Script runs into
-  ``Assertion failed: (!static_cast<bool>("should never be reached"))``.
-    - This is due to a bug in Shapely (#553_) and can be fixed by installing it
-      without its binaries: ``pip install --no-binary shapely, shapely``
-      (note that you first have to uninstall it before reinstalling it).
-* Segmentation fault at the end of the script, after all the code has run:
-    - This often seems to be a matplotlib bug for which the fix is unknown, but
-      it does not worry us too much because, as mentioned, all the code is
-      executed properly...
-    - Alternatively, for people importing NNGT and with NEST installed, it can
-      be caused by an error in the finalize function of NEST, so again, nothing
-      to worry about.
+.. include:: ../../INSTALL
+    :start-line: 55
 
 
 .. References
 
-.. _cmake: https://cmake.org/
+.. _CMake: https://cmake.org/
 .. _numpy: http://www.numpy.org/
+.. _NNGT: http://nngt.readthedocs.org/en/latest/
+.. _networkx: https://networkx.github.io/
+.. _igraph: https://igraph.org/
+.. _graph-tool: https://graph-tool.skewed.de/
 .. _scipy: http://www.scipy.org/
 .. _GEOS: https://trac.osgeo.org/geos/
 .. _shapely: http://toblerity.org/shapely/manual.html
 .. _pint: https://pint.readthedocs.io/en/latest/
-.. _cython: http://cython.org/
-.. _doxygen: http://www.stack.nl/~dimitri/doxygen/
-.. _sphinx: http://www.sphinx-doc.org/
-.. _breathe: http://breathe.readthedocs.io/en/latest/
+.. _Cython: http://cython.org/
+.. _Doxygen: http://www.stack.nl/~dimitri/doxygen/
+.. _Sphinx: http://www.sphinx-doc.org/
+.. _Breathe: http://breathe.readthedocs.io/en/latest/
 .. _matplotlib: http://matplotlib.org/
 .. _python: https://www.python.org/
 .. _seaborn:  https://seaborn.pydata.org/
-.. _neurom: https://github.com/BlueBrain/NeuroM
 .. _#553: https://github.com/Toblerity/Shapely/issues/553

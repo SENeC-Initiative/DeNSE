@@ -251,9 +251,7 @@ void RecordManager::record(int omp_id)
 
     for (auto event : events_)
     {
-        double resol = kernel().simulation_manager.get_resolution();
-
-        size_t neuron = std::get<2>(event);
+        size_t neuron = std::get<edata::NEURON>(event);
         for (size_t rec : omp_id_drec_[omp_id])
         {
             d_recorders_[rec]->record(event);
@@ -325,7 +323,7 @@ void RecordManager::new_branching_event(const Event &ev)
 {
     if (!d_recorders_.empty())
     {
-        size_t neuron_gid = std::get<2>(ev);
+        size_t neuron_gid = std::get<edata::NEURON>(ev);
         auto it           = neuron_to_d_recorder_.find(neuron_gid);
 
         if (it != neuron_to_d_recorder_.end())
@@ -339,7 +337,7 @@ void RecordManager::new_branching_event(const Event &ev)
 
     if (!c_recorders_.empty())
     {
-        size_t neuron_gid = std::get<2>(ev);
+        size_t neuron_gid = std::get<edata::NEURON>(ev);
         auto it           = neuron_to_c_recorder_.find(neuron_gid);
 
         if (it != neuron_to_c_recorder_.end())

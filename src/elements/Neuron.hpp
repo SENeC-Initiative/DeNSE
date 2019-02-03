@@ -73,8 +73,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     // Init functions
     void init_status(const statusMap &status, const statusMap &astatus,
                      const statusMap &dstatus, mtPtr rnd_engine);
-    void initialize_next_event(mtPtr rnd_engine, double new_resolution,
-                               size_t previous_step);
+    void initialize_next_event(mtPtr rnd_engine);
     void finalize();
 
     // Growth functions

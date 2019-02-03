@@ -26,8 +26,7 @@ double f_deterministic(double A_m, double A, double tau, double dt,
 namespace growth
 {
 
-const Event invalid_ev(std::make_tuple(0, std::nan(""), 0, std::string(""),
-                                       -1));
+const Event invalid_ev(std::make_tuple(Time(), 0, std::string(""), -1));
 
 
 Branching::Branching()
@@ -74,83 +73,19 @@ Branching::Branching(NeuritePtr neurite)
  *
  * @param last_simulation_n_steps steps of simulation in the previous session
  */
-void Branching::initialize_next_event(mtPtr rnd_engine,
-                                      double new_resolution_ratio,
-                                      size_t last_simulation_n_steps)
+void Branching::initialize_next_event(mtPtr rnd_engine)
 {
-    double resol = kernel().simulation_manager.get_resolution();
-    if (use_uniform_branching_)
+    if (use_uniform_branching_ and next_uniform_event_ == invalid_ev)
     {
-        if (std::isnan(std::get<1>(next_uniform_event_)))
-        {
-            compute_uniform_event(rnd_engine);
-        }
-        else
-        {
-            size_t old_steps   = std::get<0>(next_uniform_event_);
-            double old_substep = std::get<1>(next_uniform_event_);
-            size_t new_steps   =
-                old_steps * new_resolution_ratio + old_substep / resol;
-            double new_substep =
-                old_steps * resol + old_substep - new_steps * resol;
-
-            next_uniform_event_ = std::make_tuple(
-                new_steps, new_substep, std::get<2>(next_uniform_event_),
-                std::get<3>(next_uniform_event_),
-                std::get<4>(next_uniform_event_));
-
-            // send it to the simulation and recorder managers
-            kernel().simulation_manager.new_branching_event(
-                next_uniform_event_);
-        }
+        compute_uniform_event(rnd_engine);
     }
-    if (use_flpl_branching_)
+    if (use_flpl_branching_ and next_flpl_event_ == invalid_ev)
     {
-        if (std::isnan(std::get<1>(next_flpl_event_)))
-        {
-            compute_flpl_event(rnd_engine);
-        }
-        else
-        {
-            size_t old_steps   = std::get<0>(next_flpl_event_);
-            double old_substep = std::get<1>(next_flpl_event_);
-            size_t new_steps =
-                old_steps * new_resolution_ratio + old_substep / resol;
-            double new_substep =
-                old_steps * resol + old_substep - new_steps * resol;
-
-            next_flpl_event_ = std::make_tuple(
-                new_steps, new_substep, std::get<2>(next_flpl_event_),
-                std::get<3>(next_flpl_event_), std::get<4>(next_flpl_event_));
-
-            // send it to the simulation and recorder managers
-            kernel().simulation_manager.new_branching_event(next_flpl_event_);
-        }
+        compute_flpl_event(rnd_engine);
     }
-    if (use_van_pelt_)
+    if (use_van_pelt_ and next_vanpelt_event_ == invalid_ev)
     {
-        if (std::isnan(std::get<1>(next_vanpelt_event_)))
-        {
-            compute_vanpelt_event(rnd_engine);
-        }
-        else
-        {
-            size_t old_steps   = std::get<0>(next_vanpelt_event_);
-            double old_substep = std::get<1>(next_vanpelt_event_);
-            size_t new_steps =
-                old_steps * new_resolution_ratio + old_substep / resol;
-            double new_substep =
-                old_steps * resol + old_substep - new_steps * resol;
-
-            next_vanpelt_event_ = std::make_tuple(
-                new_steps, new_substep, std::get<2>(next_vanpelt_event_),
-                std::get<3>(next_vanpelt_event_),
-                std::get<4>(next_vanpelt_event_));
-
-            // send it to the simulation and recorder managers
-            kernel().simulation_manager.new_branching_event(
-                next_vanpelt_event_);
-        }
+        compute_vanpelt_event(rnd_engine);
     }
 }
 
@@ -162,49 +97,29 @@ void Branching::initialize_next_event(mtPtr rnd_engine,
 void Branching::set_branching_event(Event &ev, signed char ev_type,
                                     double duration)
 {
-    double current_substep = kernel().simulation_manager.get_current_substep();
-    size_t current_step    = kernel().simulation_manager.get_current_step();
+    Time ev_time = kernel().simulation_manager.get_time();
 
-    size_t ev_step;
-    double ev_substep;
-    double resol = kernel().simulation_manager.get_resolution();
+    // separate duration into days, hours, minutes, seconds
+    double total_hours = std::floor(duration / 60.);
 
-    if (duration < resol - current_substep)
-    {
-        ev_step    = current_step;
-        ev_substep = current_substep + duration;
-    }
-    else
-    {
-        // set event step and substep
-        // first set "integer" part
-        ev_step    = current_step + duration / resol;
-        // then "floating" part
-        ev_substep = current_substep +
-                     (duration - (ev_step - current_step)*resol);
-        // potential update
-        if (ev_substep >= resol)
-        {
-            ev_step    += 1;
-            ev_substep -= resol;
-        }
-    }
+    double seconds = (duration - std::floor(duration))*60;
+    ev_time.set_sec(ev_time.get_sec() + seconds);
 
+    unsigned char minutes = duration - 60*total_hours;
+    ev_time.set_min(ev_time.get_min() + minutes);
+
+    size_t days = total_hours / 24.;
+    ev_time.set_day(ev_time.get_day() + days);
+
+    unsigned char hours = total_hours - 24*days;
+    ev_time.set_hour(ev_time.get_hour() + hours);
+
+    // set the informations of the event
     auto n                   = neurite_->get_parent_neuron().lock();
     size_t neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
 
-    assert(ev_substep >= 0);
-    assert(std::abs((ev_step - current_step) * resol +
-                    (ev_substep - current_substep) - duration) < 1e-6);
-
-    ev = std::make_tuple(ev_step, ev_substep, neuron_gid, neurite_name,
-                         ev_type);
-
-#ifndef NDEBUG
-    printf("after set event at %lu:%f, next event in %lu:%f \n", current_step,
-           current_substep, ev_step, ev_substep);
-#endif
+    ev = std::make_tuple(ev_time, neuron_gid, neurite_name, ev_type);
 }
 
 
@@ -221,14 +136,11 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
 {
     // uniform_branching_event
     bool uniform_occurence =
-        (std::get<0>(next_uniform_event_) == std::get<0>(ev)) &&
-        (std::abs(std::get<1>(next_uniform_event_) - std::get<1>(ev)) < 1e-8);
+        std::get<edata::TIME>(next_uniform_event_) == std::get<edata::TIME>(ev);
     bool flpl_occurence =
-        (std::get<0>(next_flpl_event_) == std::get<0>(ev)) &&
-        (std::abs(std::get<1>(next_flpl_event_) - std::get<1>(ev)) < 1e-8);
+        std::get<edata::TIME>(next_flpl_event_) == std::get<edata::TIME>(ev);
     bool van_pelt_occurence =
-        (std::get<0>(next_vanpelt_event_) == std::get<0>(ev)) &&
-        (std::abs(std::get<1>(next_vanpelt_event_) - std::get<1>(ev)) < 1e-8);
+        std::get<edata::TIME>(next_vanpelt_event_) == std::get<edata::TIME>(ev);
 
     // prepare pointers to nodes and branching_point
     TNodePtr branching_node = nullptr;

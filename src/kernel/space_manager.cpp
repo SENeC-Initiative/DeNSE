@@ -127,6 +127,11 @@ void correct_polygon(
     outer.push_back(old_p1);
     outer.push_back(old_p2);
 
+    // now, we don't want to recompute "stop" because it's position was
+    // computed through the model's algorithms, i.e. it IS where we want to
+    // go; thus, if "stop" stays the same and is on the "front line", then
+    // lp_2 must also be modified.
+
     // compute angle direction of side
     double side_angle = atan2(lp_2.y() - old_p2.y(), lp_2.x() - old_p2.x());
 
@@ -234,12 +239,15 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
         }
         else
         {
+            // vector characterizing the step
             BPoint l_vec(stop);
             bg::subtract_point(l_vec, start);
 
+            // new radius at the end of the step
             double r_new(0.5 * (diam - length * taper));
-            double norm = sqrt(l_vec.x() * l_vec.x() + l_vec.y() * l_vec.y());
 
+            // orthogonal vector
+            double norm = sqrt(l_vec.x() * l_vec.x() + l_vec.y() * l_vec.y());
             BPoint r_vec(-r_new * l_vec.y() / norm, r_new * l_vec.x() / norm);
 
             // get the last segment and prepare new last points
@@ -302,6 +310,7 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         std::cout << bg::wkt(*(poly.get())) << std::endl;
                         std::cout << bg::wkt(*(last_segment.get())) << std::endl;
                         std::cout << bg::wkt(stop) << std::endl;
+                        printf("At %f min\n", kernel().simulation_manager.get_current_minutes());
                         throw std::runtime_error("stop covered by last segment");
                     }
                     else
@@ -707,7 +716,12 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 if (other == gc_ptr->get_last_segment())
                 {
                     // ignore possible intersection with last segment
-                    other_intersects = false;
+                    // other_intersects = false;
+                    if (bg::intersects(filo_line, *(other.get())) and not
+                        bg::touches(filo_line, *(other.get())))
+                    {
+                        affinities[0] = aff_self;
+                    }
                 }
                 else if (other_neuron == neuron_id and
                          neurite_name == other_neurite and
@@ -730,13 +744,13 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                     }
 
                     // we limit to the first segments
-                    if (bneighbors and other_segment < 10)
-                    {
-                        other_intersects = false;
-                        // but we reduce the interactions to make sure the
-                        // growth cone tries to go away
-                        affinities[0] *= 0.75;
-                    }
+                    // if (bneighbors and other_segment < 10)
+                    // {
+                    //     other_intersects = false;
+                    //     // but we reduce the interactions to make sure the
+                    //     // growth cone tries to go away
+                    //     affinities[0] *= 0.75;
+                    // }
                 }
                 else if (other != nullptr and
                          intersects(*(other.get()), filo_line))

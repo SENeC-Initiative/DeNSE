@@ -36,13 +36,25 @@ class ActinWave;
  */
 typedef std::vector<std::vector<double>> Random_vecs;
 typedef std::unordered_map<std::string, double> Param;
-typedef std::tuple<size_t, double, size_t, std::string, signed char> Event;
+
+
+// Event type, contains (event_time, neuron, neurite, event_type)
+typedef std::tuple<Time, size_t, std::string, signed char> Event;
+
+typedef enum
+{
+    TIME,
+    NEURON,
+    NEURITE,
+    EV_TYPE
+} edata;
+
 
 typedef struct NodeProp
 {
     NodeProp() : n_id(0), p_id(0), diameter(0), dist_to_parent(0) {};
     NodeProp(size_t n, size_t p, double diam, double dtp,
-             std::vector<double> pos)
+             const std::vector<double>& pos)
         : n_id(n), p_id(p), diameter(diam), dist_to_parent(dtp), position(pos)
     {};
 

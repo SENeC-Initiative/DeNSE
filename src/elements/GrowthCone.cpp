@@ -548,10 +548,20 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 
             BPoint new_p = BPoint(new_x, new_y);
 
+            printf("before retraction\n");
+            std::cout << bg::wkt(*(poly.get())) << std::endl;
+
             biology_.branch->retract();
+            printf("retracted on %lu %s %lu\n", neuron_id_, neurite_name_.c_str(), get_nodeID());
             // we remove the previous object and add the new, shorter one
             if (poly != nullptr)
             {
+                poly = biology_.branch->get_last_segment();
+                printf("after retraction\n");
+                if (poly != nullptr)
+                {
+                    std::cout << bg::wkt(*(poly.get())) << std::endl;
+                }
                 kernel().space_manager.remove_object(box, info, omp_id);
                 kernel().space_manager.add_object(
                     p1, new_p, get_diameter(), remaining,
@@ -758,7 +768,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
         // check forbidden overlap with other neurites
         for (auto obstacle : current_neighbors_)
         {            
-            if (bg::crosses(p, *(obstacle.second.get())))
+            if (bg::intersects(p, *(obstacle.second.get())))
             {
                 // stop at "radius" from the obstacle
                 kernel().space_manager.get_point_at_distance(

@@ -54,17 +54,15 @@ class Time
     unsigned char get_hour() const;
     size_t get_day() const;
 
-    void get_sec(double sec) const;
-    void get_min(double min) const;
-    void get_hour(double hour) const;
-    void get_day(double day) const;
+    // void get_sec(double sec) const;
+    // void get_min(double min) const;
+    // void get_hour(double hour) const;
+    // void get_day(double day) const;
 
     double get_total_seconds() const;
     double get_total_minutes() const;
     double get_total_hours() const;
     double get_total_days() const;
-
-    void add_seconds(double seconds);
 
     void set_sec(double seconds);
     void set_min(unsigned char minutes);
@@ -81,7 +79,7 @@ inline bool operator==(const Time &lhs, const Time &rhs)
     bool equal = (lhs.get_day() == rhs.get_day());
     equal &= (lhs.get_hour() == rhs.get_hour());
     equal &= (lhs.get_min() == rhs.get_min());
-    equal &= (lhs.get_sec() == rhs.get_sec());
+    equal &= (std::abs(lhs.get_sec() - rhs.get_sec()) < 1e-8);
     return equal;
 }
 
@@ -92,11 +90,7 @@ inline bool operator!=(const Time &lhs, const Time &rhs)
 
 inline bool operator<(const Time &lhs, const Time &rhs)
 {
-    bool smaller = (lhs.get_day() >= rhs.get_day());
-    smaller &= (lhs.get_hour() >= rhs.get_hour());
-    smaller &= (lhs.get_min() >= rhs.get_min());
-    smaller &= (lhs.get_sec() >= rhs.get_sec());
-    return smaller;
+    return lhs.get_total_minutes() < rhs.get_total_minutes();
 }
 
 inline bool operator>(const Time &lhs, const Time &rhs) { return rhs < lhs; }

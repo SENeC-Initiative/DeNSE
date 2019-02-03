@@ -5,10 +5,15 @@
 
 import numpy as np
 
+import matplotlib as mpl
+mpl.use("Qt5Agg")
+
 import dense as ds
 from dense.units import *
 
 # parameters
+
+np.random.seed(0)
 
 num_omp     = 1
 num_neurons = 1
@@ -30,7 +35,7 @@ neuron_params = {
 
 axon_params = {
     # growth cone model
-    "growth_cone_model": "cst_po_nwa",
+    "growth_cone_model": "cst_mem_nwa",
 
     # Steering parameters
     "sensing_angle": 90.*deg,
@@ -53,7 +58,7 @@ axon_params = {
 
 dend_params = {
     # growth cone model
-    "growth_cone_model": "cst_po_nwa",
+    "growth_cone_model": "cst_mem_nwa",
 
     # Steering parameters
     "sensing_angle": 90.*deg,
@@ -91,8 +96,8 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                     axon_params=axon_params, dendrites_params=dend_params,
-                     num_neurites=3)
+                      axon_params=axon_params, dendrites_params=dend_params,
+                      num_neurites=3)
 
 rec = ds.create_recorders(n, "num_growth_cones")
 
@@ -105,7 +110,7 @@ print(ds.get_kernel_status('time'))
 recording = ds.get_recording(rec, record_format="compact")
 print(recording)
 
-ds.plot.plot_neurons(mode="mixed", show=True)
+# ds.plot.plot_neurons(mode="mixed", show=True)
 
 # second development phase : with lateral branching
 
@@ -137,7 +142,8 @@ dend_params = {
 # updates neurites parameters
 ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=lb_axon)
 
-ds.simulate(20*day + 5*hour)
+# ds.simulate(8*day + 6*hour + 60*minute)
+ds.simulate(11910*minute)
 
 print(ds.get_kernel_status('time'))
 
@@ -159,10 +165,10 @@ dend_params = {
 }
 
 ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=vp_axon)
-ds.simulate(40*day)
-print(dense.get_kernel_status('time'))
+# ds.simulate(40*day)
+# print(dense.get_kernel_status('time'))
 
-ds.plot.plot_neurons(mode="mixed", show=True)
+# ds.plot.plot_neurons(mode="mixed", show=True)
 
 # ds.save_to_swc("pyramidal-cell.swc", gid=n)
 

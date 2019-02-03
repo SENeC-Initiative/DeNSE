@@ -24,8 +24,7 @@ namespace growth
  * @brief compare the times of Events
  */
 auto ev_greater = [](const Event &lhs, const Event &rhs) {
-    return std::tie(std::get<0>(lhs), std::get<1>(lhs)) >
-           std::tie(std::get<0>(rhs), std::get<1>(rhs));
+    return std::get<edata::TIME>(lhs) > std::get<edata::TIME>(rhs);
 };
 
 
@@ -149,7 +148,6 @@ void SimulationManager::initialize_simulation_(const Time &t)
     // objects for discrete events
     final_time_ = initial_time_ + t;
 
-    Time::timeStep steps;
     Time::to_steps(t, final_step_, final_substep_);
 
     // set the right number of step objects
@@ -157,9 +155,12 @@ void SimulationManager::initialize_simulation_(const Time &t)
     step_       = std::vector<Time::timeStep>(num_omp, 0);
     substep_    = std::vector<double>(num_omp, 0.);
 
-    // reset branching events
-    branching_ev_.clear();
-    branching_ev_tmp_.clear();
+    // make sure branching events are cleared if we start from t = 0
+    if (initial_time_ == Time())
+    {
+        branching_ev_.clear();
+        branching_ev_tmp_.clear();
+    }
 
     // exception_capture_flag "guards" captured_exception. std::called_once()
     // guarantees that will only execute any of its Callable(s) ONCE for each
@@ -190,13 +191,13 @@ void SimulationManager::initialize_simulation_(const Time &t)
             // first, initialize neurons
             for (auto &neuron : local_neurons)
             {
-                neuron.second->initialize_next_event(
-                    rnd_engine, resolution_scale_factor_, 0);
+                neuron.second->initialize_next_event(rnd_engine);
             }
 
-            // record the first step if time is zero
+            // if time is zero, we need to initialize recorders
             if (initial_time_ == Time())
             {
+                // record the first step
                 kernel().record_manager.record(omp_id);
             }
         }
@@ -237,7 +238,7 @@ void SimulationManager::finalize_simulation_()
     // the OpenMP parallel region.
     std::exception_ptr captured_exception;
 
-    // finalize neurons#pragma omp parallel
+    // finalize neurons
 #pragma omp parallel
     {
         try
@@ -321,10 +322,12 @@ void SimulationManager::simulate(const Time &t)
 #pragma omp parallel
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
-        size_t step_next_ev, current_step;
+        size_t current_step;
+        Time time_next_ev;
+
         double previous_substep = 0.;
         bool new_step           = false;
-        bool branched           = false;
+        bool branching          = false;
 
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         gidNeuronMap local_neurons =
@@ -339,9 +342,6 @@ void SimulationManager::simulate(const Time &t)
             {
                 current_step     = step_[omp_id];
                 previous_substep = substep_[omp_id];
-                branched         = false;
-
-                //~ printf("current step %lu - substep %f\nfinal step %lu - final substep %f\n", current_step, previous_substep, final_step_, final_substep_);
 
 #pragma omp barrier
 
@@ -362,13 +362,17 @@ void SimulationManager::simulate(const Time &t)
 
 #pragma omp barrier
 
+                // -------------- //
+                // EVENT HANDLING //
+                // -------------- //
+
                 // check when the next event will occur and set step/substep
                 if (branching_ev_.empty())
                 {
-                    step_next_ev = current_step + 1;
                     new_step     = true;
+                    branching    = false;
 
-                    if (step_next_ev == final_step_)
+                    if (current_step + 1 == final_step_)
                     {
                         substep_[omp_id] = final_substep_;
                     }
@@ -379,27 +383,33 @@ void SimulationManager::simulate(const Time &t)
                 }
                 else
                 {
-                    step_next_ev = std::get<0>(branching_ev_.back());
+                    Time next_time = initial_time_;
+                    next_time.update(current_step + 1, 0);
 
-                    if (step_next_ev == current_step)
+                    time_next_ev = std::get<edata::TIME>(branching_ev_.back());
+                    branching    = false;
+                    new_step     = false;
+
+                    if (time_next_ev < next_time)
                     {
-                        substep_[omp_id] = std::get<1>(branching_ev_.back());
+                        substep_[omp_id] = Time::RESOLUTION -
+                                           (next_time.get_total_minutes() -
+                                            time_next_ev.get_total_minutes());
 
                         if (current_step == final_step_
                             and substep_[omp_id] > final_substep_)
                         {
                             substep_[omp_id] = final_substep_;
-                            new_step         = false;
                         }
                         else
                         {
-                           new_step = (substep_[omp_id] == Time::RESOLUTION);
+                           new_step  = (substep_[omp_id] == Time::RESOLUTION);
+                           branching = true;
                         }
                     }
                     else if (current_step == final_step_)
                     {
                         substep_[omp_id] = final_substep_;
-                        new_step         = false;
                     }
                     else
                     {
@@ -417,16 +427,16 @@ void SimulationManager::simulate(const Time &t)
                                         substep_[omp_id] - previous_substep);
                 }
 
-                if (step_next_ev == current_step)
+                if (branching)
                 {
                     // someone has to branch
                     Event &ev            = branching_ev_.back();
-                    size_t gid_branching = std::get<2>(ev);
+                    size_t gid_branching = std::get<edata::NEURON>(ev);
                     auto it              = local_neurons.find(gid_branching);
 
                     if (it != local_neurons.end())
                     {
-                        branched = local_neurons[gid_branching]->branch(
+                        bool branched = local_neurons[gid_branching]->branch(
                             rnd_engine, ev);
 
                         // tell recorder manager

@@ -81,8 +81,7 @@ class Branching
     // critical_resource functions
     void res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                        size_t &branching_point, mtPtr rnd_engine);
-    void initialize_next_event(mtPtr rnd_engine, double new_resolution,
-                               size_t previous_step);
+    void initialize_next_event(mtPtr rnd_engine);
 
     // Get/set functions
     void set_status(const statusMap &);

@@ -217,25 +217,15 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
 }
 
 
-void Neuron::initialize_next_event(mtPtr rnd_engine, double new_resolution,
-                                   size_t previous_step)
+void Neuron::initialize_next_event(mtPtr rnd_engine)
 {
-    if (use_actin_waves_)
+    if (use_actin_waves_ and next_actin_event_ == 0)
     {
-        if (next_actin_event_ == 0)
-        {
-            next_actin_event(rnd_engine);
-        }
-        else
-        {
-            next_actin_event_ =
-                (size_t)(next_actin_event_ - previous_step) * new_resolution;
-        }
+        next_actin_event(rnd_engine);
     }
     for (auto &neurite : neurites_)
     {
-        neurite.second->branching_model_->initialize_next_event(
-            rnd_engine, new_resolution, previous_step);
+        neurite.second->branching_model_->initialize_next_event(rnd_engine);
     }
 }
 
@@ -298,7 +288,7 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
  */
 bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
 {
-    std::string name_neurite = std::get<3>(ev);
+    std::string name_neurite = std::get<edata::NEURITE>(ev);
     NeuritePtr neurite       = neurites_[name_neurite];
 
     return neurite->branching_model_->branching_event(rnd_engine, ev);

@@ -129,24 +129,12 @@ size_t Time::get_day() const { return day_; }
 
 // setters
 
-void Time::add_seconds(double seconds)
-{
-    sec_ += seconds;
-    if (sec_ >= 60.)
-    {
-        int int_part = ((int)std::floor(sec_)) / 60;
-        sec_ -= int_part * 60.;
-        set_min(min_ + int_part);
-    }
-}
-
-
 void Time::set_sec(double seconds)
 {
     sec_ = seconds;
     if (seconds >= 60.)
     {
-        int int_part = ((int)std::floor(seconds)) / 60;
+        int int_part = seconds / 60;
         sec_ -= int_part * 60.;
         set_min(min_ + int_part);
     }
@@ -193,10 +181,10 @@ void Time::to_steps(const Time &t, timeStep &steps, double &substep)
 
 Time &Time::operator+=(const Time &rhs)
 {
-    this->set_day(day_ + rhs.get_day());
-    this->set_hour(hour_ + rhs.get_hour());
-    this->set_min(min_ + rhs.get_min());
     this->set_sec(sec_ + rhs.get_sec());
+    this->set_min(min_ + rhs.get_min());
+    this->set_hour(hour_ + rhs.get_hour());
+    this->set_day(day_ + rhs.get_day());
     return *this;
 }
 
@@ -214,42 +202,48 @@ Time &Time::operator-=(const Time &rhs)
     size_t int_part;
     double dec_part;
     long int signed_tmp;
+    int carry_over = 0;
+
     // subtract and convert
-    signed_tmp = this->day_ - rhs.get_day(); // day
+    sec_ -= rhs.get_sec();
+    if (sec_ < 0)
+    {
+        sec_       = sec_ + 60. - rhs.get_sec();
+        carry_over = 1;
+    }
+
+    signed_tmp = min_ - rhs.get_min() - carry_over; // min
     if (signed_tmp < 0)
     {
-        this->day_ = 0;
-        signed_tmp = this->hour_ + signed_tmp * 24; // add because negative
+        min_       = min_ + 60 - rhs.get_min() - carry_over;
+        carry_over = 1;
     }
     else
     {
-        this->day_ = signed_tmp;
-        signed_tmp = this->hour_;
+        min_       = signed_tmp;
+        carry_over = 0;
     }
-    signed_tmp -= rhs.get_hour(); // hour
+
+    signed_tmp = hour_ - rhs.get_hour() - carry_over; // hour
     if (signed_tmp < 0)
     {
-        this->hour_ = 0;
-        signed_tmp  = this->min_ + signed_tmp * 60;
+        hour_      = 24 + hour_ - rhs.get_hour() - carry_over;
+        carry_over = 1;
     }
     else
     {
-        this->hour_ = signed_tmp;
-        signed_tmp  = this->min_;
+        hour_      = signed_tmp;
+        carry_over = 0;
     }
-    signed_tmp -= rhs.get_min(); // min
+
+    signed_tmp = day_ - rhs.get_day() - carry_over; // day
     if (signed_tmp < 0)
     {
-        this->min_ = 0;
-        this->sec_ += signed_tmp * 60;
-    }
-    else
-    {
-        this->min_ = signed_tmp;
-    }
-    this->sec_ -= rhs.get_sec();
-    if (this->sec_ < 0.)
         throw InvalidTime(__FUNCTION__, __FILE__, __LINE__);
+    }
+    
+    day_ = signed_tmp;
+
     return *this;
 }
 

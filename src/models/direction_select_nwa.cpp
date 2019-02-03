@@ -35,7 +35,7 @@ void NWADirectionSelector::select_direction(
   double &substep, double &step_length, double &new_angle, bool &stopped,
   size_t &default_direction)
 {
-    double weight;
+    double weight, norm(0.);
 
     new_angle = 0.;
 
@@ -47,11 +47,12 @@ void NWADirectionSelector::select_direction(
         if (not std::isnan(weight))
         {
             new_angle += weight*filo.directions[n];
+            norm      += weight;
         }
     }
 
     // normalize
-    new_angle /= total_proba;
+    new_angle /= norm;
 
     // default angle is closest to new_angle
     double dist, min_dist(std::numeric_limits<double>::max());

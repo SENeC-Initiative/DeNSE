@@ -344,13 +344,9 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
 
 void NeuronDiscreteRecorder::record(const Event &ev)
 {
-    size_t step         = std::get<0>(ev);
-    float substep       = std::get<1>(ev);
-    size_t neuron       = std::get<2>(ev);
-    signed char ev_type = std::get<4>(ev);
-
-    Time event_time = kernel().simulation_manager.get_initial_time();
-    event_time     += Time::from_steps(step, substep);
+    Time event_time     = std::get<edata::TIME>(ev);
+    size_t neuron       = std::get<edata::NEURON>(ev);
+    signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     // test which data is recorded
 
@@ -666,13 +662,10 @@ NeuriteDiscreteRecorder::NeuriteDiscreteRecorder() {}
 
 void NeuriteDiscreteRecorder::record(const Event &ev)
 {
-    size_t step         = std::get<0>(ev);
-    float substep       = std::get<1>(ev);
-    size_t neuron       = std::get<2>(ev);
-    std::string neurite = std::get<3>(ev);
-    signed char ev_type = std::get<4>(ev);
-
-    Time event_time = Time::from_steps(step, substep);
+    Time event_time     = std::get<edata::TIME>(ev);
+    size_t neuron       = std::get<edata::NEURON>(ev);
+    std::string neurite = std::get<edata::NEURITE>(ev);
+    signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     // test which data is recorded
 
@@ -955,12 +948,10 @@ void GrowthConeContinuousRecorder::record()
 void GrowthConeContinuousRecorder::record(const Event &ev)
 {
     // branching event occured on a neuron
-    size_t step         = std::get<0>(ev);
-    float substep       = std::get<1>(ev);
-    size_t neuron       = std::get<2>(ev);
-    std::string neurite = std::get<3>(ev);
-
-    Time event_time = Time::from_steps(step, substep);
+    Time event_time     = std::get<edata::TIME>(ev);
+    size_t neuron       = std::get<edata::NEURON>(ev);
+    std::string neurite = std::get<edata::NEURITE>(ev);
+    signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     std::unordered_map<size_t, std::vector<double>> &gc_values =
         recording_[neuron][neurite];

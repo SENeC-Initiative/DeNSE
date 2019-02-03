@@ -13,18 +13,36 @@ namespace growth
 
 MemBasedSteeringModel::MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite)
   : SteeringModel(gc, neurite)
+  , memory_angle_(fmod(gc->get_state("angle"), 2*M_PI))
   , rigidity_factor_(1.)
-  , memory_angle_(gc->get_state("angle"))
   , decay_factor_(0.9)
-{}
+{
+    if (memory_angle_ < -M_PI)
+    {
+        memory_angle_ += 2*M_PI;
+    }
+    else if (memory_angle_ > M_PI)
+    {
+        memory_angle_ -= 2*M_PI;
+    }
+}
 
 
 MemBasedSteeringModel::MemBasedSteeringModel(const MemBasedSteeringModel &copy, GCPtr gc, NeuritePtr neurite)
   : SteeringModel(copy, gc, neurite)
-  , memory_angle_(gc->get_state("angle"))
+  , memory_angle_(fmod(gc->get_state("angle"), 2*M_PI))
   , rigidity_factor_(copy.rigidity_factor_)
   , decay_factor_(copy.decay_factor_)
-{}
+{
+    if (memory_angle_ < -M_PI)
+    {
+        memory_angle_ += 2*M_PI;
+    }
+    else if (memory_angle_ > M_PI)
+    {
+        memory_angle_ -= 2*M_PI;
+    }
+}
 
 
 void MemBasedSteeringModel::compute_direction_probabilities(
@@ -36,7 +54,7 @@ void MemBasedSteeringModel::compute_direction_probabilities(
     stuck       = true;
     total_proba = 0.;
 
-    double current_angle = gc_weakptr_.lock()->get_state("angle");
+    double current_angle = fmod(gc_weakptr_.lock()->get_state("angle"), 2*M_PI);
 
     // update memory angle:
     // - first get the last segment's length
@@ -62,8 +80,9 @@ void MemBasedSteeringModel::compute_direction_probabilities(
         // check for the direction of the memory angle
         if (do_test and n == 0 and angle > memory_angle_)
         {
-            da                     = angle - memory_angle_;
-            directions_weights[0] += cos(da) * rigidity_factor_;
+            da                    = angle - memory_angle_;
+            directions_weights[0] = std::max(
+                directions_weights[0] + cos(da) * rigidity_factor_, 0.);
 
             do_test = false;
         }
@@ -73,17 +92,22 @@ void MemBasedSteeringModel::compute_direction_probabilities(
             da             = angle - memory_angle_;
             previous_da    = previous_angle - memory_angle_;
 
-            directions_weights[n]   += da / std::max(-previous_da, da)
-                                       * cos(da) * rigidity_factor_;
-            directions_weights[n-1] += -previous_da / std::max(-previous_da, da)
-                                       * cos(previous_da)*rigidity_factor_;
+            directions_weights[n] = std::max(
+                directions_weights[n] + da / std::max(-previous_da, da)
+                * cos(da) * rigidity_factor_, 0.);
+
+            directions_weights[n-1] = std::max(
+                directions_weights[n-1] - previous_da
+                / std::max(-previous_da, da) * cos(previous_da)
+                * rigidity_factor_, 0.);
 
             do_test = false;
         }
         else if (n == n_max and angle < memory_angle_)
         {
-            da                         = memory_angle_ - angle;
-            directions_weights[n_max] += cos(da) * rigidity_factor_;
+            da                        = memory_angle_ - angle;
+            directions_weights[n_max] = std::max(
+                directions_weights[n_max] + cos(da) * rigidity_factor_, 0.);
         }
 
         weight = directions_weights[n];
@@ -93,6 +117,15 @@ void MemBasedSteeringModel::compute_direction_probabilities(
             total_proba += weight;
             stuck        = false;
         }
+    }
+
+    if (memory_angle_ < -2*M_PI)
+    {
+        memory_angle_ += 2*M_PI;
+    }
+    else if (memory_angle_ > 2*M_PI)
+    {
+        memory_angle_ -= 2*M_PI;
     }
 }
 

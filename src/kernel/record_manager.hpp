@@ -40,6 +40,8 @@ class RecordManager : public ManagerInterface
     void new_branching_event(const Event &ev);
 
     void neurons_deleted(const std::vector<size_t> &gids);
+    void new_neurite(size_t neuron, const std::string& neurite);
+    void gc_died(size_t neuron, const std::string& neurite, size_t gc_id);
 
     statusMap get_recorder_status(size_t gid) const;
     void get_recorder_type(size_t gid, std::string &level,

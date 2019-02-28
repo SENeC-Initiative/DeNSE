@@ -96,7 +96,7 @@ dend_params = {
     "lateral_branching_angle_mean": 40.,
 }
 
-ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=lb_axon)
+ds.set_object_properties(n, dendrites_params=dend_params, axon_params=lb_axon)
 
 ds.simulate(30000)
 print(ds.get_kernel_status()["time"])
@@ -121,7 +121,7 @@ dend_params = {
     "gc_split_angle_mean": 30.,
 }
 
-ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=vp_axon)
+ds.set_object_properties(n, dendrites_params=dend_params, axon_params=vp_axon)
 
 ds.simulate(70000)
 print(ds.get_kernel_status()["time"])

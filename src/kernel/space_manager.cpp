@@ -509,22 +509,53 @@ void SpaceManager::get_objects_in_range(const BPoint &p, double radius,
         std::vector<RtreeValue> returned_values;
         rtree_.query(bgi::intersects(box), std::back_inserter(returned_values));
 
-        //~ bool target, got_target(false);
         // get the associated ObjectInfo
         for (const auto &value : returned_values)
         {
-            //~ target = (std::get<0>(value.second) == 5 and
-            //std::get<1>(value.second) == "dendrite_2" ~ and
-            //std::get<2>(value.second) == 1 and std::get<3>(value.second) ==
-            //0);
-            //~ got_target += target;
-            //~ if (target)
-            //~ printf("got it\n");
             v.push_back(value.second);
         }
+    }
+}
 
-        //~ if (got_target)
-        //~ printf("\n");
+
+void SpaceManager::get_intersected_objects(const BPoint &start,
+                                           const BPoint &stop,
+                                           std::vector<ObjectInfo>& v) const
+{
+    if (not map_geom_.empty())
+    {
+        // get the values inside the BBox
+        BSegment s(start, stop);
+        std::vector<RtreeValue> returned_values;
+        rtree_.query(bgi::intersects(s), std::back_inserter(returned_values));
+
+        // get the associated ObjectInfo
+        for (const auto &value : returned_values)
+        {
+            v.push_back(value.second);
+        }
+    }
+}
+
+
+void SpaceManager::get_intersected_objects(const BPoint &start,
+                                           const BPoint &stop,
+                                           std::vector<ObjectInfo>& vi,
+                                           std::vector<BPolygonPtr>& vn) const
+{
+    if (not map_geom_.empty())
+    {
+        // get the values inside the BBox
+        BSegment s(start, stop);
+        std::vector<RtreeValue> returned_values;
+        rtree_.query(bgi::intersects(s), std::back_inserter(returned_values));
+
+        // get the associated ObjectInfo
+        for (const auto &value : returned_values)
+        {
+            vi.push_back(value.second);
+            vn.push_back(map_geom_.at(value.second));
+        }
     }
 }
 
@@ -571,6 +602,7 @@ void SpaceManager::update_rtree()
                     int rm = rtree_.remove(RtreeValue({box, info}));
                     if (rm == 0)
                     {
+                        printf("for %lu %s %lu %lu\n", std::get<0>(info), std::get<1>(info).c_str(), std::get<2>(info), std::get<3>(info));
                         throw std::runtime_error("removal from tree failed.");
                     }
 
@@ -657,7 +689,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 
     // get the properties of the neighboring geometries
     std::vector<ObjectInfo> neighbors_info;
-    get_objects_in_range(position, len_filo, neighbors_info);
 
     bool check = false;
 
@@ -675,11 +706,12 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         tested_areas.clear();
         area_deque.clear();
         area_points.clear();
+        neighbors_info.clear();
         //~ new_areas.clear();
 
         // set position/line
         filo_pos  = BPoint(position.x() + cos(angle) * len_filo,
-                          position.y() + sin(angle) * len_filo);
+                           position.y() + sin(angle) * len_filo);
         filo_line = line_from_points(position, filo_pos);
 
         // set first (current) affinity
@@ -695,6 +727,9 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         // filopodia and other neurites in ``neighbors_info``.
         if (interactions_)
         {
+            // get the intersected objects
+            get_intersected_objects(position, filo_pos, neighbors_info);
+
             BPolygonPtr other;
             size_t other_neuron, other_node, other_segment;
             std::string other_neurite;
@@ -717,39 +752,10 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 {
                     // ignore possible intersection with last segment
                     // other_intersects = false;
-                    if (bg::intersects(filo_line, *(other.get())) and not
-                        bg::touches(filo_line, *(other.get())))
-                    {
-                        affinities[0] = aff_self;
-                    }
-                }
-                else if (other_neuron == neuron_id and
-                         neurite_name == other_neurite and
-                         gc_ptr->get_centrifugal_order() > 1
-                         and gc_ptr->get_branch()->size() < 30)
-                {
-                    // check for potential intersections at branching points
-                    size_t nid      = gc_ptr->get_nodeID();
-                    bool bneighbors = (other_node == nid + 1);
-                    bneighbors     += (other_node == nid + 2);
-
-                    if (nid > 1)
-                    {
-                        bneighbors += other_node == nid - 1;
-                    }
-
-                    if (nid > 2)
-                    {
-                        bneighbors += other_node == nid - 2;
-                    }
-
-                    // we limit to the first segments
-                    // if (bneighbors and other_segment < 10)
+                    // if (bg::intersects(filo_line, *(other.get())) and not
+                    //     bg::touches(filo_line, *(other.get())))
                     // {
-                    //     other_intersects = false;
-                    //     // but we reduce the interactions to make sure the
-                    //     // growth cone tries to go away
-                    //     affinities[0] *= 0.75;
+                    //     affinities[0] = aff_self;
                     // }
                 }
                 else if (other != nullptr and
@@ -786,6 +792,14 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                         {
                             // self-interaction
                             other_affinity = aff_self;
+                            if (other_node == gc_ptr->get_nodeID())
+                            {
+                                printf("self interaction %lu %s %lu %lu\n",
+                                other_neuron, other_neurite.c_str(), other_node, other_segment);
+                                std::cout << bg::wkt(*(other.get())) << std::endl;
+                                std::cout << bg::wkt(filo_line) << std::endl;
+                                std::cout << bg::wkt(position) << std::endl;
+                            }
                         }
                         else if (other_neurite == "axon")
                         {
@@ -1805,7 +1819,7 @@ void _get_p_at_dist(const BLineString &line, const BMultiPoint &intersections,
 /* for an intersecting line and a geometry, get the point at `distance` from
  * the geometry along the `line`.
  */
-void SpaceManager::get_point_at_distance(const BLineString &line,
+bool SpaceManager::get_point_at_distance(const BLineString &line,
                                          const std::string &geom_name,
                                          double radius, BPoint &p,
                                          double &distance)
@@ -1824,11 +1838,17 @@ void SpaceManager::get_point_at_distance(const BLineString &line,
                           intersections);
     }
 
- _get_p_at_dist(line, intersections, radius, p, distance);
+    if (intersections.empty())
+    {
+        return false;
+    }
+
+    _get_p_at_dist(line, intersections, radius, p, distance);
+    return true;
 }
 
 
-void SpaceManager::get_point_at_distance(const BLineString &line,
+bool SpaceManager::get_point_at_distance(const BLineString &line,
                                          const BPolygonPtr polygon,
                                          double radius, BPoint &p,
                                          double &distance)
@@ -1838,7 +1858,13 @@ void SpaceManager::get_point_at_distance(const BLineString &line,
 
     get_intersections(line, *(polygon.get()), intersections);
 
+    if (intersections.empty())
+    {
+        return false;
+    }
+
     _get_p_at_dist(line, intersections, radius, p, distance);
+    return true;
 }
 
 
@@ -1981,6 +2007,11 @@ void SpaceManager::get_environment(
         }
 
         // set properties
+
+        if (a.second == nullptr)
+        {
+            printf("trouble ahead (second)\n");
+        }
         heights.push_back(a.second->get_height());
         names.push_back(a.second->get_name());
 

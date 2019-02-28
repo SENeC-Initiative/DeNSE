@@ -686,7 +686,6 @@ void Neuron::set_status(const statusMap &status)
 
         if (has_neurites and not kernel().space_manager.is_close(p, get_position()))
         {
-            printf("(%f, %f), vs (%f, %f)\n", p.x(), p.y(), get_position().x(), get_position().y());
             throw InvalidArg("Cannot change the position of neuron " +
                              std::to_string(gid_) +
                              " after neurites have been created.",

@@ -559,6 +559,14 @@ void NeuriteContinuousRecorder::final_timestep(size_t step)
 }
 
 
+void NeuriteContinuousRecorder::new_neurite(size_t neuron,
+                                            const std::string& neurite)
+{
+    // initialize the recording container
+    recording_[neuron].insert({neurite, std::vector<double>()});
+}
+
+
 unsigned int NeuriteContinuousRecorder::get_level() const { return 1; }
 
 
@@ -750,6 +758,24 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
 }
 
 
+void NeuriteDiscreteRecorder::new_neurite(size_t neuron,
+                                          const std::string& neurite)
+{
+    // initialize the recording container
+    if (observable_ == names::num_growth_cones)
+    {
+        Time t0 = kernel().simulation_manager.get_time();
+        times_[neuron].insert({neurite, std::vector<Time>({t0})});
+        recording_[neuron].insert({neurite, std::vector<double>({1.})});
+    }
+    else
+    {
+        times_[neuron].insert({neurite, std::vector<Time>()});
+        recording_[neuron].insert({neurite, std::vector<double>()});
+    }
+}
+
+
 bool NeuriteDiscreteRecorder::get_next_recording(std::vector<Property> &ids,
                                                  std::vector<double> &values)
 {
@@ -907,12 +933,9 @@ void GrowthConeContinuousRecorder::record()
         {
             for (const auto &neurite : neuron.second->neurites_)
             {
-                std::unordered_map<size_t, std::vector<double>> &gc_values =
-                    recording_[neuron.first][neurite.first];
-                std::unordered_map<size_t, std::array<Time, 2>> &gc_times =
-                    times_[neuron.first][neurite.first];
-                std::unordered_map<size_t, size_t> &gc_num_times =
-                    num_times_[neuron.first][neurite.first];
+                auto &gc_values    = recording_[neuron.first][neurite.first];
+                auto &gc_times     = times_[neuron.first][neurite.first];
+                auto &gc_num_times = num_times_[neuron.first][neurite.first];
 
                 for (const auto &gc : neurite.second->growth_cones_)
                 {
@@ -920,10 +943,10 @@ void GrowthConeContinuousRecorder::record()
                     if (it == gc_values.end())
                     {
                         Time t0 = kernel().simulation_manager.get_time();
-                        gc_values[gc.first] = std::vector<double>(
-                            {gc.second->get_state(cstr_obs_)});
                         gc_times[gc.first]     = std::array<Time, 2>({t0, t0});
                         gc_num_times[gc.first] = 1;
+                        gc_values[gc.first]    = std::vector<double>(
+                            {gc.second->get_state(cstr_obs_)});
                     }
                     else
                     {
@@ -951,7 +974,6 @@ void GrowthConeContinuousRecorder::record(const Event &ev)
     Time event_time     = std::get<edata::TIME>(ev);
     size_t neuron       = std::get<edata::NEURON>(ev);
     std::string neurite = std::get<edata::NEURITE>(ev);
-    signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     std::unordered_map<size_t, std::vector<double>> &gc_values =
         recording_[neuron][neurite];
@@ -989,12 +1011,37 @@ void GrowthConeContinuousRecorder::final_timestep(size_t step)
     {
         for (auto &neurite_it : neuron_it.second)
         {
+            auto dead_set = dead_cones_[neuron_it.first][neurite_it.first];
+
             for (auto &ttt : neurite_it.second)
             {
-                ttt.second[1] = kernel().simulation_manager.get_time();
+                if (dead_set.count(ttt.first) == 0)
+                {
+                    ttt.second[1] = kernel().simulation_manager.get_time();
+                }
             }
         }
     }
+}
+
+
+void GrowthConeContinuousRecorder::new_neurite(size_t neuron,
+                                               const std::string& neurite)
+{
+    times_[neuron].insert({neurite, mapNumArrayTime()});
+    recording_[neuron].insert({neurite, mapNumVecDouble()});
+}
+
+
+void GrowthConeContinuousRecorder::gc_died(size_t neuron,
+                                           const std::string& neurite,
+                                           size_t gc_id)
+{
+    // add cone to dead cones
+    dead_cones_[neuron][neurite].insert(gc_id);
+
+    // set last time value
+    times_[neuron][neurite][gc_id][1] = kernel().simulation_manager.get_time();
 }
 
 
@@ -1041,13 +1088,17 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
             num_times_[gid] =
                 std::unordered_map<std::string,
                                    std::unordered_map<size_t, size_t>>();
+            dead_cones_[gid] =
+                std::unordered_map< std::string, std::unordered_set<size_t> >();
+
             for (const auto &neurite : n->neurites_)
             {
                 size_t size = neurite.second->growth_cones_.size();
 
-                recording_[gid][neurite.first] = mapNumVecDouble();
-                times_[gid][neurite.first]     = mapNumArrayTime();
-                num_times_[gid][neurite.first] =
+                recording_[gid][neurite.first]  = mapNumVecDouble();
+                times_[gid][neurite.first]      = mapNumArrayTime();
+                dead_cones_[gid][neurite.first] = std::unordered_set<size_t>();
+                num_times_[gid][neurite.first]  =
                     std::unordered_map<size_t, size_t>();
             }
         }

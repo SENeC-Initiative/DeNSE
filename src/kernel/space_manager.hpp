@@ -50,6 +50,11 @@ class SpaceManager : public ManagerInterface
     void remove_object(const BBox &box, const ObjectInfo& info, int omp_id);
     void get_objects_in_range(const BPoint &p, double radius,
                               std::vector<ObjectInfo>& v) const;
+    void get_intersected_objects(const BPoint &start, const BPoint &stop,
+                                 std::vector<ObjectInfo>& v) const;
+    void get_intersected_objects(const BPoint &start, const BPoint &stop,
+                                 std::vector<ObjectInfo>& vi,
+                                 std::vector<BPolygonPtr>& vn) const;
     void update_rtree();
 
     inline BLineString line_from_points(const BPoint &pointA,
@@ -72,10 +77,10 @@ class SpaceManager : public ManagerInterface
                            const BMultiLineString &geometry,
                            BMultiPoint &p) const;
 
-    void get_point_at_distance(const BLineString &line,
+    bool get_point_at_distance(const BLineString &line,
                                const std::string &geom_name, double radius,
                                BPoint &p, double &distance);
-    void get_point_at_distance(const BLineString &line,
+    bool get_point_at_distance(const BLineString &line,
                                const BPolygonPtr polygon, double radius,
                                BPoint &p, double &distance);
 

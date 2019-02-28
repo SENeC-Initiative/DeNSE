@@ -114,9 +114,9 @@ rec = ds.create_recorders(n, ["angle", "length"], levels="growth_cone")
 resource_branching = {'res_branching_threshold': 80., 'res_branching_proba': 0.0005}
 d_rsrc_branching = {'res_branching_threshold': 60., 'res_branching_proba': 0.0003}
 
-#~ ds.set_object_parameters(n, params=vp_branching)
-#~ ds.set_object_parameters(n, params=resource_branching)
-ds.set_object_parameters(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
+#~ ds.set_object_properties(n, params=vp_branching)
+#~ ds.set_object_properties(n, params=resource_branching)
+ds.set_object_properties(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 for i in range(10):
     ds.simulate(2000)
@@ -133,14 +133,14 @@ lb = {
 lb_axon = lb.copy()
 lb_axon["flpl_branching_rate"] = 0.0008
 
-ds.set_object_parameters(n, axon_params=lb_axon, dendrites_params=lb)
+ds.set_object_properties(n, axon_params=lb_axon, dendrites_params=lb)
 
 ds.simulate(50000)
 ds.plot.plot_neurons(show=True)
 
 
 end_branching = {"res_branching_threshold": 500., 'res_branching_proba': 0.0005}
-ds.set_object_parameters(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_properties(n, axon_params=end_branching, dendrites_params=end_branching)
 
 ds.simulate(100000)
 

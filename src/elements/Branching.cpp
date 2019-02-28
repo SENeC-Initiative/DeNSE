@@ -143,7 +143,8 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
         std::get<edata::TIME>(next_vanpelt_event_) == std::get<edata::TIME>(ev);
 
     // prepare pointers to nodes and branching_point
-    TNodePtr branching_node = nullptr;
+    TNodePtr branching_node(nullptr);
+    GCPtr second_cone(nullptr);
     NodePtr new_node = nullptr;
     size_t branching_point;
 
@@ -165,7 +166,7 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
     if (use_van_pelt_ and van_pelt_occurence)
     {
         success = vanpelt_new_branch(branching_node, new_node, branching_point,
-                                     rnd_engine);
+                                     rnd_engine, second_cone);
     }
 
     if (success)
@@ -178,6 +179,11 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
             branching_node, new_node, branching_point,
             neurite_->get_parent_neuron().lock()->get_gid(),
             neurite_->get_name(), omp_id);
+
+        if (van_pelt_occurence)
+        {
+            update_splitting_cones(branching_node, second_cone, new_node);
+        }
     }
 
     // note that critical resource splitting is instantaneous and unplanned
@@ -185,6 +191,124 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
     // @todo change that
 
     return success;
+}
+
+
+void Branching::update_splitting_cones(TNodePtr branching_cone,
+                                       GCPtr second_cone, NodePtr new_node)
+{
+    GCPtr old_cone   =
+        std::dynamic_pointer_cast<GrowthCone>(branching_cone);
+    BranchPtr branch = new_node->get_branch();
+
+    // to prevent overlap between the two second_cones, we put them on the two
+    // corners (last points) of the branch
+    std::pair<BPoint, BPoint> lps = branch->get_last_points();
+    double new_angle = second_cone->get_state("angle");
+    double module    = branch->get_last_segment_length();
+
+    BPoint lp1(lps.first), lp2(lps.second);
+    BPoint pos = second_cone->get_position();
+    BPoint tmp = BPoint(pos.x() + module*cos(new_angle),
+                        pos.y() + module*sin(new_angle));
+
+    double d1(bg::distance(tmp, lp1)), d2(bg::distance(tmp, lp2));
+    BPoint pos1 = BPoint(0.5*(pos.x() + lp1.x()), 0.5*(pos.y() + lp1.y()));
+    BPoint pos2 = BPoint(0.5*(pos.x() + lp2.x()), 0.5*(pos.y() + lp2.y()));
+
+    if (d2 > d1)
+    {
+        std::swap(pos1, pos2);
+    }
+
+    // delete last segment from parent branch and make the two cones
+    // start from the previous positions and end on lp1/lp2
+
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+    // remove last point (previous position) from old branch
+    BPolygonPtr last_seg = branch->get_last_segment();
+    branch->retract();
+    // we also remove the tree box
+    // if (last_seg != nullptr)
+    // {
+    //     BBox box;
+    //     bg::envelope(*(last_seg.get()), box);
+    //     ObjectInfo info = std::make_tuple(
+    //         neurite_->get_parent_neuron().lock()->get_gid(),
+    //         neurite_->get_name(), branching_cone->get_nodeID(),
+    //         branch->size());
+    //     printf("removing %lu %s %lu %lu\n", neurite_->get_parent_neuron().lock()->get_gid(), neurite_->get_name().c_str(), new_node->get_nodeID(),
+    //         branch->size());
+    //     kernel().space_manager.remove_object(box, info, omp_id);
+    // }
+
+    tmp = branch->get_last_xy();
+    double d_som = branch->final_distance_to_soma();
+
+    branching_cone->set_first_point(tmp, d_som);
+    second_cone->set_first_point(tmp, d_som);
+
+    printf("retracted\n");
+    std::cout << bg::wkt(*(new_node->get_branch()->get_last_segment().get())) << std::endl;
+    std::cout << bg::wkt(pos2) << "\n" << bg::wkt(lp1) << "\n" << bg::wkt(lp2) << "\n" << bg::wkt(pos) << std::endl;
+    // std::cout << bg::wkt(*(second_cone->get_branch()->get_last_segment())) << std::endl;
+
+    // update the second cone and its branch if possible
+    if (kernel().space_manager.env_contains(pos2))
+    {
+        try
+        {
+            second_cone->geometry_.position = pos2;
+
+            double module = bg::distance(tmp, pos2);
+
+            kernel().space_manager.add_object(
+                tmp, pos2, second_cone->get_diameter(), module,
+                neurite_->get_taper_rate(),
+                std::make_tuple(neurite_->get_parent_neuron().lock()->get_gid(),
+                                neurite_->get_name(),
+                                second_cone->get_nodeID(), 0),
+                second_cone->get_branch(), omp_id
+            );
+        }
+        catch(...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Neurite::growth_cone_split`."));
+        }
+    }
+
+    // move the branching cone if possible and update its branch
+    if (kernel().space_manager.env_contains(pos1))
+    {
+        try
+        {
+            old_cone->geometry_.position = pos1;
+
+            double module = bg::distance(tmp, pos1);
+            
+            kernel().space_manager.add_object(
+                tmp, pos1, branching_cone->get_diameter(), module,
+                neurite_->get_taper_rate(),
+                std::make_tuple(neurite_->get_parent_neuron().lock()->get_gid(),
+                                neurite_->get_name(),
+                                branching_cone->get_nodeID(), 0),
+                branching_cone->get_branch(), omp_id
+            );
+        }
+        catch(...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Neurite::growth_cone_split`."));
+        }
+    }
+
+    printf("after branching corrections\n");
+    std::cout << bg::wkt(*(branching_cone->get_branch()->get_last_segment().get())) << std::endl;
+    std::cout << bg::wkt(old_cone->get_position()) << std::endl;
+    std::cout << bg::wkt(*(second_cone->get_branch()->get_last_segment().get())) << std::endl;
+    std::cout << bg::wkt(second_cone->get_position()) << std::endl;
 }
 
 
@@ -488,7 +612,8 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
  *
  */
 bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                   size_t &branching_point, mtPtr rnd_engine)
+                                   size_t &branching_point, mtPtr rnd_engine,
+                                   GCPtr& second_cone)
 {
     branching_node = nullptr;
     new_node       = nullptr;
@@ -525,7 +650,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         branching_point = branching_node->get_branch()->size() - 1;
 
         //@TODO define new legth for van pelt
-        double new_length = 0.5*next_vanpelt_cone_->get_diameter();
+        double new_length = 0.;
         double new_angle, old_angle;
         double old_diameter = next_vanpelt_cone_->get_diameter();
         double new_diameter = old_diameter;
@@ -534,7 +659,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         bool success =
             neurite_->growth_cone_split(next_vanpelt_cone_, new_length,
                                         new_angle, old_angle, new_diameter,
-                                        old_diameter, new_node);
+                                        old_diameter, new_node, second_cone);
 
         next_vanpelt_event_ = invalid_ev;
         compute_vanpelt_event(rnd_engine);

@@ -81,7 +81,7 @@ def run_dense(neuron_params):
     # ~ rec = ds.create_recorders(gid, ["speed", "resource"], levels="growth_cone")
     rec = ds.create_recorders(gid, ["resource"], levels="growth_cone")
     print(neuron_params['growth_cone_model'])
-    # ds.set_object_parameters(gid, params=neuron_params,
+    # ds.set_object_properties(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3. / resolution * minute, 1, False, False)
     step(500. / resolution * minute, 1, False, False)
@@ -92,7 +92,7 @@ def run_dense(neuron_params):
     axon_params['flpl_branching_rate'] = 0.001 * cpm
     neuron_params.pop('growth_cone_model')
     print(dendrite_params)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
@@ -111,14 +111,14 @@ def run_dense(neuron_params):
         "res_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                          params=neuron_params,
                          dendrites_params=dendrite_params,
                          axon_params=axon_params)
     step(3000./resolution * minute, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001 * cpm
-    # ds.set_object_parameters(gid,params = neuron_params,
+    # ds.set_object_properties(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -133,7 +133,7 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.set_object_parameters(gid,params = neuron_params,
+    # ds.set_object_properties(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)

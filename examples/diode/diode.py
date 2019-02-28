@@ -133,7 +133,7 @@ if __name__ == '__main__':
                    'B' : 10. * cpm,
                    'T' : 1000. * minute,
                    'E' : 0.7}
-    ds.set_object_parameters(gids,
+    ds.set_object_properties(gids,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)

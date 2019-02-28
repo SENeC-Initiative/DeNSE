@@ -29,16 +29,17 @@ neuron_params = {
 
     # axon versus dendrites orientations
     "polarization_strength": 20.,
-    "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
-
+    # "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
 }
 
 axon_params = {
     # growth cone model
-    "growth_cone_model": "cst_mem_nwa",
+    "growth_cone_model": "self-referential-forces",
 
     # Steering parameters
     "sensing_angle": 90.*deg,
+    "self_avoidance_factor": 0.,
+    "self_avoidance_scale": 1.*um,
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,    
@@ -58,16 +59,21 @@ axon_params = {
 
 dend_params = {
     # growth cone model
-    "growth_cone_model": "cst_mem_nwa",
+    "growth_cone_model": "cst_srf_nm",
 
     # Steering parameters
     "sensing_angle": 90.*deg,
+    "somatropic_factor": 100.,
+    "somatropic_scale": 100.*um,
+    "rigidity_factor": 0.,
+    "self_avoidance_factor": 0.,
+    "self_avoidance_scale": 1.*um,
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,
 
     # extension parameters
-    "persistence_length": 250.*um,
+    "persistence_length": 1000.*um,
     "speed_growth_cone": 0.01*um/minute,
 
     # neurite shape paramters
@@ -75,7 +81,7 @@ dend_params = {
 
     # branching choice and parameters
     "use_uniform_branching": False,
-    "use_van_pelt": True,
+    "use_van_pelt": False,
     "B": 1.*cpm,
     "T": 1000.*minute,
     "gc_split_angle_mean": 25.*deg,
@@ -97,20 +103,20 @@ ds.set_kernel_status(kernel)
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
                       axon_params=axon_params, dendrites_params=dend_params,
-                      num_neurites=3)
+                      num_neurites=10)
 
 rec = ds.create_recorders(n, "num_growth_cones")
 
 # first development phase : initial pure elongation (no branching)  during 7 days
 
-ds.simulate(7*day)
+ds.simulate(20*day)
 
 print(ds.get_kernel_status('time'))
 
 recording = ds.get_recording(rec, record_format="compact")
 print(recording)
 
-# ds.plot.plot_neurons(mode="mixed", show=True)
+ds.plot.plot_neurons(mode="mixed", show=True)
 
 # second development phase : with lateral branching
 
@@ -123,7 +129,7 @@ lb_axon = {
     # branching choice and parameters
     "use_van_pelt": False,
     "use_flpl_branching": True,
-    "flpl_branching_rate": 0.00025*cpm,
+    "flpl_branching_rate": 0.002*cpm,
     "lateral_branching_angle_mean": 45.*deg,
 }
 
@@ -140,14 +146,14 @@ dend_params = {
 }
 
 # updates neurites parameters
-ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=lb_axon)
+ds.set_object_properties(n, dendrites_params=dend_params, axon_params=lb_axon)
 
 # ds.simulate(8*day + 6*hour + 60*minute)
-ds.simulate(11910*minute)
+# ds.simulate(11910*minute)
 
-print(ds.get_kernel_status('time'))
+# print(ds.get_kernel_status('time'))
 
-ds.plot.plot_neurons(mode="mixed", show=True)
+# ds.plot.plot_neurons(mode="mixed", show=True)
 
 # Now a third step in development
 # no branching of axons, growth cone splitting of neurites
@@ -164,8 +170,8 @@ dend_params = {
     "gc_split_angle_mean": 30.*deg,
 }
 
-ds.set_object_parameters(n, dendrites_params=dend_params, axon_params=vp_axon)
-# ds.simulate(40*day)
+ds.set_object_properties(n, dendrites_params=dend_params, axon_params=vp_axon)
+# ds.simulate(10*day)
 # print(dense.get_kernel_status('time'))
 
 # ds.plot.plot_neurons(mode="mixed", show=True)

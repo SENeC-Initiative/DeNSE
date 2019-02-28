@@ -108,7 +108,7 @@ Setting parameters
 ------------------
 
 All the properties described here can be set with
-:func:`~dense.set_object_parameters`, passing the
+:func:`~dense.set_object_properties`, passing the
 :class:`~dense.elements.Neuron` object, or its GID, to ``object``, and the
 properties through the ``params`` dictionary.
 For people who prefer a more "object-oriented" approach, you can modify a neuron
@@ -141,9 +141,9 @@ Getting and setting properties
 ------------------------------
 
 All the properties described here can be set with
-:func:`~dense.set_object_parameters` through the ``axon_params`` or ``dendrites_params`` dictionaries, or directly on the
+:func:`~dense.set_object_properties` through the ``axon_params`` or ``dendrites_params`` dictionaries, or directly on the
 :class:`~dense.elements.Neurite` object through its
-:func:`~dense.elements.Neurite.set_parameters`
+:func:`~dense.elements.Neurite.set_properties`
 Some neurite-specific properties which are independent of the specific
 :ref:`growth cone models <pymodels>` are:
 

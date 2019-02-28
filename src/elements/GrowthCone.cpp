@@ -52,7 +52,8 @@ GrowthCone::GrowthCone(const std::string &model)
     , neurite_name_("")
     , active_(true)
     , model_(model)
-    , observables_({"length", "speed", "angle", "retraction_time", "stopped"})
+    , observables_({"length", "speed", "angle", "retraction_time", "status",
+                    "stepping_probability"})
     , total_proba_(0.)
     , delta_angle_(0)
     , stuck_(false)
@@ -319,10 +320,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                     local_substep = substep_tmp;
                 }
             }
-            //~ if (get_branch()->size() == 1)
-            //~ {
-                //~ printf("state after pull %i %i, module %f\n", stuck_, interacting_, move_.module);
-            //~ }
 
             // compute speed and module
             compute_speed(rnd_engine, local_substep);
@@ -341,14 +338,11 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                 kernel().space_manager.check_accessibility(
                     directions_weights, filopodia_, get_position(),
                     move_, get_branch()->get_last_segment());
+
                 // check for stuck/total_proba_
                 // take optional GC rigidity into account
                 compute_direction_probabilities(directions_weights,
                                                 local_substep);
-                //~ if (total_proba_ == 0. and get_branch()->size() < 3)
-                //~ {
-                    //~ printf("zero proba after idir %lu %s %lu\n", neuron_id_, neurite_name_.c_str(), get_nodeID());
-                //~ }
 
                 if (not stuck_)
                 {
@@ -367,10 +361,6 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
                         std::throw_with_nested(std::runtime_error(
                             "Passed from `GrowthCone::make_move`."));
                     }
-                    //~ if (get_branch()->size() < 3)
-                    //~ {
-                        //~ printf("state after move %i %i %f\n", stuck_, stopped_, total_proba_);
-                    //~ }
 
                     // assess stopped state (computed in make_move)
                     if (not stopped_)
@@ -469,6 +459,13 @@ void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
 
         // clear neighbors
         current_neighbors_.clear();
+
+        // retraction step stop once the whole retraction is done (growth cone
+        // pauses until the step is finished)
+        if (just_retracted_)
+        {
+            break;
+        }
     }
 }
 
@@ -530,6 +527,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
         {
             distance -= distance_done;
             biology_.branch->retract();
+
             // we also remove the tree box
             if (poly != nullptr)
             {
@@ -548,16 +546,12 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 
             BPoint new_p = BPoint(new_x, new_y);
 
-            printf("before retraction\n");
-            std::cout << bg::wkt(*(poly.get())) << std::endl;
-
             biology_.branch->retract();
-            printf("retracted on %lu %s %lu\n", neuron_id_, neurite_name_.c_str(), get_nodeID());
+
             // we remove the previous object and add the new, shorter one
             if (poly != nullptr)
             {
                 poly = biology_.branch->get_last_segment();
-                printf("after retraction\n");
                 if (poly != nullptr)
                 {
                     std::cout << bg::wkt(*(poly.get())) << std::endl;
@@ -629,7 +623,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 
     // cannot be stuck_ or on low proba mode when retracting, so reset all
     stuck_       = false;
-    total_proba_ = filopodia_.size;
+    total_proba_ = 1.;
     // also reset turning
     turning_ = 0;
     turned_  = 0.;
@@ -638,8 +632,10 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 
 void GrowthCone::prune(size_t cone_n)
 {
+#ifndef NDEBUG
     printf("pruning %lu %s %lu because (%i, %i, %f)\n", neuron_id_, neurite_name_.c_str(), get_nodeID(), stuck_, stopped_, total_proba_);
     printf("prop: retraction %f, %i\n", retraction_time_, just_retracted());
+#endif
     biology_.own_neurite->delete_cone(cone_n);
 }
 
@@ -746,46 +742,56 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             if (kernel().space_manager.intersects("environment", line))
             {
                 // stop at `radius` from the environment 
-                kernel().space_manager.get_point_at_distance(
+                bool intsct = kernel().space_manager.get_point_at_distance(
                     line, "environment", radius, p, distance);
 
-                // check if we moved a bit or if we were stopped
-                if (distance > 0 and distance < min_distance)
+                if (intsct)
                 {
-                    // we moved: modify move_.module and substep accordingly
-                    substep     *= distance / move_.module;
-                    move_.module = distance;
-                    min_distance = distance;
-                    update       = true;
-                }
-                else
-                {
-                    stopped_     = true;
+                    // check if we moved a bit or if we were stopped
+                    if (distance > 0 and distance < min_distance)
+                    {
+                        // we moved: modify move_.module and substep accordingly
+                        substep     *= distance / move_.module;
+                        move_.module = distance;
+                        min_distance = distance;
+                        update       = true;
+                    }
+                    else
+                    {
+                        stopped_     = true;
+                    }
                 }
             }
         }
 
         // check forbidden overlap with other neurites
         for (auto obstacle : current_neighbors_)
-        {            
-            if (bg::intersects(p, *(obstacle.second.get())))
+        {
+            // Note for unknown reasons, this was previously "intersects",
+            // switched to covered_by but does not prevent cases where
+            // "intersection" in "get_point_at_distance" is empty.
+            if (bg::covered_by(p, *(obstacle.second.get())))
             {
                 // stop at "radius" from the obstacle
-                kernel().space_manager.get_point_at_distance(
+                bool intsct = kernel().space_manager.get_point_at_distance(
                     line, obstacle.second, radius, p, distance);
-                    
-                // check if we moved a bit or if we were stopped
-                if (distance > 0 and distance < min_distance)
+
+                // check if the intersection was indeed obtained
+                if (intsct)
                 {
-                    // we moved: modify move_.module and substep accordingly
-                    substep     *= distance / move_.module;
-                    move_.module = distance;
-                    min_distance = distance;
-                    update       = true;
-                }
-                else
-                {
-                    stopped_     = true;
+                    // check if we moved a bit or if we were stopped
+                    if (distance > 0 and distance < min_distance)
+                    {
+                        // we moved: modify move_.module and substep accordingly
+                        substep     *= distance / move_.module;
+                        move_.module = distance;
+                        min_distance = distance;
+                        update       = true;
+                    }
+                    else
+                    {
+                        stopped_     = true;
+                    }
                 }
             }
         }
@@ -821,7 +827,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     biology_.branch, omp_id
                 );
             }
-            catch (const std::exception &except)
+            catch (...)
             {
                 std::throw_with_nested(std::runtime_error(
                     "Passed from `GrowthCone::make_move`."));
@@ -1068,12 +1074,14 @@ double GrowthCone::get_state(const char *observable) const
     value = move_.speed;
     CASE("angle")
     value = move_.angle;
-    CASE("stopped")
+    CASE("status")
     value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
     CASE("retraction_time")
     value = retraction_time_;
     CASE("diameter")
     value = current_diameter_;
+    CASE("stepping_probability")
+    value = total_proba_;
     ENDTRIE;
 
     return value;

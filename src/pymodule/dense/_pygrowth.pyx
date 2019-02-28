@@ -38,12 +38,12 @@ __all__ = [
     "get_object_type",
     "get_recording",
     "get_simulation_id",
-    "get_object_parameters",
+    "get_object_properties",
     "reset_kernel",
     "set_environment",
     "set_kernel_status",
     "set_neurite_parameters",
-    "set_object_parameters",
+    "set_object_properties",
     "simulate",
 ]
 
@@ -711,7 +711,7 @@ def get_simulation_id():
     return _to_string(c_simulation_id)
 
 
-def get_object_parameters(gids, property_name=None, level=None, neurite=None,
+def get_object_properties(gids, property_name=None, level=None, neurite=None,
                           return_iterable=False):
     '''
     Return the object's properties.
@@ -1060,7 +1060,7 @@ def get_recording(recorder, record_format="detailed"):
         recorder = [recorder]
 
     for rec in recorder:
-        rec_status = get_object_parameters(rec)
+        rec_status = get_object_properties(rec)
 
         observable = rec_status["observable"]
         level      = rec_status["level"]
@@ -1276,7 +1276,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
             neurons = get_neurons()
             if neurons:
                 for n in neurons:
-                    assert get_object_parameters(
+                    assert get_object_properties(
                         n, "growth_cone_model") != "simple_random_walk", \
                         "The `simple_random_walk` model, is not compatible " +\
                         "with complex environments."
@@ -1308,7 +1308,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
     set_kernel_status_(c_status, c_simulation_id)
 
 
-def set_object_parameters(objects, params=None, axon_params=None,
+def set_object_properties(objects, params=None, axon_params=None,
                           dendrites_params=None):
     '''
     Update the status of the `objects` using the parameters contained in
@@ -1354,12 +1354,12 @@ def set_object_parameters(objects, params=None, axon_params=None,
             def_model    = p.get("growth_cone_model", "default")
             _check_params(p, object_name)
 
-            astat        = get_object_parameters(gid, neurite="axon")
+            astat        = get_object_properties(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_a, "neurite", gc_model=gc_model)
 
-            dstat        = get_object_parameters(gid, neurite="dendrites")
+            dstat        = get_object_properties(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p_d, "neurite", gc_model=gc_model)
@@ -1367,7 +1367,7 @@ def set_object_parameters(objects, params=None, axon_params=None,
         for gid, p, p_a in zip(gids, it_p, it_a):
             object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            astat        = get_object_parameters(gid, neurite="axon")
+            astat        = get_object_properties(gid, neurite="axon")
             old_gc_model = astat["growth_cone_model"] if astat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
@@ -1376,7 +1376,7 @@ def set_object_parameters(objects, params=None, axon_params=None,
         for gid, p, p_d in zip(gids, it_p, it_d):
             object_name  = get_object_type(gid)
             def_model    = p.get("growth_cone_model", "default")
-            dstat        = get_object_parameters(gid, neurite="dendrites")
+            dstat        = get_object_properties(gid, neurite="dendrites")
             old_gc_model = dstat["growth_cone_model"] if dstat else def_model
             gc_model     = p.get("growth_cone_model", old_gc_model)
             _check_params(p, object_name)
@@ -1811,7 +1811,7 @@ def _get_tree(neuron, neurite):
     Return a tree describing a neurite.
     '''
     from .elements import Node, Tree
-    pos  = get_object_parameters(neuron, property_name="position")
+    pos  = get_object_properties(neuron, property_name="position")
     tree = Tree(neuron, neurite)
 
     keep_going = True
@@ -2066,8 +2066,8 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
 
     res_obs   = {}    # data for the observable
     res_times = None  # times (only one if "continuous", else dict)
-    neuron = None     # sto get neuron gid
-    do_next = True    # loop over the results
+    neuron    = None     # sto get neuron gid
+    do_next   = True    # loop over the results
 
     # get the recording
     if level == "neuron":
@@ -2077,6 +2077,7 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 times[0]*resolution, times[1]*resolution, int(times[2]))
         else:
             res_times = {}
+
         while do_next:
             do_next = get_next_recording_(gid, data_ids, data)
             if data_ids.size() > 0:
@@ -2126,16 +2127,16 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
             do_next = get_next_recording_(gid, data_ids, data)
             if data_ids.size() > 0:
                 # get ids and check them
-                neuron           = int(data_ids[0].ul)
-                neurite          = _to_string(data_ids[1].s)
-                gc               = int(data_ids[2].ul)
+                neuron          = int(data_ids[0].ul)
+                neurite         = _to_string(data_ids[1].s)
+                gc              = int(data_ids[2].ul)
                 get_next_time_(gid, time_ids, times, _to_bytes(time_units))
-                assert neuron   == int(time_ids[0].ul), "Internal error!"
-                assert neurite  == _to_string(time_ids[1].s), "Internal error!"
-                assert gc       == int(time_ids[2].ul), "Internal error!"
+                assert neuron  == int(time_ids[0].ul), "Internal error!"
+                assert neurite == _to_string(time_ids[1].s), "Internal error!"
+                assert gc      == int(time_ids[2].ul), "Internal error!"
                 # check if neurite initialized
                 if neuron not in res_obs:
-                    res_obs[neuron] = {}
+                    res_obs[neuron]   = {}
                     res_times[neuron] = {}
                 if neurite not in res_obs[neuron]:
                     res_obs[neuron][neurite]   = {}
@@ -2145,21 +2146,20 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     res_times[neuron][neurite][gc] = times
                 else:
-                    num_obs = len(res_obs[neuron][neurite][gc])
-                    if num_obs != int((times[1] - times[0]) / resolution):
+                    num_obs       = len(res_obs[neuron][neurite][gc])
+                    num_timesteps = int((times[1] - times[0]) / resolution)
+
+                    if num_obs != num_timesteps:
                         # @todo check where this multiple recording of first
                         # step comes from
-                        start = int(
-                            np.abs(int((times[1] - times[0]) / resolution)
-                            - num_obs) - 1)
                         res_obs[neuron][neurite][gc] = \
-                            res_obs[neuron][neurite][gc][start:]
+                            res_obs[neuron][neurite][gc][-num_timesteps:]
                         # initially existing gc
-                        res_times[neuron][neurite][gc] = np.arange(
-                            times[0], times[1] + resolution, resolution)
+                        res_times[neuron][neurite][gc] = np.linspace(
+                            times[0], times[1], num_timesteps)
                     else:
-                        res_times[neuron][neurite][gc] = np.arange(
-                            times[0], times[1], resolution)
+                        res_times[neuron][neurite][gc] = np.linspace(
+                            times[0], times[1], num_obs)
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -2237,14 +2237,14 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 # we work at neurite or gc level
                 if level == "auto":
                     for new_lvl in ("neurite", "growth_cone"):
-                        valid_obs = get_object_parameters(
+                        valid_obs = get_object_properties(
                             n, "observables", neurite=rt, level=new_lvl)
                         if obs in valid_obs:
                             pos_auto.append(i)
                             new_level.append(new_lvl)
                             break
                 else:
-                    valid_obs = get_object_parameters(n, "observables",
+                    valid_obs = get_object_properties(n, "observables",
                                                       neurite=rt, level=level)
                     if obs not in valid_obs:
                         raise RuntimeError(
@@ -2259,21 +2259,21 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                         neurites =  _get_neurites(n)
                         if "axon" in neurites:
                             valid_obs  = set(
-                                get_object_parameters(n, "observables",
+                                get_object_properties(n, "observables",
                                                       neurite="axon",
                                                       level=new_lvl))
                             neurites = [nrt for nrt in neurites if nrt != "axon"]
                             if neurites:
                                 valid_obs = valid_obs.intersection(
-                                    get_object_parameters(
+                                    get_object_properties(
                                         n, "observables", neurite="dendrites",
                                         level=new_lvl))
                         elif neurites:
-                            valid_obs = get_object_parameters(
+                            valid_obs = get_object_properties(
                                 n, "observables", neurite="dendrites",
                                 level=new_lvl)
                     else:
-                        valid_obs = get_object_parameters(n, "observables",
+                        valid_obs = get_object_properties(n, "observables",
                                                          level=new_lvl)
                     if obs in valid_obs:
                         pos_auto.append(i)
@@ -2284,23 +2284,23 @@ def _check_rec_keywords(targets, sampling_intervals, start_times, end_times,
                 neurites  =  _get_neurites(n)
                 if "axon" in neurites:
                     valid_obs  = set(
-                        get_object_parameters(n, "observables", neurite="axon",
+                        get_object_properties(n, "observables", neurite="axon",
                                               level=level))
                     neurites = [nrt for nrt in neurites if nrt != "axon"]
                     if neurites:
                         valid_obs = valid_obs.intersection(
-                            get_object_parameters(
+                            get_object_properties(
                                 n, "observables", neurite="dendrites",
                                 level=level))
                 elif neurites:
-                    valid_obs = get_object_parameters(n, "observables",
+                    valid_obs = get_object_properties(n, "observables",
                                                   neurite="dendrites",
                                                   level=level)
                 if obs not in valid_obs:
                     raise RuntimeError("Valid observables at level `"
                                        "{}` are {}".format(level, valid_obs))
             else:
-                if obs not in get_object_parameters(n, "observables", level=level):
+                if obs not in get_object_properties(n, "observables", level=level):
                     valid_lvl = []
                     for k, v in valid_levels.items():
                         if obs in v:

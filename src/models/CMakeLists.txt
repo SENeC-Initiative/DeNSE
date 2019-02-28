@@ -25,6 +25,7 @@ set( models_sources
     # steering methods
     steering_pull_only.hpp
     steering_memory_based.hpp steering_memory_based.cpp
+    steering_srf.hpp steering_srf.cpp
     # direction selection methods
     direction_select_nm.hpp direction_select_nm.cpp
     direction_select_nwa.hpp direction_select_nwa.cpp

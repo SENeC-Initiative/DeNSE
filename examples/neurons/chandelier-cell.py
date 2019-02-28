@@ -110,7 +110,7 @@ axon_vp = {
     "T": 3*day,
 }
 
-ds.set_object_parameters(n, axon_params=axon_vp, dendrites_params=dend_vp)
+ds.set_object_properties(n, axon_params=axon_vp, dendrites_params=dend_vp)
 
 ds.simulate(12*day)
 
@@ -140,7 +140,7 @@ lb = {
     "lateral_branching_angle_mean": 45.*deg
 }
 
-ds.set_object_parameters(n, axon_params=lb_a, dendrites_params=lb)
+ds.set_object_properties(n, axon_params=lb_a, dendrites_params=lb)
 
 ds.simulate(10*day)
 
@@ -149,7 +149,7 @@ ds.plot.plot_neurons(show=True)
 
 
 end_branching = { "use_flpl_branching": False, "use_uniform_branching": False, "use_van_pelt": True, "T": 60*day}
-ds.set_object_parameters(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_properties(n, axon_params=end_branching, dendrites_params=end_branching)
 
 ds.simulate(20*day)
 

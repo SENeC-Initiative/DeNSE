@@ -169,7 +169,7 @@ Growth cones
 Generic properties
 ------------------
 
-The parameters of the growth cones can also be set through :func:`~dense.set_object_parameters`, either through the ``params`` argument, to
+The parameters of the growth cones can also be set through :func:`~dense.set_object_properties`, either through the ``params`` argument, to
 set the properties of all growth cones in the neuron, or separately through
 the ``axon_params`` or ``dendrite_params` arguments.
 

@@ -24,7 +24,8 @@ namespace growth
 {
 
 typedef std::unordered_map<size_t, GCPtr> gc_map;
-typedef boost::range::joined_range<const gc_map, const gc_map> gc_it_range;
+typedef boost::iterator_range< gc_map::const_iterator > simple_gc_range;
+typedef boost::range::joined_range<const gc_map, const gc_map> joined_gc_range;
 
 
 // Neuron forward declaration
@@ -93,10 +94,11 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     bool growth_cone_split(GCPtr branching_cone, double new_length,
                            double new_angle, double old_angle,
                            double new_diameter, double old_diameter,
-                           NodePtr &new_node);
+                           NodePtr &new_node, GCPtr& sibling);
     GCPtr create_branching_cone(const TNodePtr branching_node, NodePtr new_node,
                                 double new_length, double new_diameter,
-                                const BPoint &xy, double new_cone_angle);
+                                const BPoint &xy, double new_cone_angle,
+                                bool split);
     void update_parent_nodes(NodePtr new_node, TNodePtr oldnode);
     void update_tree_structure(TNodePtr root);
     void delete_parent_node(NodePtr parent, int child_id);
@@ -133,7 +135,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_node(NodePtr);
 
     bool walk_tree(NodeProp& np) const;
-    gc_it_range gc_range() const;
+    simple_gc_range active_gc_range() const;
+    joined_gc_range gc_range() const;
     std::unordered_map<size_t, NodePtr>::const_iterator nodes_cbegin() const;
     std::unordered_map<size_t, NodePtr>::const_iterator nodes_cend() const;
 

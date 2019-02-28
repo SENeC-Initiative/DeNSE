@@ -122,7 +122,7 @@ def run_dense(neuron_params):
 
     dendrite_params.update(arborization)
     axon_params.update(arborization_axon)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
@@ -132,7 +132,7 @@ def run_dense(neuron_params):
         "persistence_length":30.,
     }
     dendrite_params.update(elongation)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
@@ -151,7 +151,7 @@ def run_dense(neuron_params):
 
     dendrite_params.update(stortignation)
     axon_params.update(stortignation_axon)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
@@ -171,7 +171,7 @@ def run_dense(neuron_params):
 
     # dendrite_params.update(stortignation)
     # axon_params.update(stortignation_axon)
-    # ds.set_object_parameters(gid,
+    # ds.set_object_properties(gid,
                         # params=neuron_params,
                         # dendrites_params=dendrite_params,
                         # axon_params=axon_params)

@@ -127,7 +127,7 @@ def run_dense(kernel,neuron_params,ID,plot):
                                   position=[]
                                   )
 
-    # ds.set_object_parameters(gid, params=neuron_params,
+    # ds.set_object_properties(gid, params=neuron_params,
     # axon_params=neuron_params)
     step(3./resolution, 1, False, plot)
     step(300./resolution, 1, False, plot)
@@ -136,7 +136,7 @@ def run_dense(kernel,neuron_params,ID,plot):
     dendrite_params['use_van_pelt'] = True
     axon_params['use_flpl_branching'] = False
     axon_params['flpl_branching_rate'] = 0.001
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -155,7 +155,7 @@ def run_dense(kernel,neuron_params,ID,plot):
         "res_use_ratio": 0.3,
     }
     axon_params.update(axon_migated)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)

@@ -121,25 +121,18 @@ extern const std::string points_per_circle;
  * Steering models
  */
 
-// memory-based steering
+// common
 extern const std::string rigidity_factor;
-extern const std::string decay_factor;
-
-
-/*
- * Direction selection models
- */
-extern const std::string noise_amplitude;
-extern const std::string critical_pull;
-
-
-/*
- * Steering models
- */
 
 // memory-based steering
-extern const std::string rigidity_factor;
 extern const std::string decay_factor;
+
+// SRF steering
+extern const std::string somatropic_factor;
+extern const std::string somatropic_scale;
+extern const std::string somatropic_mode;
+extern const std::string self_avoidance_factor;
+extern const std::string self_avoidance_scale;
 
 
 /*

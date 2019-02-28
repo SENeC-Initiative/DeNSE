@@ -62,10 +62,13 @@ class Branching
     void set_branching_event(Event &ev, signed char ev_type,
                              double duration);
     bool branching_event(mtPtr rnd_engine, const Event &ev);
+    void update_splitting_cones(TNodePtr branching_cone,
+                                GCPtr second_cone, NodePtr new_node);
 
     // van Pelt branching functions
     bool vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                            size_t &branching_point, mtPtr rnd_engine);
+                            size_t &branching_point, mtPtr rnd_engine,
+                            GCPtr &second_cone);
     void compute_vanpelt_event(mtPtr rnd_engine);
 
     // uniform branching functions

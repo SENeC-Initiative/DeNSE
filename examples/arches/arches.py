@@ -20,7 +20,7 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-num_neurons = 1000
+num_neurons = 10
 
 num_omp = 6
 
@@ -29,19 +29,19 @@ use_uniform_branching = False
 use_vp = False
 use_run_tumble = True
 
-gc_model = 'persistent_random_walk'
+gc_model = 'run-and-tumble'
 
 neuron_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
-    "sensing_angle": 0.14,
+    "sensing_angle": 80.*deg,
     "speed_growth_cone": 0.15 * um / minute,
     "filopodia_wall_affinity": 100.,
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 20,
     "persistence_length": 400. * um,
-    "thinning_ratio": 1./2000.,
+    "taper_rate": 1./2000.,
 
     "soma_radius": soma_radius * um,
     'B' : 10. * cpm,
@@ -99,13 +99,13 @@ if __name__ == '__main__':
 
     print("Creating neurons")
     gids = ds.create_neurons(
-        n=num_neurons, growth_cone_model="persistent_rw_critical",
-        culture=culture, params=neuron_params,
+        n=num_neurons, culture=culture, params=neuron_params,
         dendrites_params=dendrite_params, num_neurites=2)
 
     print("neuron created, starting simu")
+    ds.plot.plot_neurons(show=True)
 
     step(5 * day, 0, False)
 
     # prepare the plot
-    ds.plot.plot_neurons(show_density=True, dstep=4., dmax=10, cmap="jet")
+    ds.plot.plot_neurons(show_density=False, dstep=4., dmax=10, cmap="jet")

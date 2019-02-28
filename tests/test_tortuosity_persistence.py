@@ -159,7 +159,7 @@ observable = "num_tumbles"
 fig, ax = plt.subplots()
 fig2, ax2 = plt.subplots()
 #~ observable = "angle"
-#~ observable = "stopped"
+#~ observable = "status"
 
 xbins = np.linspace(-5000, 5000, int(num_neurons/200.))
 abins = np.linspace(-np.pi, np.pi, 50)

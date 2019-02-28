@@ -97,7 +97,7 @@ class Neuron(object):
         For a neuron with no neurites, `has_axon` determines whether the first
         created neurite will be an axon or a dendrite.
         '''
-        return _pg.get_object_parameters(self, "has_axon")
+        return _pg.get_object_properties(self, "has_axon")
 
     @property
     def total_length(self):
@@ -156,7 +156,7 @@ class Neuron(object):
             return self.axon
         return self.dendrites[neurite]
 
-    def get_parameters(self, property_name=None, level=None, neurite=None):
+    def get_properties(self, property_name=None, level=None, neurite=None):
         '''
         Get the object's properties.
 
@@ -182,14 +182,14 @@ class Neuron(object):
         
         See also
         --------
-        :func:`~dense.get_object_parameters`,
-        :func:`~dense.elements.Neurite.get_parameters`,
-        :func:`~dense.elements.Neuron.set_parameters`.
+        :func:`~dense.get_object_properties`,
+        :func:`~dense.elements.Neurite.get_properties`,
+        :func:`~dense.elements.Neuron.set_properties`.
         '''
-        return _pg.get_object_parameters(self, property_name=property_name,
+        return _pg.get_object_properties(self, property_name=property_name,
                                          level=level, neurite=neurite)
 
-    def set_parameters(self, params=None, axon_params=None,
+    def set_properties(self, params=None, axon_params=None,
                        dendrites_params=None):
         '''
         Update the neuronal parameters using the entries contained in `params`.
@@ -205,11 +205,11 @@ class Neuron(object):
 
         See also
         --------
-        :func:`~dense.set_object_parameters`,
-        :func:`~dense.elements.Neurite.set_parameters`,
-        :func:`~dense.elements.Neuron.get_parameters`.
+        :func:`~dense.set_object_properties`,
+        :func:`~dense.elements.Neurite.set_properties`,
+        :func:`~dense.elements.Neuron.get_properties`.
         '''
-        return _pg.set_object_parameters(
+        return _pg.set_object_properties(
             self, params=params, axon_params=axon_params,
             dendrites_params=dendrites_params)
 
@@ -452,11 +452,11 @@ class Neurite(object):
     @property
     def taper_rate(self):
         if self._parent is not None:
-            return _pg.get_object_parameters(self._parent, "taper_rate",
+            return _pg.get_object_properties(self._parent, "taper_rate",
                                              neurite=self.name)
         return None
 
-    def get_parameters(self, property_name=None, level=None):
+    def get_properties(self, property_name=None, level=None):
         '''
         Get the object's properties.
 
@@ -477,15 +477,15 @@ class Neurite(object):
         
         See also
         --------
-        :func:`~dense.get_object_parameters`,
-        :func:`~dense.elements.Neuron.get_parameters`,
-        :func:`~dense.elements.Neurite.set_parameters`.
+        :func:`~dense.get_object_properties`,
+        :func:`~dense.elements.Neuron.get_properties`,
+        :func:`~dense.elements.Neurite.set_properties`.
         '''
-        return _pg.get_object_parameters(
+        return _pg.get_object_properties(
             self._parent, property_name=property_name,
             level=level, neurite=str(self))
 
-    def set_parameters(self, params):
+    def set_properties(self, params):
         '''
         Update the neuronal parameters using the entries contained in `params`.
 
@@ -497,8 +497,8 @@ class Neurite(object):
         See also
         --------
         :func:`~dense.set_neurite_parameters`,
-        :func:`~dense.elements.Neuron.set_parameters`,
-        :func:`~dense.elements.Neurite.get_parameters`.
+        :func:`~dense.elements.Neuron.set_properties`,
+        :func:`~dense.elements.Neurite.get_properties`.
         '''
         return _pg.set_neurite_parameters(self._parent, self, params=params)
 
@@ -769,9 +769,9 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_parameters(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_properties(gids, "position", return_iterable=True)
         pos  = [pos[n] for n in gids]
-        rad  = _pg.get_object_parameters(gids, "soma_radius",
+        rad  = _pg.get_object_properties(gids, "soma_radius",
                                          return_iterable=True)
         rad  = [rad[n] for n in gids]
 
@@ -906,7 +906,7 @@ class Population(list):
                     raise Exception(
                         "Dendrites are expected to be a list of segments.")
 
-    def get_parameters(self, property_name=None, level=None, neurite=None):
+    def get_properties(self, property_name=None, level=None, neurite=None):
         '''
         Get the neurons's properties.
 
@@ -930,7 +930,7 @@ class Population(list):
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
         '''
-        return _pg.get_object_parameters(self, property_name=property_name,
+        return _pg.get_object_properties(self, property_name=property_name,
                                          level=level, neurite=neurite)
 
 

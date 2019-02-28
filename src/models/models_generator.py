@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from collections import namedtuple
-
 ''' Generate the complete models_manager.cpp '''
+
+from collections import namedtuple
 
 
 in_file  = "models_manager.cpp.in"
 out_file = "models_manager.cpp"
-mc_args  = ("method", "filename", "classname") 
+mc_args  = ("method", "filename", "classname")
 
 
 class ModelComponent(namedtuple("component", mc_args)):
@@ -64,6 +64,10 @@ steering_methods = [
     ModelComponent(method="memory-based",
                    filename="steering_memory_based.hpp",
                    classname="MemBasedSteeringModel"),
+
+    ModelComponent(method="self-referential-forces",
+                   filename="steering_srf.hpp",
+                   classname="SrfSteeringModel"),
 ]
 
 # list of direction selection methods
@@ -83,11 +87,15 @@ direction_selection_methods = [
 
 # dictionary of abbreviations (complete to abbrev)
 abbrev = {
+    # extensions
     "constant": "cst",
     "gaussian-fluctuations": "gf",
     "resource-based": "res",
+    # steering
     "pull-only": "po",
     "memory-based": "mem",
+    "self-referential-forces": "srf",
+    # direction selection
     "noisy-maximum": "nm",
     "noisy-weighted-average": "nwa",
     "run-and-tumble": "rt",
@@ -98,21 +106,17 @@ specials = {
     "simple-random-walk": "constant_pull-only_noisy-weighted-average",
     "run-and-tumble": "constant_pull-only_run-and-tumble",
     "netmorph-like": "constant_memory-based_noisy-maximum",
-    # ~ "neuromac-like": "constant_self-referential-forces_noisy-weighted-average" @todo
+    "self-referential-forces": "constant_self-referential-forces_noisy-weighted-average",
 }
 
 
 ''' Strings to fill the C++ file '''
 
 include       = '#include "{}"\n'
+
 translate_str = '      {{"{}", "{}"}},\n'
-# ~ model_str    = '''
-    # ~ kernel().neuron_manager.register_model(
-        # ~ "{model_name}",
-        # ~ std::dynamic_pointer_cast<GrowthCone>(
-            # ~ std::make_shared<GrowthConeModel<{el}, {steer}, {dirsel}>>("{model_name}")));
-# ~ '''
-model_str    = '''
+
+model_str     = '''
     models_.insert({{
         "{model_name}",
         GrowthConeModel<{el}, {steer}, {dirsel}>::create_gc_model("{model_name}")

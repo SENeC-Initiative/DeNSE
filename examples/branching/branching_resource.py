@@ -95,7 +95,7 @@ def resource_branching(neuron_params):
 
     step(10, 1, False, False)
     neuron_params['res_branching_threshold'] = b_th
-    ds.set_object_parameters(gid,params = neuron_params,
+    ds.set_object_properties(gid,params = neuron_params,
                         axon_params=neuron_params)
     step(5000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True

@@ -160,7 +160,7 @@ if __name__ == '__main__':
                         "use_uniform_branching": True,
                         "uniform_branching_rate": 0.1 * cph,})
 
-    ds.set_object_parameters(gids,
+    ds.set_object_properties(gids,
                              params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)

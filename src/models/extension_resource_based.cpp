@@ -195,13 +195,15 @@ double ResourceBasedExtensionModel::compute_CR(
                     rnd_engine, new_angle, old_angle, new_diameter,
                     old_diameter);
 
+                // @todo
                 // this has to be replaced to make it create an event for the
                 // beginning of the next timestep and delegate to the
                 // branching model
                 NodePtr update_me;
+                GCPtr and_me_too;
                 neurite_ptr_->growth_cone_split(
                     gc_weakptr_.lock(), step_length, new_angle, old_angle,
-                    new_diameter, old_diameter, update_me);
+                    new_diameter, old_diameter, update_me, and_me_too);
             }
         }
     }

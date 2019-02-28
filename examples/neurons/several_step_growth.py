@@ -139,8 +139,8 @@ if __name__ =='__main__':
     }
 
     # update the parameters lists of the neurons 'gids'
-    ds.set_object_parameters(gids, axon_params=vp_axon, dendrites_params=vp_dend)
-    # pprint(ds.get_object_parameters(gids))
+    ds.set_object_properties(gids, axon_params=vp_axon, dendrites_params=vp_dend)
+    # pprint(ds.get_object_properties(gids))
 
     ds.simulate(7 *day+2*day)
 
@@ -185,13 +185,13 @@ if __name__ =='__main__':
     #    "lateral_branching_angle_std": 5.,
     #    }
     
-    #    ds.set_object_parameters(gids, axon_params=lat_params, dendrites_params=dlat_params)
+    #    ds.set_object_properties(gids, axon_params=lat_params, dendrites_params=dlat_params)
 
-    ds.set_object_parameters(gids, params=lat_params, dendrites_params=dlat_params)
+    ds.set_object_properties(gids, params=lat_params, dendrites_params=dlat_params)
 
     ds.simulate(5 * day)
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
     ds.plot.plot_neurons(mode="mixed", show=True)
 
-    #~ pprint(ds.get_object_parameters(gids_rec))
+    #~ pprint(ds.get_object_properties(gids_rec))

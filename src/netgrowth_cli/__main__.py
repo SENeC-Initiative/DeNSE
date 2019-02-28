@@ -182,7 +182,7 @@ if '__main__' is __name__:
     if args.simulate:
         step(100, 1, False)
         neuron_params["use_van_pelt"] = True
-        ds.set_object_parameters(gids,
+        ds.set_object_properties(gids,
                             axon_params = neuron_params,
                             dendrites_params= neuron_params,
                             params = neuron_params)

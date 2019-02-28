@@ -84,7 +84,7 @@ if __name__ =='__main__':
                             num_neurites=2)
 
     pprint("neuron status")
-    pprint(ds.get_object_parameters(gids[0]))
+    pprint(ds.get_object_properties(gids[0]))
 
     '''
     Create recorders
@@ -92,7 +92,7 @@ if __name__ =='__main__':
 
     gids_rec = ds.create_recorders(gids, "length", levels="neurite")
 
-    print(gids_rec, ds.get_object_parameters(gids_rec))
+    print(gids_rec, ds.get_object_properties(gids_rec))
 
     print("start simu")
 

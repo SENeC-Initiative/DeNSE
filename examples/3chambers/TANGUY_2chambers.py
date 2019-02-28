@@ -140,7 +140,7 @@ if __name__ == '__main__':
                    'T' : 10000. * minute,
                    'E' : 0.7}
     print(time.time() - start)
-    ds.set_object_parameters(gids, params=neuron_params,
+    ds.set_object_properties(gids, params=neuron_params,
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
     print(time.time() - start)

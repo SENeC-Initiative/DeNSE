@@ -45,7 +45,7 @@ Neurite::Neurite(const std::string &name, const std::string &neurite_type,
     , branching_model_(std::make_shared<Branching>())
     , name_(name)
     , observables_(
-          {"length", "speed", "num_growth_cones", "retraction_time", "stopped"})
+          {"length", "speed", "num_growth_cones", "retraction_time", "status"})
     , num_created_nodes_(0)
     , growth_cone_model_(gc_model)
     , neurite_type_(neurite_type)
@@ -248,7 +248,8 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
             gc.second->set_diameter(diameter);
         }
 
-        if (diameter <= min_diameter_ or gc.second->current_stop_ >= gc.second->max_stop_)
+        if (diameter <= min_diameter_
+            or gc.second->current_stop_ >= gc.second->max_stop_)
         {
             gc.second->active_ = false;
             growth_cones_inactive_tmp_.insert(gc);
@@ -262,6 +263,10 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
         {
             growth_cones_inactive_.insert(gc);
             growth_cones_.erase(gc.first);
+
+            // tell recorders that this growth cone "died"
+            kernel().record_manager.gc_died(
+                parent_.lock()->get_gid(), name_, gc.first);
         }
     }
 
@@ -276,6 +281,9 @@ void Neurite::grow(mtPtr rnd_engine, size_t current_step, double substep)
         // if dead_cones_ is not ordered, then this will fail!
         assert(growth_cones_[cone_n].use_count() == 1);
         growth_cones_.erase(cone_n);
+        // tell recorders that this growth cone died
+        kernel().record_manager.gc_died(
+            parent_.lock()->get_gid(), name_, cone_n);
     }
 
     dead_cones_.clear();
@@ -441,7 +449,8 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
  */
 void Neurite::delete_cone(size_t cone_n)
 {
-    // check if not already dead
+    // check if not already dead (can call this function several times in a
+    // single timestep)
     GCPtr dead_cone = growth_cones_[cone_n];
     bool alive = not dead_cone->biology_.dead;
 
@@ -584,7 +593,7 @@ void Neurite::update_parent_nodes(NodePtr new_node, TNodePtr branching)
 GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                                      NodePtr new_node, double dist_to_parent,
                                      double new_diameter, const BPoint &xy,
-                                     double new_cone_angle)
+                                     double new_cone_angle, bool split)
 {
     // check that the new position is inside the environment and does not
     // overlap with another branch from the same element.
@@ -652,10 +661,17 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     sibling->set_diameter(new_diameter);
 
     // update branch and assign it to the new growth cone
-    kernel().space_manager.add_object(
-        xy, p, new_diameter, dist_to_parent, taper_rate_, info, b, omp_id);
+    // this is only done for lateral branching; for splitting, the procedure
+    // is more complex and has to be performed after the R-tree update, so
+    // in Branching::update_splitting_cones, called from
+    // Branching::branching_event after the call to this function.
+    if (not split)
+    {
+        kernel().space_manager.add_object(
+            xy, p, new_diameter, dist_to_parent, taper_rate_, info, b, omp_id);
 
-    sibling->set_position(p, parent_to_soma + dist_to_parent, b);
+        sibling->set_position(p, parent_to_soma + dist_to_parent, b);
+    }
 
     // double parent_to_soma      = new_node->get_distance_to_soma();
     // BranchPtr b                = std::make_shared<Branch>(xy, parent_to_soma);
@@ -730,8 +746,10 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
         BLineString ls({xy, line_end});
 
         std::vector<ObjectInfo> neighbors_info;
-        kernel().space_manager.get_objects_in_range(line_end, 1.5*new_diam,
-                                                    neighbors_info);
+        // kernel().space_manager.get_objects_in_range(line_end, 1.5*new_diam,
+        //                                             neighbors_info);
+        kernel().space_manager.get_intersected_objects(xy, line_end,
+                                                       neighbors_info);
 
         size_t gid = parent_.lock()->get_gid();
         size_t nid = branching_node->get_nodeID();
@@ -767,7 +785,7 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
 
         auto sibling = create_branching_cone(
             branching_node, new_node, dist_to_bp, new_cone_diam, xy,
-            branch_direction + angle);
+            branch_direction + angle, false);
         
         // check if sibling could indeed be created
         if (sibling != nullptr)
@@ -856,7 +874,7 @@ bool Neurite::lateral_branching(TNodePtr branching_node, size_t branch_point,
 bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
                                 double new_angle, double old_angle,
                                 double new_diameter, double old_diameter,
-                                NodePtr &new_node)
+                                NodePtr &new_node, GCPtr& sibling)
 {
     if (not branching_cone->is_dead() and active_)
     {
@@ -879,26 +897,33 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
             branching_cone->get_position(),
             branching_cone->get_branch()->final_distance_to_soma(),
             new_node->get_branch());
+        
+        printf("gc split\n");
+        std::cout << bg::wkt(*(branching_cone->get_branch()->get_last_segment().get())) << std::endl;
+        std::cout << bg::wkt(branching_cone->get_position()) << std::endl;
 
-
-        // create the new growth cone from the parent node
-        auto sibling = create_branching_cone(
+        // create the sibling
+        sibling = create_branching_cone(
             branching_cone, new_node, new_length, new_diameter,
-            branching_cone->geometry_.position, direction + new_angle);
+            branching_cone->get_position(), direction + new_angle, true);
         
         if (sibling != nullptr)
         {
             update_parent_nodes(new_node, branching_cone);
 
-            sibling->TopologicalNode::set_diameter(branching_cone->get_diameter());
+            sibling->TopologicalNode::set_diameter(
+                branching_cone->get_diameter());
+
             // move the old growth cone --> growth cone split specific
-            branching_cone->move_.angle       = direction + old_angle;
-            branching_cone->TopologicalNode::set_diameter(branching_cone->get_diameter());
+            branching_cone->move_.angle = direction + old_angle;
+            branching_cone->TopologicalNode::set_diameter(
+                branching_cone->get_diameter());
             branching_cone->set_diameter(old_diameter);
             branching_cone->topological_advance();
+
             branching_cone->biology_.branch = std::make_shared<Branch>(
                 branching_cone->get_position(),
-                branching_cone->get_branch()->final_distance_to_soma());
+                new_node->get_branch()->final_distance_to_soma());
 
             // update growth cones' variables after split
             branching_cone->after_split();
@@ -1131,7 +1156,13 @@ bool Neurite::walk_tree(NodeProp& np) const
 }
 
 
-gc_it_range Neurite::gc_range() const
+simple_gc_range Neurite::active_gc_range() const
+{
+    return boost::make_iterator_range(growth_cones_);
+}
+
+
+joined_gc_range Neurite::gc_range() const
 {
     return boost::range::join(growth_cones_, growth_cones_inactive_);
 }

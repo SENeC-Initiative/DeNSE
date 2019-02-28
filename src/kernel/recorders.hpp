@@ -5,9 +5,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <string>
-#include <vector>
+#include <unordered_set>
 
 // includes from libgrowth
 #include "config.hpp"
@@ -45,6 +43,9 @@ typedef std::unordered_map<
                                std::unordered_map<size_t, std::vector<Time>>>>
     gcDiscreteTimes;
 typedef std::unordered_map<
+    size_t, std::unordered_map<std::string, std::unordered_set<size_t>>>
+      setDeadCones;
+typedef std::unordered_map<
     size_t, std::unordered_map<std::string, std::unordered_map<size_t, size_t>>>
     gcNumTimes;
 
@@ -73,6 +74,9 @@ class BaseRecorder
     virtual void final_timestep(size_t step);
 
     void neuron_deleted(size_t gid);
+    virtual void new_neurite(size_t neuron, const std::string& neurite) {};
+    virtual void gc_died(size_t neuron, const std::string& neurite,
+                         size_t gc_id) {};
 
     void get_status(statusMap &status) const;
     virtual void set_status(const statusMap &status);
@@ -152,6 +156,8 @@ class NeuriteContinuousRecorder : public BaseRecorder
 
     virtual void record() override;
     virtual void final_timestep(size_t step) override;
+    virtual void new_neurite(size_t neuron,
+                             const std::string& neurite) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -178,6 +184,8 @@ class NeuriteDiscreteRecorder : public BaseRecorder
     NeuriteDiscreteRecorder();
 
     virtual void record(const Event &ev) override;
+    virtual void new_neurite(size_t neuron,
+                             const std::string& neurite) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -209,6 +217,11 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     virtual void record(const Event &ev) override;
     virtual void final_timestep(size_t step) override;
 
+    virtual void new_neurite(size_t neuron,
+                             const std::string& neurite) override;
+    virtual void gc_died(size_t neuron, const std::string& neurite,
+                         size_t gc_id) override;
+
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
     virtual bool get_next_recording(std::vector<Property> &ids,
@@ -222,6 +235,7 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     gcRec recording_;
     gcContinuousTimes times_;
     gcNumTimes num_times_;
+    setDeadCones dead_cones_;
     // value iterators
     gcRec::const_iterator v_neuron_it_;
     std::unordered_map<std::string, mapNumVecDouble>::const_iterator

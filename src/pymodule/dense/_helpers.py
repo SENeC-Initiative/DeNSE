@@ -250,8 +250,10 @@ def format_dict(obj, start=None):
     strout  = "{\n"
     max_len = 0
     start   = "  " if start is None else start + "  "
+
     for k, v in obj.items():
         max_len = max(max_len, len(str(k)))
+
     for k, v in obj.items():
         wlen = max_len-len(str(k))
         if isinstance(v, str):
@@ -269,7 +271,9 @@ def format_dict(obj, start=None):
                                                format_dict(v), start=start)
         else:
             strout += "{}'{}'{}: {},\n".format(start, k, ' '*wlen, str(v))
+
     strout += "}"
+
     return strout
 
 
@@ -322,7 +326,7 @@ def dict_formatter(obj, p, cycle):
 
     if obj:
         p.breakable()
-    for idx, key in p._enumerate(keys):
+    for idx, key in enumerate(keys):
         if idx:
             p.text(',')
             p.breakable()
@@ -330,12 +334,8 @@ def dict_formatter(obj, p, cycle):
         p.pretty(key)
         wlen = max_len-len(str(key))
         p.text(' '*wlen + ': ')
-        if isinstance(obj[key], Model):
-            p.begin_group(max_len + step + 2)
-            p.pretty(obj[key])
-            p.end_group(max_len + step + 2)
-        else:
-            p.pretty(obj[key])
+        p.pretty(obj[key])
+        p.end_group(max_len + step + 2, "")
     if obj:
         p.end_group(step, '')
         p.breakable()
@@ -498,7 +498,7 @@ valid_levels = {
     "neurite": ["length", "speed", "num_growth_cones", "A"],
     "growth_cone": [
         "length", "speed", "resource", "angle", "persistence_angle",
-        "retraction_time", "stopped"
+        "retraction_time", "status", "stepping_probability",
     ],
 }
 

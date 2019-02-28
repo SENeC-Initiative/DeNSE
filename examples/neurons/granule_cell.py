@@ -76,7 +76,7 @@ lb_axon = {
     "lateral_branching_angle_mean": 45.*deg,
 }
 
-ds.set_object_parameters(n, axon_params=lb_axon)
+ds.set_object_properties(n, axon_params=lb_axon)
 
 ds.simulate(5 * day)
 

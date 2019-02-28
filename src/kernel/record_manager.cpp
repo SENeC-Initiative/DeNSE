@@ -355,22 +355,68 @@ void RecordManager::neurons_deleted(const std::vector<size_t> &gids)
 {
     for (size_t neuron : gids)
     {
-        auto cit = c_recorders_.find(neuron);
+        auto v_crec = neuron_to_c_recorder_.find(neuron);
 
-        if (cit != c_recorders_.end())
+        if (v_crec != neuron_to_c_recorder_.end())
         {
-            cit->second->neuron_deleted(neuron);
-            c_recorders_.erase(neuron);
-            neuron_to_c_recorder_.erase(neuron);
+            for (size_t rec_id : v_crec->second)
+            {
+                c_recorders_[rec_id]->neuron_deleted(neuron);
+                neuron_to_c_recorder_.erase(neuron);
+            }
         }
 
-        auto dit = d_recorders_.find(neuron);
+        auto v_drec = neuron_to_d_recorder_.find(neuron);
 
-        if (dit != d_recorders_.end())
+        if (v_drec != neuron_to_d_recorder_.end())
         {
-            dit->second->neuron_deleted(neuron);
-            d_recorders_.erase(neuron);
-            neuron_to_d_recorder_.erase(neuron);
+            for (size_t rec_id : v_drec->second)
+            {
+                d_recorders_[rec_id]->neuron_deleted(neuron);
+                neuron_to_d_recorder_.erase(neuron);
+            }
+        }
+    }
+}
+
+
+void RecordManager::new_neurite(size_t neuron, const std::string& neurite)
+{
+   auto v_crec = neuron_to_c_recorder_.find(neuron);
+
+    if (v_crec != neuron_to_c_recorder_.end())
+    {
+        for (size_t rec_id : v_crec->second)
+        {
+            c_recorders_[rec_id]->new_neurite(neuron, neurite);
+        }
+    }
+
+    auto v_drec = neuron_to_d_recorder_.find(neuron);
+
+    if (v_drec != neuron_to_d_recorder_.end())
+    {
+        for (size_t rec_id : v_drec->second)
+        {
+            d_recorders_[rec_id]->new_neurite(neuron, neurite);
+        }
+    }
+}
+
+
+void RecordManager::gc_died(size_t neuron, const std::string& neurite,
+                            size_t gc_id)
+{
+    // this information is only relevant for continuous recorders to know what
+    // is the last time for the gc records.
+    // for discrete recorders there is no issue since no new event will arrive.
+    auto v_crec = neuron_to_c_recorder_.find(neuron);
+    
+    if (v_crec != neuron_to_c_recorder_.end())
+    {
+        for (size_t rec_id : v_crec->second)
+        {
+            c_recorders_[rec_id]->gc_died(neuron, neurite, gc_id);
         }
     }
 }

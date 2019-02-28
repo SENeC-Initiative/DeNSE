@@ -88,5 +88,5 @@ if __name__ =='__main__':
 
     ds.plot_neurons(show_nodes=True, show=True)
 
-    #~ pprint(ds.get_object_parameters(gids_rec))
+    #~ pprint(ds.get_object_properties(gids_rec))
     ds.plot_recording(rec_ngc, time_units="minutes")

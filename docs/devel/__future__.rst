@@ -140,7 +140,7 @@ Let user choose the units it wants as output
 
 ### Statuses
 
-* Clean up `set_status` and python `set_object_parameters`
+* Clean up `set_status` and python `set_object_properties`
 
 @CheckStatus
 

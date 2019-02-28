@@ -9,6 +9,8 @@ from dense.units import *
 import numpy as np
 import os
 
+import matplotlib as mpl
+mpl.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -94,7 +96,7 @@ dend_t = {
 ''' Init kernel and create neurons '''
 
 kernel = {
-    "resolution": 50. * minute,
+    "resolution": 30. * minute,
     "seeds": [1],
     "environment_required": False,
     "num_local_threads": num_omp,
@@ -109,9 +111,9 @@ pyr_neuron = ds.create_neurons(1, params=pyr_nrn, axon_params=pyr_axon_i,
 # initial extension (5 days)
 ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
-print(ds.get_object_parameters(pyr_neuron))
+print(ds.get_object_properties(pyr_neuron))
 # Extension and branching period (5 days)
-ds.set_object_parameters(
+ds.set_object_properties(
     pyr_neuron, axon_params=pyr_axon_lb, dendrites_params=pyr_dend_lb)
 ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
@@ -121,6 +123,6 @@ ds.simulate(sim_time)
 ds.plot.plot_neurons(mode="mixed")
 
 # Termination period (10 days)
-ds.set_object_parameters(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
+ds.set_object_properties(pyr_neuron, axon_params=axon_t, dendrites_params=dend_t)
 ds.simulate(2*sim_time)
 ds.plot.plot_neurons(mode="mixed")

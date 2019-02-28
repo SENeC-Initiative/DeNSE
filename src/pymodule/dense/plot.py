@@ -5,6 +5,8 @@
 # library (https://pypi.python.org/pypi/descartes/) and are released under
 # a BSD license.
 
+from itertools import cycle
+
 import numpy as np
 
 import matplotlib.animation as _anim
@@ -16,6 +18,7 @@ from matplotlib.cm import get_cmap as _get_cmap
 from matplotlib.textpath import TextPath as _TextPath
 
 from . import _pygrowth as _pg
+from .units import *
 from .environment import plot_shape
 from ._helpers import is_iterable as _is_iterable
 
@@ -322,7 +325,7 @@ class Animate(_Animator, _anim.FuncAnimation):
 # -------------- #
 
 def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
-                  legend=True, show=True):
+                   legend=True, show=True, **kwargs):
     '''
     Plot the result of a recording.
 
@@ -344,6 +347,9 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
         Whether to display the legend or not.
     show : bool, optional (default: True)
         Display the plot.
+    **kwargs : optional arguments
+        Include "color" (numbers) and "linestyle" (default matplotlib values)
+        to customize the plot's appearance. Must be iterables.
 
     Returns
     -------
@@ -351,11 +357,13 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
         The axes of the plots.
     '''
     import matplotlib.pyplot as plt
-    status      = _pg.get_object_parameters(recorder, time_units=time_units)
+    status      = _pg.get_object_properties(recorder)
 
     num_rec     = 1
-    num_neurons = 0
-    colors      = [[0.5]]
+    num_colors  = 5
+    colors      = kwargs.get("color", [])
+    num_colors  = len(colors)
+    styles      = kwargs.get("linestyle", cycle(["-", "--", "-.", ":"]))
     cmap        = _get_cmap(cmap)
 
     # check how many recorders we got and prepare data
@@ -363,17 +371,16 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
         # only one recorder
         num_neurons = len(status["targets"])
         status      = {recorder: status}
-        if num_neurons > 1:
-            colors = [np.linspace(0, 1, num_neurons)]
+        if not colors:
+            num_colors = num_neurons
     else:
         num_neurons = len(next(iter(status.values()))["targets"])
         num_rec     = len(status)
-        colors      = []
+        if not colors:
+            num_colors = num_neurons
 
-        for rec in range(num_rec):
-            c_tmp = (np.linspace(0, 1, num_neurons) if num_neurons > 1
-                     else np.array([1.]))
-            colors.append(float(rec+1) * c_tmp / num_rec)
+    if not colors:
+        colors = cycle(np.linspace(0, 1-1./num_colors, num_colors))
 
     num_cols = num_rows = 1
     if display == "separate":
@@ -383,20 +390,26 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
                 "with `display='separate'`."
         num_cols = int(np.sqrt(num_neurons))
         num_rows = num_cols + 1 if num_cols**2 < num_neurons else num_cols
+
     fig = plt.figure()
     gs   = _gridspec.GridSpec(num_rows, num_cols)
 
     axes      = {rec: [] for rec in status}
     first_rec = next(iter(status))
+
     for i in range(num_rows):
         for j in range(num_cols):
             axes[first_rec].append(plt.subplot(gs[i, j]))
+            if num_rec > 1:
+                axes[first_rec][-1].grid(False)
             offset = 0.15
             if (len(status) > 2):
                 fig.subplots_adjust(right=0.8)
             for k, rec in enumerate(status):
                 if rec != first_rec:
                     twinax = axes[first_rec][-1].twinx()
+                    if num_rec > 1:
+                        twinax.grid(False)
                     axes[rec].append(twinax)
                     # Offset the right spine (the ticks and label have already
                     # been placed on the right by twinx)
@@ -412,7 +425,7 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
 
     lines = []
 
-    for i, (rec, rec_status) in enumerate(status.items()):
+    for ls, (i, (rec, rec_status)) in zip(styles, enumerate(status.items())):
         rec_type    = rec_status["observable"]
         level       = rec_status["level"]
         ev_type     = rec_status["event_type"]
@@ -420,31 +433,33 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
 
         k = 0
 
-        for neuron in range(num_neurons):
-            c = colors[i][neuron]
+        for c, neuron in zip(colors, range(num_neurons)):
             ax = axes[rec][neuron] if display == "separate" else axes[rec][0]
 
             ax.set_ylabel(rec_type)
             if i == 0:
-                ax.set_xlabel("Time")
+                ax.set_xlabel("Time ({})".format(time_units))
 
             if level == "neuron":
                 lbl = "{} of neuron {}".format(rec_type, neuron)
                 if rec_type == "num_growth_cones":
                     # repeat the times and values to make sudden jumps
-                    times  = np.repeat(data[rec_type]["times"][neuron], 2)
+                    times = np.repeat(data[rec_type]["times"][neuron], 2)
+                    # convert to "time_units"
+                    times *= (1*minute).m_as(time_units)
                     values = np.repeat(data[rec_type]["data"][neuron], 2)
                     lines.extend(
-                        ax.plot(times[1:], values[:-1], label=lbl, c=cmap(c)))
+                        ax.plot(times[1:], values[:-1], label=lbl, c=cmap(c),
+                                ls=ls))
                 else:
                     # for neuron level, same times for everyone
                     lines.extend(
                         ax.plot(data[rec_type]["times"],
                             data[rec_type]["data"][neuron], c=cmap(c),
-                            label=lbl))
+                            label=lbl, ls=ls))
             else:
                 num_neurites = len(data[rec_type]["data"][neuron])
-                subcolors = np.linspace(0, 1./float(num_neurons), num_neurites)
+                subcolors = np.linspace(0, 1./num_colors, num_neurites)
                 k = 0
                 for neurite, values in data[rec_type]["data"][neuron].items():
                     sc = subcolors[k]
@@ -454,32 +469,51 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
                         if ev_type == "continuous":
                             lines.extend(
                                 ax.plot(data[rec_type]["times"], values,
-                                    c=cmap(c+sc), label=lbl))
+                                    c=cmap(c+sc), label=lbl, ls=ls))
                         else:
                             if rec_type == "num_growth_cones":
                                 # repeat the times and values to make sudden
                                 # jumps
                                 times  = np.repeat(
                                     data[rec_type]["times"][neuron][neurite], 2)
+                                # convert to "time_units"
+                                times *= (1*minute).m_as(time_units)
                                 values = np.repeat(values, 2)
                                 lines.extend(
                                     ax.plot(times[1:], values[:-1],
-                                        c=cmap(c+sc), label=lbl))
+                                        c=cmap(c+sc), label=lbl, ls=ls))
                             else:
                                 lbl_nrt = neurite.replace("_", "\_")
                                 lines.extend(ax.plot(
                                     data[rec_type]["times"][neuron][neurite],
-                                    values[1:], c=cmap(c+sc), label=lbl_nrt))
+                                    values[1:], c=cmap(c+sc), label=lbl_nrt,
+                                    ls=ls))
                     else:
-                        times = data[rec_type]["times"][neuron][neurite]
-                        l = 0
-                        for gc_d, gc_t in zip(values.values(), times.values()):
-                            lbl = "{} of ({}, {}, gc {})".format(
+                        num_gcs = len(data[rec_type]["data"][neuron][neurite])
+                        times   = data[rec_type]["times"][neuron][neurite]
+
+                        subsubcolors = np.linspace(
+                            0, 1./(num_colors*num_neurites), num_gcs)
+
+                        l  = 0
+                        dd = subsubcolors, values.values(), times.values()
+
+                        for ssc, gc_d, gc_t in zip(*dd):
+                            # convert to "time_units"
+                            gc_t *= (1*minute).m_as(time_units)
+                            lbl   = "{} of ({}, {}, gc {})".format(
                                 rec_type, neuron, neurite, l).replace(
-                                    "_", "\_")
+                                    "_", "\\_")
                             lines.extend(
-                                ax.plot(gc_t, gc_d, c=cmap(c+sc), label=lbl))
+                                ax.plot(gc_t, gc_d, c=cmap(c+sc+ssc), label=lbl,
+                                        ls=ls))
                             l += 1
+
+                        if rec_type == "status":
+                            ax.set_ylim(-0.1, 2.1)
+                            ax.set_yticks([0, 1, 2])
+                            ax.set_yticklabels(
+                                ["extending", "stopped", "stuck"])
                     k += 1
 
     if legend:
@@ -497,12 +531,12 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
 # ---------- #
 
 def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
-               culture=None, show_culture=True, aspect=1., soma_radius=None,
-               active_gc="d", gc_size=2., soma_color='k',
-               axon_color="indianred", dendrite_color="royalblue",
-               subsample=1, save_path=None, title=None, axis=None,
-               show_density=False, dstep=20., dmin=None, dmax=None,
-               colorbar=True, show_neuron_id=False, show=True, **kwargs):
+                 culture=None, show_culture=True, aspect=1., soma_radius=None,
+                 active_gc="d", gc_size=2., soma_color='k',
+                 axon_color="indianred", dendrite_color="royalblue",
+                 subsample=1, save_path=None, title=None, axis=None,
+                 show_density=False, dstep=20., dmin=None, dmax=None,
+                 colorbar=True, show_neuron_id=False, show=True, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -611,7 +645,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     # plot the elements
     if mode in ("sticks", "mixed"):
         for a in axons.values():
-            plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2,            alpha=axon_alpha, show=False)
+            plot_shape(a, axis=ax, fc=axon_color, show_contour=False, zorder=2,
+                       alpha=axon_alpha, show=False)
 
         for vd in dendrites.values():
             for d in vd:

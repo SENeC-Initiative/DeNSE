@@ -111,7 +111,7 @@ def run_dense(neuron_params):
      }
 
     dendrite_params.update(splitting_dendrites)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params)
     step(2000.*minute, 1, False, True)
@@ -132,7 +132,7 @@ def run_dense(neuron_params):
     "res_use_ratio": 0.3 * cpm,
      }
     dendrite_params.update(arborization)
-    ds.set_object_parameters(gid,
+    ds.set_object_properties(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
@@ -154,7 +154,7 @@ def run_dense(neuron_params):
     # ~ "res_use_ratio": 0.4 * cpm,
      # ~ }
     # ~ dendrite_params.update(arborization)
-    # ~ ds.set_object_parameters(gid,
+    # ~ ds.set_object_properties(gid,
                         # ~ params=neuron_params,
                         # ~ dendrites_params=dendrite_params,
                         # ~ axon_params=axon_params)
@@ -162,7 +162,7 @@ def run_dense(neuron_params):
     # ~ step(2000./resolution, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
-    # ds.set_object_parameters(gid,params = neuron_params,
+    # ds.set_object_properties(gid,params = neuron_params,
     # axon_params= neuron_params)
     # step(1000./resolution, 1, False, True)
     # step(1000./resolution, 1, False, True)
@@ -177,7 +177,7 @@ def run_dense(neuron_params):
     # step(1080, 1, False, True)
     # step(4080, 1, False, True)
     # neuron_params['use_van_pelt'] = True
-    # ds.set_object_parameters(gid,params = neuron_params,
+    # ds.set_object_properties(gid,params = neuron_params,
     # axon_params=neuron_params)
     # step(10, 1, False, True)
     # step(10, 1, False, False)

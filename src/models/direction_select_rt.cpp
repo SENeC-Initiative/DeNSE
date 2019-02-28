@@ -189,7 +189,6 @@ void RTDirectionSelector::select_direction(
         double distance_done = next_tumble_;
         // compute how much time remains until tumble and update the current
         // substep accordingly.
-        //~ printf("distance done: %f, module %f\n", distance_done, step_length);
         substep = substep * (distance_done / step_length);
         // we are still running, so set delta_angle_ to zero
 

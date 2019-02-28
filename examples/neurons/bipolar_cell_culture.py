@@ -125,7 +125,7 @@ show_nrn(bip_neuron)
 
 # Extension and branching period (5 days)
 
-ds.set_object_parameters(bip_neuron, axon_params=bip_axon_lb, dendrites_params=bip_dend_lb)
+ds.set_object_properties(bip_neuron, axon_params=bip_axon_lb, dendrites_params=bip_dend_lb)
 
 ds.simulate(7200)
 show_nrn(bip_neuron)
@@ -137,7 +137,7 @@ show_nrn(bip_neuron)
 
 # Termination period (10 days)
 
-ds.set_object_parameters(bip_neuron, axon_params=axon_t, dendrites_params=dend_t)
+ds.set_object_properties(bip_neuron, axon_params=axon_t, dendrites_params=dend_t)
 
 ds.simulate(14400)
 show_nrn(bip_neuron)

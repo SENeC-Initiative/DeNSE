@@ -110,8 +110,13 @@ const std::string rw_delta_corr("rw_delta_corr");
 
 const std::string S("S");
 const std::string scale_up_move("scale_up_move");
+const std::string self_avoidance_factor("self_avoidance_factor");
+const std::string self_avoidance_scale("self_avoidance_scale");
 const std::string sensing_angle("sensing_angle");
 const std::string soma_radius("soma_radius");
+const std::string somatropic_factor("somatropic_factor");
+const std::string somatropic_mode("somatropic_mode");
+const std::string somatropic_scale("somatropic_scale");
 const std::string speed_growth_cone("speed_growth_cone");
 const std::string speed_ratio_retraction("speed_ratio_retraction");
 const std::string speed_variance("speed_variance");

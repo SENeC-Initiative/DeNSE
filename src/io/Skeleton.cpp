@@ -124,7 +124,7 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
         }
 
         // anyway get active growth cones
-        for (auto it : neurite.second->gc_range())
+        for (auto it : neurite.second->active_gc_range())
         {
             double x = it.second->get_position().x();
             double y = it.second->get_position().y();

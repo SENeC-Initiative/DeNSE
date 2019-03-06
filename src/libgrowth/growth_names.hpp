@@ -122,7 +122,10 @@ extern const std::string points_per_circle;
  */
 
 // common
+extern const std::string persistence_length;
 extern const std::string rigidity_factor;
+extern const std::string speed_growth_cone;
+extern const std::string speed_variance;
 
 // memory-based steering
 extern const std::string decay_factor;
@@ -133,6 +136,12 @@ extern const std::string somatropic_scale;
 extern const std::string somatropic_mode;
 extern const std::string self_avoidance_factor;
 extern const std::string self_avoidance_scale;
+
+#define SRF_AVOIDANCE_FACTOR 0.1
+#define SRF_AVOIDANCE_SCALE 5. // microns
+#define SRF_RIGIDITY_FACTOR 1.
+#define SRF_SOMATROPIC_FACTOR 1.
+#define SRF_SOMATROPIC_SCALE 50. // microns
 
 
 /*
@@ -195,42 +204,6 @@ extern const std::string res_typical_gc_support;
 
 
 /*
- * RANDOM WALK MODEL
- */
-
-extern const std::string random_walk_submodel;
-//! @param speed_growth_cone      10     [micormeter/second]
-extern const std::string speed_growth_cone;
-extern const std::string speed_variance;
-//! @param persistence_length      500  [micrometer]
-extern const std::string persistence_length;
-//@param sensing angle is choosen from experimental
-// data and it's 8.2 degrees
-
-extern const std::string rw_memory_tau;
-extern const std::string rw_delta_corr;
-
-#define RW_DELTA_CORR 100.
-#define RW_MEMORY_TAU 100.
-
-
-// SELF REFERENTIAL MODEL
-//
-#define SRF_AVOIDANCE_FORCE 1
-extern const std::string srf_avoidance_force;
-#define SRF_AVOIDANCE_DECAY 2
-extern const std::string srf_avoidance_decay;
-#define SRF_INERTIAL_FORCE 1
-extern const std::string srf_inertial_force;
-#define SRF_INERTIAL_DECAY 2
-extern const std::string srf_inertial_decay;
-#define SRF_SOMATROPIC_FORCE 1
-extern const std::string srf_somatropic_force;
-#define SRF_SOMATROPIC_DECAY 2
-extern const std::string srf_somatropic_decay;
-
-
-/*
  * GROWTH CONE SPLITTING PARAMETERS
  */
 
@@ -257,16 +230,17 @@ extern const std::string T;
  * LATERAL BRANCHING PARAMETERS
  */
 
-extern const std::string use_flpl_branching;
+extern const std::string diameter_fraction_lb;
 extern const std::string flpl_branching_rate;
-extern const std::string use_uniform_branching;
-extern const std::string uniform_branching_rate;
 extern const std::string lateral_branching_angle_mean;
 extern const std::string lateral_branching_angle_std;
+extern const std::string use_flpl_branching;
+extern const std::string use_uniform_branching;
+extern const std::string uniform_branching_rate;
 
-#define ANGLE_IN_DEGREES true
-#define LATERAL_BRANCHING_ANGLE_MEAN 90 * 3.14 / 180
-#define LATERAL_BRANCHING_ANGLE_STD 1. / 180 * 3.14
+#define DIAM_FRAC_LB 0.8
+#define LATERAL_BRANCHING_ANGLE_MEAN 60. * 3.14 / 180.
+#define LATERAL_BRANCHING_ANGLE_STD 1. / 180. * 3.14
 #define UNIFORM_BRANCHING_RATE 0.001
 
 

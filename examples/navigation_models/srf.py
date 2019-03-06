@@ -4,10 +4,8 @@
 import dense as ds
 from dense.units import *
 
-import matplotlib as mpl
-mpl.use("Qt5Agg")
-
-import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
 
 
 ds.set_kernel_status("resolution", 10.*minute)

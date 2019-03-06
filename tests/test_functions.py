@@ -19,7 +19,7 @@ def functions():
     '''
     ds.set_kernel_status('environment_required', False)
     m  = ds.generate_model('constant', 'memory-based', 'run-and-tumble')
-    dp = ds.get_default_parameters(m)
+    dp = ds.get_default_properties(m)
     e  = ds.get_environment()
     ks = ds.get_kernel_status()
     ms = ds.get_models()

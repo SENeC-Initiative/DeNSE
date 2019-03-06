@@ -3,8 +3,8 @@
 
 """ Generate the morphology of a granule cell """
 
-import matplotlib
-matplotlib.use("Qt5Agg")
+# import matplotlib
+# matplotlib.use("Qt5Agg")
 
 import dense as ds
 from dense.units import *

@@ -38,16 +38,20 @@ typedef std::vector<std::vector<double>> Random_vecs;
 typedef std::unordered_map<std::string, double> Param;
 
 
-// Event type, contains (event_time, neuron, neurite, event_type)
-typedef std::tuple<Time, size_t, std::string, signed char> Event;
+// Event type, contains (event_time, neuron, neurite, gc, event_type)
+typedef std::tuple<Time, size_t, std::string, int, signed char> Event;
 
-typedef enum
+namespace edata
 {
+  enum edata
+  {
     TIME,
     NEURON,
     NEURITE,
+    GC,
     EV_TYPE
-} edata;
+  };
+}
 
 
 typedef struct NodeProp

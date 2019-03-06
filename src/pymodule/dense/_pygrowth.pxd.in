@@ -223,7 +223,7 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef void set_neurite_status_(size_t neurton, string neurite,
                                   statusMap status) except +
 
-    cdef void simulate_(const CTime& simtime) except +
+    cdef void simulate_(const CTime& simtime)
 
     cdef void test_random_generator_(vector[vector[double]]& values,
                                      size_t size) except +

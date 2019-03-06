@@ -196,15 +196,19 @@ BranchPtr Branch::resize_head(size_t id_x) const
     new_branch->points_[0].insert(
         new_branch->points_[0].end(), points_[0].cbegin() + id_x,
         points_[0].cend());
-    new_branch->points_[1].insert(new_branch->points_[1].end(),
-                                 points_[1].cbegin() + id_x, points_[1].cend());
-    new_branch->points_[2].insert(new_branch->points_[2].end(),
-                                 points_[2].cbegin() + id_x, points_[2].cend());
+
+    new_branch->points_[1].insert(
+        new_branch->points_[1].end(), points_[1].cbegin() + id_x,
+        points_[1].cend());
+
+    new_branch->points_[2].insert(
+        new_branch->points_[2].end(), points_[2].cbegin() + id_x,
+        points_[2].cend());
 
     // resize segments
-    new_branch->segments_.insert(new_branch->segments_.end(),
-                                 segments_.cbegin() + id_x,
-                                 segments_.cend());
+    new_branch->segments_.insert(
+        new_branch->segments_.end(), segments_.cbegin() + id_x,
+        segments_.cend());
 
     // set points
     new_branch->initial_point_ = BPoint(new_branch->points_[0][0],
@@ -223,19 +227,52 @@ void Branch::append_branch(BranchPtr appended_branch)
 {
     size_t total_size = points_[0].size() + appended_branch->size();
 
-    // auto id_end = appended_branch->size();
-    points_[0].insert(points_[0].end(), appended_branch->points_[0].cbegin(),
-                     appended_branch->points_[0].cend());
-    points_[1].insert(points_[1].end(), appended_branch->points_[1].cbegin(),
-                     appended_branch->points_[1].cend());
-    points_[2].insert(points_[2].end(), appended_branch->points_[2].cbegin(),
-                     appended_branch->points_[2].cend());
+    const BPoint lp = get_last_xy();
+    const BPoint ip = appended_branch->xy_at(0);
+    int dsize       = 0;
 
-    segments_.insert(segments_.end(), appended_branch->segments_.cbegin(),
+    if (std::abs(lp.x() - ip.x()) < 1e-6 and std::abs(lp.y() - ip.y()) < 1e-6)
+    {
+        dsize = 1;
+    }
+
+    total_size -= dsize;
+
+    // auto id_end = appended_branch->size();
+    points_[0].insert(points_[0].end(),
+                      appended_branch->points_[0].cbegin() + dsize,
+                      appended_branch->points_[0].cend());
+
+    points_[1].insert(points_[1].end(),
+                      appended_branch->points_[1].cbegin() + dsize,
+                      appended_branch->points_[1].cend());
+
+    points_[2].insert(points_[2].end(),
+                      appended_branch->points_[2].cbegin() + dsize,
+                      appended_branch->points_[2].cend());
+
+    segments_.insert(segments_.end(),
+                     appended_branch->segments_.cbegin(),
                      appended_branch->segments_.cend());
 
     assert(points_[2].size() == total_size);
 }
+
+
+// double Branch::get_normal_direction() const
+// {
+//     // normal direction to the 
+//     double x1, x2, y1, y2;
+
+//     x1 = new_branch->last_points_.first.x();
+//     y1 = new_branch->last_points_.first.y();
+
+//     x2 = new_branch->last_points_.second.x();
+//     y2 = new_branch->last_points_.second.y();
+
+//     double theta = atan2(-(x2-x1), y2-y1);
+//     double current_dir = atan2();
+// }
 
 
 PointArray Branch::get_last_point() const

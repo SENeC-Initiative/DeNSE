@@ -186,24 +186,23 @@ double ResourceBasedExtensionModel::compute_CR(
             double rnd_throw = uniform_(*(rnd_engine).get());
             double threshold = branching_proba_ * (stored_ - branching_th_)
                                / (stored_ + branching_th_);
+
             if (rnd_throw < substep*threshold)
             {
-                double new_angle, old_angle;
-                double old_diameter = gc_weakptr_.lock()->get_diameter();
-                double new_diameter = old_diameter;
-                neurite_ptr_->gc_split_angles_diameter(
-                    rnd_engine, new_angle, old_angle, new_diameter,
-                    old_diameter);
+                // create an event so the growth cone will split at the next
+                // step
+                Time ev_time = kernel().simulation_manager.get_time();
+                ev_time.update(1UL, 0.);
 
-                // @todo
-                // this has to be replaced to make it create an event for the
-                // beginning of the next timestep and delegate to the
-                // branching model
-                NodePtr update_me;
-                GCPtr and_me_too;
-                neurite_ptr_->growth_cone_split(
-                    gc_weakptr_.lock(), step_length, new_angle, old_angle,
-                    new_diameter, old_diameter, update_me, and_me_too);
+                auto neuron         = neurite_ptr_->get_parent_neuron().lock();
+                size_t neuron_gid   = neuron->get_gid();
+                std::string neurite = neurite_ptr_->get_name();
+                int cone_id         = gc_weakptr_.lock()->get_node_id();
+
+                Event ev = std::make_tuple(
+                    ev_time, neuron_gid, neurite, cone_id, names::gc_splitting);
+
+                kernel().simulation_manager.new_branching_event(ev);
             }
         }
     }

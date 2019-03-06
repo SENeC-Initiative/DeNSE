@@ -9,12 +9,13 @@ from dense.units import *
 import numpy as np
 import os
 
-import matplotlib as mpl
-mpl.use("Qt5Agg")
-import matplotlib.pyplot as plt
-import seaborn as sns
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
 
-# parameters
+
+'''
+Parameters
+'''
 
 num_omp     = 1
 num_neurons = 2

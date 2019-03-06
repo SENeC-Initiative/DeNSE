@@ -67,7 +67,7 @@ typedef struct NodeBiology
     double diameter;
 
     NodeBiology()
-        : dead(true)
+        : dead(false)
         , branch(std::make_shared<Branch>())
         , own_neurite(nullptr)
         , diameter(0)
@@ -116,7 +116,7 @@ class BaseNode
     virtual BPoint get_position() const;
     virtual double get_distance_to_soma() const;
     virtual double get_distance_parent() const;
-    virtual size_t get_nodeID() const;
+    virtual size_t get_node_id() const;
 };
 
 
@@ -161,7 +161,7 @@ class TopologicalNode : public BaseNode
         return topology_.centrifugal_order;
     }
     inline bool has_child() const { return topology_.has_child; }
-    inline size_t get_nodeID() const override { return topology_.nodeID; }
+    inline size_t get_node_id() const override { return topology_.nodeID; }
 
     seg_range segment_range() const;
 
@@ -169,6 +169,7 @@ class TopologicalNode : public BaseNode
     inline bool is_dead() const { return biology_.dead; }
     inline BranchPtr get_branch() const { return biology_.branch; }
     size_t get_branch_size() const;
+    double get_branch_length() const;
     inline virtual double get_diameter() const { return biology_.diameter; }
 
     bool support_AW() const;
@@ -182,6 +183,7 @@ class Node : public TopologicalNode
 
   protected:
     std::vector<TNodePtr> children_;
+    double diameter_;  // diameter at the node's position
 
   public:
     Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &pos);

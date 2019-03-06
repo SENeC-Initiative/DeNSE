@@ -25,6 +25,8 @@ try:
 except:
     from collections import Container as _container
 
+import warnings
+
 try:
     import IPython
     ip_support = True
@@ -35,7 +37,7 @@ import numpy as np
 from shapely.geometry import Point, MultiLineString
 from shapely.ops import cascaded_union, linemerge
 
-from .units import ureg, _cpp_units
+from .units import ureg, _cpp_units, um
 from .environment import Shape
 
 
@@ -455,9 +457,7 @@ def is_iterable(obj):
 def neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):
     if culture is None:
         if rnd_pos:
-            raise RuntimeError("Cannot seed neurons randomly in space when "
-                               "no spatial environment exists. Please set the "
-                               "'position' entry in `params`.")
+            param["position"] = [(0., 0.) for _ in range(n)]*um
         if "position" not in param:
                 raise RuntimeError("`position` entry required in `params` if "
                                    "no `culture` is provided.")

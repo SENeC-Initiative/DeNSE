@@ -532,11 +532,12 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
 
 def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
                  culture=None, show_culture=True, aspect=1., soma_radius=None,
-                 active_gc="d", gc_size=2., soma_color='k',
-                 axon_color="indianred", dendrite_color="royalblue",
-                 subsample=1, save_path=None, title=None, axis=None,
-                 show_density=False, dstep=20., dmin=None, dmax=None,
-                 colorbar=True, show_neuron_id=False, show=True, **kwargs):
+                 active_gc="d", gc_size=2., soma_color='k', scale=50*um,
+                 scale_text=True, axon_color="indianred",
+                 dendrite_color="royalblue", subsample=1, save_path=None,
+                 title=None, axis=None, show_density=False, dstep=20.,
+                 dmin=None, dmax=None, colorbar=True, show_neuron_id=False,
+                 show=True, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -569,10 +570,15 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         conventions.
     gc_size : float, optional (default: 2.)
         Size of the growth cone marker.
-    axon_color : valid matplotlib color, optional (default: "r")
+    axon_color : valid matplotlib color, optional (default: "indianred")
         Color of the axons.
-    dendrite_color : valid matplotlib color, optional (default: "b")
+    dendrite_color : valid matplotlib color, optional (default: "royalblue")
         Color of the dendrites.
+    soma_color : valid matplotlib color, optional (default: "k")
+        Color of the soma.
+    scale : length, optional (default: 50 microns)
+        Whether a scale bar should be displayed, with axes hidden. If ``None``,
+        then spatial measurements will be given through standard axes.
     subsample : int, optional (default: 1)
         Subsample the neurites to save memory.
     save_path : str, optional (default: not saved)
@@ -594,6 +600,7 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     axes : axis or tuple of axes if `density` is True.
     '''
     import matplotlib
+    from matplotlib.patches import Rectangle
     import matplotlib.pyplot as plt
 
     assert mode in ("lines", "sticks", "mixed"),\
@@ -773,6 +780,31 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         ax2.set_aspect(aspect)
         ax2.set_xlabel(r"x ($\mu$ m)")
         ax2.set_ylabel(r"y ($\mu$ m)")
+    
+    if scale is not None:
+        xmin, xmax = ax.get_xlim()
+        ymin, ymax = ax.get_ylim()
+
+        length = scale.m_as("micrometer")
+
+        if xmax - xmin < 2*length:
+            scale *= 0.2
+            length = scale.m_as("micrometer")
+
+        x = xmin + 0.2*length
+        y = ymin + (ymax-ymin)*0.05
+
+        ax.add_artist(
+            Rectangle((x, y), length, 0.1*length, fill=True, facecolor='k',
+                      edgecolor='none'))
+
+        plt.axis('off')
+
+        stext = "(scale is {} $\mu$m)".format(length)
+        if title is not None and scale_text:
+            fig.suptitle(title + " " + stext)
+        elif scale_text:
+            fig.suptitle(stext)
 
     if show:
         plt.show()
@@ -886,14 +918,14 @@ def _plot_coords(ax, ob):
 def _set_ax_lim(ax, xdata, ydata, xlims=None, ylims=None, offset=0.):
     if xlims is not None:
         ax.set_xlim(*xlims)
-    else:
+    elif len(xdata) > 0:
         x_min, x_max = np.nanmin(xdata) - offset, np.nanmax(xdata) + offset
         if not np.isnan(x_min) and not np.isnan(x_max):
             width = x_max - x_min
             ax.set_xlim(x_min - 0.05*width, x_max + 0.05*width)
     if ylims is not None:
         ax.set_ylim(*ylims)
-    else:
+    elif len(ydata) > 0:
         y_min, y_max = np.nanmin(ydata) - offset, np.nanmax(ydata) + offset
         if not np.isnan(y_min) and not np.isnan(y_max):
             height = y_max - y_min

@@ -64,8 +64,6 @@ void locate_from_idx(BPoint &xy, double &angle, double &distance,
     }
     // get the principal argument (between -Pi and Pi)
     angle = -sign + atan2(delta_y, delta_x);
-    /*    printf("The arc tangent for (x=%f, y=%f) is %f degrees\n", delta_x,
-     * delta_y,*/
-    /*angle * 180 / M_PI);*/
 }
+
 } // namespace growth

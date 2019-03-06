@@ -3,14 +3,13 @@
 
 """ Generate the morphology of a bipolar cell (spindle neuron) """
 
-import dense as ds
 import numpy as np
 import os
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-#~ plt.ion()
+import dense as ds
+from dense.units import *
 
 
 # parameters
@@ -20,88 +19,81 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 2.,
-    "axon_diameter": 3.,
-    "position": np.random.uniform(-1000, 1000, (num_neurons, 2)),
+    "dendrite_diameter": 2.*um,
+    "axon_diameter": 3.*um,
+    "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
 }
 
 axon_params = {
-    "persistence_length": 500.,
-    "speed_growth_cone": 0.03,
+    "persistence_length": 500.*um,
+    "speed_growth_cone": 0.03*um/minute,
     # diameter
-    "thinning_ratio": 1./300.,
+    "taper_rate": 1./300.,
     "diameter_ratio_avg": 0.5,
     # branching
     "use_van_pelt": True,
-    "B": 0.2,
-    "T": 5000.,
-    "gc_split_angle_mean": 25.,
+    "B": 0.2*cpm,
+    "T": 5000.*minute,
+    "gc_split_angle_mean": 25.*deg,
 }
 
 dend_params = {
-    "persistence_length": 250.,
-    "speed_growth_cone": 0.01,
-    "thinning_ratio": 1./300.,
+    "persistence_length": 250.*um,
+    "speed_growth_cone": 0.01*um/minute,
+    "taper_rate": 1./200.,
     "use_uniform_branching": False,
     "use_van_pelt": True,
-    "B": 1.,
-    "T": 5000.,
-    "gc_split_angle_mean": 25.,
+    "B": 1.*cpm,
+    "T": 5000.*minute,
+    "gc_split_angle_mean": 25.*deg,
 }
 
 kernel = {
-    "resolution": 50.,
+    "resolution": 30.*minute,
     "seeds": [8],
     "environment_required": False,
     "num_local_threads": num_omp,
 }
 
-ds.get_kernel_status(kernel)
+ds.set_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
-                     axon_params=axon_params, dendrites_params=dend_params,
-                     num_neurites=2)
+n = ds.create_neurons(n=num_neurons, params=neuron_params,
+                      axon_params=axon_params, dendrites_params=dend_params,
+                      num_neurites=2)
 
 # first, elongation
 
-ds.simulate(10000)
-print(ds.get_kernel_status()["time"])
-
-#~ ds.plot.plot_neurons(show=True)
+ds.simulate(10000*minute)
+ds.plot.plot_neurons()
 
 
 # then branching
 
 
 lb_axon = {
-    "speed_growth_cone": 0.02,
+    "speed_growth_cone": 0.02*um/minute,
     "use_van_pelt": False,
     "use_flpl_branching": True,
-    "flpl_branching_rate": 0.00025,
-    "speed_growth_cone": 0.02,
-    "lateral_branching_angle_mean": 45.,
+    "flpl_branching_rate": 0.00025*cpm,
+    "lateral_branching_angle_mean": 45.*deg,
 }
 
-
 dend_params = {
-    "thinning_ratio": 1./100.,
     "use_van_pelt": False,
     "use_uniform_branching": True,
-    "uniform_branching_rate": 0.0002,
-    "persistence_length": 100.,
-    "speed_growth_cone": 0.01,
-    "lateral_branching_angle_mean": 40.,
+    "uniform_branching_rate": 0.0002*cpm,
+    "persistence_length": 100.*um,
+    "speed_growth_cone": 0.01*um/minute,
+    "lateral_branching_angle_mean": 40.*deg,
 }
 
 ds.set_object_properties(n, dendrites_params=dend_params, axon_params=lb_axon)
 
-ds.simulate(30000)
-print(ds.get_kernel_status()["time"])
-
-#~ ds.plot.plot_neurons(show=True)
+ds.simulate(30000*minute)
+ds.plot.plot_neurons()
 
 # then further branching
 
@@ -116,21 +108,20 @@ vp_axon = {
 dend_params = {
     "use_van_pelt": True,
     "use_uniform_branching": False,
-    "B": 5.,
-    "T": 50000.,
-    "gc_split_angle_mean": 30.,
+    "B": 5.*cpm,
+    "T": 50000.*minute,
+    "gc_split_angle_mean": 30.*deg,
 }
 
 ds.set_object_properties(n, dendrites_params=dend_params, axon_params=vp_axon)
 
-ds.simulate(70000)
+ds.simulate(70000*minute)
 print(ds.get_kernel_status()["time"])
 
 ds.plot.plot_neurons(show=True)
 
-ds.save_to_swc("pyramidal-cell.swc", gid=n)
-
-n[0].to_nml("bipolar_cell.nml")
+n.to_swc("pyramidal-cell.swc")
+n.to_neuroml("bipolar_cell.nml")
 
 import neurom as nm
 from neurom import viewer

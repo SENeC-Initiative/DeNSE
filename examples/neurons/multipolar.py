@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import dense as ds
-from dense.units import *
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
+
 import numpy as np
 import os
+
+import dense as ds
+from dense.units import *
 
 
 '''
@@ -20,10 +24,9 @@ Extension : ressource based
 num_neurons = 2
 
 neuron_params = {
-
-    "filopodia_min_number": 30,
-    "sensing_angle": 0.1495 *rad,
-
+    "filopodia_min_number": 15,
+    "sensing_angle": 70.*deg,
+    "filopodia_finger_length": 10.0 * um,
 }
 
 dendrite_params = {
@@ -33,51 +36,44 @@ dendrite_params = {
     "use_flpl_branching": False,
 
     "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0 * um,
 
-    "persistence_length": 200.0 * um,
+    "persistence_length": 200.*um,
     # "use_flpl_branching": use_uniform_branching,
 
     # CR model for branching
-    "res_retraction_factor": 0.10 * um / minute,
-    "res_elongation_factor": 0.10 * um / minute,
-    # "res_leakage": 0.05,
-    "res_retraction_threshold": 0.01 * uM,
-    "res_elongation_threshold": 0.3 * uM,
-    "res_leakage": 10.0 * minute,
-    "res_neurite_generated": 2500. * uM,
+    "res_retraction_factor": 0.10 * um/minute,
+    "res_elongation_factor": 0.10 * um/minute,
+    "res_leakage": 0.05,
+    "res_retraction_threshold": 0.01*uM,
+    "res_elongation_threshold": 0.3*uM,
+    "res_leakage": 10.*minute,
+    "res_neurite_generated": 2500.*uM,
     "res_correlation": 0.2,
-    "res_variance": 0.01 * uM / minute ** 0.5,
+    "res_variance": 0.01 * uM / minute**0.5,
     "res_use_ratio": 0.16 * cpm
 }
 
 axon_params = {
-    "growth_cone_model":"res_po_rt",
+    "growth_cone_model": "res_po_rt",
 
     "use_van_pelt": False,
     "use_flpl_branching": False,
 
     "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0 * um,
 
     "persistence_length": 400.0 * um,
 
     # Cr model for branching
-    "res_retraction_factor'": 0.010 * um / minute,
+    "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.10 * um / minute,
 
     "res_retraction_threshold": 0.10 * uM,
     "res_elongation_threshold": 0.3 * uM,
-    # "res_split_th": 0.80,
     "res_neurite_generated": 2500. * uM,
     "res_neurite_delivery_tau": 50. * minute,
     "res_correlation": 0.4,
-    "res_variance": 0.04 * uM / minute ** .5,
+    "res_variance": 0.04 * uM / minute**0.5,
     "res_use_ratio": 0.1 * cpm,
-
-    # Best model
-    #gc_split_angle_mean": 1.2,
-
 }
 
 
@@ -90,17 +86,17 @@ def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.plot_neurons(
+            ds.plot.plot_neurons(
                 show_nodes=True)
         else:
-            ds.plot_neurons(
+            ds.plot.plot_neurons(
                 show_nodes=False, save_path=save_path)
 
 
 def run_dense(neuron_params):
     """
     """
-    resolution = 1.*minute
+    resolution = 30.*minute
     np.random.seed(kernel['seeds']) #Seeds the random number generator
     kernel["resolution"] = resolution
 #    kernel["angles_in_radians"] = True
@@ -110,17 +106,14 @@ def run_dense(neuron_params):
         -1000, 1000, (num_neurons, 2)) * um
 
     gid = ds.create_neurons(n=num_neurons,
-                                  params=neuron_params,
-                                  axon_params=axon_params,
-                                  dendrites_params=dendrite_params,
-                                  num_neurites=6,
-                                  position=[]
-                                  )
+                            params=neuron_params,
+                            axon_params=axon_params,
+                            dendrites_params=dendrite_params,
+                            num_neurites=4)
 
     # ds.set_object_properties(gid, params=neuron_params,
     # axon_params=neuron_params)
-    step(3./resolution, 1, False, True)
-    step(300./resolution, 1, False, True)
+    step(3*day, 1, False, True)
 
     axon_params['use_van_pelt'] = True
     axon_params["B"] =  90. * cpm
@@ -132,17 +125,17 @@ def run_dense(neuron_params):
     dendrite_params["B"] =  90. * cpm
     dendrite_params["E"] =  0.2
     dendrite_params["S"] =  1.
-    dendrit_params["T"] =  10000. * minute
+    dendrite_params["T"] =  10000. * minute
 
     axon_params['use_flpl_branching'] = False
-    axon_params['flpl_branching_rate'] = 0.001
+    axon_params['flpl_branching_rate'] = 0.001*cpm
 
     ds.set_object_properties(gid,
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
 
-    step(6000./resolution, 1, False, True)
+    step(6*day, 1, False, True)
 
     axon_migated = {
         'use_van_pelt' : True,
@@ -162,7 +155,7 @@ def run_dense(neuron_params):
                         params=neuron_params,
                         dendrites_params=dendrite_params,
                         axon_params=axon_params)
-    step(3000./resolution, 1, False, True)
+    step(3*day, 1, False, True)
     # neuron_params['use_flpl_branching'] = True
     # neuron_params["flpl_branching_rate"] = 0.001
     # ds.set_object_properties(gid,params = neuron_params,
@@ -185,7 +178,7 @@ def run_dense(neuron_params):
     # step(10, 1, False, True)
     # step(10, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    ds.SaveSwc(swc_resolution=25)
+    ds.io.save_to_swc(resolution=25)
     ds.save_json_info()
 
     swc_file = ds.get_simulation_id()

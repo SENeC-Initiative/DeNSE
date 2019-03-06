@@ -184,7 +184,9 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     std::vector<std::string> neurite_names;
     if (neurite_angles_.empty())
     {
-        for (int i=0; i < num_neurites -1; i++)
+        int subtract = has_axon_ ? 1 : 0;
+
+        for (int i=0; i < num_neurites - subtract; i++)
         {
             neurite_names.push_back("dendrite_" + std::to_string(i+1));
         }

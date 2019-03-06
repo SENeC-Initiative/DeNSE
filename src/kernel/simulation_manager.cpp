@@ -49,21 +49,19 @@ void SimulationManager::initialize()
 {
     // set resolution
     Time::reset_resolution();
-}
-
-
-void SimulationManager::finalize()
-{
-    Time::reset_resolution();
-
-    step_.clear();
-    substep_.clear();
 
     final_step_    = 0;
     final_substep_ = 0.;
     initial_time_  = Time();
     final_time_    = Time();
     max_resol_     = DEFAULT_MAX_RESOL;
+}
+
+
+void SimulationManager::finalize()
+{
+    step_.clear();
+    substep_.clear();
 }
 
 
@@ -148,7 +146,16 @@ void SimulationManager::initialize_simulation_(const Time &t)
     // objects for discrete events
     final_time_ = initial_time_ + t;
 
+    double old_substep = final_substep_;
     Time::to_steps(t, final_step_, final_substep_);
+
+    // update
+    final_substep_ += old_substep;
+    if (final_substep_ >= 1)
+    {
+        final_step_++;
+        final_substep_ = std::max(final_substep_ - 1., 0.);
+    }
 
     // set the right number of step objects
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
@@ -272,13 +279,16 @@ void SimulationManager::finalize_simulation_()
     kernel().record_manager.finalize_simulation(final_step_);
 
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
+#ifndef NDEBUG
     initial_time_.update(final_step_, final_substep_);
+    assert(std::abs(initial_time_.get_total_seconds() - final_time_.get_total_seconds()) < 1e-4);
+#endif
 
-    assert(initial_time_.get_total_seconds()
-           == final_time_.get_total_seconds());
+    initial_time_ = final_time_;
 
-    final_step_ = 0;
-    simulating_ = false;
+    // do not reset final_substep_ to zero!
+    final_step_    = 0;
+    simulating_    = false;
 }
 
 

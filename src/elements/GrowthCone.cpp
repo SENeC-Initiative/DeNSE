@@ -517,7 +517,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
         {
             box  = bg::return_envelope<BBox>(*(poly.get()));
             // there is one less segment than point, so size - 2 for segment
-            info = std::make_tuple(neuron_id_, neurite_name_, get_nodeID(),
+            info = std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
                                    biology_.branch->size() - 2);
         }
 
@@ -551,12 +551,8 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
             // we remove the previous object and add the new, shorter one
             if (poly != nullptr)
             {
-                poly = biology_.branch->get_last_segment();
-                if (poly != nullptr)
-                {
-                    std::cout << bg::wkt(*(poly.get())) << std::endl;
-                }
                 kernel().space_manager.remove_object(box, info, omp_id);
+
                 kernel().space_manager.add_object(
                     p1, new_p, get_diameter(), remaining,
                     biology_.own_neurite->get_taper_rate(), info, biology_.branch,
@@ -633,7 +629,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 void GrowthCone::prune(size_t cone_n)
 {
 #ifndef NDEBUG
-    printf("pruning %lu %s %lu because (%i, %i, %f)\n", neuron_id_, neurite_name_.c_str(), get_nodeID(), stuck_, stopped_, total_proba_);
+    printf("pruning %lu %s %lu because (%i, %i, %f)\n", neuron_id_, neurite_name_.c_str(), get_node_id(), stuck_, stopped_, total_proba_);
     printf("prop: retraction %f, %i\n", retraction_time_, just_retracted());
 #endif
     biology_.own_neurite->delete_cone(cone_n);
@@ -682,10 +678,6 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                            const std::vector<std::string> &new_pos_area,
                            double &substep, mtPtr rnd_engine, int omp_id)
 {
-    //~ if (neuron_id_ == 44 and neurite_name_ == "dendrite_1" and get_nodeID() == 1)
-    //~ {
-        //~ printf("branch size %lu vs branch length %f\n", biology_.branch->size(), biology_.branch->get_length());
-    //~ }
     assert(directions_weights.size() == filopodia_.size);
     assert(filopodia_.directions.size() == filopodia_.size);
 
@@ -703,7 +695,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
 
         select_direction(directions_weights, rnd_engine, substep, new_angle,
                          default_direction);
-        
+
         double default_angle = filopodia_.directions[default_direction]
                                + move_.angle;
 
@@ -765,51 +757,55 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
         }
 
         // check forbidden overlap with other neurites
-        for (auto obstacle : current_neighbors_)
+        if (not stopped_)
         {
-            // Note for unknown reasons, this was previously "intersects",
-            // switched to covered_by but does not prevent cases where
-            // "intersection" in "get_point_at_distance" is empty.
-            if (bg::covered_by(p, *(obstacle.second.get())))
+            for (auto obstacle : current_neighbors_)
             {
-                // stop at "radius" from the obstacle
-                bool intsct = kernel().space_manager.get_point_at_distance(
-                    line, obstacle.second, radius, p, distance);
-
-                // check if the intersection was indeed obtained
-                if (intsct)
+                // Note for unknown reasons, this was previously "intersects",
+                // switched to covered_by but does not prevent cases where
+                // "intersection" in "get_point_at_distance" is empty.
+                if (bg::covered_by(p, *(obstacle.second.get())))
                 {
-                    // check if we moved a bit or if we were stopped
-                    if (distance > 0 and distance < min_distance)
+                    // stop at "radius" from the obstacle
+                    bool intsct = kernel().space_manager.get_point_at_distance(
+                        line, obstacle.second, radius, p, distance);
+
+                    // check if the intersection was indeed obtained
+                    if (intsct)
                     {
-                        // we moved: modify move_.module and substep accordingly
-                        substep     *= distance / move_.module;
-                        move_.module = distance;
-                        min_distance = distance;
-                        update       = true;
-                    }
-                    else
-                    {
-                        stopped_     = true;
+                        // check if we moved a bit or if we were stopped
+                        if (distance > 0 and distance < min_distance)
+                        {
+                            // we moved: modify move_.module and substep
+                            // accordingly
+                            substep     *= distance / move_.module;
+                            move_.module = distance;
+                            min_distance = distance;
+                            update       = true;
+                        }
+                        else
+                        {
+                            stopped_     = true;
+                        }
                     }
                 }
             }
-        }
 
-#ifndef NDEBUG
-        if (interacting_);
-#endif
+            if (update)
+            {
+                if (move_.module < 1e-6)
+                {
+                    stopped_ = true;
+                }
+                else
+                {
+                    p = BPoint(
+                        geometry_.position.x() + cos(new_angle) * move_.module,
+                        geometry_.position.y() + sin(new_angle) * move_.module
+                    );
+                }
+            }
 
-        if (update)
-        {
-            p = BPoint(
-                geometry_.position.x() + cos(new_angle) * move_.module,
-                geometry_.position.y() + sin(new_angle) * move_.module
-            );
-        }
-
-        if (not stopped_)
-        {
             // update angle
             delta_angle_ = new_angle - move_.angle;
             move_.angle  = new_angle;
@@ -822,7 +818,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                 kernel().space_manager.add_object(
                     geometry_.position, p, get_diameter(), move_.module,
                     biology_.own_neurite->get_taper_rate(),
-                    std::make_tuple(neuron_id_, neurite_name_, get_nodeID(),
+                    std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
                                     biology_.branch->size() - 1),
                     biology_.branch, omp_id
                 );

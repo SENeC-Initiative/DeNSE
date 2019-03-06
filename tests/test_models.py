@@ -24,7 +24,7 @@ def Models():
     'speed',
     'stopped']
     
-    observables = ds.get_default_parameters('neuron', 'observables').values()
+    observables = ds.get_default_properties('neuron', 'observables').values()
 
     for m in models:
         

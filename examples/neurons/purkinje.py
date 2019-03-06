@@ -6,257 +6,109 @@ from dense.units import *
 import numpy as np
 import os
 
-import matplotlib.pyplot as plt
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
+
 
 '''
 Main parameters
 '''
 
-S = 0.901
-E = 0.3
-gc_model = "cst_po_rt"
+# gc_model = "simple-random-walk"
+gc_model = "self-referential-forces"
+
 num_neurons = 1
+num_omp     = 1
 
 neuron_params = {
-    # "growth_cone_model": "self_referential_forces",
-    "filopodia_min_number": 30,
-    "speed_growth_cone": 1. * um / minute,
-    "sensing_angle": 0.1495 * rad,
-    "dendrite_diameter":20. * um,
-}
-
-dendrite_params = {
     "growth_cone_model": gc_model,
-    "use_van_pelt": False,
-
-    "persistence_length": 60.0 * um,
-    # "use_flpl_branching": use_uniform_branching,
-
-    # Cr model
-    # ~ "res_retraction_factor": 0.010 * um / minute ,
-    # ~ "res_elongation_factor": 0.0371 * um / minute,
-    # ~ # "res_leakage": 0.05 * minute,
-    # ~ "res_retraction_threshold": 10. * uM ,
-    # ~ "res_elongation_threshold": 50. * uM,
-    # ~ "res_leakage": 10.0 * minute,
-    # ~ "res_neurite_generated": 4500. * uM,
-    # ~ "res_correlation": 0.,
-    # ~ "res_variance": 0.1 * uM / minute ** 0.5,
-    # ~ "res_use_ratio": 0.16 * cpm,
-
-    # ~ "res_weight_diameter": 0.,
-
-    # Best model
-    "gc_split_angle_mean": 1.*rad,
-    "B": 4. * cpm,
-    "E": 0.0,
-    "S": 0.2,
-    "T": 10. * minute,
+    "filopodia_min_number": 15,
+    "speed_growth_cone": 0.2 * um / minute,
+    "sensing_angle": 0.1495 * rad,
+    "dendrite_diameter": 6.*um,
+    "axon_diameter": 3.*um,
+    "position": (0., 0.)*um,
+    "max_arbor_length": 20000.*um,
+    "diameter_eta_exp":1.,
+    "diameter_ratio_avg": 1.,
 }
 
 axon_params = {
-    "growth_cone_model": gc_model,
-    "use_van_pelt": False,
-    "use_flpl_branching": False,
-    # ~ "res_retraction_factor": 0.000 * um / minute,
-    # ~ "res_elongation_factor": 0.00 * um / minute,
+    "persistence_length": 200.0 * um,
+    "taper_rate": 1./400.,
+    "somatropic_scale": 500.*um,
+    "somatropic_factor": 0.7,
+    "self_avoidance_factor": 0.3,
+    "self_avoidance_scale": 10.*um,
+    "somatropic_mode": "window",
 }
 
+dendrite_params = {
+    "use_van_pelt": True,
 
-'''
-Analysis
-'''
+    "persistence_length": 100.0 * um,
+    "taper_rate": 1./80.,
+    "diameter_fraction_lb": 0.5,
 
-def step(n, loop_n, save_path, plot=True):
-    ds.simulate(n)
-    if plot:
-        if save_path is False:
-            ds.plot.plot_neurons(
-                show_nodes=True)
-        else:
-            ds.plot.plot_neurons(
-                show_nodes=False, save_path=save_path)
+    # SFR parameters
+    "somatropic_scale": 100.*um,
+    "somatropic_factor": 0.7,
+    # "self_avoidance_factor": 0.2,
+    "self_avoidance_scale": 6.*um,
 
-
-def run_dense(neuron_params):
-    """
-    """
-    resolution = 1.
-    np.random.seed(kernel['seeds'])
-    kernel["resolution"] = resolution * minute
-    ds.set_kernel_status(kernel, simulation_id="case_neuron")
-    neuron_params['growth_cone_model'] = gc_model
-
-    neuron_params["position"] = np.random.uniform(
-        -1000, 1000, (num_neurons, 2)) * um
-    gid = ds.create_neurons(n=num_neurons,
-                                  params=neuron_params,
-                                  axon_params=axon_params,
-                                  dendrites_params=dendrite_params,
-                                  num_neurites=4,
-                                  position=[0, 0] * um
-                                  )
-
-    step(2000.*minute, 1, False, True)
-
-    splitting_dendrites=    {'use_van_pelt': True,
-    "persistence_length": 60.0 * um,
-    "gc_split_angle_mean": 1. * deg,
-    'use_flpl_branching' : True,
-    "flpl_branching_rate" : 0.0036*cpm,
-    "B": 1. * cpm,
-    "E": 0.9,
-    "S": 1.0,
-    "T": 10000. * minute,
-     }
-
-    dendrite_params.update(splitting_dendrites)
-    ds.set_object_properties(gid,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params)
-    step(2000.*minute, 1, False, True)
-
-    arborization =    {'use_van_pelt': False,
-    'use_flpl_branching' : False,
-    "persistence_length": 30.0 * um,
-    "res_weight_diameter": 0.,
-    "res_retraction_threshold": 10. * uM,
-    "res_elongation_threshold": 50. * uM,
-    "res_elongation_factor": 0.0612 * um / minute,
-    "res_retraction_factor": 0.1 * um / minute,
-    # 'use_van_pelt' : True,
-    "res_neurite_generated": 9500. * uM,
-    "res_neurite_delivery_tau": 50.*minute,
-    "res_correlation": 0.,
-    "res_variance": 0.02 * uM / minute ** 0.5,
-    "res_use_ratio": 0.3 * cpm,
-     }
-    dendrite_params.update(arborization)
-    ds.set_object_properties(gid,
-                        params=neuron_params,
-                        dendrites_params=dendrite_params,
-                        axon_params=axon_params)
-    step(2000.*minute, 1, False, True)
-
-    # ~ arborization =    {'use_van_pelt': True,
-    # ~ # 'use_flpl_branching' : True,
-    # ~ "flpl_branching_rate" : 0.00036,
-    # ~ "persistence_length":5.0,
-    # ~ "res_retraction_threshold": 0.1,
-    # ~ "res_weight_diameter": 0.001,
-    # ~ "res_elongation_threshold": 0.14 * uM,
-    # ~ "res_elongation_factor": 0.12 * um / minute,
-    # ~ # 'use_van_pelt' : True,
-    # ~ "res_neurite_generated": 9500. * uM,
-    # ~ "res_neurite_delivery_tau": 50.,
-    # ~ "res_correlation": 0.5,
-    # ~ "res_variance": 0.2,
-    # ~ "res_use_ratio": 0.4 * cpm,
-     # ~ }
-    # ~ dendrite_params.update(arborization)
-    # ~ ds.set_object_properties(gid,
-                        # ~ params=neuron_params,
-                        # ~ dendrites_params=dendrite_params,
-                        # ~ axon_params=axon_params)
-    # ~ step(2000./resolution, 1, False, True)
-    # ~ step(2000./resolution, 1, False, True)
-    # neuron_params['use_flpl_branching'] = True
-    # neuron_params["flpl_branching_rate"] = 0.001
-    # ds.set_object_properties(gid,params = neuron_params,
-    # axon_params= neuron_params)
-    # step(1000./resolution, 1, False, True)
-    # step(1000./resolution, 1, False, True)
-    # step(1000./resolution, 1, False, True)
-    # step(1000./resolution, 1, False, True)
-    # step(180, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(1080, 1, False, True)
-    # step(4080, 1, False, True)
-    # neuron_params['use_van_pelt'] = True
-    # ds.set_object_properties(gid,params = neuron_params,
-    # axon_params=neuron_params)
-    # step(10, 1, False, True)
-    # step(10, 1, False, False)
-    # neuron_params['use_lateral_branching'] = True
-    ds.SaveSwc(swc_resolution=15)
-    ds.save_json_info()
-
-    swc_file = ds.get_simulation_id()
-    # print(swc_file)
-
-    # ds.reset_kernel()
-    return swc_file
+    # Best model
+    "gc_split_angle_mean": 60.*deg,
+    "B": 2.*cpm,
+    "E": 2.0,
+    "S": 3.0,
+    "T": 1.*hour,
+}
 
 
 if __name__ == '__main__':
     kernel = {
-        "seeds": [33, 345, 17, 193, 177],
-        "num_local_threads": 5,
-        "environment_required": False
+        "seeds": [0],
+        "num_local_threads": 1,
+        "environment_required": False,
+        "resolution": 5.*minute,
     }
-    swc_file = run_dense(neuron_params)
-    # ~ import btmorph2
-    # ~ import matplotlib.pyplot as plt
-    # ~ neuron1 = btmorph2.NeuronMorphology(
-        # ~ os.path.join(swc_file, "morphology.swc"))
-    # ~ # total_length = neuron1.total_length()
-    # ~ # print( 'Total neurite length=%f', total_length)
 
-    # ~ no_terminals = neuron1.no_terminals()
-    # ~ # print( 'Number of terminals=%f',  no_terminals)
+    ds.set_kernel_status(kernel)
 
-    # ~ neuron1.plot_dendrogram()
-    plt.show(block=True)
-    # plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S),
-    # format="pdf", ppi =300)
-    # plt.show()
+    neuron = ds.create_neurons(n=num_neurons, params=neuron_params,
+                               axon_params=axon_params,
+                               dendrites_params=dendrite_params, num_neurites=2)
 
-    # # bif_nodes = neuron1._bif_points
-    # # term_nodes = neuron1._end_points
-    # # all_nodes = bif_nodes + term_nodes
-    # # total_length = 0
-    # # all_segment_lengths = []
-    # # for node in all_nodes:
-    # # all_segment_lengths.append(neuron1.get_segment_pathlength(node))
-    # # total_length = total_length + all_segment_lengths[-1]
-# # print('total_length=', total_length)
+    rec = ds.create_recorders(neuron, "num_growth_cones", levels="neuron")
 
-# # plt.hist(all_segment_lengths)
-# # plt.xlabel('Segment length (micron)')
-# # plt.ylabel('count')
+    ds.simulate(2*hour)
+    ds.plot.plot_neurons()
 
-# bif_path_lengths = []
-# bif_euclidean_lengths = []
-# bif_contractions = []
-# for node in neuron1._bif_points:
-    # bif_path_lengths.append(neuron1.get_pathlength_to_root(node))
-    # bif_euclidean_lengths.append(neuron1.get_Euclidean_length_to_root(node))
-    # bif_contractions.append(bif_euclidean_lengths[-1] / bif_path_lengths[-1])
+    neuron.dendrites["dendrite_1"].set_properties({
+        "B": 6.*cpm, "T": 5.*hour,
+        # "somatropic_scale": 200.*um, "somatropic_factor": 1.
+    })
 
-# # plt.hist(bif_euclidean_lengths)
-# # plt.title('(Almost) Sholl analysis')
-# # plt.xlabel('euclidean distance (micron)')
-# # plt.ylabel('count / crossings')
+    ds.simulate(15*hour)
+    ds.plot.plot_neurons()
 
+    neuron.set_properties(dendrites_params={
+        "use_van_pelt": False, "use_uniform_branching": True,
+        "uniform_branching_rate": 1.*cph, "speed_growth_cone": 0.1*um/minute,
+        "somatropic_scale": 300.*um, "somatropic_factor": 0.95,
+        "self_avoidance_scale": 5.*um,
+    })
 
-# p_bifs = neuron1.get_points_of_interest()[1]  # soma, bifurcations, terminals
-# p_eucl = []
-# for node in p_bifs:
-    # p_eucl.append(neuron1.get_Euclidean_length_to_root(node))
-# # plt.hist(p_eucl)
-# plt.title('(Almost) Sholl analysis')
-# plt.xlabel('euclidean distance (micron)')
-# plt.ylabel('count / crossings')
+    ds.simulate(6*day)
+    ds.plot.plot_neurons()
 
-# p_eucl = [neuron1.get_Euclidean_length_to_root(node)
-    # for node in neuron1.get_points_of_interest()[1]]
+    neuron.set_properties(dendrites_params={
+        "use_van_pelt": False, "use_uniform_branching": True,
+        "uniform_branching_rate": 2.*cph, "speed_growth_cone": 0.1*um/minute,
+        "somatropic_scale": 80.*um, "somatropic_factor": 1.,
+        "diameter_fraction_lb": 0.45,
+    })
 
-# # plt.figure()
-# # neuron1.plot_2D()
-# plt.figure()
-# plt.show(block=True)
-# # sleep(1000)
+    ds.simulate(20.*day)
+    ds.plot.plot_neurons()
+    ds.plot.plot_recording(rec)

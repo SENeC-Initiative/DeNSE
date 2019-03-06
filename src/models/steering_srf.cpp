@@ -20,12 +20,12 @@ namespace growth
 
 SrfSteeringModel::SrfSteeringModel(GCPtr gc, NeuritePtr neurite)
   : SteeringModel(gc, neurite)
-  , rigidity_factor_(1.)
-  , somatropic_factor_(1.)
-  , somatropic_scale_(20.)
+  , rigidity_factor_(SRF_RIGIDITY_FACTOR)
+  , somatropic_factor_(SRF_SOMATROPIC_FACTOR)
+  , somatropic_scale_(SRF_SOMATROPIC_SCALE)
   , somatropic_mode_(sine)
-  , self_avoidance_factor_(2.)
-  , self_avoidance_scale_(5.)
+  , self_avoidance_factor_(SRF_AVOIDANCE_FACTOR)
+  , self_avoidance_scale_(SRF_AVOIDANCE_SCALE)
   , soma_()
 {}
 
@@ -90,10 +90,11 @@ void SrfSteeringModel::compute_direction_probabilities(
     double max_dist     = 5*self_avoidance_scale_;
     size_t neuron_id    = neurite_ptr_->get_parent_neuron().lock()->get_gid();
     std::string neurite = neurite_ptr_->get_name();
-    size_t gc_id        = gc_weakptr_.lock()->get_nodeID();
+    size_t gc_id        = gc_weakptr_.lock()->get_node_id();
+    double radius       = 0.5*gc_weakptr_.lock()->get_diameter();
 
     // loop over the angles, get total probability, and add memory contribution
-    double weight, abs_angle, angle, gfactor, sangle, sfactor, distance;
+    double weight, abs_angle, angle, gfactor, sangle, sfactor, distance, tmp;
     double inv_pi = 1./M_PI;
     std::string nneurite;
     size_t nneuron, ngc;
@@ -133,7 +134,7 @@ void SrfSteeringModel::compute_direction_probabilities(
                     sfactor =
                         (sangle <= 0.5*M_PI)
                         ? 1
-                        : pow(1 - 2*sangle*inv_pi - 1*sexp_factor, spower);
+                        : pow(1 - (2*sangle*inv_pi - 1)*sexp_factor, spower);
                     break;
                 case sine:
                     sfactor = pow(1-sin(0.5*sangle)*sexp_factor, spower);
@@ -163,24 +164,26 @@ void SrfSteeringModel::compute_direction_probabilities(
                 if (nneuron == neuron_id and not nneurite.empty()
                     and not (nneurite == neurite and ngc == gc_id))
                 {
-                    // get distance, etc
-                    if (std::isnan(distance))
+                    // get distance, note that contact or close-to-contact 
+                    // interactions are ignored here, since they are handled by
+                    // the affinities
+                    tmp = bg::distance(current_pos, *(neighbor.get()));
+
+                    if (std::isnan(distance) and tmp > radius)
                     {
-                        distance = bg::distance(current_pos, *(neighbor.get()));
+                        distance = tmp - radius;
                     }
-                    else
+                    else if (tmp > radius)
                     {
-                        distance = std::min(
-                            bg::distance(current_pos, *(neighbor.get())),
-                            distance);
+                        distance = std::min(tmp - radius, distance);
                     }
                 }
             }
 
             if (not std::isnan(distance))
             {
-                weight *= exp(-self_avoidance_factor_*distance
-                            /self_avoidance_scale_);
+                weight *= std::max(
+                    1 - self_avoidance_factor_*exp(-distance / self_avoidance_scale_), 0.);
             }
 
             directions_weights[n] = weight;

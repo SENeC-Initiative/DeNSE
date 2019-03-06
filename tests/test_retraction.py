@@ -3,8 +3,8 @@
 
 """ Testing resolution invariance for wall affinity """
 
-import matplotlib
-matplotlib.use('Qt5Agg')
+# import matplotlib
+# matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 

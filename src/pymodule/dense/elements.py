@@ -7,7 +7,6 @@ from logging import warnings as _warn
 from collections import deque as _deque
 
 import numpy as _np
-
 from . import _pygrowth as _pg
 from ._helpers import nonstring_container as _nsc
 
@@ -47,7 +46,7 @@ class Neuron(object):
         return str(self.__gid)
     
     def __repr__(self):
-        return "Neuron {}".format(self.__gid)
+        return "Neuron<{}>".format(self.__gid)
     
     def _repr_pretty_(self, p, cycle):
         p.text("Neuron({})".format(self.__gid))
@@ -225,7 +224,8 @@ class Neuron(object):
             Coarse-graining factor of the structure: only one point every
             `resolution` will be kept.
         '''
-        _pg.save_to_swc(filename, gid=self, resolution=resolution)
+        from .io import save_to_swc
+        save_to_swc(filename, gid=self, resolution=resolution)
 
     def to_neuroml(self, filename, resolution=10, write=True):
         '''
@@ -369,6 +369,11 @@ class Neurite(object):
 
     def __str__(self):
         return self.__name
+    
+    def __repr__(self):
+        if self._parent is None:
+            return "Neurite<{} at {}>".format(str(self), id(self))
+        return "Neurite<{} of neuron {}>".format(str(self), int(self._parent))
 
     def get_tree(self):
         return _pg._get_tree(self._parent, str(self))

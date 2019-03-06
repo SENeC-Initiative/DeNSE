@@ -6,6 +6,7 @@ import hashlib
 import json
 
 from .. import _pygrowth as _pg
+from ..elements import Neuron as _Neuron
 from . import dataIO_swc as _dataIO_swc
 from .dataIO_swc import *
 from .dataIO import (save_json_info, NeuronsFromSimulation,
@@ -13,12 +14,11 @@ from .dataIO import (save_json_info, NeuronsFromSimulation,
 
 __all__ = [
     "generate_hash_id",
-    "NeuronsFromSimulation",
     "save_to_swc"
     "load_swc",
     "save_json_info",
-    "SaveSwc",
-    "SimulationsFromFolder",
+    # "NeuronsFromSimulation",
+    # "SimulationsFromFolder",
 ]
 
 __all__.extend(_dataIO_swc.__all__)
@@ -59,4 +59,6 @@ def save_to_swc(filename, gid=None, resolution=10):
         Coarse-graining factor of the structure: only one point every
         `resolution` will be kept.
     '''
+    if isinstance(gid, (int, _Neuron)):
+        gid = [gid]
     _pg._neuron_to_swc(filename=filename, gid=gid, resolution=resolution)

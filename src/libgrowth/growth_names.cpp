@@ -32,26 +32,6 @@ const std::string axon_polarization_weight("axon_polarization_weight");
 const std::string B("B");
 const std::string branching_proba_default("branching_proba_default");
 
-const std::string res_branching_proba("res_branching_proba");
-const std::string res_branching_threshold("res_branching_threshold");
-const std::string res_correlation("res_correlation");
-const std::string res_elongation_factor("res_elongation_factor");
-const std::string res_elongation_threshold("res_elongation_threshold");
-const std::string res_increase_slope("res_increase_slope");
-const std::string res_leakage("res_leakage");
-const std::string res_neurite_split_threshold("res_neurite_split_threshold");
-const std::string res_neurite_available("res_neurite_available");
-const std::string res_neurite_variance("res_neurite_variance");
-const std::string res_neurite_generated("res_neurite_generated");
-const std::string res_neurite_generated_tau("res_neurite_generated_tau");
-const std::string res_neurite_delivery_tau("res_neurite_delivery_tau");
-const std::string res_retraction_factor("res_retraction_factor");
-const std::string res_retraction_threshold("res_retraction_threshold");
-const std::string res_typical_gc_support("res_typical_gc_support");
-const std::string res_use_ratio("res_use_ratio");
-const std::string res_variance("res_variance");
-const std::string res_weight_centrifugal("res_weight_centrifugal");
-const std::string res_weight_diameter("res_weight_diameter");
 const std::string critical_pull("critical_pull");
 
 const std::string decay_factor("decay_factor");
@@ -59,6 +39,7 @@ const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
 const std::string diameter_eta_exp("diameter_eta_exp");
+const std::string diameter_fraction_lb("diameter_fraction_lb");
 const std::string diameter_ratio_avg("diameter_ratio_avg");
 const std::string diameter_ratio_std("diameter_ratio_std");
 const std::string duration_retraction("duration_of_retraction");
@@ -101,12 +82,30 @@ const std::string polarization_strength("polarization_strength");
 const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 
-const std::string random_walk_submodel("random_walk_submodel");
+const std::string random_rotation_angles("random_rotation_angles");
+const std::string res_branching_proba("res_branching_proba");
+const std::string res_branching_threshold("res_branching_threshold");
+const std::string res_correlation("res_correlation");
+const std::string res_elongation_factor("res_elongation_factor");
+const std::string res_elongation_threshold("res_elongation_threshold");
+const std::string res_increase_slope("res_increase_slope");
+const std::string res_leakage("res_leakage");
+const std::string res_neurite_split_threshold("res_neurite_split_threshold");
+const std::string res_neurite_available("res_neurite_available");
+const std::string res_neurite_variance("res_neurite_variance");
+const std::string res_neurite_generated("res_neurite_generated");
+const std::string res_neurite_generated_tau("res_neurite_generated_tau");
+const std::string res_neurite_delivery_tau("res_neurite_delivery_tau");
+const std::string res_retraction_factor("res_retraction_factor");
+const std::string res_retraction_threshold("res_retraction_threshold");
+const std::string res_typical_gc_support("res_typical_gc_support");
+const std::string res_use_ratio("res_use_ratio");
+const std::string res_variance("res_variance");
+const std::string res_weight_centrifugal("res_weight_centrifugal");
+const std::string res_weight_diameter("res_weight_diameter");
 const std::string resolution("resolution");
 const std::string resource("resource");
 const std::string rigidity_factor("rigidity_factor");
-const std::string rw_memory_tau("rw_memory_tau");
-const std::string rw_delta_corr("rw_delta_corr");
 
 const std::string S("S");
 const std::string scale_up_move("scale_up_move");
@@ -130,8 +129,6 @@ const std::string substrate_affinity("substrate_affinity");
 
 const std::string T("T");
 const std::string taper_rate("taper_rate");
-
-const std::string random_rotation_angles("random_rotation_angles");
 
 const std::string uniform_branching_rate("uniform_branching_rate");
 const std::string use_actin_waves("use_actin_waves");

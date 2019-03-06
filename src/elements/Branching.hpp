@@ -82,8 +82,10 @@ class Branching
     void compute_flpl_event(mtPtr rnd_engine);
 
     // critical_resource functions
-    void res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                       size_t &branching_point, mtPtr rnd_engine);
+    bool res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                        size_t &branching_point, mtPtr rnd_engine,
+                        GCPtr& second_cone, const Event &ev);
+
     void initialize_next_event(mtPtr rnd_engine);
 
     // Get/set functions

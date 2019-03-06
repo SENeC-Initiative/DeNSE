@@ -37,7 +37,7 @@ BPoint BaseNode::get_position() const { return geometry_.position; }
 int BaseNode::get_centrifugal_order() const { return -1; }
 
 
-size_t BaseNode::get_nodeID() const { return 0; }
+size_t BaseNode::get_node_id() const { return 0; }
 
 
 double BaseNode::get_distance_parent() const
@@ -103,9 +103,6 @@ void TopologicalNode::set_position(const BPoint &pos)
 void TopologicalNode::set_position(const BPoint &pos, double dist_to_soma,
                                    BranchPtr b)
 {
-    assert(pos.x() == b->get_last_xy().x() and
-           pos.y() == b->get_last_xy().y());
-
     geometry_.position    = pos;
     geometry_.dis_to_soma = dist_to_soma;
     geometry_.dis_to_parent =
@@ -124,6 +121,12 @@ void TopologicalNode::set_diameter(double diameter)
 size_t TopologicalNode::get_branch_size() const
 {
     return biology_.branch->size();
+}
+
+
+double TopologicalNode::get_branch_length() const
+{
+    return biology_.branch->get_length();
 }
 
 

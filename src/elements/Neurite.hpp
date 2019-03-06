@@ -191,6 +191,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     double lateral_branching_angle_std_;
     double gc_split_angle_mean_;
     double gc_split_angle_std_;
+    double diam_frac_lb_;
 
 }; // Neurite
 

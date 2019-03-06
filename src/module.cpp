@@ -581,8 +581,8 @@ void get_branches_data_(size_t neuron, const std::string &neurite_name,
                 points_tmp.push_back(row_y);
             }
 
-            parents.push_back(node_it->second->get_parent().lock()->get_nodeID());
-            nodes.push_back(node_it->second->get_nodeID());
+            parents.push_back(node_it->second->get_parent().lock()->get_node_id());
+            nodes.push_back(node_it->second->get_node_id());
 
             points.push_back(points_tmp);
             diameters.push_back(node_it->second->get_diameter());
@@ -601,10 +601,10 @@ void get_branches_data_(size_t neuron, const std::string &neurite_name,
             points_tmp.push_back(b->get_xlist());
             points_tmp.push_back(b->get_ylist());
 
-            size_t parent_id = gc.second->get_parent().lock()->get_nodeID();
+            size_t parent_id = gc.second->get_parent().lock()->get_node_id();
 
             parents.push_back(parent_id);
-            nodes.push_back(gc.second->get_nodeID());
+            nodes.push_back(gc.second->get_node_id());
 
             points.push_back(points_tmp);
 

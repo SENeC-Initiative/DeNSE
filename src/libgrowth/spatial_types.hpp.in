@@ -121,6 +121,18 @@ typedef struct Move
 typedef std::tuple<size_t, std::string, size_t, size_t> ObjectInfo;
 
 
+namespace ndata
+{
+  enum ndata
+  {
+    NEURON,
+    NEURITE,
+    NODE,
+    SEGMENT
+  };
+}
+
+
 // R-tree value
 typedef std::pair<BBox, ObjectInfo> RtreeValue;
 

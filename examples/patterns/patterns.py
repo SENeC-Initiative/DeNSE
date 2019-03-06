@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -12,9 +14,11 @@ from dense.units import *
 Main parameters
 '''
 
-num_neurons = 50
-soma_radius = 8.*um
+num_neurons = 10
+soma_radius = 5.*um
 num_omp     = 6
+
+cwd = os.path.dirname(os.path.realpath(__file__))
 
 gc_model = 'run-and-tumble'
 
@@ -58,11 +62,11 @@ if __name__ == '__main__':
         "environment_required": True
     }
 
-    ds.get_kernel_status(kernel)
+    ds.set_kernel_status(kernel)
 
-    culture = ds.set_environment("test_15-75_small.dxf",
+    culture = ds.set_environment(cwd + "/test_15-75_small.dxf",
                                 internal_shapes_as="areas",
-                                default_properties={"substrate_affinity": -50.},
+                                default_properties={"substrate_affinity": 0.},
                                 other_properties={"substrate_affinity": 100.})
     # ~ ds.environment.plot_shape(culture, show=True)
 
@@ -74,7 +78,7 @@ if __name__ == '__main__':
                             dendrites_params=dendrite_params,
                             num_neurites=3)
 
-    ds.plot_neurons(show=False)
+    ds.plot.plot_neurons(show=False)
     # ~ xlim = -10200., -9500.
     # ~ ylim = -700., -1500.
     # ~ xlim = -9250., -9000.
@@ -92,7 +96,7 @@ if __name__ == '__main__':
     for i in range(2):
         ds.simulate(800.*minute)
         # ~ ds.plot_neurons(subsample=20, dendrite_color="gold", show=False)
-        ds.Newplot_neurons(dendrite_color="gold", show=False)
+        ds.plot.plot_neurons(dendrite_color="gold", show=False)
         plt.xlim(*xlim)
         plt.ylim(*ylim)
         plt.axis('off')

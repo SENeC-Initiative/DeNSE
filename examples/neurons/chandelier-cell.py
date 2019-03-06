@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
+
 import dense as ds
 from dense.units import *
 
 import numpy as np
 import matplotlib.pyplot as plt
-import neurom as nm
-from neurom import viewer
 
 import os
 
@@ -18,7 +19,7 @@ Main parameters
 
 S = 0.901
 E = 0.3
-gc_model = "run_tumble"
+gc_model = "run-and-tumble"
 num_neurons = 1
 num_omp     = 1
 
@@ -28,7 +29,8 @@ neuron_params = {
     "dendrite_diameter": 2.*um,
     "axon_diameter": 3.*um,
     "position": np.array([(0., 0.)])*um,
-    "neurite_angles": {"axon": 275.*deg, "dendrite_1": 115.*deg, "dendrite_2": 65.*deg}
+    "neurite_angles": {
+        "axon": 275.*deg, "dendrite_1": 115.*deg, "dendrite_2": 65.*deg}
 }
 
 dend_params = {
@@ -36,7 +38,7 @@ dend_params = {
     "use_van_pelt": False,
 
     "persistence_length": 150.0*um,
-    "thinning_ratio": 1./100.,
+    "taper_rate": 1./100.,
     "speed_growth_cone": 0.008*um/minute,
 }
 
@@ -48,7 +50,7 @@ axon_params = {
 
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0*um,
-    "thinning_ratio": 1./200.,
+    "taper_rate": 1./200.,
 
     "persistence_length": 300.0*um,
     "speed_growth_cone": 0.015*um/minute,
@@ -61,32 +63,27 @@ Growth
 '''
 
 kernel = {
-    "resolution": 50.,
+    "resolution": 30.*minute,
     "seeds": [5],
     "environment_required": False,
     "num_local_threads": num_omp,
 }
 
-ds.get_kernel_status(kernel)
+ds.set_kernel_status(kernel)
 
 
 # create neurons
 
-n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
-                     axon_params=axon_params, dendrites_params=dend_params,
-                     num_neurites=3)
+n = ds.create_neurons(n=num_neurons, params=neuron_params,
+                      axon_params=axon_params, dendrites_params=dend_params,
+                      num_neurites=3)
 
 
 ds.simulate(2*day)
 
-ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
+# ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
-nrn = nm.load_neuron("chandelier-cell.swc")
-
-fig, _ = viewer.draw(nrn)
-
-print(ds.get_kernel_status("time"))
-ds.plot.plot_neurons(show=True)
+ds.plot.plot_neurons()
 
 # Turn branching on
 
@@ -103,7 +100,7 @@ dend_vp = {
 axon_vp = {
     "use_van_pelt": True,
     # Best model
-    "gc_split_angle_mean": 70*deg,
+    "gc_split_angle_mean": 30.*deg,
     "B": 5.*cpm,
     "E": 0.,
     "S": 1.,
@@ -114,15 +111,10 @@ ds.set_object_properties(n, axon_params=axon_vp, dendrites_params=dend_vp)
 
 ds.simulate(12*day)
 
-ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
+# ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
-fig, _ = viewer.draw(nrn)
-plt.axis('off')
-fig.suptitle("")
-plt.tight_layout()
+ds.plot.plot_neurons()
 
-print(ds.get_kernel_status("time"))
-ds.plot.plot_neurons(show=True)
 
 lb_a = {
     "use_van_pelt": False,
@@ -144,7 +136,6 @@ ds.set_object_properties(n, axon_params=lb_a, dendrites_params=lb)
 
 ds.simulate(10*day)
 
-print(ds.get_kernel_status("time"))
 ds.plot.plot_neurons(show=True)
 
 
@@ -156,19 +147,9 @@ ds.simulate(20*day)
 print(ds.get_kernel_status("time"))
 ds.plot.plot_neurons(show=True)
 
-ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
+ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("chandelier-cell.swc")
-
-fig, _ = viewer.draw(nrn)
-
-for ax in fig.axes:
-    ax.set_title("")
-
-
-tree = n[0].axon.get_tree()
+tree = n.axon.get_tree()
 
 plt.axis('off')
 fig.suptitle("")

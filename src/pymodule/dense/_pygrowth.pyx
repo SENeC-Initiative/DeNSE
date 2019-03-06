@@ -30,7 +30,7 @@ __all__ = [
     "delete_neurites",
     "generate_model",
     "generate_simulation_id",
-    "get_default_parameters",
+    "get_default_properties",
     "get_environment",
     "get_kernel_status",
     "get_models",
@@ -159,6 +159,7 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     `has_axon` is set to False, the subsequent neurites are dendrites.
     If `has_axon` is set to False, then only dendrites are created.
     '''
+    params = {} if params is None else params
     assert isinstance(params, dict), "`params` must be a dictionary."
 
     params       = {} if params is None else params.copy()
@@ -204,7 +205,8 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             "To use one, call `get_kernel_status('environment_required', True)`."
 
         # check that the environment contains the region provided
-        contained = environment.contains(culture)
+        intsct    = environment.intersection(culture)
+        contained = intsct.difference(culture).area < 1e-10*culture.area
 
         # if not, this can come from rounding errors
         if not contained:
@@ -218,8 +220,8 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         rnd_pos = True
 
     if not params:
-        params = get_default_parameters("neuron", settables=True)
-        params.update(get_default_parameters(params["growth_cone_model"],
+        params = get_default_properties("neuron", settables=True)
+        params.update(get_default_properties(params["growth_cone_model"],
                                              settables=True))
         if culture is None:
             if n == 1:
@@ -907,7 +909,7 @@ def get_neurons(as_ints=False):
         return Population.from_gids(get_neurons_())
 
 
-def get_default_parameters(obj, property_name=None, settables_only=True,
+def get_default_properties(obj, property_name=None, settables_only=True,
                            detailed=False):
     '''
     Returns the default status of an object.
@@ -1424,17 +1426,19 @@ def set_neurite_parameters(neuron, neurite, params):
 
     Parameters
     ----------
-    neuron : :class:`~dense.elements.Neuron` or GID
+    neuron : :class:`~dense.elements.Neuron` or int
         Neuron containing the neurite to update.
     neurite : :class:`~dense.elements.Neuron` or str
         Neurite to update.
     params : dict
         Parameters of the neurite.
     '''
-    neuron  = int(neuron)
-    neurite = _to_bytes(str(neurite))
+    neuron   = int(neuron)
+    neurite  = _to_bytes(str(neurite))
+    gc_model = get_object_properties(neuron, "growth_cone_model",
+                                     neurite=neurite)
 
-    _check_params(params, "neurite")
+    _check_params(params, "neurite", gc_model=gc_model)
 
     cdef statusMap cparams = _get_scalar_status(params, 1)
 
@@ -1467,6 +1471,7 @@ def simulate(time, force_resol=False):
 
     # initialize the Time instance
     cdef CTime simtime = CTime(s, m, h, d)
+
     # launch simulation
     simulate_(simtime)
 

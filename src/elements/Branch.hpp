@@ -99,6 +99,7 @@ class Branch
     const BPolygonPtr get_last_segment() const;
     const BPolygonPtr get_segment_at(size_t idx) const;
     seg_range segment_range() const;
+    // double get_normal_direction() const;
     //! return the last xy
     BPoint get_last_xy() const;
     /**

@@ -448,9 +448,12 @@ void SpaceManager::update_objects_branching(TNodePtr old_node, NodePtr new_node,
     BBox box;
     ObjectInfo info;
 
-    size_t old_id(old_node->get_nodeID()), new_id(new_node->get_nodeID());
+    size_t old_id(old_node->get_node_id()), new_id(new_node->get_node_id());
     const BranchPtr old_branch(old_node->get_branch());
     const BranchPtr new_branch(new_node->get_branch());
+
+    // size_t num_old_segments = max(old_branch->size() - 2, 0);
+    // size_t num_new_segments = max(new_branch->size() - 2, 0);
 
     // change node ids below branching point
     for (size_t i = 0; i < branching_point; i++)
@@ -585,6 +588,7 @@ void SpaceManager::update_rtree()
                     // addition
                     rtree_.insert(std::make_pair(box, info));
                     auto it = gmap.find(info);
+
                     if (it == gmap.end())
                     {
                         printf("not in gmap\n");
@@ -600,6 +604,7 @@ void SpaceManager::update_rtree()
                 {
                     // removal
                     int rm = rtree_.remove(RtreeValue({box, info}));
+
                     if (rm == 0)
                     {
                         printf("for %lu %s %lu %lu\n", std::get<0>(info), std::get<1>(info).c_str(), std::get<2>(info), std::get<3>(info));
@@ -648,15 +653,16 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
 
     size_t neuron_id                = gc_ptr->get_neuron_id();
     const std::string &neurite_name = gc_ptr->get_neurite_name();
+    BPolygonPtr last_segment        = gc_ptr->get_branch()->get_last_segment();
 
-    double aff_self                 = aff_values.affinity_self;
-    double aff_axon_same_neuron     = aff_values.affinity_axon_same_neuron;
-    double aff_axon_other_neuron    = aff_values.affinity_axon_other_neuron;
-    double aff_dendrite_same_neuron = aff_values.affinity_dendrite_same_neuron;
+    double aff_self                  = aff_values.affinity_self;
+    double aff_axon_same_neuron      = aff_values.affinity_axon_same_neuron;
+    double aff_axon_other_neuron     = aff_values.affinity_axon_other_neuron;
+    double aff_dendrite_same_neuron  = aff_values.affinity_dendrite_same_neuron;
+    double aff_soma_same_neuron      = aff_values.affinity_soma_same_neuron;
+    double aff_soma_other_neuron     = aff_values.affinity_soma_other_neuron;
     double aff_dendrite_other_neuron =
         aff_values.affinity_dendrite_other_neuron;
-    double aff_soma_same_neuron  = aff_values.affinity_soma_same_neuron;
-    double aff_soma_other_neuron = aff_values.affinity_soma_other_neuron;
 
     // values used locally inside loop
     double angle, distance, distance1, min_wall_dist;
@@ -734,9 +740,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             size_t other_neuron, other_node, other_segment;
             std::string other_neurite;
 
-            //~ bool target = (neuron_id == 12 and neurite_name == "dendrite_2"
-            //~ and gc_ptr->get_nodeID() == 3);
-
             for (const auto &info : neighbors_info)
             {
                 other         = map_geom_[info];
@@ -751,12 +754,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 if (other == gc_ptr->get_last_segment())
                 {
                     // ignore possible intersection with last segment
-                    // other_intersects = false;
-                    // if (bg::intersects(filo_line, *(other.get())) and not
-                    //     bg::touches(filo_line, *(other.get())))
-                    // {
-                    //     affinities[0] = aff_self;
-                    // }
+                    other_intersects = false;
                 }
                 else if (other != nullptr and
                          intersects(*(other.get()), filo_line))
@@ -792,14 +790,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                         {
                             // self-interaction
                             other_affinity = aff_self;
-                            if (other_node == gc_ptr->get_nodeID())
-                            {
-                                printf("self interaction %lu %s %lu %lu\n",
-                                other_neuron, other_neurite.c_str(), other_node, other_segment);
-                                std::cout << bg::wkt(*(other.get())) << std::endl;
-                                std::cout << bg::wkt(filo_line) << std::endl;
-                                std::cout << bg::wkt(position) << std::endl;
-                            }
                         }
                         else if (other_neurite == "axon")
                         {

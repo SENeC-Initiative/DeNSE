@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# __init__.py
+# {{file_name}}
 #
 # This file is part of DeNSE.
 #
@@ -19,10 +19,3 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-
-""" Tools relaetd to neuronal structure """
-
-from .algorithms import *
-from .connections import *
-from .graph import *
-from .neuron_shape import *

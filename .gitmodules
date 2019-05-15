@@ -1,0 +1,3 @@
+[submodule "geometry"]
+	path = src/pymodule/NetGrowth/geometry
+	url = https://github.com/SENeC-Initiative/PyNCulture.git

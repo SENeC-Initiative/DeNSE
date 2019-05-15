@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+from setuptools import setup, Extension, find_packages
+import numpy as np
+
+try:
+    from Cython.Build import cythonize
+    import setuptools
+    version = setuptools.__version__
+    version = int(version[:version.index(".")])
+    with_cython = True if version >= 18 else False
+    from _cpp_header import clean_cpp
+    with_cython = True
+except ImportError:
+    with_cython = False
+
+
+# ------------------------------------- #
+# Extension to link C++ files to python #
+# ------------------------------------- #
+
+mod_name = 'NetGrowth'
+
+ext = '.pyx' if with_cython else '.cpp'
+
+extensions = Extension(
+    mod_name + "._pygrowth", # name of extension
+    sources = ['@PYMODULE_DIR@/' + mod_name + '/_pygrowth' + ext],
+    extra_compile_args = [
+        "-std=c++11", "-fPIC", "-Wno-cpp","-Wno-unused-function"
+    ],
+    extra_link_args = [],
+    language = "c++",
+    include_dirs = [
+        '@PROJECT_SOURCE_DIR@',
+        '@PROJECT_SOURCE_DIR@/kernel',
+        '@PROJECT_SOURCE_DIR@/elements',
+        '@PROJECT_SOURCE_DIR@/libgrowth',
+        '@PROJECT_SOURCE_DIR@/spatial',
+        '@PYMODULE_DIR@/' + mod_name,
+        np.get_include()
+    ],
+    libraries = ['cgrowth'],
+    library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@'],
+    runtime_library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
+)
+
+if with_cython:
+    extensions = cythonize(extensions)
+    clean_cpp('@PYMODULE_DIR@/' + mod_name + '/_pygrowth.cpp')
+else:
+    extensions = [extensions]
+
+
+# ----- #
+# Setup #
+# ----- #
+
+setup(
+    name = mod_name,
+    version = '@cgrowth_VERSION_VERSION@',
+    description = 'Package to study the growth of neuronal networks',
+    package_dir = {mod_name: '@PYMODULE_DIR@/' + mod_name},
+    packages = find_packages('@PYMODULE_DIR@'),
+
+    # Include the non python files (c++ library):
+    package_data = {mod_name: ['*.so', '*.dll', '*.a', '*.dylib', '*.pxd']},
+
+    ext_modules = extensions,
+
+    author = 'Tanguy Fardet and Alessio Quaresima',
+    author_email = 'tanguy.fardet@univ-paris-diderot.fr',
+    license = 'GNU',
+    keywords = 'neuronal network growth simulation topology',
+    zip_safe = False
+)

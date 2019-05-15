@@ -1,0 +1,75 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#include <memory>
+#include <random>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+
+namespace growth
+{
+
+// Define whether MPI is available
+#cmakedefine WITH_MPI
+// Define whether OpenMP is available
+#cmakedefine WITH_OMP
+
+typedef enum { BOOL, DOUBLE, INT, VEC_LONG, STRING } dtype;
+
+class Property
+{
+  public:
+    Property();
+    Property(int i_);
+    Property(bool b_);
+    Property(char const arr[]);
+    Property(double d_);
+    Property(const std::vector<long> &v);
+    Property(std::string s_);
+
+    Property(const Property &prop);
+
+    Property &operator=(const Property &prop);
+
+    ~Property();
+
+    dtype data_type;
+
+    union {
+        bool b;
+        double d;
+        int i;
+        std::vector<long> l;
+        std::string s;
+    };
+};
+
+typedef std::unordered_map<std::string, Property> statusMap;
+
+// getting/setting parameters from a statusMap/statusMap
+
+inline bool get_param(const statusMap &map, const std::string &key,
+                      int &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      double &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      bool &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      std::vector<long> &result);
+inline bool get_param(const statusMap &map, const std::string &key,
+                      std::string &result);
+
+inline void set_param(statusMap &map, const std::string &key,
+                      const bool &value);
+inline void set_param(statusMap &map, const std::string &key,
+                      const double &value);
+inline void set_param(statusMap &map, const std::string &key, const int &value);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::vector<long> &value);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::string &value);
+}
+
+#endif // CONFIG_H

@@ -1,0 +1,58 @@
+# Python
+
+*.pyc
+*.pyxbldc
+*.egg.info
+
+
+# CMake generated
+
+CMakeCache.txt
+CMakeFiles
+generated
+Makefile
+**/build
+src/pymodule/setup.py
+src/libgrowth/config.hpp
+local_install
+src/pymodule/NetGrowth/_*.cpp
+
+
+# Libraries
+
+*.a
+*.so
+*.lib
+*.dylib
+*.dll
+
+
+# Docs related
+
+src/docs/_build
+src/docs/doxyfiles/html
+src/docs/doxyfiles/latex
+
+# Netgrowth run files
+*.pdf
+*.swc
+*.json
+src/pymodule/NetGrowth/rw_in_env/ve
+src/pymodule/NetGrowth/ve
+
+# Files Alessio
+**/tags
+*.swo
+*.swp
+*.swn
+.ycm_extra_conf.py
+cython_debug
+compile_commands.json
+reset_env.sh
+test.swc
+*cscope*
+phd_tracking/tests
+phd_tracking/phd
+phd_tracking/vess
+
+restats

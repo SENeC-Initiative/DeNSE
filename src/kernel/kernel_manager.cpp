@@ -1,0 +1,196 @@
+#include "kernel_manager.hpp"
+#include <stdio.h>
+
+namespace growth
+{
+
+KernelManager *KernelManager::kernel_manager_instance_ = 0;
+
+
+/*
+ * Instantiate KernelManager
+ */
+void KernelManager::create_kernel_manager()
+{
+// only one thread at a time must enter this, which means only one
+// will indeed be created (prevents race condition)
+#pragma omp critical(create_kernel_manager)
+    {
+        if (kernel_manager_instance_ == 0)
+        {
+            kernel_manager_instance_ = new KernelManager();
+            assert(kernel_manager_instance_);
+        }
+    }
+}
+
+
+/*
+ * Remove KernelManager
+ */
+void KernelManager::destroy_kernel_manager()
+{
+    kernel_manager_instance_->finalize();
+    delete kernel_manager_instance_;
+}
+
+
+/*
+ * Constructor and destructor
+ */
+KernelManager::KernelManager()
+    // managers
+    : parallelism_manager()
+    , rng_manager()
+    , simulation_manager()
+    , space_manager()
+    , neuron_manager()
+    ,
+    // status
+    initialized_(false)
+    // settings
+    , simulation_ID_("Kernel_ID_00000000")
+    , angles_in_radians_(false)
+    , record_enabled_(false)
+    , env_required_(true)
+    , num_objects_(0)
+    , version_("0.1.0")
+{
+}
+
+
+KernelManager::~KernelManager() {}
+
+
+/*
+ * Init, finalize and reset
+ */
+void KernelManager::initialize()
+{
+    // parralelism comes first
+    parallelism_manager.initialize();
+    // then RNG
+    rng_manager.initialize();
+    // then the rest
+    simulation_manager.initialize();
+    space_manager.initialize();
+    neuron_manager.initialize();
+    num_objects_ = 0;
+    initialized_ = true;
+}
+
+
+void KernelManager::finalize()
+{
+    initialized_ = false;
+    neuron_manager.finalize();
+    space_manager.finalize();
+    simulation_manager.finalize();
+    rng_manager.finalize();
+    parallelism_manager.finalize();
+}
+
+
+void KernelManager::reset()
+{
+    finalize();
+    initialize();
+}
+
+
+// Getters
+
+/*
+ * Return full config
+ */
+const statusMap KernelManager::get_status() const
+{
+    assert(is_initialized());
+
+    statusMap status;
+    // local
+    set_param(status, "version", version_);
+    set_param(status, "angles_in_radians", angles_in_radians_);
+    set_param(status, "environment_required", env_required_);
+    set_param(status, "record_enabled", record_enabled_);
+
+    // set_param(status, "simulation_ID", simulation_ID_);
+    /*
+     * delegate the rest; no set_status for "neuron_manager"
+     */
+    parallelism_manager.get_status(status);
+    rng_manager.get_status(status);
+    space_manager.get_status(status);
+    simulation_manager.get_status(status);
+
+    return status;
+}
+
+void KernelManager::set_simulation_ID(std::string simulation_ID)
+{
+    simulation_ID_ = simulation_ID;
+}
+std::string KernelManager::get_simulation_ID()
+{
+    std::cout << simulation_ID_ << std::endl;
+    return simulation_ID_;
+}
+
+
+/*
+ * Return number of objects
+ */
+size_t KernelManager::get_num_objects() const { return num_objects_; }
+
+
+bool KernelManager::angles_in_radians() const { return angles_in_radians_; }
+
+
+double KernelManager::get_current_seconds() const
+{
+    return simulation_manager.get_current_seconds();
+}
+
+
+bool KernelManager::using_environment() const { return env_required_; }
+
+
+void KernelManager::update_num_objects()
+{
+    num_objects_ = neuron_manager.num_neurons();
+}
+
+
+// Setters
+
+void KernelManager::set_status(const statusMap &status)
+{
+    // local
+    get_param(status, "version", version_);
+    get_param(status, "angles_in_radians", angles_in_radians_);
+    get_param(status, "record_enabled", record_enabled_);
+    get_param(status, "simulation_ID", simulation_ID_);
+    bool env_required_old = env_required_;
+    bool env_updated = get_param(status, "environment_required", env_required_);
+
+    /*
+     * delegate the rest; no set_status for:
+     * - rng_manager
+     * - neuron_manager
+     */
+    parallelism_manager.set_status(status);
+    space_manager.set_status(status);
+    double old_resol = simulation_manager.get_resolution();
+    simulation_manager.set_status(status);
+
+    // update the objects
+    env_updated *= (env_required_old != env_required_);
+    bool resol_updated = (old_resol != simulation_manager.get_resolution());
+
+    if (env_updated || resol_updated)
+    {
+        neuron_manager.update_kernel_variables();
+    }
+}
+std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
+}

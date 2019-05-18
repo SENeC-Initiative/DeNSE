@@ -1,0 +1,7 @@
+numpy
+scipy
+pint
+shapely
+dxfgrabber
+svg.path
+matplotlib

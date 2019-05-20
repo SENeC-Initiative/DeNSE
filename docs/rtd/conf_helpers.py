@@ -83,11 +83,10 @@ def pygrowth_mocker():
     '''
     Generate a pseudo _pygrowth.py file to mock the cython import.
     '''
-    root_path = os.path.abspath("..")
-    doc_path = os.path.abspath(".")
+    root_path = os.path.abspath("../..")
+    doc_path = os.path.abspath("..")
 
     ignore = {"init", "finalize"}
-
 
     with open(root_path + "/src/pymodule/dense/_pygrowth.pyx", "r") as pgr:
         with open(doc_path + "/pg_mock.py", "w") as pgw:

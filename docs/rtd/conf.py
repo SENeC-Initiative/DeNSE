@@ -29,6 +29,8 @@ import sys
 from subprocess import call
 import sphinx_bootstrap_theme
 
+sys.path.insert(0, os.path.abspath("."))
+
 from conf_helpers import gen_autosum, pygrowth_mocker
 
 
@@ -39,9 +41,9 @@ doc_path = os.path.abspath("..")
 doxypath = doc_path + '/doxyfiles/xml'
 sys.path.append(doc_path + '/breathe')
 sys.path.append(doxypath)
-sys.path.insert(0, root_path)
 sys.path.insert(0, doc_path)
 sys.path.insert(0, root_path + "/src/pymodule")
+sys.path.insert(0, root_path)
 
 # run doxygen
 #call(["doxygen", "Doxyfile"])
@@ -67,8 +69,6 @@ import dense
 # -- Setup all autosum then start --------------------------------------------
 
 # find all *.in files
-
-root_path = os.path.abspath("..")
 
 inputs = []
 for root, dirnames, filenames in os.walk(root_path):

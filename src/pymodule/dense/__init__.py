@@ -30,6 +30,8 @@ from shapely import speedups as _spdups
 if _spdups.available:
     _spdups.enable()
 
+__version__ = "0.1.dev"
+
 # declare default units
 
 _units = {}

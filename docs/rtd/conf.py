@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# conf_rtd.py
+# conf.py
 #
 # This file is part of DeNSE.
 #
@@ -34,12 +34,13 @@ from conf_helpers import gen_autosum, pygrowth_mocker
 
 # -- Set doxygen/breathe --------------------------------------------------
 
-root_path = os.path.abspath("..")
-doc_path = os.path.abspath(".")
+root_path = os.path.abspath("../..")
+doc_path = os.path.abspath("..")
 doxypath = doc_path + '/doxyfiles/xml'
 sys.path.append(doc_path + '/breathe')
 sys.path.append(doxypath)
 sys.path.insert(0, root_path)
+sys.path.insert(0, doc_path)
 sys.path.insert(0, root_path + "/src/pymodule")
 
 # run doxygen
@@ -108,7 +109,7 @@ extensions = [
 
 breathe_projects = {project: doxypath}
 breathe_default_project = project
-breathe_projects_source = {project: '../'}
+breathe_projects_source = {project: root_path}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = [doc_path + '/_templates']

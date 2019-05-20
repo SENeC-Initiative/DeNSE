@@ -5,3 +5,4 @@ shapely
 dxfgrabber
 svg.path
 matplotlib
+sphinx_bootstrap_theme

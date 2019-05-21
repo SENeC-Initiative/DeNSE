@@ -433,11 +433,11 @@ def create_recorders(targets, observables, sampling_intervals=None,
                      start_times=None, end_times=None, levels="auto",
                      restrict_to=None, record_to="memory", buffer_size=100):
     '''
-    @TODO : LIST OF THE POSSIBLE OBSERVABLES
-    
     Create recorders to monitor the state of target neurons in the environment.
     One recorder is created on each thread containing target neurons for every
     observable.
+
+    @todo: LIST OF THE POSSIBLE OBSERVABLES
 
     Note
     ----

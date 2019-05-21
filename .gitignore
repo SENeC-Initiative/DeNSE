@@ -41,7 +41,6 @@ src/models/models_manager.cpp
 
 docs/_build
 docs/doxyfiles/
-docs/conf.py
 docs/modules/dense.rst
 docs/modules/elements.rst
 docs/modules/environment.rst

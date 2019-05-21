@@ -1617,6 +1617,7 @@ double SpaceManager::get_wall_distance(const BPoint &position, int omp_id) const
     //~ GEOSGeom_destroy_r(context_handler_, boundary);
 
     //~ return distance;
+    return 0.;
 }
 
 

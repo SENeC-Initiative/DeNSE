@@ -29,13 +29,15 @@ import sys
 from subprocess import call
 import sphinx_bootstrap_theme
 
+doc_path = os.path.abspath(".")
+sys.path.insert(0, doc_path)
+
 from conf_helpers import gen_autosum, pygrowth_mocker
 
 
 # -- Set doxygen/breathe --------------------------------------------------
 
 root_path = os.path.abspath("..")
-doc_path = os.path.abspath(".")
 doxypath = doc_path + '/doxyfiles/xml'
 sys.path.append(doc_path + '/breathe')
 sys.path.append(doxypath)

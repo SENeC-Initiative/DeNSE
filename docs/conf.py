@@ -32,7 +32,7 @@ import sphinx_bootstrap_theme
 doc_path = os.path.abspath(".")
 sys.path.insert(0, doc_path)
 
-from conf_helpers import gen_autosum, pygrowth_mocker
+from conf_helpers import gen_autosum, pygrowth_mocker, configure_doxygen
 
 
 # -- Set doxygen/breathe --------------------------------------------------
@@ -46,6 +46,7 @@ sys.path.insert(0, root_path + "/src/pymodule")
 sys.path.insert(0, root_path)
 
 # run doxygen
+configure_doxygen()
 call(["doxygen", "Doxyfile"])
 
 

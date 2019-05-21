@@ -119,3 +119,16 @@ def pygrowth_mocker():
             pgw.write("def init(argv):\n    pass\n\n")
             pgw.write("def finalize():\n    pass\n")
 
+
+def configure_doxygen():
+    ''' Write Doxyfile from .in '''
+    root_path = os.path.abspath("..")
+    doc_path = os.path.abspath(".")
+
+    with open(doc_path + "/Doxyfile.in", "r") as dfin:
+        data = dfin.read()
+        data = data.replace("@PY_NAME@", "DeNSE")
+        data = data.replace("@PROJECT_SOURCE_DIR@", root_path + "/src")
+
+        with open(doc_path + "/Doxyfile", "w") as dfout:
+            dfout.write(data)

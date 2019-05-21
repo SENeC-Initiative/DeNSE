@@ -46,7 +46,7 @@ sys.path.insert(0, root_path + "/src/pymodule")
 sys.path.insert(0, root_path)
 
 # run doxygen
-#call(["doxygen", "Doxyfile"])
+call(["doxygen", "Doxyfile"])
 
 
 # General information about the project.

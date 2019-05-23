@@ -25,6 +25,8 @@
 #define GEOS_USE_ONLY_R_API
 #endif
 
+#define _USE_MATH_DEFINES
+
 #include "elements_types.hpp"
 #include "spatial_types.hpp"
 

@@ -307,7 +307,7 @@ Then::
     mkdir build
     cd build
     set DISTUTILS_USE_SDK 1
-    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder
+    cmake ..
     cmake --build . --config Release --target INSTALL
 
 

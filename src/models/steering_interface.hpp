@@ -22,6 +22,8 @@
 #ifndef STEERMODEL_H
 #define STEERMODEL_H
 
+#define _USE_MATH_DEFINES
+
 #include <vector>
 #include <string>
 

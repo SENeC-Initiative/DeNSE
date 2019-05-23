@@ -21,7 +21,6 @@
 
 #include "steering_memory_based.hpp"
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include "config.hpp"

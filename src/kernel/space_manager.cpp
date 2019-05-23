@@ -26,6 +26,7 @@
 #include <deque>
 #include <iostream>
 #include <sstream>
+#include <numeric>
 
 // Boost includes
 #include <boost/geometry/algorithms/buffer.hpp>

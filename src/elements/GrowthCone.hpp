@@ -22,6 +22,8 @@
 #ifndef GROWTHCONE_H
 #define GROWTHCONE_H
 
+#define _USE_MATH_DEFINES
+
 #include <random>
 
 #include "Neuron.hpp"

@@ -1,3 +1,24 @@
+# -*- coding: utf-8 -*-
+#
+# _pygrowth.pyx
+#
+# This file is part of DeNSE.
+#
+# Copyright (C) 2019 SeNEC Initiative
+#
+# DeNSE is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
+#
+# DeNSE is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
+
 #!/usr/bin/env cython
 #-*- coding:utf-8 -*-
 #cython: boundscheck=False, wraparound=False, initializedcheck=False
@@ -412,11 +433,11 @@ def create_recorders(targets, observables, sampling_intervals=None,
                      start_times=None, end_times=None, levels="auto",
                      restrict_to=None, record_to="memory", buffer_size=100):
     '''
-    @TODO : LIST OF THE POSSIBLE OBSERVABLES
-    
     Create recorders to monitor the state of target neurons in the environment.
     One recorder is created on each thread containing target neurons for every
     observable.
+
+    @todo: LIST OF THE POSSIBLE OBSERVABLES
 
     Note
     ----

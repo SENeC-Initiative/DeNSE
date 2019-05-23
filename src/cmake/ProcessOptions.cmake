@@ -2,7 +2,8 @@
 #
 # This file is part of CGROWTH.
 #
-# Copyright (C) 2004 The CGROWTH Initiative
+# Copyright (C) 2019 The SENeC Initiative
+# (adapted from the NEST Initiative scripts)
 #
 # CGROWTH is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

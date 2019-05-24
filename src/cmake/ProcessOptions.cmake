@@ -223,7 +223,13 @@ print(s.get_config_var('MULTIARCH') or '');
             set( CYTHON_VERSION "${CYTHON_VERSION}" PARENT_SCOPE )
           endif ()
         endif ()
-        set( PYEXECDIR "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
+
+        # set execdir for python files
+        if (MSVC AND PYTHON_EXECUTABLE MATCHES "Anaconda")
+          set( PYEXECDIR "site-packages" PARENT_SCOPE )
+        else ()
+          set( PYEXECDIR "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
+        endif ()
       else ()
         message(
           FATAL_ERROR "Python libraries not found, you requested "

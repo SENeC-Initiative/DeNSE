@@ -114,7 +114,7 @@ ext = '.pyx' if with_cython else '.cpp'
 
 extensions = Extension(
     mod_name + "._pygrowth", # name of extension
-    sources = ['@PYMODULE_DIR@/' + mod_name + '/_pygrowth' + ext],
+    sources = [mod_name + '/_pygrowth' + ext],
     language = "c++",
     include_dirs = [
         '@PROJECT_SOURCE_DIR@',
@@ -158,9 +158,9 @@ setup(
     ext_modules = extensions,
     cmdclass = {'build_ext': CustomBuildExt},
 
-    author = 'Tanguy Fardet and Alessio Quaresima',
+    author = 'SENeC Initiative',
     author_email = 'tanguy.fardet@univ-paris-diderot.fr',
-    license = 'GNU',
+    license = 'GNU General Public License v2 (GPLv2)',
     keywords = 'neuronal network growth simulation topology',
     zip_safe = False
 )

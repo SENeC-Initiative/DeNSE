@@ -1,16 +1,10 @@
 # pymodule/CMakeLists.txt
 
 if ( HAVE_PYTHON )
-  
-  set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR} )
-  
-  set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR} PARENT_SCOPE)
-  set( PYMODULE_DIR ${PROJECT_SOURCE_DIR}/pymodule )
 
-  if (MSVC)
-    # reformat path for Windows because it does not get it otherwise
-    string(REPLACE "/" "\\\\" PYMODULE_DIR "${PYMODULE_DIR}")
-  endif ()
+  set( PYMODULE_DIR ${PROJECT_SOURCE_DIR}/pymodule )
+  set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR} )
+  set( PYTHON_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR} PARENT_SCOPE)
 
   set( ngexists 0 )
   
@@ -62,17 +56,17 @@ if ( HAVE_PYTHON )
     # there are whitespaces in "Program Files" (of course)!!
     string(REPLACE "/" "\\\\" MS_PYTHON_INSTALL_DIR "${PYTHON_INSTALL_DIR}")
     set(STR_CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH};${MS_PYTHON_INSTALL_DIR}\")")
-	install( CODE "${STR_CODE}
-		execute_process(
-		COMMAND \"${PYTHON}\" ${PYMODULE_DIR}/setup.py
-			build -b ${CMAKE_CURRENT_BINARY_DIR}
-			install --prefix=${MS_PYTHON_INSTALL_DIR}
-					--install-scripts=${MS_PYTHON_INSTALL_DIR}
-					--install-data=${MS_PYTHON_INSTALL_DIR}\\\\${PY_NAME}
-					--install-headers=${MS_PYTHON_INSTALL_DIR}
-					--install-lib=${MS_PYTHON_INSTALL_DIR}
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
-	)
+    install( CODE "${STR_CODE}
+      execute_process(
+      COMMAND \"${PYTHON}\" ${PYMODULE_DIR}/setup.py
+        build -b ${CMAKE_CURRENT_BINARY_DIR}
+        install --prefix=${MS_PYTHON_INSTALL_DIR}
+            --install-scripts=${MS_PYTHON_INSTALL_DIR}
+            --install-data=${MS_PYTHON_INSTALL_DIR}\\\\${PY_NAME}
+            --install-headers=${MS_PYTHON_INSTALL_DIR}
+            --install-lib=${MS_PYTHON_INSTALL_DIR}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})"
+    )
   else ()
 	  if (PYTHON_DEVELOPER_MODE)
 		install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")

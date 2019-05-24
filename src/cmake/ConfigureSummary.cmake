@@ -89,7 +89,7 @@ function( CGROWTH_PRINT_CONFIG_SUMMARY )
   message( "" )
 
   message( "Python bindings will be installed to:" )
-  message( "    ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}" )
+  message( "    ${PYTHON_INSTALL_DIR}" )
   message( "" )
 
   if ( WITH_DOCS )

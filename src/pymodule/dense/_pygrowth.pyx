@@ -1797,7 +1797,7 @@ def _get_parent_and_soma_distances(neuron, neurite, node, segment):
     Get the distance between a segment and its parent node as well as with the
     soma.
     '''
-    cdef double distance_to_parent, distance_to_soma
+    cdef double distance_to_parent(0.), distance_to_soma(0.)
 
     get_distances_(neuron, neurite, node, segment, distance_to_parent,
                    distance_to_soma)

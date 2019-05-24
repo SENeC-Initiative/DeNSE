@@ -73,6 +73,10 @@ The whole procedure can be performed directly by running::
 
     ./install_debian.sh
 
+Note that this may require you to add running permission to it through::
+
+    chmod u+x install_debian.sh
+
 Once this is over, go to the "Launching" part.
 
 Otherwise, first install the required tools::
@@ -105,11 +109,15 @@ The whole procedure can be performed directly by running::
 
     ./install_arch.sh
 
+Note that this may require you to add running permission to it through::
+
+    chmod u+x install_arch.sh
+
 Once this is over, go to the "Launching" part.
 
 Otherwise, first install the required tools::
 
-    sudo pacman -S cmake gcc python python-pip geos
+    sudo pacman -S cmake gcc python python-pip geos boost boost-libs
 
 Then use pip to install the required python libraries::
 
@@ -140,6 +148,10 @@ In case this changes, the whole procedure could be performed directly by
 running::
 
     ./install_centos.sh
+
+Note that this may require you to add running permission to it through::
+
+    chmod u+x install_centos.sh
 
 Once this is over, go to the "Launching" part.
 
@@ -210,6 +222,40 @@ Otherwise, check that you have all the things required to install homebrew on
 https://docs.brew.sh/Installation.
 
 
+Windows (Anaconda)
+------------------
+
+This is the "simple" way, if you are not used to UNIX-like platforms.
+Note that Windows install is highly experimental and might very well not work,
+so I would advise against wasting too much time on it if troubles arise: install
+VirtualBox and a random Linux version like Mint, then use DeNSE on the virtual
+OS.
+
+First, you will need to install Anaconda: https://www.anaconda.com/download/.
+Once the installation is finished, launch Anaconda Navigator for the final
+installation steps, then, once it finishes, you can run the Anaconda Prompt from
+the startup menu.
+
+Make sure you have Visual Studio installed including Visual C++, otherwise get
+it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
+Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
+(include Linux tools to get C++ for CMake)
+
+Once in the Anaconda Prompt, run::
+
+    conda install cmake geos
+    pip install cython
+    pip install shapely pint PyOpenGL svg.path dxfgrabber
+
+Then::
+
+    mkdir build
+    cd build
+    set DISTUTILS_USE_SDK 1
+    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder
+    cmake --build . --config Release --target INSTALL
+
+
 Windows (minimal)
 -----------------
 
@@ -274,40 +320,6 @@ directory, then::
     cd X:/path/to/DeNSE/build
     set DISTUTILS_USE_SDK 1
     cmake .. -DCMAKE_INSTALL_PREFIX=X:/where/you/want/dense/to/be/installed
-    cmake --build . --config Release --target INSTALL
-
-
-Windows (Anaconda)
-------------------
-
-This is the "simple" way, if you are not used to UNIX-like platforms.
-Note that Windows install is highly experimental and might very well not work,
-so I would advise against wasting too much time on it if troubles arise: install
-VirtualBox and a random Linux version like Mint, then use DeNSE on the virtual
-OS.
-
-First, you will need to install Anaconda: https://www.anaconda.com/download/.
-Once the installation is finished, launch Anaconda Navigator for the final
-installation steps, then, once it finishes, you can run the Anaconda Prompt from
-the startup menu.
-
-Make sure you have Visual Studio installed including Visual C++, otherwise get
-it from https://www.microsoft.com/en-us/download/developer-tools.aspx.
-Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
-(include Linux tools to get C++ for CMake)
-
-Once in the Anaconda Prompt, run::
-
-    conda install cmake geos
-    pip install cython
-    pip install shapely pint PyOpenGL svg.path dxfgrabber
-
-Then::
-
-    mkdir build
-    cd build
-    set DISTUTILS_USE_SDK 1
-    cmake ..
     cmake --build . --config Release --target INSTALL
 
 

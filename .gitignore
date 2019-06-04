@@ -41,6 +41,7 @@ src/models/models_manager.cpp
 
 docs/_build
 docs/doxyfiles/
+docs/pg_mock.py
 docs/modules/dense.rst
 docs/modules/elements.rst
 docs/modules/environment.rst

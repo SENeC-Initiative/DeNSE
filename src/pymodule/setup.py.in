@@ -116,7 +116,10 @@ extensions = Extension(
     ],
     extra_compile_args = [],
     extra_link_args = [],
-    libraries = ['cgrowth'] + (['libgrowth', 'kernel', 'elements', 'spatial'] if @MSVC@ else []),
+    libraries = ['cgrowth_py@PYTHON_VERSION@'] + \
+                (['libgrowth_py@PYTHON_VERSION@', 'kernel_py@PYTHON_VERSION@',
+                  'elements_py@PYTHON_VERSION@', 'spatial_py@PYTHON_VERSION@']
+                  if @MSVC@ else []),
     library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@',],
     runtime_library_dirs = [] if @MSVC@ else ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
 )
@@ -136,7 +139,10 @@ setup(
     name = mod_name,
     version = '@cgrowth_VERSION_VERSION@',
     description = 'Package to study the growth of neuronal networks',
-    packages = find_namespace_packages(exclude=['dist', '_*', 'build', '*.egg-info']),
+    package_dir = {} if @MSVC@ else {'': '@PYMODULE_DIR@'},
+    packages = find_namespace_packages(
+        '@PYMODULE_DIR@',
+        exclude=['dist', '_*', 'build', '*.egg-info']),
 
     # Include the non python files (c++ library):
     package_data = {mod_name: ['*.so', '*.dll', '*.a', '*.dylib', '*.pxd']},

@@ -25,7 +25,11 @@ configure_file(
 
 add_library( libgrowth STATIC ${libgrowth_sources} )
 
-set_target_properties( libgrowth PROPERTIES POSITION_INDEPENDENT_CODE ON )
+set_target_properties(
+    libgrowth PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME "libgrowth_py${PYTHON_VERSION}"
+)
 
 target_include_directories( libgrowth PRIVATE
     ${PROJECT_SOURCE_DIR}/elements

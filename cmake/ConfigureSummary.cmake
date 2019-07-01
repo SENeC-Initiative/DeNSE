@@ -90,6 +90,10 @@ function( CGROWTH_PRINT_CONFIG_SUMMARY )
 
   message( "Python bindings will be installed to:" )
   message( "    ${PYTHON_INSTALL_DIR}" )
+  message( "Libraries will be installed to:" )
+  message( "    ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" )
+  message( "Binaries will be installed to:" )
+  message( "    ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" )
   message( "" )
 
   if ( WITH_DOCS )

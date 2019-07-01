@@ -6,7 +6,11 @@ set( spatial_sources
 
 add_library( spatial STATIC ${spatial_sources} )
 
-set_target_properties( spatial PROPERTIES POSITION_INDEPENDENT_CODE ON )
+set_target_properties(
+    spatial PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME "spatial_py${PYTHON_VERSION}"
+)
 
 target_include_directories( spatial PRIVATE
     ${PROJECT_SOURCE_DIR}/libgrowth

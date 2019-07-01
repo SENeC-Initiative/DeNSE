@@ -5,15 +5,18 @@ set( io_sources
 
 add_library( io STATIC ${io_sources} )
 
-set_target_properties( io PROPERTIES POSITION_INDEPENDENT_CODE ON )
+set_target_properties(
+    io PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME "io_py${PYTHON_VERSION}"
+)
 
 target_include_directories( io PRIVATE
     ${PROJECT_SOURCE_DIR}/elements
     ${PROJECT_SOURCE_DIR}/libgrowth
     ${PROJECT_SOURCE_DIR}/spatial
-
-
 )
+
 target_link_libraries( io elements libgrowth spatial  )
 
 install( TARGETS io

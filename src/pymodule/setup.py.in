@@ -141,7 +141,7 @@ setup(
     description = 'Package to study the growth of neuronal networks',
     package_dir = {} if @MSVC@ else {'': '@PYMODULE_DIR@'},
     packages = find_namespace_packages(
-        '@PYMODULE_DIR@',
+        "." if @MSVC@ else '@PYMODULE_DIR@',
         exclude=['dist', '_*', 'build', '*.egg-info']),
 
     # Include the non python files (c++ library):

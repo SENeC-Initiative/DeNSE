@@ -1,8 +1,9 @@
 # Development of Neurons in Spatial Environments - DeNSE 
 
-<!-- [![Build Status](https://travis-ci.org/nest/nest-simulator.svg?branch=master)](https://travis-ci.org/nest/nest-simulator)
+<!-- [![Build Status](https://travis-ci.org/nest/nest-simulator.svg?branch=master)](https://travis-ci.org/nest/nest-simulator) -->
 [![License](http://img.shields.io/:license-GPLv2+-green.svg)](http://www.gnu.org/licenses/gpl-2.0.html)
-[Current version](https://img.shields.io/github/release/SENeC-Initiative/dense.svg) -->
+[![Documentation Status](https://readthedocs.org/projects/dense/badge/?version=latest)](http://dense.readthedocs.io/en/latest/)
+<!-- [Current version](https://img.shields.io/github/release/SENeC-Initiative/dense.svg) -->
 
 DeNSE provides a generic platform to investigate growth and network formations
 in 2D ensembles of neurons. DeNSE enables to focus on single neuron morphologies,
@@ -26,7 +27,7 @@ or [graph-tool](https://graph-tool.skewed.de/), but also with the
 [NEST simulator](https://nest-simulator.readthedocs.io) via the
 [NNGT](http://nngt.readthedocs.io/) package.
 
-To get started with DeNSE, please see the [documentation]().
+To get started with DeNSE, please see the [documentation](http://dense.readthedocs.io/en/latest/).
 
 ## License
 

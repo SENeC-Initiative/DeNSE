@@ -3,6 +3,8 @@
 *.pyc
 *.pyxbldc
 *.egg.info
+*.egg-info
+dist/
 
 
 # Virtual env

@@ -28,7 +28,7 @@ import os
 
 n_samples = 200
 angle = 90 # 20, 40, 90
-culture_file = "../culture/angle"+str(angle)+".svg"
+culture_file = "angle"+str(angle)+".svg"
 # this is linked to the file .svg
 end_of_the_tube = 300
 sim_length = 320

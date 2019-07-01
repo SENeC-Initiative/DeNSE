@@ -2,7 +2,7 @@ set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required( VERSION 2.6 )
 
 # add cmake modules: for all `include(...)` first look here
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/cmake )
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 if ( COMMAND cmake_policy )
   #  cmake_policy( SET CMP0003 NEW )
@@ -74,16 +74,29 @@ cgrowth_get_color_flags()
 
 # check prefix
 
-# @todo get the PythonXY/site-packages (is this really necessary?)
-# + copy dll to the lib folder (probably in setup.py)
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-    execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; import os; print(os.path.abspath(site.USER_BASE))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message("\n\n\n\n${PY_LOCAL_DIR}\n\n\n\n")
-    set( CMAKE_INSTALL_PREFIX "${PY_LOCAL_DIR}" CACHE STRING "install prefix" FORCE)
-	  set( CMAKE_INSTALL_PREFIX "${PY_LOCAL_DIR}" )
+    # set discovered python local folder
+    set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" )
+    set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
+
+    # get local user library folder as default install prefix
+    if (PYTHON_EXECUTABLE MATCHES "Anaconda")
+      execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+      string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    elseif (MSVC)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase().replace('\\\\', '/'))" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else ()
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase())" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif ()
+
+    # cache it
+    set( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "install prefix" FORCE)
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
     set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
+    set( PYTHON_INSTALL_DIR "$CACHE{PYTHON_INSTALL_DIR}" )
 ELSEIF ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" )
+  # /usr/local is forbidden because it is the default CMAKE value and it makes
+  # configuration too complex
     message( FATAL_ERROR "Do not install into '/usr/local'. "
              "Please change CMAKE_INSTALL_PREFIX." )
 ELSE ()
@@ -91,12 +104,13 @@ ELSE ()
   get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
 ENDIF ()
 
-
-# check installation directory)
+# set libraries in binaries installation directories
 
 if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
   if (UNIX)
     include( GNUInstallDirs )
+  elseif (MSVC AND PYTHON_EXECUTABLE MATCHES "Anaconda")
+    set(CMAKE_INSTALL_LIBDIR "Lib")
   else ()
     set(CMAKE_INSTALL_LIBDIR "lib")
   endif ()
@@ -105,6 +119,12 @@ endif ()
 if (NOT DEFINED CMAKE_INSTALL_BINDIR)
   set(CMAKE_INSTALL_BINDIR "bin")
 endif ()
+
+# check that python install was setup automatically or set it manually
+
+if (NOT DEFINED PYTHON_INSTALL_DIR)
+  set(PYTHON_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}")
+endif()
 
 
 ###############################################################################
@@ -156,40 +176,6 @@ if ( with-defines )
     set( ALL_CXXFLAGS "${def} ${ALL_CXXFLAGS}" )
   endforeach ()
 endif ()
-
-# all libraries
-set( ALL_LIBS
-  "-lelements"
-  "-lkernel"
-  "-llibgrowth"
-  "-lio"
-  "-lmodels"
-  "-lpymodule"
-  "-lspatial"
-  "${OpenMP_CXX_FLAGS}"
-  "${MPI_CXX_LIBRARIES}" )
-if ( with-libraries )
-  set( ALL_LIBS "${ALL_LIBS};${with-libraries}" )
-endif ()
-string( REPLACE ";" " " ALL_LIBS "${ALL_LIBS}" )
-
-# all includes
-set( ALL_INCLUDES_tmp
-  "${PROJECT_SOURCE_DIR}"
-  "${PROJECT_SOURCE_DIR}/elements"
-  "${PROJECT_SOURCE_DIR}/kernel"
-  "${PROJECT_SOURCE_DIR}/libgrowth"
-  "${PROJECT_SOURCE_DIR}/io"
-  "${PROJECT_SOURCE_DIR}/models"
-  "${PROJECT_SOURCE_DIR}/pymodule"
-  "${PROJECT_SOURCE_DIR}/spatial"
-  "${MPI_CXX_INCLUDE_PATH}" )
-set( ALL_INCLUDES "" )
-foreach ( INC ${ALL_INCLUDES_tmp} ${with-includes} )
-  if ( INC AND NOT INC STREQUAL "" )
-    set( ALL_INCLUDES "${ALL_INCLUDES} -I${INC}" )
-  endif ()
-endforeach ()
 
 
 ###############################################################################

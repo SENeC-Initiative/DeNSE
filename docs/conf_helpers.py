@@ -93,18 +93,17 @@ def pygrowth_mocker():
         with open(doc_path + "/pg_mock.py", "w") as pgw:
             raw_data = pgr.read()
 
-            regexp = re.compile(r"^def[^{'''}]+'''[^{'''}]+'''",
+            regexp = re.compile(r"^def\s+(?P<name>\w+)\s*\((?P<arg>[^)]*)\):[\s\n]+'''(?P<doc>.*?)'''",
                                 re.MULTILINE|re.DOTALL)
 
-            functions = re.findall(regexp, raw_data)
+            functions = re.finditer(regexp, raw_data)
             fnames    = []
 
             for f in functions:
-                first_letter = f.find(" ") + 1
-                paren        = f.find("(")
-                name         = f[first_letter:paren]
-                if name not in ignore and f[first_letter] != "_":
-                    pgw.write(f)
+                name = f.group("name")
+
+                if name not in ignore and not name.startswith("_"):
+                    pgw.write(f.group())
                     pgw.write("\n    pass\n\n")
                     # store function name
                     fnames.append(name)

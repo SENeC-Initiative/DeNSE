@@ -44,9 +44,11 @@ ENDIF()
 
 IF (WIN32 OR CYGWIN)
 	SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+	SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON PARENT_SCOPE)
 ENDIF()
 
 add_library(cgrowth SHARED ${SOURCE_FILES})
+set_target_properties(cgrowth PROPERTIES OUTPUT_NAME "cgrowth_py${PYTHON_VERSION}")
 target_link_libraries( cgrowth kernel libgrowth elements spatial ${GEOS_LIBRARY} ${GEOS_C_LIBRARY})
 target_include_directories( cgrowth PUBLIC
     ${PROJECT_SOURCE_DIR}/elements
@@ -65,14 +67,6 @@ target_include_directories( growth PRIVATE
 
 target_link_libraries( growth cgrowth )
 install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-# this is implemented to prevent python from creating .pyc file
-# during development
-if (python-develop)
-    set(PYTHON_DEVELOPER_MODE "lib64")
-endif()
-
-set( PYEXECDIR "${PYEXECDIR}" PARENT_SCOPE )
 
 # install target
 install(

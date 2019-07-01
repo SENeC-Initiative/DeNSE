@@ -9,7 +9,11 @@ set( elements_sources
 
 add_library( elements STATIC ${elements_sources} )
 
-set_target_properties( elements PROPERTIES POSITION_INDEPENDENT_CODE ON )
+set_target_properties(
+    elements PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME "elements_py${PYTHON_VERSION}"
+)
 
 target_include_directories(
     elements PUBLIC

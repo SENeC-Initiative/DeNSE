@@ -22,6 +22,8 @@
 #ifndef ACTINWAVE_H
 #define ACTINWAVE_H
 
+#define _USE_MATH_DEFINES
+
 #include <random>
 
 #include "elements_types.hpp"

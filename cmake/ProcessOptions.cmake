@@ -223,6 +223,20 @@ print(s.get_config_var('MULTIARCH') or '');
             set( CYTHON_VERSION "${CYTHON_VERSION}" PARENT_SCOPE )
           endif ()
         endif ()
+
+        # set local install dir for python packages
+        if (MSVC AND PYTHON_EXECUTABLE MATCHES "Anaconda")
+          execute_process(COMMAND conda info --root OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+          string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}/Lib/site-packages")
+        elseif (MSVC)
+          execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getusersitepackages().replace('\\\\', '/'))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        else ()
+          execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getusersitepackages())" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        endif ()
+
+        set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)
+
+        # set normal path for manual CMAKE_INSTALL_PREFIX
         set( PYEXECDIR "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
       else ()
         message(

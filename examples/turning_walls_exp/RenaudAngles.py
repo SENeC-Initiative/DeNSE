@@ -97,9 +97,7 @@ if __name__ == '__main__':
         #~ "adaptive_timestep": -1.
     }
 
-    culture_file = main_dir + "/../culture/angle40.svg"
-    #~ culture_file = main_dir + "/../culture/follow_angle96.svg"
-    #~ culture_file = main_dir + "/../culture/follow_angle120.svg"
+    culture_file = main_dir + "/angle40.svg"
 
     ds.set_kernel_status(kernel, simulation_id="ID")
 

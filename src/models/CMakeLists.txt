@@ -34,7 +34,11 @@ set( models_sources
 
 add_library( models STATIC ${models_sources} )
 
-set_target_properties( models PROPERTIES POSITION_INDEPENDENT_CODE ON )
+set_target_properties(
+    models PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    OUTPUT_NAME "models_py${PYTHON_VERSION}"
+)
 
 target_include_directories( models PUBLIC
     ${PROJECT_SOURCE_DIR}/elements

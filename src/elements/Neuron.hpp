@@ -23,6 +23,8 @@
 #ifndef NEURON_H
 #define NEURON_H
 
+#define _USE_MATH_DEFINES
+
 // c++ includes
 #include <map>
 #include <memory>

@@ -12,6 +12,7 @@ pip3 install numpy scipy pint breathe sphinx-bootstrap-theme
 pip3 install --no-binary shapely, shapely
 pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
 
+cd ..
 mkdir build
 cd build
 CC=gcc-8 CXX=g++-8 cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -Dwith-docs=ON -Dwith-python=3

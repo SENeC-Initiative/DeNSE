@@ -23,7 +23,7 @@ import os
 import platform
 import sysconfig
 from distutils.command.build_ext import build_ext
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_namespace_packages
 
 import numpy as np
 
@@ -50,10 +50,6 @@ copt =  {
         '/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',
         '/MD', "-Zi", "/Od",
     ],
-    'mingw': [
-        '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
-        '-ffast-math', '-msse', '-ftree-vectorize', '-O2', '-g', "-fPIC",
-    ],
     'unix': [
         '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
         '-ffast-math', '-msse', '-ftree-vectorize', '-O2', '-g', "-fPIC",
@@ -62,7 +58,6 @@ copt =  {
 
 lopt =  {
     'unix': ['-fopenmp'],
-    'mingw': ['-fopenmp'],
 	'msvc': ['/subsystem:windows', "-debug"],
 }
 
@@ -81,12 +76,7 @@ class CustomBuildExt(build_ext):
             from distutils import ccompiler
             c = ccompiler.get_default_compiler()
         # normalize names
-        if "msvc" in c:
-            c = "msvc"
-        elif "mingw" in c:
-            c = "mingw"
-        else:
-            c = "unix"
+        c = "msvc" if "msvc" in c else "unix"
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
@@ -97,8 +87,6 @@ class CustomBuildExt(build_ext):
         for e in self.extensions:
             e.extra_link_args.extend(lopt.get(c, []))
             e.extra_compile_args.extend(copt.get(c, []))
-            if "cygwin" in platform.system().lower() and c != "msvc":
-                e.extra_compile_args.append("-mdll")
 
         if not @SKIP_BUILD@:
             build_ext.build_extensions(self)
@@ -148,8 +136,7 @@ setup(
     name = mod_name,
     version = '@cgrowth_VERSION_VERSION@',
     description = 'Package to study the growth of neuronal networks',
-    package_dir = {mod_name: '@PYMODULE_DIR@/' + mod_name},
-    packages = find_packages('@PYMODULE_DIR@'),
+    packages = find_namespace_packages(exclude=['dist', '_*', 'build', '*.egg-info']),
 
     # Include the non python files (c++ library):
     package_data = {mod_name: ['*.so', '*.dll', '*.a', '*.dylib', '*.pxd']},

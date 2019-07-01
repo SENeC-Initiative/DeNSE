@@ -10,6 +10,7 @@ pip install --user cython
 pip install --user numpy scipy shapely pint breathe sphinx-bootstrap-theme
 pip install --user networkx nngt svg.path dxfgrabber
 
+cd ..
 mkdir build
 cd build
 cmake .. -Dwith-docs=ON

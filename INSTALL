@@ -41,12 +41,12 @@ Before installation, several tools must be pre-installed, including
     * shapely
     * pint
 
-3. Doxygen, Sphinx, and Breathe to compile the documentation locally
+3. Doxygen, Sphinx, and Breathe to compile the documentation locally (optional)
 
 4. Optional python modules are also required to use DeNSE to full capability
+    * matplotlib to plot neurons and results
     * networkx, igraph, or graph-tool to analyze generated networks
     * NNGT to interface the graph libraries with DeNSE
-    * matplotlib to plot neurons and results
     * svg.path and dxfgrabber to load SVG and DXF files to create complex
       environments
     * PyOpenGL to efficiently seed neurons in complex environments
@@ -56,7 +56,8 @@ Before installation, several tools must be pre-installed, including
 Automatic installation
 ======================
 
-Automatic installation files for several linux distributions are provided.
+Automatic installation files for several linux distributions are provided in the
+``extra`` folder.
 Since these require you to have administrative rights and input your password,
 please check that they were not tampered with before executing them.
 
@@ -71,6 +72,7 @@ Debian-based systems (Ubuntu, Mint...)
 
 The whole procedure can be performed directly by running::
 
+    cd extra
     ./install_debian.sh
 
 Note that this may require you to add running permission to it through::
@@ -107,6 +109,7 @@ Arch-based systems
 
 The whole procedure can be performed directly by running::
 
+    cd extra
     ./install_arch.sh
 
 Note that this may require you to add running permission to it through::
@@ -147,6 +150,7 @@ of GEOS are still 3.4, which is not sufficient to build DeNSE.
 In case this changes, the whole procedure could be performed directly by
 running::
 
+    cd extra
     ./install_centos.sh
 
 Note that this may require you to add running permission to it through::
@@ -197,6 +201,7 @@ If you did not already run a complete install such as "install_debian.sh" but
 have installed all required software, you can directly run the generic
 installation of DeNSE through::
 
+    cd extra
     ./install_linux.sh
 
 Otherwise, you can follow the step-by-step procedure in "Manual installation".
@@ -207,6 +212,7 @@ MacOS
 
 The whole procedure can be performed directly by running::
 
+    cd extra
     ./install_macos.sh
 
 If the automatic install fails with a message like::
@@ -247,13 +253,10 @@ Once in the Anaconda Prompt, run::
     pip install cython
     pip install shapely pint PyOpenGL svg.path dxfgrabber
 
-Then::
+Then you can just run the installer via::
 
-    mkdir build
-    cd build
-    set DISTUTILS_USE_SDK 1
-    cmake .. -DCMAKE_INSTALL_PREFIX=X:\where\you\want\the\install\folder
-    cmake --build . --config Release --target INSTALL
+    cd extra
+    install_windows.cmd
 
 
 Windows (minimal)
@@ -323,75 +326,6 @@ directory, then::
     cmake --build . --config Release --target INSTALL
 
 
-Windows (Cygwin)
-----------------
-
-WARNING: this is not the preferred install mode on Windows because it relies on
-a very slow patch of POSIX which will only let you use DeNSE with single-thread
-configuration (1 OpenMP thread), multi-threaded configurations with Cygwin will
-only slow down the computation.
-
-This installation is also not optimal for Windows because it works in some
-separate environment.
-Eventually, note that this installation also requires roughly 2 Gb of space.
-
-First, install Cygwin and the necessary packages:
-* download Cygwin from https://www.cygwin.com/,
-* launch the installer and get to the package list.
-
-Once on the package list, make sure "View" is set to "Category", then install
-the following packages:
-
-* search for gcc and install (in Devel)
-   - gcc-core gcc-fortran gcc-g++
-   - mingw64-(x86_64/i686)- idem above depending on your platform (ignore)
-* search for make (in Devel)
-   - select cmake
-   - select make
-* search for python (in Python)
-   - select python3
-   - select python3-cairo
-   - select python3-cython
-   - select python3-devel
-   - select python3-ipython
-   - select python3-numpy
-   - select python3-opengl
-   - select python3-pip
-   - select python3-sphinx
-   - select python3-tkinter
-* search for gobject and select gobject-introspection
-* search for xorg (in X11) and select xorg-server
-* search for xinit (in X11) and select xinit
-* search for geos (in Devel) amd select libgeos-devel
-* search for doxygen (in Devel) and select it
-* search for lapack (in Libs) and select Liblapack-devel
-* search for blas (in Math) and select libopenblas
-* search for libpng and select libpng-devel
-* search for tcl-tk (in Tcl) and select tcl-tk and tcl-tk-devel
-* search for freetype (in Libs) and select libfreetype-devel
-* search for gtk3 (in Libs) and select libgtk3-devel and libgt3_0
-
-Click next, check the list of packages to install, then click next again.
-Once the Cygwin install is complete, open Cygwin terminal and type::
-
-    pip3 install scipy pint breathe PyGObject matplotlib sphinx-bootstrap-theme shapely svg.path dxfgrabber
-
-Move to the DeNSE folder. If you do not know how to do it, first copy the DeNSE
-folder in Windows Explorer (select, then CTRL+C or right-click then "Copy"),
-then type "cd " in the Cygwin terminal, paste (it should write the path,
-something like "/cygdrive/c/Users/YourUserName/Documents/DeNSE/"), and press
-enter.
-You should see the correct path appearing at the beginning of the terminal line,
-if so, run::
-
-	./install_cygwin.sh
-
-Otherwise try again until the correct path appears.
-
-If the installation finished without error, you can now use DeNSE: go to the
-"Launching" section.
-
-
 Manual installation
 ===================
 
@@ -426,6 +360,12 @@ libraries.
 Once you made sure the "build" directory is empy, run::
 
     cmake ..
+
+Windows user may require the additional::
+
+    set DISTUTILS_USE_SDK 1
+
+before invoking ``cmake``.
 
 
 Additional CMake options
@@ -467,9 +407,13 @@ Upon proper completion of the configuration step, you should see the lines::
     -- Generating done
     -- Build files have been written to: /the/current/build/folder
 
-As advised, you can now compile by running::
+As advised, you can now compile by running (on Linux and Mac)::
 
     make && make install
+
+Or on Windows::
+
+    cmake --build . --config Release --target INSTALL
 
 Depending on whether you specified a custom path or not, you can now
 either jump to the "Launching" section, or configure the paths.
@@ -491,8 +435,8 @@ to install the new boost version in /usr/local where Cmake can easily
 find it.
 
 
-Configuring the paths
-=====================
+Configuring the paths (Linux and Mac)
+=====================================
 
 If all goes well, the installation should be in directories that are
 included by default in the system's path and should not require any
@@ -565,23 +509,9 @@ Windows
   - open the anaconda prompt and type "ipython" to run interactively,
   - otherwise type "python the_script_name.py".
 
-* Cygwin:
 
-  - first open a Cygwin terminal,
-  - if you want to run it with interactive plotting (matplotlib), then:
- 
-    - type "startxwin >/dev/null 2>&1 &" and press enter, to start the
-      graphical interface
-    - type "export DISPLAY=:0.0" and press enter to select the screen
-
-  - whether you want to plot or not:
- 
-    - to run DeNSE interactively, run "ipython3", then "import dense as ds"
-    - to run a script, type ``python3 the_script_name.py``
-
-
-Known errors
-============
+Common errors
+=============
 
 On configure (cmake)
 --------------------

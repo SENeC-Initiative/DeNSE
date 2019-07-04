@@ -28,8 +28,8 @@ from os import listdir
 from os.path import isdir
 
 from .. import _pygrowth as _pg
-from .._helpers import nonstring_container
-from ..elements import Population
+from .._helpers import nonstring_container, is_iterable
+from ..elements import Population, Neuron
 from ..units import *
 from .dataIO_swc import ImportSwc
 
@@ -40,7 +40,6 @@ __all__ = [
     "NeuronsFromSimulation",
     "save_json_info",
     "save_to_neuroml",
-    "SaveSwc",
     "SimulationsFromFolder"
 ]
 
@@ -78,7 +77,7 @@ def save_json_info(filepath="default", gid=None):
         json.dump(experiment_dict, dumper, sort_keys =True)
 
 
-def save_to_neuroml(filename, gid=None, spatial_resolution=10):
+def save_to_neuroml(filename, gid=None, resolution=10):
     '''
     Save the morphology of each neuron to a single NeuroML file.
 
@@ -89,15 +88,29 @@ def save_to_neuroml(filename, gid=None, spatial_resolution=10):
         added.
     gid : int or list, optional (default: all neurons)
         Ids of the neurons to save.
-    spatial_resolution : int, optional (default: 10)
-        Spatial distance between two consecutive points on a neurite.
+    resolution : int, optional (default: 10)
+        Subsampling coefficient for points on a neurite (sample on point every
+        `resolution`).
     '''
     import neuroml
     import neuroml.writers as writers
+
     if not filename.endswith(".nml"):
         filename += ".nml"
+
     if gid is None:
         gid = _pg.get_neurons()
+    if not is_iterable(gid):
+        gid = [gid]
+
+    doc = neuroml.NeuroMLDocument(id=filename)
+
+    for n in gid:
+        neuron = n if isinstance(n, Neuron) else _pg.get_neurons(n)
+        cell = neuron.to_neuroml(filename, resolution, write=False)
+        doc.cells.append(cell)
+
+    writers.NeuroMLWriter.write(doc, filename)
 
 
 ############################

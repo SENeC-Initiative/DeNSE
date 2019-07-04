@@ -20,8 +20,8 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-# import matplotlib as mpl
-# mpl.use("Qt5Agg")
+import matplotlib as mpl
+mpl.use("Qt5Agg")
 
 import numpy as np
 import os

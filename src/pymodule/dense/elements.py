@@ -314,7 +314,11 @@ class Neuron(object):
                     else:
                         diameter = (diameter for _ in range(len(branch.xy)))
 
-                    for pos, diam in zip(branch.xy, diameter):
+                    # subsample positions and diameters
+                    subnodes = branch.xy[::resolution]
+                    subdiam  = diameter[::resolution]
+
+                    for pos, diam in zip(subnodes, subdiam):
                         p = neuroml.Point3DWithDiam(
                             x=p_segment.distal.x, y=p_segment.distal.y,
                             z=p_segment.distal.z,

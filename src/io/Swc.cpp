@@ -65,7 +65,7 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
 {
     // write the number of the neuron, it can be whichever identifier used to
     // distinguish between neurons.
-    swc_file_ << "#start_neuron gid " << gid << "\n";
+    swc_file_ << "#start_neuron " << gid << "\n";
 
     // start the swc format, the first point is the soma
     // and it s written as a single point which is meant as a
@@ -88,7 +88,8 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
 
     for (const auto &neurite : neuron->neurites_)
     {
-        // attach each neaurite to the soma.
+        swc_file_ << "#start_neurite " << gid << "." << neurite.first << "\n";
+        // attach each neurite to the soma.
         // the neurites are always starting there!
         last_sample = 1;
         tap_r       = neurite.second->get_taper_rate();
@@ -165,8 +166,9 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
                 /*}*/
             }
         }
-        swc_file_ << "#end_neuron gid " << gid << "\n";
+        swc_file_ << "#end_neurite " << gid << "." << neurite.first << "\n";
     }
+    swc_file_ << "#end_neuron " << gid << "\n";
 }
 
 Swc::~Swc() { swc_file_.close(); }

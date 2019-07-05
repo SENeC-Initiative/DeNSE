@@ -961,6 +961,30 @@ class Population(list):
         return _pg.get_object_properties(self, property_name=property_name,
                                          level=level, neurite=neurite)
 
+    def set_properties(self, params=None, axon_params=None,
+                       dendrites_params=None):
+        '''
+        Update the neuronal parameters using the entries contained in `params`.
+
+        Parameters
+        ----------
+        params : dict
+            New neuron parameters.
+        axon_params : dict, optional (default: None)
+            New axon parameters.
+        dendrites_params : dict, optional (default: None)
+            New dendrites parameters.
+
+        See also
+        --------
+        :func:`~dense.set_object_properties`,
+        :func:`~dense.elements.Neurite.set_properties`,
+        :func:`~dense.elements.Neuron.get_properties`.
+        '''
+        return _pg.set_object_properties(
+            self, params=params, axon_params=axon_params,
+            dendrites_params=dendrites_params)
+
 
 # ------------- #
 # Tool function #

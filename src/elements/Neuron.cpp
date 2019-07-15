@@ -227,7 +227,7 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         }
     }
 
-    if (has_axon_)
+    if (has_axon_ and num_neurites > 0)
     {
         new_neurite("axon", "axon", axon_gc, rnd_engine);
         set_neurite_status("axon", local_axon_params);

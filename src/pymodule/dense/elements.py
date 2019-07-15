@@ -121,22 +121,9 @@ class Neuron(object):
         for each neurite, with its name as key.
         '''
         neurites = self.dendrites
-        if self.has_axon:
-            axon = self.axon
-            neurites[axon.name] = axon
+        if self.axon is not None:
+            neurites[self.axon.name] = self.axon
         return neurites
-
-    @property
-    def has_axon(self):
-        '''
-        Whether the neuron has an axon or not.
-
-        Note
-        ----
-        For a neuron with no neurites, `has_axon` determines whether the first
-        created neurite will be an axon or a dendrite.
-        '''
-        return _pg.get_object_properties(self, "has_axon")
 
     @property
     def total_length(self):

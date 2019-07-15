@@ -21,7 +21,7 @@
 
 """
 This file introduces the first steps to learn how DeNSE works, configuring the
-simulator and growing a few neurons.
+simulator and growing a single neuron.
 """
 
 # import matplotlib as mpl
@@ -34,37 +34,30 @@ import dense as ds
 from dense.units import *
 
 
-''' Configuring the simulator and the neuronal properties '''
+''' Create a neuron and neurites '''
 
-num_omp       = 2
-num_neurons   = 2
+# a single neuron without any neurite (an isolate soma)
+n = ds.create_neurons()
 
-simu_params   = {
-    "resolution": 1.*minute,
-    "num_local_threads": num_omp,
-    "seeds": [0, 1],
-    "environment_required": False,
-}
+# adding neurites
+n.create_neurites(2)
 
-neuron_params = {
-    "axon_diameter": 4.*um,
-    "dendrite_diameter": 3.*um,
-    "growth_cone_model": "run-and-tumble",
-    "position": [(0., 0.), (100., 100.)]*um,
-    "persistence_length": 200.*um,
-    "speed_growth_cone": 0.03*um/minute,
-    "taper_rate": 1./400.,
+
+''' Access the neurites and set the parameters '''
+
+print("{!r}".format(n.axon))
+print(n.dendrites)
+print(n.neurites)
+
+dprop = {
+    "speed_growth_cone": 0.2*um/minute,
+    "taper_rate": 0.01,
     "use_uniform_branching": True,
-    "uniform_branching_rate": 0.009*cph,
+    "uniform_branching_rate": 0.05*cph
 }
 
-# configure DeNSE
-ds.set_kernel_status(simu_params)
-
-# create neurons
-n = ds.create_neurons(n=num_neurons,
-                      params=neuron_params,
-                      num_neurites=2)
+n.axon.set_properties({"speed_growth_cone": 0.5*um/minute})
+n.dendrites["dendrite_1"].set_properties(dprop)
 
 
 ''' Plot the initial state '''
@@ -76,30 +69,3 @@ ds.plot.plot_neurons()
 
 ds.simulate(7*day)
 ds.plot.plot_neurons()
-
-
-''' Change parameters and simulate again '''
-
-# new dendritic and axonal parameters
-axon_params = {
-    "speed_growth_cone": 0.02*um/minute,
-}
-
-dend_params = {
-    "use_uniform_branching": False,
-    "speed_growth_cone": 0.01*um/minute,
-}
-
-# update the properties of the neurons
-ds.set_object_properties(n, dendrites_params=dend_params,
-                         axon_params=axon_params)
-
-# simulate and plot again
-ds.simulate(7*day)
-ds.plot.plot_neurons()
-
-
-''' Save neuronal morphologies '''
-
-ds.io.save_to_swc("neurons.swc", n)
-ds.io.save_to_neuroml("neurons.nml", n)

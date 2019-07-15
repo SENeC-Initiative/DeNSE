@@ -49,7 +49,7 @@ def run_dense(neuron_params,letter,length_simulation,single=False):
 
     step(length_simulation, 1, False ,plot=False)
     neurons    = ds.get_neurons()
-    structure  = ds.NeuronStructure(neurons)
+    structure  = ds.morphology.NeuronStructure(neurons)
     population = ds.Population.from_structure(structure)
     ens =  ds.EnsembleRW(population)
     ens.characterizeRW("axon")

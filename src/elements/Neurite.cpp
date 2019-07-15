@@ -1359,15 +1359,16 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
 {
     if (level == "neurite")
     {
+        set_param(status, names::neurite_type, neurite_type_, "");
         set_param(status, names::diameter_fraction_lb, diam_frac_lb_, "");
         set_param(status, names::gc_split_angle_mean,
                   gc_split_angle_mean_, "rad");
         set_param(status, names::gc_split_angle_std,
                   gc_split_angle_std_, "rad");
         set_param(status, names::lateral_branching_angle_std,
-                  lateral_branching_angle_mean_, "rad");
-        set_param(status, names::lateral_branching_angle_mean,
                   lateral_branching_angle_std_, "rad");
+        set_param(status, names::lateral_branching_angle_mean,
+                  lateral_branching_angle_mean_, "rad");
         set_param(status, names::observables, observables_, "");
 
         set_param(status, names::taper_rate, taper_rate_,

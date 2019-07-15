@@ -167,7 +167,7 @@ for k, resol in enumerate(resolutions):
     gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
     ds.simulate(simtime*minute)
-    # ~ print(ds.NeuronStructure())
+    # ~ print(ds.morphology.NeuronStructure())
     
     ''' Analyze the resulting neurons '''
 

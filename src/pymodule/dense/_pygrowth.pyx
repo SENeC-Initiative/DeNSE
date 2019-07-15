@@ -63,7 +63,7 @@ __all__ = [
     "reset_kernel",
     "set_environment",
     "set_kernel_status",
-    "set_neurite_parameters",
+    "set_neurite_properties",
     "set_object_properties",
     "simulate",
 ]
@@ -735,7 +735,7 @@ def get_simulation_id():
 
 
 def get_object_properties(gids, property_name=None, level=None, neurite=None,
-                          return_iterable=False):
+                          settables_only=False, return_iterable=False):
     '''
     Return the object's properties.
 
@@ -754,6 +754,8 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
         `dendrites`). By default, both dictionaries are returned inside the
         neuronal status dictionary. If `neurite` is specified, only the
         parameters of this neurite will be returned.
+    settables_only : bool, optional (default: False)
+        Return only settable values; read-only values are hidden.
     return_iterable : bool, optional (default: False)
         If true, returns a dict or an array, even if only one gid is passed.
 
@@ -776,6 +778,9 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
         string clevel, cneurite, event_type
 
     status = {}
+
+    if neurite is not None:
+        neurite = str(neurite)
 
     if not nonstring_container(gids):
         #creates a vector of size 1
@@ -802,7 +807,14 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
             elif neurite == "dendrites":
                 cneurite    = _to_bytes("dendrites")
                 c_status    = get_neurite_status_(gid, cneurite, clevel)
-                status[gid] = _statusMap_to_dict(c_status)
+                neurit_stat = _statusMap_to_dict(c_status)
+
+                if settables_only:
+                    for unset in unsettables.get("neurite", []):
+                        if unset in neurit_stat:
+                            del neurit_stat[unset]
+
+                status[gid] = neurit_stat
             else:
                 c_status      = get_status_(gid)
                 neuron_status = _statusMap_to_dict(c_status)
@@ -827,10 +839,23 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
                     neuron_status["dendrites_params"] = _statusMap_to_dict(
                         get_neurite_status_(gid, b"dendrites", nlevel))
 
+                if settables_only:
+                    unsets = unsettables.get("neuron", [])
+                    unsets.extend(unsettables.get("neurite", []))
+                    for unset in unsets:
+                        if unset in neuron_status:
+                            del neuron_status[unset]
+
                 status[gid] = neuron_status
         elif get_object_type(gid) == "recorder":
             c_status = get_status_(gid)
             rec_status = _statusMap_to_dict(c_status)
+
+            if settables_only:
+                for unset in unsettables.get(level, []):
+                    if unset in rec_status:
+                        del rec_status[unset]
+
             status[gid] = rec_status
         else:
             raise NotImplementedError(
@@ -1340,7 +1365,7 @@ def set_object_properties(objects, params=None, axon_params=None,
     Parameters
     ----------
     objects : object or int
-        Objects to update.
+        Objects to update (either neurons or recorders).
     params : dict or list of dicts
         New parameters of the objects.
     axon_params :  dict or list of dicts, optional (default: None)
@@ -1441,7 +1466,7 @@ def set_object_properties(objects, params=None, axon_params=None,
                     dendrites_statuses[i])
 
 
-def set_neurite_parameters(neuron, neurite, params):
+def set_neurite_properties(neuron, neurite, params):
     '''
     Set the status of a specific neurite on a specific neuron.
 
@@ -1520,8 +1545,8 @@ def test_random_gen(size=10000):
 # --------------- #
 
 def _get_neurites(gid):
-    ''' Return a list of strings with the neurite names for neuron `gid` '''
-    return [_to_string(s) for s in get_neurites_(gid)]
+    ''' Return a set of strings with the neurite names for neuron `gid` '''
+    return {_to_string(s) for s in get_neurites_(gid)}
 
 
 def _get_branches_data(gid, neurite, start_point=0):

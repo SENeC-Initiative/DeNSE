@@ -678,6 +678,8 @@ void Neuron::set_status(const statusMap &status)
     }
 
     get_param(status, names::random_rotation_angles, random_rotation_angles_);
+    get_param(status, names::polarization_strength, polarization_strength_);
+    get_param(status, names::axon_polarization_weight, axon_polarization_weight_);
 
     auto nit = neurites_.find("axon");
     baa      = get_param(status, names::axon_angle, aa);

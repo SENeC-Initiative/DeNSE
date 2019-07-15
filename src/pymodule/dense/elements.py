@@ -40,8 +40,6 @@ class Neuron(object):
     '''
 
     def __init__(self, gid, soma_position, soma_radius):
-        self.position    = soma_position
-        self.soma_radius = soma_radius
         self._axon       = None
         self._dendrites  = {}
         self.__gid       = gid
@@ -69,6 +67,29 @@ class Neuron(object):
     
     def _repr_pretty_(self, p, cycle):
         p.text("Neuron({})".format(self.__gid))
+
+    def __getattr__(self, attribute):
+        ''' Access neuronal properties directly '''
+        ndict = _pg.get_object_properties(self, level="neuron")
+
+        if attribute in ndict:
+            return ndict[attribute]
+
+        raise AttributeError(
+            "{!r} has not attribute '{}'".format(self, attribute))
+
+    def __setattr__(self, attribute, value):
+        ''' Set neuronal properties directly '''
+        if attribute.startswith("_"):
+            super(Neuron, self).__setattr__(attribute, value)
+        else:
+            ndict = _pg.get_object_properties(
+                self, level="neuron", settables_only=True)
+
+            if attribute in ndict:
+                _pg.set_object_properties(self, {attribute: value})
+            else:
+                super(Neuron, self).__setattr__(attribute, value)
 
     @property
     def axon(self):
@@ -176,7 +197,7 @@ class Neuron(object):
 
     def get_properties(self, property_name=None, level=None, neurite=None):
         '''
-        Get the object's properties.
+        Get the neuron's properties.
 
         Parameters
         ----------
@@ -376,7 +397,6 @@ class Neurite(object):
     def __init__(self, branches, neurite_type, name="neurite", parent=None):
         self._parent       = None if parent is None else int(parent)
         self._branches     = branches
-        self.neurite_type  = neurite_type
         self.__name        = name
 
         if branches:
@@ -398,8 +418,74 @@ class Neurite(object):
             return "Neurite<{} at {}>".format(str(self), id(self))
         return "Neurite<{} of neuron {}>".format(str(self), int(self._parent))
 
+    def __getattr__(self, attribute):
+        ''' Access neuronal properties directly '''
+        ndict = _pg.get_object_properties(self._parent, neurite=self)
+
+        if attribute in ndict:
+            return ndict[attribute]
+
+        raise AttributeError(
+            "{!r} has not attribute '{}'".format(self, attribute))
+
+    def __setattr__(self, attribute, value):
+        ''' Set neuronal properties directly '''
+        if attribute.startswith("_"):
+            super(Neurite, self).__setattr__(attribute, value)
+        else:
+            ndict = _pg.get_object_properties(
+                self._parent, neurite=self, settables_only=True)
+
+            if attribute in ndict:
+                _pg.set_neurite_properties(self._parent, self, {attribute: value})
+            else:
+                super(Neurite, self).__setattr__(attribute, value)
+
     def get_tree(self):
         return _pg._get_tree(self._parent, str(self))
+
+    def get_properties(self, property_name=None):
+        '''
+        Get the neurite's properties.
+
+        Parameters
+        ----------
+        property_name : str, optional (default: None)
+            Name of the property that should be queried. By default, the full
+            dictionary is returned.
+
+        Returns
+        -------
+        status : variable
+            Properties of the neurite: a single value if
+            `property_name` was specified, the full status ``dict`` otherwise.
+        
+        See also
+        --------
+        :func:`~dense.get_object_properties`,
+        :func:`~dense.elements.Neurite.set_properties`,
+        :func:`~dense.elements.Neuron.get_properties`.
+        '''
+        return _pg.get_object_properties(self._parent, property_name=property_name,
+                                         neurite=self)
+
+    def set_properties(self, params):
+        '''
+        Update the neurite parameters using the entries contained in `params`.
+
+        Parameters
+        ----------
+        params : dict
+            New neurite parameters.
+
+        See also
+        --------
+        :func:`~dense.set_object_properties`,
+        :func:`~dense.elements.Neurite.get_properties`,
+        :func:`~dense.elements.Neuron.set_properties`.
+        '''
+        return _pg.set_neurite_properties(self._parent, self, params=params)
+
 
     @property
     def name(self):
@@ -524,11 +610,11 @@ class Neurite(object):
 
         See also
         --------
-        :func:`~dense.set_neurite_parameters`,
+        :func:`~dense.set_neurite_properties`,
         :func:`~dense.elements.Neuron.set_properties`,
         :func:`~dense.elements.Neurite.get_properties`.
         '''
-        return _pg.set_neurite_parameters(self._parent, self, params=params)
+        return _pg.set_neurite_properties(self._parent, self, params=params)
 
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))

@@ -24,8 +24,8 @@ This file introduces the first steps to learn how DeNSE works, configuring the
 simulator and growing a few neurons.
 """
 
-import matplotlib as mpl
-mpl.use("Qt5Agg")
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
 
 
 ''' Importing DeNSE '''

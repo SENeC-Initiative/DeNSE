@@ -160,6 +160,11 @@ def generate_network(source_neurons=None, target_neurons=None,
     positions     = np.array(
         [neuron.position.to(unit).magnitude for neuron in population])
 
+    # test if there is a network to create
+    if not neurons and shape is None:
+        raise RuntimeError('Cannot create a network without any neurons '
+                           'or environment.')
+
     network = NetClass(population=population, shape=shape, positions=positions)
 
     num_synapses = len(edges)
@@ -273,23 +278,24 @@ def get_connections(source_neurons=None, target_neurons=None,
     source_set  = set(source_neurons)
     target_set  = set(target_neurons)
     all_neurons = source_set.union(target_set)
+    
+    edges, positions, distances = [], [], []
 
-    syn_density = spine_density.m_as("1 / micrometer**2")
+    if all_neurons:
+        syn_density = spine_density.m_as("1 / micrometer**2")
 
-    axons, dendrites, somas = _pg._get_geom_skeleton(all_neurons)
+        axons, dendrites, somas = _pg._get_geom_skeleton(all_neurons)
 
-    soma_pos = np.array(somas)[:2, :].T
+        soma_pos = np.array(somas)[:2, :].T
 
-    edges, positions, distances = None, None, None
-
-    if crossings_only:
-        edges, positions, distances = _edges_from_intersections(
-            source_set, target_set, axons, dendrites, soma_pos, syn_density,
-            connection_probability, autapse_allowed)
-    else:
-        edges, positions, distances = _edges_from_spines(
-            source_set, target_set, axons, dendrites, soma_pos, syn_density,
-            connection_probability, autapse_allowed, max_spine_length)
+        if crossings_only:
+            edges, positions, distances = _edges_from_intersections(
+                source_set, target_set, axons, dendrites, soma_pos, syn_density,
+                connection_probability, autapse_allowed)
+        else:
+            edges, positions, distances = _edges_from_spines(
+                source_set, target_set, axons, dendrites, soma_pos, syn_density,
+                connection_probability, autapse_allowed, max_spine_length)
 
     return edges, positions, distances
 

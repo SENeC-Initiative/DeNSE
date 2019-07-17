@@ -1,0 +1,28 @@
+language: python
+
+python:
+  - '3.6'
+  - '2.7'
+
+sudo: required
+
+os:
+  - linux
+  - osx
+
+addons:
+  apt:
+    packages:
+      - cmake
+      - libboost-dev
+      - libgeos++-dev
+      - g++
+      - python-matplotlib
+      - python-tk
+
+install:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd extra && ./install_linux.sh; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then cd extra && ./install_macos.sh; fi
+  - pip install --user pytest nngt networkx
+
+script: pytest tests --ignore=tests/todo

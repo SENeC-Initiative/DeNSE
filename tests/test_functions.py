@@ -20,23 +20,19 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Testing Branching """
-
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-import nngt
+""" Testing main functions """
 
 import dense as ds
 from dense.units import *
 
 
-def functions():
+def test_functions():
     '''
-    
+    Run each of the main functions.
     '''
+    ds.reset_kernel()
     ds.set_kernel_status('environment_required', False)
+
     m  = ds.generate_model('constant', 'memory-based', 'run-and-tumble')
     dp = ds.get_default_properties(m)
     e  = ds.get_environment()
@@ -49,14 +45,11 @@ def functions():
     n  = ds.get_neurons()
     ns = ds.get_object_properties(n)
     si = ds.get_simulation_id()
-    ds.simulate(20*hour)
-    ni = ds.get_neurons()
-    # st = ds.NeuronStrucuture(n)
-    ds.reset_kernel()
-    return 1
 
-def test_functions():
-    assert functions() == 1
+    ds.simulate(20*hour)
+
+    ni = ds.get_neurons()
+
 
 if __name__ == '__main__':
-    functions()
+    test_functions()

@@ -211,7 +211,7 @@ void get_models_(std::unordered_map<std::string, std::string> &models,
                  bool abbrev);
 
 
-std::vector<std::string> get_extension_types_();
+std::vector<std::string> get_elongation_types_();
 
 
 std::vector<std::string> get_steering_methods_();

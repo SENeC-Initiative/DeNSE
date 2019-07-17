@@ -31,6 +31,7 @@ import nngt
 import nngt.geometry as geom
 
 import dense as ds
+from dense.units import *
 from dense.tools import neurite_length
 
 
@@ -68,17 +69,16 @@ lengths = []
 for k, resol in enumerate(resolutions):
     np.random.seed(1)
     ds.reset_kernel()
-    ds.get_kernel_status({
-        "resolution": resol,
+    ds.set_kernel_status({
+        "resolution": resol*ms,
         "num_local_threads": num_omp,
         "seeds": [2*i+1 for i in range(num_omp)],
-        "wall_area_width": 5.,
     })
 
     ds.set_environment(shape)
 
     params = {
-        "sensing_angle": 0.04,
+        "sensing_angle": 70.*deg,
         # ~ "filopodia_wall_affinity": 10.*np.sqrt(resol),
         # ~ "filopodia_wall_affinity": 10.*resol,
         # ~ "filopodia_wall_affinity": 10/np.sqrt(resol),

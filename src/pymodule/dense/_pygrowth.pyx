@@ -491,7 +491,7 @@ def create_recorders(targets, observables, sampling_intervals=None,
     num_obj = get_num_created_objects_()
 
     # switch targets and observables to lists
-    targets     = list(targets) if nonstring_container(targets) \
+    targets     = [int(t) for t in targets] if nonstring_container(targets) \
                   else [int(targets)]
     observables = list(observables) if nonstring_container(observables) \
                   else [observables]
@@ -578,19 +578,19 @@ def delete_neurites(neurite_names=None, neurons=None):
     delete_neurites_(cneurons, cnames)
 
 
-def generate_model(elongation_type, steering_method, direction_selection):
+def generate_model(elongation, steering, direction_selection):
     '''
     Returns a Model object giving the method to use for each of the three main
     properties:
 
-    - the extension type (how the growth cone speed is computed)
+    - the elongation type (how the growth cone speed is computed)
     - the steering method (how forces are exerted on the growth cone)
     - the direction selection method (how the new direction is chosen at each
       step)
 
     Parameters
     ----------
-    extension : str
+    elongation : str
         Among "constant", "gaussian-fluctuations", or "resource-based".
     steering : str
         Among "pull-only", "memory-based", or "self-referential-forces"
@@ -604,23 +604,23 @@ def generate_model(elongation_type, steering_method, direction_selection):
 
     Note
     ----
-    The properties of the model can be obtained through ``model.extension``,
+    The properties of the model can be obtained through ``model.elongation``,
     ``model.steering`` and ``model.direction_selection``.
 
     For more information on the models, see :ref:`pymodels`.
     '''
-    etypes = [_to_string(et) for et in get_extension_types_()]
+    etypes = [_to_string(et) for et in get_elongation_types_()]
     stypes = [_to_string(st) for st in get_steering_methods_()]
     dtypes = [_to_string(dt) for dt in get_direction_selection_methods_()]
 
-    assert extension in etypes,  "Invalid `extension` " + elongation_type + "."
+    assert elongation in etypes, "Invalid `elongation` " + elongation + "."
 
-    assert steering in stypes,  "Invalid `steering` " + steering_method + "."
+    assert steering in stypes, "Invalid `steering` " + steering + "."
 
     assert direction_selection in dtypes, \
         "Invalid `direction_selection` " + direction_selection + "."
         
-    return Model(elongation_type, steering_method, direction_selection)
+    return Model(elongation, steering, direction_selection)
 
 
 def generate_simulation_id(*args):
@@ -988,7 +988,7 @@ def get_default_properties(obj, property_name=None, settables_only=True,
     gc_models = get_models(abbrev=False)
 
     if obj in gc_models.values():
-        obj = "{}_{}_{}".format(obj.elongation_type, obj.steering_method,
+        obj = "{}_{}_{}".format(obj.elongation, obj.steering,
                                 obj.direction_selection)
 
     cname = _to_bytes(obj)
@@ -2413,8 +2413,8 @@ def _check_params(params, object_name, gc_model=None):
     '''
     default_model = _to_string(get_default_model_())
     gc_model      = default_model if gc_model is None else gc_model
-    
-    valid_models            = get_models()
+
+    valid_models            = get_models(abbrev=False)
     valid_models["default"] = valid_models[default_model]
 
     assert gc_model in valid_models, "Unknown growth cone `" + gc_model + "`."

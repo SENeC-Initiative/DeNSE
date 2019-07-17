@@ -131,6 +131,57 @@ Note that the ``neuroml`` python module is necessary to use :func:`~dense.io.sav
     :lines: 103-104
 
 
+Multiprocessing and random number generation
+============================================
+
+DeNSE support parallel simulations at the C++ level using OpenMP_ shared memory thread parallelism.
+Currently, the number of threads must be set at the beginning of a script, before any objects are
+created because objects are then allocated to a given thread which will be responsible for it.
+The number of thread can be set through ::
+
+    ds.set_kernel_status({"num_local_threads": 4})
+
+if you want your simulation to run on four threads.
+Parallelism is implemented at the neuronal level: all neurites of a given neuron are associated to
+the same thread. There is therefore no point in allcating a number of threads which would be higher
+than the total amount of neurons in the simulation.
+
+.. warning::
+    For people using simulateously DeNSE and other parallel simulation software, make sure that
+    you or the software used do not set the ``OMP_NUM_THREADS`` variable to a value other than
+    that used for DeNSE: this would lead to undefined behavior.
+
+Since DeNSE also uses random numbers to make most of the actions associated to growth cone navigation,
+you can seed the random number generators used during the simulation through: ::
+
+    ds.set_kernel_status({"seeds": [1, 5, 3, 6]})
+
+Note that one seed must be given for each thread.
+The result of a simulation should alawys be the same provided the number of threads and seeds used are
+identical.
+
+
+Interactions and simulation speed, various tips
+===============================================
+
+Simulation speed with DeNSE will vary greatly depending on the time resolution and interactions.
+By default, DeNSE uses a 1 minute timestep, with neuron-neuron interactions turned on, which can
+lead to rather long simulation times.
+To increase speed, several approaches may or may not be attractive to you.
+
+* Increasing the time resolution. Using ``ds.set_kernel_status({"resolution": 5.*minute})``, you
+  can reduce the number of steps necessary to complete the simulation; this also has another
+  advantage because it increases the size of the compartments composing the neuron, thus
+  reducing their number and speeding up the interactions. However, this will obviously make the
+  final results more "crude", as you subsample the real path of the neurites.
+* Switch the interactions off using ``ds.set_kernel_status({"interactions": False})``.
+  Neuron-neuron interactions are currently the main source of CPU requirement and, though we know
+  how we could reduce it, it is a non-trivial task for which we currently do not have the
+  necessary time. If you are interested an would like to help on that, feel free to contact us.
+* Do not use a spatial environment. Though this leads to lower speed gains compared to the other
+  solutions, it might also help in specific cases.
+
+
 Embedding neurons in space
 ==========================
 
@@ -145,3 +196,4 @@ Generating neuronal networks
 
 .. _NeuroML: https://www.neuroml.org
 .. _SWC: http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
+.. _OpenMP: www.openmp.org

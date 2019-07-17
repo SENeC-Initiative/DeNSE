@@ -22,14 +22,13 @@
 
 """ Testing the tortuosity and persistence length """
 
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit
 
 import dense as ds
 from dense.units import *
+
 
 '''
 Setting the parameters
@@ -39,16 +38,22 @@ num_neurons   = 100
 
 simtime       = 10000.
 num_omp       = 4
-# ~ resolutions   = (1., 2., 5., 10., 20., 50.)
-resolutions   = (1., 10., 20., 50.)
+resolutions   = (1., 10., 20., 30.)
 
 gc_model      = "run-and-tumble"
 # ~ gc_model      = "simple-random-walk"
 sensing_angle = 70.*deg
 
-cmap          = plt.get_cmap('plasma')
-# ~ colors        = np.linspace(0.2, 0.8, 20)
+cmap    = None
+do_plot = False
+
+if do_plot:
+    import matplotlib.pyplot as plt
+    cmap = plt.get_cmap('plasma')
+
 colors        = np.linspace(0.2, 0.8, len(resolutions))
+
+
 
 '''
 Analysis functions
@@ -57,11 +62,13 @@ Analysis functions
 def exp_decay(x, lp):
     return np.exp(-x / lp)
 
+
 def norm_angle_from_vectors(vectors):
     #~ angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
     angles  = np.arctan2(vectors[1], vectors[0])
     norms   = np.linalg.norm(vectors, axis=0)
     return angles, norms
+
 
 def correlation(points, distances):
     '''
@@ -122,8 +129,12 @@ gc_pos     = []
 data_times = {}
 statuses   = {}
 
-fig, ax = plt.subplots()
-fig2, ax2 = plt.subplots()
+fig, ax   = None, None
+fig2, ax2 = None, None
+
+if do_plot:
+    fig, ax = plt.subplots()
+    fig2, ax2 = plt.subplots()
 
 sensing_angles = np.linspace(0.1, 3., 10)
 
@@ -138,7 +149,7 @@ distances = np.arange(dist_step, dist_max, dist_step)
 for k, resol in enumerate(resolutions):
     np.random.seed(1)
     ds.reset_kernel()
-    ds.get_kernel_status({
+    ds.set_kernel_status({
         "resolution": resol * minute,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
@@ -149,7 +160,6 @@ for k, resol in enumerate(resolutions):
 
     params = {
         "growth_cone_model": gc_model,
-        "use_critical_resource": False,
         "speed_growth_cone" : speed * um / minute,
         "filopodia_wall_affinity": 2.5,
         "filopodia_min_number": 100,
@@ -171,7 +181,7 @@ for k, resol in enumerate(resolutions):
     
     ''' Analyze the resulting neurons '''
 
-    population = ds.Population.from_gids(gids)
+    population = ds.elements.Population.from_gids(gids)
 
     axons     = [neuron.axon.xy.transpose() for neuron in population]
     # ~ print(axons)
@@ -182,28 +192,26 @@ for k, resol in enumerate(resolutions):
     avg_corr = np.average(sequence, axis=0)
     lp, _    = curve_fit(exp_decay, distances, avg_corr, p0=l_p)
 
-    ax2.scatter(resol, lp[0])
+    if do_plot:
+        ax2.scatter(resol, lp[0])
 
-    ax.plot(distances, avg_corr, color=cmap(colors[k]), alpha=1,
-            label="resol: {}".format(resol))
-    ax.plot(distances, exp_decay(distances, lp[0]))
+        ax.plot(distances, avg_corr, color=cmap(colors[k]), alpha=1,
+                label="resol: {}".format(resol))
+        ax.plot(distances, exp_decay(distances, lp[0]))
 
     if show_neurons:
         ds.plot_neurons(show=True, title=str(resol))
-
-
-# plot ref
-
-ax.plot(distances, np.exp(-distances/l_p), ls="--", c="k")
 
 
 '''
 Make, save and show the figure
 '''
 
-ax.legend(loc=2, fancybox=True, frameon=True)
-fig.patch.set_alpha(0.)
+if do_plot:
+    ax.plot(distances, np.exp(-distances/l_p), ls="--", c="k")
 
+    ax.legend(loc=2, fancybox=True, frameon=True)
+    fig.patch.set_alpha(0.)
 
-plt.show()
+    plt.show()
 

@@ -90,7 +90,7 @@ class Time(namedtuple("Time", time_units)):
 
 # Models
 
-model_blocks = ("extension", "steering", "direction_selection")
+model_blocks = ("elongation", "steering", "direction_selection")
 
 class Model(namedtuple("Model", model_blocks)):
 
@@ -99,14 +99,14 @@ class Model(namedtuple("Model", model_blocks)):
 
     def __repr__(self):
         return "Model(elongation={el}, steering={st}, direction={dir})".format(
-            el=self.elongation_type, st=self.steering_method,
+            el=self.elongation, st=self.steering,
             dir=self.direction_selection
         )
 
     def _repr_pretty_(self, p, cycle):
         p.begin_group(4, "Model(")
         p.breakable("")
-        p.text("extension={},".format(self.extension))
+        p.text("elongation={},".format(self.elongation))
         p.breakable()
         p.text("steering={},".format(self.steering))
         p.breakable()

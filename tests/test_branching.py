@@ -22,17 +22,13 @@
 
 """ Testing Branching """
 
-from pprint import pprint
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
-
-import nngt
 
 import dense as ds
 from dense.units import *
 
-def Simulation(plot = False):
+
+def test_branching(plot = False):
     num_omp = 4
     res = 10.
     seeds = np.random.choice(np.arange(0,1000), size = num_omp, replace = False)
@@ -45,7 +41,7 @@ def Simulation(plot = False):
 
     neuron_params = {
         "position" : np.random.uniform(
-        -1000, 1000, (num_neurons, 2)) * um,
+            -1000, 1000, (num_neurons, 2)) * um,
         
         "growth_cone_model": gc_model,
         "sensing_angle": 45.*deg,
@@ -58,32 +54,33 @@ def Simulation(plot = False):
         "lateral_branching_angle_mean": 25.*deg,
         "lateral_branching_angle_std": 0.*deg,
         "taper_rate": 0.,
+        "diameter_fraction_lb": 1.,
         
-        branching_type : True,
-        
+        branching_type: True,
         "use_van_pelt": False,
-        "use_critical_resource": False
     }
 
     expected_branching = 500.
     test_nb = 6
 
-    rates = np.linspace(0.0001, 0.005, test_nb)
+    rates = np.linspace(0.001, 0.005, test_nb)
     mean = []
     er = []
     Nb = []
     scipy_exp = []
 
     for rate in rates:
+        ds.reset_kernel()
 
         kernel = {
         "resolution": res*minute,
         "seeds": seeds,
         "environment_required": False,
+        "interactions": False,
         "num_local_threads": num_omp,
         }
 
-        ds.get_kernel_status(kernel)
+        ds.set_kernel_status(kernel)
 
         sim_time = expected_branching/rate * minute
         sim_time.ito(day)
@@ -91,7 +88,7 @@ def Simulation(plot = False):
         neuron_params[branching_rate] = rate * cpm
 
         pop = ds.create_neurons(n=num_neurons, params=neuron_params,
-                               num_neurites=1)
+                                num_neurites=1)
         
         rec = ds.create_recorders(pop, 'num_growth_cones', levels = 'neuron')
         
@@ -105,24 +102,24 @@ def Simulation(plot = False):
 
         mean.append(np.mean(Dt))
 
-        #interval de confiance à 99% sur distribution de poisson donne 2.576
+        #interval de confiance à 99% sur distribution de Poisson donne 2.576
         er.append(2.576*mean[-1]/np.sqrt(len(Dt)))
         Nb.append(len(Dt))
-            
-        ds.reset_kernel()
-        
-    test1 = (1/rates > mean - er)
-    test2 = (1/rates < mean + er)
+
+    mean_merr = np.subtract(mean, er)
+    mean_perr = np.add(mean, er)
+    test1 = (1/rates > mean_merr)
+    test2 = (1/rates < mean_perr)
+
+    if plot:
+        import matplotlib.pyplot as plt
+        plt.plot(rates, mean)
+        plt.plot(rates, 1/rates, ls=":")
+        plt.fill_between(rates, mean_merr, mean_perr, alpha=0.5)
+        plt.show()
     
-    if test1.all() and test2.all():
-        return True
-    else:
-        return False
-
-
-def test_branching():
-    assert Simulation() == True
+    assert test1.all() and test2.all()
 
 
 if __name__ == '__main__':
-    print(Simulation(plot = True))
+    test_branching(plot=True)

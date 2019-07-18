@@ -36,31 +36,31 @@ addons:
 
 before_install:
   # set conda path info
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       MINICONDA_PATH=/c/tools/miniconda3/;
       MINICONDA_PATH_WIN=`cygpath --windows $MINICONDA_PATH`;
       MINICONDA_SUB_PATH=$MINICONDA_PATH/Scripts;
-    fi;
+    fi
 
 install:
   # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip install setuptools cython numpy scipy shapely pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL sphinx breathe sphinx-bootstrap-theme; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
     elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      - sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.3"  # fix "fatal error: _stdio.h: No such file or directory"
-      - cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
+      sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.3"  # fix "fatal error: _stdio.h: No such file or directory"
+      cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
     elif [ "$TRAVIS_OS_NAME" = "windows" ]; then
-      - export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
+      export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
       # for conda version 4.4 or later
-      - source $MINICONDA_PATH/etc/profile.d/conda.sh;
-      - hash -r;
-      - conda config --set always_yes yes --set changeps1 no;
-      - conda update -q conda;
-      - echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
-      - conda install cmake geos boost;
-      - pip install cython;
-      - pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
-      - cd extra && install_windows.cmd;
+      source $MINICONDA_PATH/etc/profile.d/conda.sh;
+      hash -r;
+      conda config --set always_yes yes --set changeps1 no;
+      conda update -q conda;
+      echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
+      conda install cmake geos boost;
+      pip install cython;
+      pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
+      cd extra && install_windows.cmd;
     fi
 
 script: pytest tests --ignore=tests/todo

@@ -20,11 +20,10 @@ matrix:
 
 addons:
   apt:
-    sources:
-      - sourceline: 'ppa:mhier/libboost-latest'
+    sources: ['ubuntu-toolchain-r-test', 'boost-latest']
     packages:
       - cmake
-      - libboost-dev
+      - libboost1.70-dev
       - libgeos++-dev
       - g++
       - python-matplotlib

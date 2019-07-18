@@ -6,34 +6,23 @@ sudo: required
 
 env:
   global:
-    - DO_PLOT=0
+  - DO_PLOT=0
 
 matrix:
   include:
-    - env: PYTHON_VERSION=2.7 PATH=~/virtualenv/python$PYTHON_VERSION/bin/:$PATH
-      os: linux
-      python: "2.7"
-    - env: PYTHON_VERSION=3.7 PATH=~/virtualenv/python$PYTHON_VERSION/bin/:$PATH
-      os: linux
-      python: "3.6"
-    - env: PYTHON_VERSION=3
-      os: osx
-      osx_image: xcode10
-      language: generic
-    - env: PYTHON_VERSION=3 CONDA_PYTHON=3.7
-      os: windows
-      language: shell
-
-addons:
-  apt:
-    packages:
-      - cmake
-      - libboost-dev
-      - libgeos++-dev
-      - g++
-      - python-matplotlib
-      - python-tk
-      - doxygen
+  - env: PYTHON_VERSION=2.7
+    os: linux
+    python: "2.7"
+  - env: PYTHON_VERSION=3.7
+    os: linux
+    python: "3.6"
+  - env: PYTHON_VERSION=3
+    os: osx
+    osx_image: xcode10
+    language: generic
+  - env: PYTHON_VERSION=3 CONDA_PYTHON=3.7
+    os: windows
+    language: shell
 
 cache:
     - apt
@@ -48,13 +37,16 @@ before_install:
     fi
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo updatedb && locate boost; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt install -y cmake libboost-dev libgeos++-dev g++ doxygen; fi
   - shopt -s expand_aliases
   - if [ "$PYTHON_VERSION" >= 3 && "$TRAVIS_OS_NAME" == "linux" ]; then
       alias sudo='sudo -H ' && alias pip=pip3;
     fi
-  # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip install setuptools cython numpy scipy shapely pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL sphinx breathe sphinx-bootstrap-theme; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      sudo pip install setuptools cython;
+      sudo pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
+      sudo pip install --no-binary shapely, shapely;
+      sudo pip install sphinx breathe sphinx-bootstrap-theme;
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
     fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then

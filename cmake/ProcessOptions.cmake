@@ -230,6 +230,8 @@ print(s.get_config_var('MULTIARCH') or '');
           string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}/Lib/site-packages")
         elseif (MSVC)
           execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getusersitepackages().replace('\\\\', '/'))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        elseif(APPLE)
+          execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import distutils; print(distutils.sysconfig.get_python_lib())" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
         else ()
           execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getusersitepackages())" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
         endif ()

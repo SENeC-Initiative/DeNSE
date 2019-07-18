@@ -19,7 +19,7 @@ matrix:
     - env: PYTHON_VERSION=3
       os: osx
       language: generic
-    - env: CONDA_PYTHON=3.7
+    - env: PYTHON_VERSION=3
       os: windows
       language: shell
 
@@ -46,18 +46,18 @@ install:
   # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip install setuptools cython numpy scipy shapely pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL sphinx breathe sphinx-bootstrap-theme; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
-    elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      sudo softwareupdate -i "Command Line Tools (macOS High Sierra version 10.13) for Xcode-9.3"  # fix "fatal error: _stdio.h: No such file or directory"
+    fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
-    elif [ "$TRAVIS_OS_NAME" = "windows" ]; then
+    fi
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
-      # for conda version 4.4 or later
       source $MINICONDA_PATH/etc/profile.d/conda.sh;
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
       conda update -q conda;
-      echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
       conda install cmake geos boost;
+      echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
       pip install cython;
       pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
       cd extra && install_windows.cmd;

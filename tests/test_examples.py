@@ -23,6 +23,7 @@
 """ Testing main functions """
 
 import os
+import matplotlib.pyplot as plt
 
 import dense as ds
 
@@ -30,24 +31,24 @@ import dense as ds
 root = os.path.abspath(os.path.dirname(__file__) + "/..")
 tuto = root + "/examples/tutorials"
 
-print(root)
 
-def test_1_first_steps():
+def mock_show():
+    pass
+
+
+def test_1_first_steps(monkeypatch):
     '''
     Run first example.
     '''
+    monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
     exec(open(tuto + "/1_first-steps.py").read())
 
 
-def test_2_interacting_neurons():
+def test_2_interacting_neurons(monkeypatch):
     '''
     Run second example.
     '''
+    monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
     exec(open(tuto + "/2_interacting-neurons.py").read())
-    
-
-if __name__ == '__main__':
-    test_1_first_steps()
-    test_2_interacting_neurons()

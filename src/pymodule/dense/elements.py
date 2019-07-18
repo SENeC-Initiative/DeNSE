@@ -275,9 +275,12 @@ class Neuron(object):
         import neuroml
         import neuroml.writers as writers
 
-        x, y, z = self.position[0], self.position[1], 0.
+        x = self.position[0].to('micrometer').m
+        y = self.position[1].to('micrometer').m
+        z = 0.
 
-        p = neuroml.Point3DWithDiam(x=x, y=y, z=z, diameter=2.*self.soma_radius)
+        p = neuroml.Point3DWithDiam(x=x, y=y, z=z,
+                                    diameter=2.*self.soma_radius.m)
         soma = neuroml.Segment(proximal=p, distal=p)
         soma.name = 'Soma'
         soma.id = 0

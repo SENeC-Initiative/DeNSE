@@ -22,13 +22,16 @@
 
 """ Testing Branching """
 
+import os
+
 import numpy as np
 
 import dense as ds
 from dense.units import *
 
 
-def test_branching(plot = False):
+def test_branching():
+    do_plot = int(os.environ.get("DO_PLOT", True))
     num_omp = 4
     res = 10.
     seeds = np.random.choice(np.arange(0,1000), size = num_omp, replace = False)
@@ -111,7 +114,7 @@ def test_branching(plot = False):
     test1 = (1/rates > mean_merr)
     test2 = (1/rates < mean_perr)
 
-    if plot:
+    if do_plot:
         import matplotlib.pyplot as plt
         plt.plot(rates, mean)
         plt.plot(rates, 1/rates, ls=":")
@@ -122,4 +125,4 @@ def test_branching(plot = False):
 
 
 if __name__ == '__main__':
-    test_branching(plot=True)
+    test_branching()

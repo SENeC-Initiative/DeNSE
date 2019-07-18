@@ -22,6 +22,8 @@
 
 """ Testing the tortuosity and persistence length """
 
+import os
+
 import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit
@@ -45,7 +47,7 @@ gc_model      = "run-and-tumble"
 sensing_angle = 70.*deg
 
 cmap    = None
-do_plot = False
+do_plot = int(os.environ.get("DO_PLOT", True))
 
 if do_plot:
     import matplotlib.pyplot as plt

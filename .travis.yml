@@ -8,10 +8,10 @@ env:
 
 matrix:
   include:
-    - env: PYTHON_VERSION=2.7
+    - env: PYTHON_VERSION=2.7 PATH=$HOME/.local/bin:$PATH
       os: linux
       python: "2.7"
-    - env: PYTHON_VERSION=3.7
+    - env: PYTHON_VERSION=3.7 PATH=$HOME/.local/bin:$PATH
       os: linux
       python: "3.7"
     - env: PYTHON_VERSION=3
@@ -20,6 +20,8 @@ matrix:
 
 addons:
   apt:
+    sources:
+      - sourceline: 'ppa:mhier/libboost-latest'
     packages:
       - cmake
       - libboost-dev
@@ -27,10 +29,11 @@ addons:
       - g++
       - python-matplotlib
       - python-tk
+      - doxygen
 
 install:
+  # - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip install setuptools cython numpy scipy shapely pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL sphinx breathe sphinx-bootstrap-theme; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then cd extra && chmod u+x install_linux.sh && ./install_linux.sh; fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then cd extra && chmod u+x install_macos.sh && ./install_macos.sh; fi
-  - pip install --user pytest nngt networkx pyneuroml
 
 script: pytest tests --ignore=tests/todo

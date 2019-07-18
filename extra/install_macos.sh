@@ -4,11 +4,12 @@
 
 brew tap homebrew/core
 
-brew install gcc-8 cmake python3 geos doxygen boost
+brew install gcc@8 cmake python3 geos doxygen boost
 
 pip3 install setuptools
 pip3 install cython
-pip3 install numpy scipy pint breathe sphinx-bootstrap-theme
+pip3 install --user numpy scipy pint pyneuroml
+pip3 install --user sphinx breathe sphinx-bootstrap-theme
 pip3 install --no-binary shapely, shapely
 pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
 

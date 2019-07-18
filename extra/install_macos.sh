@@ -4,7 +4,7 @@
 
 brew tap homebrew/core
 
-brew install gcc@8 cmake python3 geos doxygen boost
+brew install gcc@8 cmake python3 geos doxygen boost libomp
 
 pip3 install setuptools
 pip3 install cython

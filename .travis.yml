@@ -35,31 +35,31 @@ before_install:
     fi
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       sudo rm -rf /var/lib/apt/lists/*;
       sudo apt-get update -qq;
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
   - shopt -s expand_aliases
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" >= 3 ]]; then
+  - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ${PYTHON_VERSION} -gt 3 ]; then
       alias sudo='sudo -H ' && alias pip='pip3';
     fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "2.7" ]]; then
+  - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$PYTHON_VERSION" = "2.7" ]; then
       sudo pip install "Sphinx < 2.0" breathe sphinx-bootstrap-theme;
-    else;
+    else
       sudo pip install sphinx breathe sphinx-bootstrap-theme;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ] then;
+  - if [ "$TRAVIS_OS_NAME" = "linux" ] then;
       sudo pip install setuptools cython;
       sudo pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
       sudo pip install --no-binary shapely, shapely;
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
     fi
-  # - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+  # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
   #     cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
   #   fi
-  # - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+  # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
   #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe;
   #     start Miniconda4-latest-Windows-x86_64.exe /InstallationType=JustMe /RegisterPython=1 /S /D=$MINICONDA_PATH;
   #     export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";

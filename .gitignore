@@ -43,8 +43,8 @@ src/models/models_manager.cpp
 
 docs/_build
 docs/.build
-docs/Doxyfile/
-docs/doxyfiles/
+docs/Doxyfile
+docs/doxyfiles
 docs/pg_mock.py
 docs/modules/dense.rst
 docs/modules/elements.rst

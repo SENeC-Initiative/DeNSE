@@ -42,14 +42,14 @@ install:
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
   - if [[ "$TRAVIS_OS_NAME" = "linux" && "$PYTHON_VERSION" = "2.7" ]]; then
-      sudo pip install "Sphinx < 2.0" sphinx-bootstrap-theme;
+      pip install "Sphinx < 2.0" breathe sphinx-bootstrap-theme;
     else
-      sudo pip install sphinx breathe sphinx-bootstrap-theme;
+      pip install sphinx breathe sphinx-bootstrap-theme;
     fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ] then;
-      sudo pip install setuptools cython;
-      sudo pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
-      sudo pip install --no-binary shapely, shapely;
+      pip install setuptools cython;
+      pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
+      pip install --no-binary shapely, shapely;
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
     fi
   # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then

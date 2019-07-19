@@ -13,14 +13,14 @@ matrix:
   - env: PYTHON_VERSION=2.7
     os: linux
     python: "2.7"
-  - env: PYTHON_VERSION=3.6
+  - env: PYTHON_VERSION=3.7
     os: linux
     python: "3.6"
   - env: PYTHON_VERSION=3
     os: osx
     osx_image: xcode10
     language: generic
-  - env: PYTHON_VERSION=3
+  - env: PYTHON_VERSION=3 CONDA_PYTHON=3.7
     os: windows
     language: shell
 
@@ -30,20 +30,16 @@ cache:
 
 before_install:
   # set conda path info
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       MINICONDA_PATH=$HOME/miniconda;
       MINICONDA_SUB_PATH=$MINICONDA_PATH/bin;
-      # MINICONDA_PATH=/c/tools/miniconda3/;
-      # MINICONDA_PATH_WIN=`cygpath --windows $MINICONDA_PATH`;
-      # MINICONDA_SUB_PATH=$MINICONDA_PATH/Scripts;
     fi
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      # update package repository status (-qq is more quiet)
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       sudo rm -rf /var/lib/apt/lists/*;
       sudo apt-get update -qq;
-      # remove any obsolete libraries
+      remove any obsolete libraries
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
@@ -63,7 +59,7 @@ install:
     fi
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe;
-      start /wait "" Miniconda4-latest-Windows-x86_64.exe /InstallationType=JustMe /RegisterPython=1 /S /D=$HOME/miniconda;
+      start /wait "" Miniconda4-latest-Windows-x86_64.exe /InstallationType=JustMe /RegisterPython=1 /S /D=$MINICONDA_PATH;
       export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
       source $MINICONDA_PATH/etc/profile.d/conda.sh;
       hash -r;

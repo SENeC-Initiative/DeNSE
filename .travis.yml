@@ -42,7 +42,7 @@ install:
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
   - if [[ "$TRAVIS_OS_NAME" = "linux" && "$PYTHON_VERSION" = "2.7" ]]; then
-      pip install "Sphinx < 2.0" breathe sphinx-bootstrap-theme;
+      pip install "Sphinx < 2.0" sphinx-bootstrap-theme;
     else
       pip install sphinx breathe sphinx-bootstrap-theme;
     fi
@@ -52,22 +52,5 @@ install:
       pip install --no-binary shapely, shapely;
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
     fi
-  # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-  #     cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
-  #   fi
-  # - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
-  #     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe;
-  #     start Miniconda4-latest-Windows-x86_64.exe /InstallationType=JustMe /RegisterPython=1 /S /D=$MINICONDA_PATH;
-  #     export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
-  #     source $MINICONDA_PATH/etc/profile.d/conda.sh;
-  #     hash -r;
-  #     conda config --set always_yes yes --set changeps1 no;
-  #     conda update -q conda;
-  #     conda install cmake geos boost;
-  #     echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
-  #     pip install cython;
-  #     pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
-  #     cd extra && install_windows.cmd;
-  #   fi
 
 script: pytest tests --ignore=tests/todo

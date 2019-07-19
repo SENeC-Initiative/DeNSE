@@ -42,7 +42,7 @@ install:
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
   - shopt -s expand_aliases
-  - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ ${PYTHON_VERSION} -gt 3 ]; then
+  - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$PYTHON_VERSION" -gt "3" ]; then
       alias sudo='sudo -H ' && alias pip='pip3';
     fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ] && [ "$PYTHON_VERSION" = "2.7" ]; then

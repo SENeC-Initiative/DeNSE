@@ -38,9 +38,13 @@ if ( HAVE_PYTHON )
       set( SKIP_BUILD 0 )
   endif()
 
-  # Define MSVC variable to 0 for python if MSVC is not being used
+  # Define MSVC and APPLE variable to 0 for python if they are not defined
   if (NOT MSVC)
     set(MSVC 0)
+  endif ()
+
+  if (NOT APPLE)
+    set(APPLE 0)
   endif ()
 
   # configure _pygrowth.pxd and setup.py

@@ -60,6 +60,10 @@ install:
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       choco install miniconda3 --params="'/AddToPath:1 /D:$MINICONDA_PATH'";
       export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
+      refreshenv;
+      updatedb;
+      locate conda.sh;
+      source $HOME/miniconda3/etc/profile.d/conda.sh;
       source $MINICONDA_PATH/etc/profile.d/conda.sh;
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
@@ -68,7 +72,7 @@ install:
       conda --version ; python --version ; pip --version;
       pip install cython;
       pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
-      cd extra && install_windows.cmd;
+      cd extra && ./install_windows.cmd;
     fi;
 
-script: pytest tests --ignore=tests/todo
+script: python -m pytest tests --ignore=tests/todo

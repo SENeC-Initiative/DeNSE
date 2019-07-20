@@ -89,6 +89,17 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
       execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase())" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
 
+    # sometimes the getuserbase command fails
+    if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
+      if (APPLE)
+        set(CMAKE_INSTALL_PREFIX "${HOME}/Library/Python/${PYTHON_VERSION}")
+      elseif (MSVC)
+        set(CMAKE_INSTALL_PREFIX "\"ENV{APPDATA}/Python\"")
+      else ()
+        set(CMAKE_INSTALL_PREFIX "${HOME}/.local")
+      endif ()
+    endif ()
+
     # cache it
     set( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "install prefix" FORCE)
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))

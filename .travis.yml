@@ -35,15 +35,17 @@ before_install:
     fi
 
 install:
+  # update apt
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       sudo rm -rf /var/lib/apt/lists/*;
       sudo apt-get update -qq;
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
     fi
+  # breathe is not working on 2.7
   - if [[ "$TRAVIS_OS_NAME" = "linux" && "$PYTHON_VERSION" = "2.7" ]]; then
       pip install "Sphinx < 2.0" sphinx-bootstrap-theme;
-    else
+    elseif [ "$TRAVIS_OS_NAME" = "linux" ]; then
       pip install sphinx breathe sphinx-bootstrap-theme;
     fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
@@ -55,5 +57,18 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
     fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+      choco install miniconda3 --params="'/AddToPath:1 /D:$MINICONDA_PATH'";
+      export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
+      source $MINICONDA_PATH/etc/profile.d/conda.sh;
+      hash -r;
+      conda config --set always_yes yes --set changeps1 no;
+      conda update -q conda;
+      echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
+      conda --version ; python --version ; pip --version;
+      pip install cython;
+      pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
+      cd extra && install_windows.cmd;
+    fi;
 
 script: pytest tests --ignore=tests/todo

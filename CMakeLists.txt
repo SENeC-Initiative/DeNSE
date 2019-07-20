@@ -131,8 +131,9 @@ endif ()
 
 # check that python install was setup automatically or set it manually
 
-if (NOT DEFINED PYTHON_INSTALL_DIR)
+if (NOT DEFINED PYTHON_INSTALL_DIR OR "${PYTHON_INSTALL_DIR}" STREQUAL "")
   set(PYTHON_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}")
+  file(MAKE_DIRECTORY "${PYTHON_INSTALL_DIR}")
 endif()
 
 

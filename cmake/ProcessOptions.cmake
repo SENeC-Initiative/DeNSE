@@ -231,7 +231,7 @@ print(s.get_config_var('MULTIARCH') or '');
         else ()
           execute_process(COMMAND ${PYTHON_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
           # create the directory if it does not exist
-          file(MAKE_DIRECTORY ${PY_LOCAL_DIR})
+          file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
         endif ()
 
         set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)

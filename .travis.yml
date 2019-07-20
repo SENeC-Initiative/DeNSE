@@ -45,7 +45,7 @@ before_install:
       brew install gcc@8 cmake python3 geos doxygen boost libomp;
       pip3 install setuptools;
       pip3 install cython;
-      pip3 install numpy scipy pint pyneuroml;
+      pip3 install numpy scipy pint pyneuroml pytest;
       pip3 install --no-binary shapely, shapely;
       pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL;
     fi
@@ -79,7 +79,10 @@ install:
     fi
   # on windows, installer works fine
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
-      cd extra && ./install_windows.cmd;
+      mkdir build && cd build;
+      set DISTUTILS_USE_SDK 1;
+      cmake .. -DCMAKE_GENERATOR_PLATFORM=x86;
+      cmake --build . --config Release --target INSTALL;
     fi;
 
 script:

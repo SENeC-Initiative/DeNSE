@@ -23,7 +23,11 @@ import os
 import platform
 import sysconfig
 from distutils.command.build_ext import build_ext
-from setuptools import setup, Extension, find_namespace_packages
+from setuptools import setup, Extension
+try:
+    from setuptools import find_namespace_packages as getpackages
+except ImportError:
+    from setuptools import find_packages as getpackages
 
 import numpy as np
 
@@ -145,7 +149,7 @@ setup(
     version = '@cgrowth_VERSION_VERSION@',
     description = 'Package to study the growth of neuronal networks',
     package_dir = {} if @MSVC@ else {'': '@PYMODULE_DIR@'},
-    packages = find_namespace_packages(
+    packages = getpackages(
         "." if @MSVC@ else '@PYMODULE_DIR@',
         exclude=['dist', '_*', 'build', '*.egg-info']),
 

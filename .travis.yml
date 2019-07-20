@@ -20,7 +20,7 @@ matrix:
     os: osx
     osx_image: xcode10
     language: generic
-  - env: PYTHON_VERSION=3 CONDA_PYTHON=3.7
+  - env: PYTHON_VERSION=3
     os: windows
     language: shell
 
@@ -30,7 +30,7 @@ cache:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
-      MINICONDA_PATH=$HOME/miniconda;
+      MINICONDA_PATH=$ToolsDir/miniconda3;
       MINICONDA_SUB_PATH=$MINICONDA_PATH/bin;
     fi
 
@@ -58,21 +58,22 @@ install:
       cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
     fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
-      choco install miniconda3 --params="'/AddToPath:1 /D:$MINICONDA_PATH'";
+      choco install miniconda3 --params="'/AddToPath:1'";
       export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
-      refreshenv;
-      updatedb;
-      locate conda.sh;
-      source $HOME/miniconda3/etc/profile.d/conda.sh;
+      cat c/ProgramData/chocolatey/logs/chocolatey.log;
       source $MINICONDA_PATH/etc/profile.d/conda.sh;
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
       conda update -q conda;
-      echo "Python $CONDA_PYTHON running on $TRAVIS_OS_NAME";
       conda --version ; python --version ; pip --version;
       pip install cython;
       pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
       cd extra && ./install_windows.cmd;
     fi;
 
-script: python -m pytest tests --ignore=tests/todo
+script:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      python3 -m pytest tests --ignore=tests/todo;
+    else
+      python -m pytest tests --ignore=tests/todo;
+    fi;

@@ -83,10 +83,8 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     if (PYTHON_EXECUTABLE MATCHES "Anaconda")
       execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
       string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    elseif (MSVC)
-      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase().replace('\\\\', '/'))" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     else ()
-      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase())" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} -m "site --user-base" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
 
     # sometimes the getuserbase command fails

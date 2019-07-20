@@ -60,8 +60,9 @@ install:
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       choco install miniconda3 --params="'/AddToPath:1'";
       export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
-      cat c/ProgramData/chocolatey/logs/chocolatey.log;
-      source $MINICONDA_PATH/etc/profile.d/conda.sh;
+      export PATH="c/tools/miniconda3:c/tools/miniconda3/bin:$PATH";
+      echo $MINICONDA_PATH;
+      source c/tools/miniconda3/etc/profile.d/conda.sh;
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
       conda update -q conda;
@@ -73,7 +74,7 @@ install:
 
 script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      python3 -m pytest tests --ignore=tests/todo;
+      /usr/local/bin/python3 -m pytest tests --ignore=tests/todo;
     else
       python -m pytest tests --ignore=tests/todo;
     fi;

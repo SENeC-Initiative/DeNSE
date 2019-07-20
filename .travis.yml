@@ -28,30 +28,29 @@ cache:
     - apt
     - pip
 
-install:
+before_install:
   # update apt and pip packages
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       echo $VIRTUAL_ENV;
       sudo rm -rf /var/lib/apt/lists/*;
       sudo apt-get update -qq;
       sudo apt-get autoremove;
-      sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
+      sudo apt-get install -y cmake libboost-dev libgeos++-dev g++;
       pip install setuptools cython;
       pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
       pip install --no-binary shapely, shapely;
     fi
-  # on linux, install in the virtualenv
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      mkdir build && cd build;
-      cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV;
-      make && make install;
-    fi
-  # on mac, installer works fine
+  # update brew and pip on mac
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      pip3 install pytest;
-      cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
+      brew install gcc@8 cmake python3 geos doxygen boost libomp;
+      pip3 install setuptools;
+      pip3 install cython;
+      pip3 install numpy scipy pint pyneuroml;
+      pip3 install --no-binary shapely, shapely;
+      pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL;
     fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
+  # use miniconda on windows
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       choco install openssl.light;
       choco install miniconda3 --params="'/AddToPath:1'";
       export PATH="/c/tools/miniconda3:/c/tools/miniconda3/Scripts:/c/tools/miniconda3/Library/bin:/c/tools/miniconda3/bin:$PATH";
@@ -62,12 +61,31 @@ install:
       conda --version ; python --version ; pip --version;
       pip install cython;
       pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
+    fi
+
+install:
+  # on linux, install in the virtualenv
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      mkdir build && cd build;
+      cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV;
+      make && make install;
+    fi
+  # on mac, set gcc as compiler
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      mkdir build && cd build;
+      CC=gcc-8 CXX=g++-8 cmake .. -Dwith-python=3;
+      make;
+      CC=gcc-8 CXX=g++-8 make install;
+    fi
+  # on windows, installer works fine
+  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       cd extra && ./install_windows.cmd;
     fi;
 
 script:
-  # we were in extra for OSX and WINDOWS, so swith back to root folder
-  - if [ "$TRAVIS_OS_NAME" != "linux" ]; then cd ..; fi
+  # we were in extra for WINDOWS, and in build for MAC and LINUX, so swith back to root folder
+  - cd ..
+  # run tests
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       python3 -m pytest tests --ignore=tests/todo;
     else

@@ -1262,7 +1262,6 @@ void SpaceManager::generate_synapses_crossings(
         BPoint centroid, p;
         int num_synapses;
 
-        #pragma omp for
         for (size_t k=0; k < points.size(); k++)
         {
             p = points[k];
@@ -1431,7 +1430,6 @@ void SpaceManager::generate_synapses_all(
         int num_synapses;
         double tmp, area;
 
-        #pragma omp for
         for (size_t k=0; k < all_points.size(); k++)
         {
             p = all_points[k];

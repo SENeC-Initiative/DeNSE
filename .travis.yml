@@ -28,33 +28,22 @@ cache:
     - apt
     - pip
 
-before_install:
-  - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
-      MINICONDA_PATH=$ToolsDir/miniconda3;
-      MINICONDA_SUB_PATH=$MINICONDA_PATH/bin;
-    fi
-
 install:
-  # update apt
+  # update apt and pip packages
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       echo $VIRTUAL_ENV;
       sudo rm -rf /var/lib/apt/lists/*;
       sudo apt-get update -qq;
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++ doxygen;
-    fi
-  # breathe is not working on 2.7
-  - if [[ "$TRAVIS_OS_NAME" = "linux" && "$PYTHON_VERSION" = "2.7" ]]; then
-      pip install "Sphinx < 2.0" sphinx-bootstrap-theme;
-    elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      pip install sphinx breathe sphinx-bootstrap-theme;
-    fi
-  # on linux, install in the virtualenv
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       pip install setuptools cython;
       pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
       pip install --no-binary shapely, shapely;
-      cd build && cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV;
+    fi
+  # on linux, install in the virtualenv
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      mkdir build && cd build;
+      cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV;
       make && make install;
     fi
   # on mac, installer works fine
@@ -65,16 +54,12 @@ install:
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then
       choco install openssl.light;
       choco install miniconda3 --params="'/AddToPath:1'";
-      export PATH="$MINICONDA_PATH:$MINICONDA_SUB_PATH:$PATH";
       export PATH="/c/tools/miniconda3:/c/tools/miniconda3/Scripts:/c/tools/miniconda3/Library/bin:/c/tools/miniconda3/bin:$PATH";
-      echo "miniconda path is $MINICONDA_PATH";
-      echo "path is $PATH";
       hash -r;
       conda config --set always_yes yes --set changeps1 no;
-      /c/tools/miniconda3/conda.exe config --set always_yes yes --set changeps1 no;
-      /c/tools/miniconda3/bin/conda.exe update -q conda;
-      /c/tools/miniconda3/Library/bin/conda.exe install python cmake geos boost;
-      /c/tools/miniconda3/Scripts/conda.exe --version ; python --version ; pip --version;
+      conda update -q conda;
+      conda install python cmake geos boost;
+      conda --version ; python --version ; pip --version;
       pip install cython;
       pip install pytest shapely pint PyOpenGL svg.path dxfgrabber;
       cd extra && ./install_windows.cmd;

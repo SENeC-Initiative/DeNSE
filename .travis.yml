@@ -45,7 +45,7 @@ install:
   # breathe is not working on 2.7
   - if [[ "$TRAVIS_OS_NAME" = "linux" && "$PYTHON_VERSION" = "2.7" ]]; then
       pip install "Sphinx < 2.0" sphinx-bootstrap-theme;
-    elseif [ "$TRAVIS_OS_NAME" = "linux" ]; then
+    elif [ "$TRAVIS_OS_NAME" = "linux" ]; then
       pip install sphinx breathe sphinx-bootstrap-theme;
     fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then

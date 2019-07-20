@@ -88,6 +88,11 @@ class CustomBuildExt(build_ext):
             e.extra_link_args.extend(lopt.get(c, []))
             e.extra_compile_args.extend(copt.get(c, []))
 
+        # mac fix from https://stackoverflow.com/a/19147134
+        if platform.system() == 'Darwin':
+            for e in self.extensions:
+                e.extra_link_args.append('-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@')
+
         if not @SKIP_BUILD@:
             build_ext.build_extensions(self)
 
@@ -115,13 +120,13 @@ extensions = Extension(
         np.get_include()
     ],
     extra_compile_args = [],
-    extra_link_args = [],
+    extra_link_args = ["-R @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@"] if @APPLE@ else [],
     libraries = ['cgrowth_py@PYTHON_VERSION@'] + \
                 (['libgrowth_py@PYTHON_VERSION@', 'kernel_py@PYTHON_VERSION@',
                   'elements_py@PYTHON_VERSION@', 'spatial_py@PYTHON_VERSION@']
                   if @MSVC@ else []),
     library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@',],
-    runtime_library_dirs = [] if @MSVC@ else ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
+    runtime_library_dirs = [] if (@MSVC@ or @APPLE@) else ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
 )
 
 if with_cython:

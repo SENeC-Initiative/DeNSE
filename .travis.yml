@@ -46,11 +46,14 @@ install:
     else
       pip install sphinx breathe sphinx-bootstrap-theme;
     fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ] then;
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       pip install setuptools cython;
       pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
       pip install --no-binary shapely, shapely;
       cd extra && chmod u+x install_linux.sh && ./install_linux.sh;
+    fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      cd extra && chmod u+x install_macos.sh && ./install_macos.sh;
     fi
 
 script: pytest tests --ignore=tests/todo

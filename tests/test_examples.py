@@ -23,6 +23,9 @@
 """ Testing main functions """
 
 import os
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 
 import dense as ds

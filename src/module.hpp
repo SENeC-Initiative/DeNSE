@@ -28,6 +28,9 @@
 #include <string>
 #include <vector>
 
+// include GEOS C-API
+#include <geos_c.h>
+
 // kernel include
 #include "recorders.hpp"
 

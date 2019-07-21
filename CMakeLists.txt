@@ -80,7 +80,7 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
 
     # get local user library folder as default install prefix ()
-    if (PYTHON_EXECUTABLE MATCHES "Anaconda")
+    if (PYTHON_EXECUTABLE MATCHES "conda")
       execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
       string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     else ()

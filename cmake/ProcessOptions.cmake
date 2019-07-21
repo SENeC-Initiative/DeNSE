@@ -225,7 +225,7 @@ print(s.get_config_var('MULTIARCH') or '');
         endif ()
 
         # set local install dir for python packages
-        if (MSVC AND PYTHON_EXECUTABLE MATCHES "Anaconda")
+        if (MSVC AND PYTHON_EXECUTABLE MATCHES "conda")
           execute_process(COMMAND conda info --root OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
           string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}/Lib/site-packages")
         else ()

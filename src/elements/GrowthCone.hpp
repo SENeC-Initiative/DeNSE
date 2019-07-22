@@ -60,7 +60,7 @@ class GrowthCone : public TopologicalNode,
     friend class Branching;
 
   protected:
-    size_t neuron_id_;
+    stype neuron_id_;
     std::string neurite_name_;
     const std::string model_;
     bool using_environment_; // whether we're embedded in space
@@ -104,8 +104,8 @@ class GrowthCone : public TopologicalNode,
     space_tree_map current_neighbors_;
 
     double max_sensing_angle_;
-    size_t min_filopodia_; // minimal number of filopodia
-    size_t num_filopodia_; // minimal number of filopodia
+    stype min_filopodia_; // minimal number of filopodia
+    stype num_filopodia_; // minimal number of filopodia
 
     double current_diameter_;
 
@@ -133,10 +133,10 @@ class GrowthCone : public TopologicalNode,
                          double angle);
 
     // growth
-    void grow(mtPtr rnd_engine, size_t cone_n, double substep);
-    void retraction(double distance, size_t cone_n, int omp_id);
+    void grow(mtPtr rnd_engine, stype cone_n, double substep);
+    void retraction(double distance, stype cone_n, int omp_id);
 
-    virtual void prune(size_t cone_n);
+    virtual void prune(stype cone_n);
 
     // compute direction
     bool sense_surroundings(std::vector<double> &directions_weights,
@@ -152,7 +152,7 @@ class GrowthCone : public TopologicalNode,
     virtual void
     select_direction(const std::vector<double> &directions_weights,
                      mtPtr rnd_engine, double &substep, double &new_angle,
-                     size_t &default_direction) = 0;
+                     stype &default_direction) = 0;
 
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
@@ -173,8 +173,9 @@ class GrowthCone : public TopologicalNode,
     virtual double get_growth_cone_speed() const;
     virtual double get_diameter() const override;
     bool just_retracted() const;
-    size_t get_neuron_id() const;
+    stype get_neuron_id() const;
     const std::string& get_neurite_name() const;
+    const std::string& get_model_name() const;
     const BPolygonPtr get_last_segment() const;
     bool is_active() const;
     double get_self_affinity() const;

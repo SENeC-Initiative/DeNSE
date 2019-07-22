@@ -62,12 +62,12 @@ bool get_param(const statusMap &map, const std::string &key, double &result)
 
 
 bool get_param(const statusMap &map, const std::string &key,
-               std::vector<size_t> &result)
+               std::vector<stype> &result)
 {
     auto res = map.find(key);
     if (res != map.end())
     {
-        result = std::vector<size_t>(res->second.uu);
+        result = std::vector<stype>(res->second.uu);
         return true;
     }
     else
@@ -108,7 +108,7 @@ bool get_param(const statusMap &map, const std::string &key, int &result)
 }
 
 
-bool get_param(const statusMap &map, const std::string &key, size_t &result)
+bool get_param(const statusMap &map, const std::string &key, stype &result)
 {
     auto res = map.find(key);
     if (res != map.end())
@@ -210,7 +210,7 @@ void set_param(statusMap &map, const std::string &key, const int &value,
 }
 
 
-void set_param(statusMap &map, const std::string &key, const size_t &value,
+void set_param(statusMap &map, const std::string &key, const stype &value,
                const std::string& dim)
 {
     map[key] = Property(value, dim);
@@ -218,7 +218,7 @@ void set_param(statusMap &map, const std::string &key, const size_t &value,
 
 
 void set_param(statusMap &map, const std::string &key,
-               const std::vector<size_t> &value, const std::string& dim)
+               const std::vector<stype> &value, const std::string& dim)
 {
     map[key] = Property(value, dim);
 }

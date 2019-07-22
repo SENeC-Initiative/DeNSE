@@ -4,7 +4,9 @@ sudo pacman -S cmake gcc python python-pip geos boost boost-libs doxygen python-
 
 pip install --user setuptools
 pip install --user cython
-pip install --user numpy scipy shapely pint breathe sphinx-bootstrap-theme
+pip install --user numpy scipy pint pyneuroml
+pip install --user --no-binary shapely, shapely
+pip install --user sphinx breathe sphinx-bootstrap-theme
 pip install --user networkx nngt svg.path dxfgrabber PyOpenGL
 
 cd ..

@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # ds.reset_kernel()
 
     # save
-    # structure = ds.NeuronStructure()
+    # structure = ds.morphology.NeuronStructure()
     # graph =ds.generate_network()
     save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
     ds.save_json_info(filepath=save_path)

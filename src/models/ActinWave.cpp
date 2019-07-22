@@ -112,7 +112,7 @@ void ActinWave::actin_make_branch(mtPtr rnd_engine)
     assert(actin_content_tau_ >= 0);
     double new_length = 1.; // @todo: compute from actinContent
     //@TODO
-    size_t TODO = 1;
+    stype TODO = 1;
     NodePtr todo_ptr;
     ownNeurite_->lateral_branching(targetNode_, TODO, todo_ptr, rnd_engine);
 }
@@ -125,7 +125,7 @@ void ActinWave::initialize_AW_distributions()
 
 void ActinWave::get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const
 {
-    size_t id_x     = targetNode_->get_branch()->size();
+    stype id_x     = targetNode_->get_branch()->size();
     double distance = targetNode_->get_branch()->at(id_x)[2];
     while (distance <= distanceToTarget_)
     {

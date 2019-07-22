@@ -20,56 +20,40 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Testing Branching """
-
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-
-import nngt
+""" Testing models """
 
 import dense as ds
 from dense.units import *
 
-def Models():
+
+def test_models():
     '''
-    simulate one neurons with each defaults models
+    Simulate one neurons with each defaults model
     '''
-    models = ds.get_models()
-    
-    observables = ['length',
-    'num_growth_cones',
-    'retraction_time',
-    'speed',
-    'stopped']
-    
-    observables = ds.get_default_properties('neuron', 'observables').values()
+    models      = ds.get_models()
+    observables = ds.get_default_properties('neuron', 'observables', settables_only=False)
 
     for m in models:
-        
-        kernel = {
-        "environment_required": False,
-        }
-        
+        print(m)
+        ds.reset_kernel()
+        kernel = {"environment_required": False}
+
         params = {
             "growth_cone_model": m,
             "position" : [0.,0.]*um
         }
-        
-        ds.get_kernel_status(kernel)
-    
-        gids = ds.create_neurons(n=1, num_neurites=3, params=params)
-        
-        rec = [ds.create_recorders(gids, obs, levels="neuron") for obs in observables]
-        
-        ds.simulate(10*hour)
-        
-        print(ds.get_recording(rec))
-        
-        ds.reset_kernel()
-    return 1
-    
-def test_models():
-    assert Models() == 1
 
-Models()
+        ds.set_kernel_status(kernel)
+
+        gids = ds.create_neurons(n=1, num_neurites=3, params=params)
+
+        rec = [ds.create_recorders(gids, obs, levels="neuron") for obs in observables]
+
+        ds.simulate(10*hour)
+
+        for r in rec:
+            ds.get_recording(r)
+
+
+if __name__ == "__main__":
+    test_models()

@@ -53,7 +53,7 @@ def run_dense(neuron_params,axes,letter,single=False):
 
     step(1000*second, 1, os.path.join(os.getcwd(), "primo"),plot=False)
     neurons    = ds.get_neurons()
-    structure  = ds.NeuronStructure(neurons)
+    structure  = ds.morphology.NeuronStructure(neurons)
     population = ds.Population.from_structure(structure)
     axons= population.axon_all_points()
     from matplotlib.colors import LogNorm

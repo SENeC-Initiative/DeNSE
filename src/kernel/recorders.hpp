@@ -44,30 +44,30 @@ typedef void (*ptRecorder)(GCPtr, std::ofstream &);
 
 typedef std::unordered_map<std::string, std::vector<double>> mapNameVecDouble;
 typedef std::unordered_map<std::string, std::vector<Time>> mapNameVecTime;
-typedef std::unordered_map<size_t, std::vector<double>> mapNumVecDouble;
-typedef std::unordered_map<size_t, std::array<Time, 2>> mapNumArrayTime;
+typedef std::unordered_map<stype, std::vector<double>> mapNumVecDouble;
+typedef std::unordered_map<stype, std::array<Time, 2>> mapNumArrayTime;
 
-typedef std::unordered_map<size_t, std::vector<double>> neuronRec;
-typedef std::unordered_map<size_t, std::vector<Time>> neuronTimeRec;
+typedef std::unordered_map<stype, std::vector<double>> neuronRec;
+typedef std::unordered_map<stype, std::vector<Time>> neuronTimeRec;
 
-typedef std::unordered_map<size_t, mapNameVecDouble> neuriteRec;
-typedef std::unordered_map<size_t, mapNameVecTime> neuriteTimeRec;
+typedef std::unordered_map<stype, mapNameVecDouble> neuriteRec;
+typedef std::unordered_map<stype, mapNameVecTime> neuriteTimeRec;
 
-typedef std::unordered_map<size_t,
+typedef std::unordered_map<stype,
                            std::unordered_map<std::string, mapNumVecDouble>>
     gcRec;
-typedef std::unordered_map<size_t,
+typedef std::unordered_map<stype,
                            std::unordered_map<std::string, mapNumArrayTime>>
     gcContinuousTimes;
 typedef std::unordered_map<
-    size_t, std::unordered_map<std::string,
-                               std::unordered_map<size_t, std::vector<Time>>>>
+    stype, std::unordered_map<std::string,
+                               std::unordered_map<stype, std::vector<Time>>>>
     gcDiscreteTimes;
 typedef std::unordered_map<
-    size_t, std::unordered_map<std::string, std::unordered_set<size_t>>>
+    stype, std::unordered_map<std::string, std::unordered_set<stype>>>
       setDeadCones;
 typedef std::unordered_map<
-    size_t, std::unordered_map<std::string, std::unordered_map<size_t, size_t>>>
+    stype, std::unordered_map<std::string, std::unordered_map<stype, stype>>>
     gcNumTimes;
 
 
@@ -92,12 +92,12 @@ class BaseRecorder
                                std::vector<double> &values,
                                const std::string &time_units);
     void reset_iterations();
-    virtual void final_timestep(size_t step);
+    virtual void final_timestep(stype step);
 
-    void neuron_deleted(size_t gid);
-    virtual void new_neurite(size_t neuron, const std::string& neurite) {};
-    virtual void gc_died(size_t neuron, const std::string& neurite,
-                         size_t gc_id) {};
+    void neuron_deleted(stype gid);
+    virtual void new_neurite(stype neuron, const std::string& neurite) {};
+    virtual void gc_died(stype neuron, const std::string& neurite,
+                         stype gc_id) {};
 
     void get_status(statusMap &status) const;
     virtual void set_status(const statusMap &status);
@@ -109,7 +109,7 @@ class BaseRecorder
     int interval_;              // interval between successive records
     std::string restrict_to_;   // dendrite name
     // ids and pointers to targets
-    std::unordered_map<size_t, NeuronPtr> targets_;
+    std::unordered_map<stype, NeuronPtr> targets_;
     bool v_iterating_;
     bool t_iterating_;
     // model-related parameters
@@ -127,7 +127,7 @@ class NeuronContinuousRecorder : public BaseRecorder
     NeuronContinuousRecorder();
 
     virtual void record() override;
-    virtual void final_timestep(size_t step) override;
+    virtual void final_timestep(stype step) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -141,7 +141,7 @@ class NeuronContinuousRecorder : public BaseRecorder
   private:
     neuronRec recording_;
     std::array<Time, 2> times_;
-    size_t num_times_;
+    stype num_times_;
     neuronRec::const_iterator neuron_it_;
 };
 
@@ -176,8 +176,8 @@ class NeuriteContinuousRecorder : public BaseRecorder
     NeuriteContinuousRecorder();
 
     virtual void record() override;
-    virtual void final_timestep(size_t step) override;
-    virtual void new_neurite(size_t neuron,
+    virtual void final_timestep(stype step) override;
+    virtual void new_neurite(stype neuron,
                              const std::string& neurite) override;
 
     virtual unsigned int get_event_type() const override;
@@ -192,7 +192,7 @@ class NeuriteContinuousRecorder : public BaseRecorder
   private:
     neuriteRec recording_;
     std::array<Time, 2> times_;
-    size_t num_times_;
+    stype num_times_;
     neuriteRec::const_iterator neuron_it_;
     mapNameVecDouble::const_iterator neurite_it_;
     mapNameVecDouble::const_iterator neurite_endit_;
@@ -205,7 +205,7 @@ class NeuriteDiscreteRecorder : public BaseRecorder
     NeuriteDiscreteRecorder();
 
     virtual void record(const Event &ev) override;
-    virtual void new_neurite(size_t neuron,
+    virtual void new_neurite(stype neuron,
                              const std::string& neurite) override;
 
     virtual unsigned int get_event_type() const override;
@@ -236,12 +236,12 @@ class GrowthConeContinuousRecorder : public BaseRecorder
 
     virtual void record() override;
     virtual void record(const Event &ev) override;
-    virtual void final_timestep(size_t step) override;
+    virtual void final_timestep(stype step) override;
 
-    virtual void new_neurite(size_t neuron,
+    virtual void new_neurite(stype neuron,
                              const std::string& neurite) override;
-    virtual void gc_died(size_t neuron, const std::string& neurite,
-                         size_t gc_id) override;
+    virtual void gc_died(stype neuron, const std::string& neurite,
+                         stype gc_id) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -306,20 +306,20 @@ class GrowthConeDiscreteRecorder : public BaseRecorder
     // time iterators
     gcDiscreteTimes::const_iterator t_neuron_it_;
     std::unordered_map<std::string,
-                       std::unordered_map<size_t, std::vector<Time>>>::
+                       std::unordered_map<stype, std::vector<Time>>>::
         const_iterator t_neurite_it_;
     std::unordered_map<std::string,
-                       std::unordered_map<size_t, std::vector<Time>>>::
+                       std::unordered_map<stype, std::vector<Time>>>::
         const_iterator t_neurite_endit_;
-    std::unordered_map<size_t, std::vector<Time>>::const_iterator t_gc_pos_;
-    std::unordered_map<size_t, std::vector<Time>>::const_iterator t_gc_endpos_;
+    std::unordered_map<stype, std::vector<Time>>::const_iterator t_gc_pos_;
+    std::unordered_map<stype, std::vector<Time>>::const_iterator t_gc_endpos_;
 };
 
 
 void _record_length(GCPtr gc, std::ofstream &record_file_);
 void _record_CR(GCPtr gc, std::ofstream &record_file_);
-void _record_branch_topology(std::string branch_type, size_t centrifugal_order,
-                             size_t branch_size, std::ofstream &record_file_);
+void _record_branch_topology(std::string branch_type, stype centrifugal_order,
+                             stype branch_size, std::ofstream &record_file_);
 void _record_branch_geometry(std::string branch_type, double angle,
                              double ratio, std::ofstream &record_file_);
 

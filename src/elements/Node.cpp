@@ -58,7 +58,7 @@ BPoint BaseNode::get_position() const { return geometry_.position; }
 int BaseNode::get_centrifugal_order() const { return -1; }
 
 
-size_t BaseNode::get_node_id() const { return 0; }
+stype BaseNode::get_node_id() const { return 0; }
 
 
 double BaseNode::get_distance_parent() const
@@ -139,7 +139,7 @@ void TopologicalNode::set_diameter(double diameter)
 }
 
 
-size_t TopologicalNode::get_branch_size() const
+stype TopologicalNode::get_branch_size() const
 {
     return biology_.branch->size();
 }

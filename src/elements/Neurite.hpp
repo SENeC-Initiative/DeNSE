@@ -44,7 +44,7 @@
 namespace growth
 {
 
-typedef std::unordered_map<size_t, GCPtr> gc_map;
+typedef std::unordered_map<stype, GCPtr> gc_map;
 typedef boost::iterator_range< gc_map::const_iterator > simple_gc_range;
 typedef boost::range::joined_range<const gc_map, const gc_map> joined_gc_range;
 
@@ -102,15 +102,15 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     // Growth functions
     void update_growth_cones(mtPtr rnd_engine, double substep);
     void update_resource(mtPtr rnd_engine, double substep);
-    void grow(mtPtr rnd_engine, size_t current_step, double substep);
-    void delete_cone(size_t cone_n);
+    void grow(mtPtr rnd_engine, stype current_step, double substep);
+    void delete_cone(stype cone_n);
 
     // critical resource
     double get_quotient_cr() const;
     double get_available_cr() const;
 
     // Branching functions
-    bool lateral_branching(TNodePtr branching_node, size_t branch_point,
+    bool lateral_branching(TNodePtr branching_node, stype branch_point,
                            NodePtr &new_node, mtPtr rnd_engine);
     bool growth_cone_split(GCPtr branching_cone, double new_length,
                            double new_angle, double old_angle,
@@ -130,7 +130,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     const Branching *get_branching_model() const;
 
-    void get_distances(size_t node, size_t segment, double &dist_to_parent,
+    void get_distances(stype node, stype segment, double &dist_to_parent,
                        double &dist_to_soma) const;
 
     //@TODO
@@ -158,8 +158,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     bool walk_tree(NodeProp& np) const;
     simple_gc_range active_gc_range() const;
     joined_gc_range gc_range() const;
-    std::unordered_map<size_t, NodePtr>::const_iterator nodes_cbegin() const;
-    std::unordered_map<size_t, NodePtr>::const_iterator nodes_cend() const;
+    std::unordered_map<stype, NodePtr>::const_iterator nodes_cbegin() const;
+    std::unordered_map<stype, NodePtr>::const_iterator nodes_cend() const;
 
   private:
     //! Neuron parent
@@ -170,7 +170,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     double max_arbor_len_;
     double fixed_arbor_len_;
     // keep track of how many nodes were created to set the ids
-    size_t num_created_nodes_;
+    stype num_created_nodes_;
     // observables for recorders
     std::vector<std::string> observables_;
 
@@ -188,11 +188,11 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     gc_map growth_cones_inactive_;
     gc_map growth_cones_inactive_tmp_;
 
-    std::vector<size_t> dead_cones_;
+    std::vector<stype> dead_cones_;
     std::deque<ActinPtr> actinDeck_;
-    std::unordered_map<size_t, NodePtr> nodes_;
-    std::vector<size_t> dead_nodes_;
-    size_t max_gc_num_;
+    std::unordered_map<stype, NodePtr> nodes_;
+    std::vector<stype> dead_nodes_;
+    stype max_gc_num_;
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;

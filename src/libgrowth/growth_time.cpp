@@ -39,7 +39,7 @@ void Time::reset_resolution() { RESOLUTION = DEFAULT_RESOLUTION; }
 void Time::set_resolution(double resolution) { RESOLUTION = resolution; }
 
 
-Time Time::from_steps(size_t step, double substep)
+Time Time::from_steps(stype step, double substep)
 {
     Time t = Time();
     t.update(step, substep);
@@ -60,7 +60,7 @@ Time::Time()
 
 
 Time::Time(double seconds, unsigned char minutes, unsigned char hours,
-           size_t days)
+           stype days)
     : sec_(0.)
     , min_(0)
     , hour_(0)
@@ -106,7 +106,7 @@ void Time::update(Time::timeStep steps, double substeps)
         dv    = std::div(hour_ + dv.quot, 24L);
         hour_ = (char)dv.rem;
         // day
-        day_ += (size_t)dv.quot;
+        day_ += (stype)dv.quot;
     }
 }
 
@@ -145,7 +145,7 @@ unsigned char Time::get_min() const { return min_; }
 unsigned char Time::get_hour() const { return hour_; }
 
 
-size_t Time::get_day() const { return day_; }
+stype Time::get_day() const { return day_; }
 
 
 // setters
@@ -186,7 +186,7 @@ void Time::set_hour(unsigned char hours)
 }
 
 
-void Time::set_day(size_t days) { day_ = days; }
+void Time::set_day(stype days) { day_ = days; }
 
 
 // convert time to steps
@@ -220,7 +220,7 @@ Time operator+(Time lhs, const Time &rhs)
 Time &Time::operator-=(const Time &rhs)
 {
     // define integer and decimal parts
-    size_t int_part;
+    stype int_part;
     double dec_part;
     long int signed_tmp;
     int carry_over = 0;

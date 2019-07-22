@@ -40,7 +40,7 @@ typedef struct NodeTopology
     BaseWeakNodePtr parent;
     int centrifugal_order;
     bool has_child;
-    size_t nodeID;
+    stype nodeID;
 
     NodeTopology()
         : parent(std::make_shared<BaseNode>())
@@ -137,7 +137,7 @@ class BaseNode
     virtual BPoint get_position() const;
     virtual double get_distance_to_soma() const;
     virtual double get_distance_parent() const;
-    virtual size_t get_node_id() const;
+    virtual stype get_node_id() const;
 };
 
 
@@ -182,14 +182,14 @@ class TopologicalNode : public BaseNode
         return topology_.centrifugal_order;
     }
     inline bool has_child() const { return topology_.has_child; }
-    inline size_t get_node_id() const override { return topology_.nodeID; }
+    inline stype get_node_id() const override { return topology_.nodeID; }
 
     seg_range segment_range() const;
 
     // biology getter functions
     inline bool is_dead() const { return biology_.dead; }
     inline BranchPtr get_branch() const { return biology_.branch; }
-    size_t get_branch_size() const;
+    stype get_branch_size() const;
     double get_branch_length() const;
     inline virtual double get_diameter() const { return biology_.diameter; }
 

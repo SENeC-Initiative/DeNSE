@@ -41,7 +41,7 @@ Property::Property(int i_, const std::string& dim)
 }
 
 
-Property::Property(size_t ul_, const std::string& dim)
+Property::Property(stype ul_, const std::string& dim)
     : data_type(SIZE)
     , dimension(dim)
     , ul(ul_)
@@ -79,7 +79,7 @@ Property::Property(const std::vector<long> &v, const std::string& dim)
 }
 
 
-Property::Property(const std::vector<size_t> &v, const std::string& dim)
+Property::Property(const std::vector<stype> &v, const std::string& dim)
     : data_type(VEC_SIZE)
     , dimension(dim)
     , uu(v)
@@ -123,7 +123,7 @@ Property::Property(const Property &prop)
         new (&ll) std::vector<long>(prop.ll);
         break;
     case VEC_SIZE:
-        new (&uu) std::vector<size_t>(prop.uu);
+        new (&uu) std::vector<stype>(prop.uu);
         break;
     case VEC_STRING:
         new (&ss) std::vector<std::string>(prop.ss);
@@ -156,7 +156,7 @@ Property &Property::operator=(const Property &prop)
     switch (data_type)
     {
     case VEC_SIZE:
-        uu.~vector<size_t>();
+        uu.~vector<stype>();
         break;
     case VEC_LONG:
         ll.~vector<long>();
@@ -180,7 +180,7 @@ Property &Property::operator=(const Property &prop)
     switch (prop.data_type)
     {
     case VEC_SIZE:
-        new (&uu) std::vector<size_t>(prop.uu);
+        new (&uu) std::vector<stype>(prop.uu);
         break;
     case VEC_LONG:
         new (&ll) std::vector<long>(prop.ll);
@@ -217,7 +217,7 @@ Property::~Property()
     switch (data_type)
     {
     case VEC_SIZE:
-        uu.~vector<size_t>();
+        uu.~vector<stype>();
         break;
     case VEC_LONG:
         ll.~vector<long>();

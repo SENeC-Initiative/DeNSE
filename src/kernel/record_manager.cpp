@@ -25,6 +25,9 @@
 #include "GrowthCone.hpp"
 #include "elements_types.hpp"
 
+// include from lib
+#include "config.hpp"
+
 // include from kernel
 #include "kernel_manager.hpp"
 
@@ -51,12 +54,12 @@ RecordManager::RecordManager()
  */
 void RecordManager::initialize()
 {
-    size_t num_omp = kernel().parallelism_manager.get_num_local_threads();
+    stype num_omp = kernel().parallelism_manager.get_num_local_threads();
     num_threads_   = num_omp;
 
-    for (size_t i = 0; i < num_omp; i++)
+    for (stype i = 0; i < num_omp; i++)
     {
-        omp_id_crec_.push_back(std::vector<size_t>());
+        omp_id_crec_.push_back(std::vector<stype>());
     }
 }
 
@@ -82,19 +85,19 @@ void RecordManager::finalize()
  *
  * @return The number of recorders created.
  */
-size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
+stype RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
 {
     // get new gid value from kernel
-    size_t first_gid   = kernel().get_num_created_objects();
-    size_t num_created = 0;
+    stype first_gid   = kernel().get_num_created_objects();
+    stype num_created = 0;
+    stype gid;
 
-    size_t gid;
     std::string level, event_type;
 
     for (const auto &status : obj_params)
     {
         // get the targets
-        std::vector<size_t> tgts;
+        std::vector<stype> tgts;
         get_param(status, names::targets, tgts);
 
         // one recorder only takes care of neurons that are in the same OpenMP
@@ -105,10 +108,10 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
             gid = first_gid + num_created;
 
             // find the targets that are on the same thread
-            std::vector<size_t> local_targets;
+            std::vector<stype> local_targets;
             int neuron_thread;
 
-            for (size_t n : tgts)
+            for (stype n : tgts)
             {
                 neuron_thread = kernel().neuron_manager.get_neuron_thread(n);
                 if (neuron_thread == i)
@@ -203,12 +206,12 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                 // set recorder status
                 d_recorders_[gid]->set_status(local_status);
 
-                for (size_t n : local_targets)
+                for (stype n : local_targets)
                 {
                     auto it = neuron_to_d_recorder_.find(n);
                     if (it == neuron_to_d_recorder_.end())
                     {
-                        neuron_to_d_recorder_[n] = std::vector<size_t>();
+                        neuron_to_d_recorder_[n] = std::vector<stype>();
                     }
                     neuron_to_d_recorder_[n].push_back(gid);
                 }
@@ -221,12 +224,12 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
                 // set recorder status
                 c_recorders_[gid]->set_status(local_status);
 
-                for (size_t n : local_targets)
+                for (stype n : local_targets)
                 {
                     auto it = neuron_to_c_recorder_.find(n);
                     if (it == neuron_to_c_recorder_.end())
                     {
-                        neuron_to_c_recorder_[n] = std::vector<size_t>();
+                        neuron_to_c_recorder_[n] = std::vector<stype>();
                     }
                     neuron_to_c_recorder_[n].push_back(gid);
                 }
@@ -265,15 +268,15 @@ size_t RecordManager::create_recorder(const std::vector<statusMap> &obj_params)
  */
 void RecordManager::record(int omp_id)
 {
-    for (size_t gid : omp_id_crec_[omp_id])
+    for (stype gid : omp_id_crec_[omp_id])
     {
         c_recorders_[gid]->record();
     }
 
     for (auto event : events_)
     {
-        size_t neuron = std::get<edata::NEURON>(event);
-        for (size_t rec : omp_id_drec_[omp_id])
+        stype neuron = std::get<edata::NEURON>(event);
+        for (stype rec : omp_id_drec_[omp_id])
         {
             d_recorders_[rec]->record(event);
         }
@@ -281,9 +284,9 @@ void RecordManager::record(int omp_id)
 }
 
 
-void RecordManager::finalize_simulation(size_t steps)
+void RecordManager::finalize_simulation(stype steps)
 {
-    size_t final_step = (steps > 0) ? steps - 1 : 0;
+    stype final_step = (steps > 0) ? steps - 1 : 0;
 
     for (auto &recorder : c_recorders_)
     {
@@ -292,7 +295,7 @@ void RecordManager::finalize_simulation(size_t steps)
 }
 
 
-bool RecordManager::is_recorder(size_t gid) const
+bool RecordManager::is_recorder(stype gid) const
 {
     auto c_it = c_recorders_.find(gid);
     auto d_it = d_recorders_.find(gid);
@@ -320,7 +323,7 @@ void RecordManager::get_defaults(statusMap &status) const
 }
 
 
-size_t RecordManager::num_recorders() const
+stype RecordManager::num_recorders() const
 {
     return c_recorders_.size() + d_recorders_.size();
 }
@@ -332,10 +335,10 @@ void RecordManager::num_threads_changed(int num_omp)
     omp_id_drec_.clear();
     num_threads_ = num_omp;
 
-    for (size_t i = 0; i < num_omp; i++)
+    for (stype i = 0; i < num_omp; i++)
     {
-        omp_id_crec_.push_back(std::vector<size_t>());
-        omp_id_drec_.push_back(std::vector<size_t>());
+        omp_id_crec_.push_back(std::vector<stype>());
+        omp_id_drec_.push_back(std::vector<stype>());
     }
 }
 
@@ -344,7 +347,7 @@ void RecordManager::new_branching_event(const Event &ev)
 {
     if (!d_recorders_.empty())
     {
-        size_t neuron_gid = std::get<edata::NEURON>(ev);
+        stype neuron_gid = std::get<edata::NEURON>(ev);
         auto it           = neuron_to_d_recorder_.find(neuron_gid);
 
         if (it != neuron_to_d_recorder_.end())
@@ -358,7 +361,7 @@ void RecordManager::new_branching_event(const Event &ev)
 
     if (!c_recorders_.empty())
     {
-        size_t neuron_gid = std::get<edata::NEURON>(ev);
+        stype neuron_gid = std::get<edata::NEURON>(ev);
         auto it           = neuron_to_c_recorder_.find(neuron_gid);
 
         if (it != neuron_to_c_recorder_.end())
@@ -372,15 +375,15 @@ void RecordManager::new_branching_event(const Event &ev)
 }
 
 
-void RecordManager::neurons_deleted(const std::vector<size_t> &gids)
+void RecordManager::neurons_deleted(const std::vector<stype> &gids)
 {
-    for (size_t neuron : gids)
+    for (stype neuron : gids)
     {
         auto v_crec = neuron_to_c_recorder_.find(neuron);
 
         if (v_crec != neuron_to_c_recorder_.end())
         {
-            for (size_t rec_id : v_crec->second)
+            for (stype rec_id : v_crec->second)
             {
                 c_recorders_[rec_id]->neuron_deleted(neuron);
                 neuron_to_c_recorder_.erase(neuron);
@@ -391,7 +394,7 @@ void RecordManager::neurons_deleted(const std::vector<size_t> &gids)
 
         if (v_drec != neuron_to_d_recorder_.end())
         {
-            for (size_t rec_id : v_drec->second)
+            for (stype rec_id : v_drec->second)
             {
                 d_recorders_[rec_id]->neuron_deleted(neuron);
                 neuron_to_d_recorder_.erase(neuron);
@@ -401,13 +404,13 @@ void RecordManager::neurons_deleted(const std::vector<size_t> &gids)
 }
 
 
-void RecordManager::new_neurite(size_t neuron, const std::string& neurite)
+void RecordManager::new_neurite(stype neuron, const std::string& neurite)
 {
    auto v_crec = neuron_to_c_recorder_.find(neuron);
 
     if (v_crec != neuron_to_c_recorder_.end())
     {
-        for (size_t rec_id : v_crec->second)
+        for (stype rec_id : v_crec->second)
         {
             c_recorders_[rec_id]->new_neurite(neuron, neurite);
         }
@@ -417,7 +420,7 @@ void RecordManager::new_neurite(size_t neuron, const std::string& neurite)
 
     if (v_drec != neuron_to_d_recorder_.end())
     {
-        for (size_t rec_id : v_drec->second)
+        for (stype rec_id : v_drec->second)
         {
             d_recorders_[rec_id]->new_neurite(neuron, neurite);
         }
@@ -425,8 +428,8 @@ void RecordManager::new_neurite(size_t neuron, const std::string& neurite)
 }
 
 
-void RecordManager::gc_died(size_t neuron, const std::string& neurite,
-                            size_t gc_id)
+void RecordManager::gc_died(stype neuron, const std::string& neurite,
+                            stype gc_id)
 {
     // this information is only relevant for continuous recorders to know what
     // is the last time for the gc records.
@@ -435,7 +438,7 @@ void RecordManager::gc_died(size_t neuron, const std::string& neurite,
     
     if (v_crec != neuron_to_c_recorder_.end())
     {
-        for (size_t rec_id : v_crec->second)
+        for (stype rec_id : v_crec->second)
         {
             c_recorders_[rec_id]->gc_died(neuron, neurite, gc_id);
         }
@@ -443,7 +446,7 @@ void RecordManager::gc_died(size_t neuron, const std::string& neurite,
 }
 
 
-statusMap RecordManager::get_recorder_status(size_t gid) const
+statusMap RecordManager::get_recorder_status(stype gid) const
 {
     statusMap status;
     std::shared_ptr<BaseRecorder> rec;
@@ -503,7 +506,7 @@ statusMap RecordManager::get_recorder_status(size_t gid) const
 void RecordManager::set_status(const statusMap &status) {}
 
 
-void RecordManager::get_recorder_type(size_t gid, std::string &level,
+void RecordManager::get_recorder_type(stype gid, std::string &level,
                                       std::string &event_type) const
 {
     if (is_recorder(gid))
@@ -529,7 +532,7 @@ void RecordManager::get_recorder_type(size_t gid, std::string &level,
 }
 
 
-bool RecordManager::get_next_recording(size_t gid, std::vector<Property> &ids,
+bool RecordManager::get_next_recording(stype gid, std::vector<Property> &ids,
                                        std::vector<double> &values)
 {
     auto c_it = c_recorders_.find(gid);
@@ -553,7 +556,7 @@ bool RecordManager::get_next_recording(size_t gid, std::vector<Property> &ids,
 }
 
 
-bool RecordManager::get_next_time(size_t gid, std::vector<Property> &ids,
+bool RecordManager::get_next_time(stype gid, std::vector<Property> &ids,
                                   std::vector<double> &values,
                                   const std::string &time_units)
 {

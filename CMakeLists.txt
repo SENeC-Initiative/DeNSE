@@ -45,6 +45,7 @@ get_target_triple( CGROWTH_TARGET_TRIPLE CGROWTH_TARGET_ARCH CGROWTH_TARGET_VEND
 # process compiler and options
 if (MSVC)
    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase-" )
+   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 else ()
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 
@@ -79,14 +80,23 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" )
     set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
 
-    # get local user library folder as default install prefix
-    if (PYTHON_EXECUTABLE MATCHES "Anaconda")
+    # get local user library folder as default install prefix ()
+    if (PYTHON_EXECUTABLE MATCHES "conda")
       execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
       string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-    elseif (MSVC)
-      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase().replace('\\\\', '/'))" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     else ()
-      execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import site; print(site.getuserbase())" OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif ()
+
+    # sometimes the getuserbase command fails
+    if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
+      if (APPLE)
+        set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/Library/Python/${PYTHON_VERSION}")
+      elseif (MSVC)
+        set(CMAKE_INSTALL_PREFIX "\"$ENV{APPDATA}/Python\"")
+      else ()
+        set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/.local")
+      endif ()
     endif ()
 
     # cache it
@@ -122,8 +132,9 @@ endif ()
 
 # check that python install was setup automatically or set it manually
 
-if (NOT DEFINED PYTHON_INSTALL_DIR)
+if (NOT DEFINED PYTHON_INSTALL_DIR OR "${PYTHON_INSTALL_DIR}" STREQUAL "")
   set(PYTHON_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}")
+  file(MAKE_DIRECTORY "${PYTHON_INSTALL_DIR}")
 endif()
 
 
@@ -154,16 +165,16 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGROWTH_CXX_COLOR_FLAGS}" )
 if ( NOT CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "None" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS}" )
-elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
+elseif ( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_DEBUG}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
-elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Release" )
+elseif ( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS}" )
-elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" )
+elseif ( "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel" )
+elseif ( "${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel" )
   set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_MINSIZEREL}" )
   set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
 else ()

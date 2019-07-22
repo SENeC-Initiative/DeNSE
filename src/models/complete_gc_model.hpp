@@ -85,7 +85,7 @@ class GrowthConeModel
     void
     select_direction(const std::vector<double> &directions_weights,
                      mtPtr rnd_engine, double &substep, double &new_angle,
-                     size_t &default_direction) override final;
+                     stype &default_direction) override final;
 
     void prepare_for_split() override final;
     void after_split() override final;
@@ -222,7 +222,7 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_direction_proba
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::select_direction(
   const std::vector<double> &directions_weights, mtPtr rnd_engine,
-  double &substep, double &new_angle, size_t &default_direction)
+  double &substep, double &new_angle, stype &default_direction)
 {
     dir_selector_->select_direction(directions_weights, filopodia_,
         rnd_engine, total_proba_, interacting_, move_.angle, substep,

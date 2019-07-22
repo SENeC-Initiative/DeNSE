@@ -132,7 +132,7 @@ if __name__ == '__main__':
     save_path = CleanFolder(os.path.join(os.getcwd(),"swc"))
     ds.save_json_info(filepath=save_path)
     ds.SaveSwc(filepath=save_path,swc_resolution = 10)
-    structure = ds.NeuronStructure()
+    structure = ds.morphology.NeuronStructure()
     graph =ds.generate_network(structure=structure)
 
 

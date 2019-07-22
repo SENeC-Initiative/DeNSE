@@ -15,36 +15,29 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 
 
+IF @MSVC@:
+    ctypedef unsigned long stype
+ELSE:
+    ctypedef size_t stype
+
+ctypedef unordered_map[string, Property] statusMap
+ctypedef unordered_map[ string, vector[double] ] mapParams
+
+
 # ---------------------- #
 # Load the c++ functions #
 # ---------------------- #
-
-cdef extern from "../libgrowth/elements_types.hpp" namespace "growth":
-    ctypedef pair[vector[double], vector[double]] SkelNeurite
-    ctypedef vector[vector[double]] SkelSomas
-
-    ctypedef struct NodeProp:
-        NodeProp() except +
-
-        size_t n_id
-        size_t p_id
-        double diameter
-        double dist_to_parent
-        vector[double] position
-
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef enum dtype:
         BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, MAP_DOUBLE
 
-    ctypedef unordered_map[string, Property] statusMap
-
     cdef cppclass Property:
         Property() except +
         Property(double d, const string& dim) except +
         Property(int i, const string& dim) except +
-        Property(size_t ul, const string& dim) except +
-        Property(const vector[size_t]& v, const string& dim) except +
+        Property(stype ul, const string& dim) except +
+        Property(const vector[stype]& v, const string& dim) except +
         Property(const vector[long]& v, const string& dim) except +
         Property(const string& s, const string& dim) except +
         Property(const vector[string]& v, const string& dim) except +
@@ -54,19 +47,33 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
         bool b
         double d
         int i
-        size_t ul
+        stype ul
         vector[long] ll
-        vector[size_t] uu
+        vector[stype] uu
         string s
         vector[string] ss
         unordered_map[string, double] md
+
+
+cdef extern from "../libgrowth/elements_types.hpp" namespace "growth":
+    ctypedef pair[vector[double], vector[double]] SkelNeurite
+    ctypedef vector[vector[double]] SkelSomas
+
+    ctypedef struct NodeProp:
+        NodeProp() except +
+
+        stype n_id
+        stype p_id
+        double diameter
+        double dist_to_parent
+        vector[double] position
 
 
 cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
     cdef cppclass CTime "growth::Time":
         CTime() except +
         CTime(double seconds, unsigned char minutes, unsigned char hours,
-              size_t days) except +
+              stype days) except +
         CTime(CTime initial_time, unsigned long steps) except +
         void set_sec(double seconds)
         void set_min(char minutes)
@@ -75,38 +82,36 @@ cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
         double get_sec() const
         char get_min() const
         char get_hour() const
-        size_t get_day() const
+        stype get_day() const
         double get_total_seconds() const
 
 
 # kernel functions
-ctypedef unordered_map[ string, vector[double] ] mapParams
-
 
 cdef extern from "../module.hpp" namespace "growth":
     cdef void init_growth_(int* argc, char** argv[] )
 
     cdef void finalize_growth_()
 
-    cdef size_t create_objects_(const string& object_name,
+    cdef stype create_objects_(const string& object_name,
                                 const vector[statusMap]& obj_params
                                 ) except +
 
-    cdef size_t create_neurons_(const vector[statusMap]& neuron_params,
+    cdef stype create_neurons_(const vector[statusMap]& neuron_params,
                                 const vector[statusMap]& axon_params,
                                 const vector[statusMap]& dendrites_params
                                 ) except +
 
-    cdef void create_neurites_(const vector[size_t]& neurons,
-                               size_t num_neurites,
+    cdef void create_neurites_(const vector[stype]& neurons,
+                               stype num_neurites,
                                const vector[statusMap]& params,
                                const vector[string]& neurite_types,
                                const vector[double]& angles,
                                const vector[string]& names) except +
 
-    cdef void delete_neurons_(const vector[size_t] &neurons) except +
+    cdef void delete_neurons_(const vector[stype] &neurons) except +
 
-    cdef void delete_neurites_(const vector[size_t] &neurons,
+    cdef void delete_neurites_(const vector[stype] &neurons,
                                const vector[string] &names) except +
 
     cdef void get_environment_(GEOSGeometry*& environment,
@@ -125,57 +130,57 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef statusMap get_kernel_status_() except +
 
-    cdef size_t get_num_objects_() except +
+    cdef stype get_num_objects_() except +
 
-    cdef size_t get_num_created_objects_() except +
+    cdef stype get_num_created_objects_() except +
 
     cdef void get_skeleton_(
         SkelNeurite& axon, SkelNeurite& dendrites, SkelNeurite& nodes,
         SkelNeurite& growth_cones, SkelSomas& somas,
-        vector[size_t] gids, unsigned int resolution) except +
+        vector[stype] gids, unsigned int resolution) except +
 
     cdef void get_geom_skeleton_(
-        vector[size_t] gids, vector[GEOSGeometry*]& axons,
-        vector[GEOSGeometry*]& dendrites, vector[size_t]& dendrite_gids,
+        vector[stype] gids, vector[GEOSGeometry*]& axons,
+        vector[GEOSGeometry*]& dendrites, vector[stype]& dendrite_gids,
         vector[vector[double]]& somas) except +
     
     cdef void generate_synapses_(
         bool crossings_only, double density,
         bool only_new_syn, bool autapse_allowed,
-        const cset[size_t] &presyn_pop, const cset[size_t] &postsyn_pop,
-        vector[size_t] &presyn_neurons, vector[size_t] &postsyn_neurons,
+        const cset[stype] &presyn_pop, const cset[stype] &postsyn_pop,
+        vector[stype] &presyn_neurons, vector[stype] &postsyn_neurons,
         vector[string] &presyn_neurites, vector[string] &postsyn_neurites,
-        vector[size_t] &presyn_nodes, vector[size_t] &postsyn_nodes,
-        vector[size_t] &presyn_segments, vector[size_t] &postsyn_segments,
+        vector[stype] &presyn_nodes, vector[stype] &postsyn_nodes,
+        vector[stype] &presyn_segments, vector[stype] &postsyn_segments,
         vector[double] &pre_syn_x, vector[double] &pre_syn_y,
         vector[double] &post_syn_x, vector[double] &post_syn_y) except +
     
-    cdef void get_distances_(size_t gid, const string &neurite, size_t node,
-                             size_t segment, double &dist_to_parent,
+    cdef void get_distances_(stype gid, const string &neurite, stype node,
+                             stype segment, double &dist_to_parent,
                              double &dist_to_soma) except +
 
     cdef void get_swc_(string output_file,
-        vector[size_t] gids, unsigned int resolution) except +
+        vector[stype] gids, unsigned int resolution) except +
 
-    cdef statusMap get_status_(size_t gid) except +
+    cdef statusMap get_status_(stype gid) except +
 
-    cdef statusMap get_neurite_status_(size_t gid,
+    cdef statusMap get_neurite_status_(stype gid,
                                       const string& n_type, const string& level,
                                       ) except +
 
-    cdef vector[size_t] get_neurons_() except +
+    cdef vector[stype] get_neurons_() except +
 
-    cdef bool is_neuron_(size_t gid) except +
-    cdef bool is_neurite_(size_t gid, const string& neurite) except +
+    cdef bool is_neuron_(stype gid) except +
+    cdef bool is_neurite_(stype gid, const string& neurite) except +
 
-    cdef vector[string] get_neurites_(size_t gid) except +
+    cdef vector[string] get_neurites_(stype gid) except +
 
-    cdef void get_branches_data_(size_t neuron, const string& neurite_name,
+    cdef void get_branches_data_(stype neuron, const string& neurite_name,
                                  vector[vector[vector[double]]]& points,
                                  vector[double]& diameters,
                                  vector[int]& parents,
-                                 vector[size_t]& nodes,
-                                 size_t start_point) except +
+                                 vector[stype]& nodes,
+                                 stype start_point) except +
 
     cdef void get_defaults_(const string& object_name,
                             const string& object_type,
@@ -188,17 +193,17 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef void get_models_(unordered_map[string, string]& models,
                           bool abbrev) except +
 
-    cdef void get_recorder_type_(size_t gid, string& level,
+    cdef void get_recorder_type_(stype gid, string& level,
                                  string& event_type) except +
 
-    cdef bool get_next_recording_(size_t gid, vector[Property]& ids,
+    cdef bool get_next_recording_(stype gid, vector[Property]& ids,
                                   vector[double]& values) except +
 
-    cdef bool get_next_time_(size_t gid, vector[Property]& ids,
+    cdef bool get_next_time_(stype gid, vector[Property]& ids,
                              vector[double]& values,
                              const string& time_units) except +
 
-    cdef string object_type_(size_t gid) except +
+    cdef string object_type_(stype gid) except +
 
     cdef void reset_kernel_() except +
 
@@ -207,28 +212,28 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef string get_simulation_id_() except +
 
-    cdef double get_state_(size_t gid, const string& level,
+    cdef double get_state_(stype gid, const string& level,
                            const string& variable) except +
 
-    cdef vector[string] get_extension_types_() except +
+    cdef vector[string] get_elongation_types_() except +
 
     cdef vector[string] get_steering_methods_() except +
 
     cdef vector[string] get_direction_selection_methods_() except +
 
-    cdef void set_status_(size_t gid, statusMap neuron_status,
+    cdef void set_status_(stype gid, statusMap neuron_status,
                           statusMap axon_status,
                           statusMap dendrites_status) except +
 
-    cdef void set_neurite_status_(size_t neurton, string neurite,
+    cdef void set_neurite_status_(stype neurton, string neurite,
                                   statusMap status) except +
 
     cdef void simulate_(const CTime& simtime)
 
     cdef void test_random_generator_(vector[vector[double]]& values,
-                                     size_t size) except +
+                                     stype size) except +
 
-    cdef bool walk_neurite_tree_(size_t neuron, string neurite,
+    cdef bool walk_neurite_tree_(stype neuron, string neurite,
                                  NodeProp& np) except +
 
 

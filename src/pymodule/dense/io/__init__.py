@@ -30,13 +30,14 @@ from ..elements import Neuron as _Neuron
 from . import dataIO_swc as _dataIO_swc
 from .dataIO_swc import *
 from .dataIO import (save_json_info, NeuronsFromSimulation,
-                     SimulationsFromFolder, load_swc)
+                     SimulationsFromFolder, load_swc, save_to_neuroml)
 
 __all__ = [
     "generate_hash_id",
-    "save_to_swc"
     "load_swc",
     "save_json_info",
+    "save_to_neuroml",
+    "save_to_swc",
     # "NeuronsFromSimulation",
     # "SimulationsFromFolder",
 ]

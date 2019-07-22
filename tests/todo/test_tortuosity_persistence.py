@@ -223,7 +223,7 @@ for k, resol in enumerate(resolutions[::-1]):
     ''' Analyze the resulting neurons '''
 
     # neurons    = ds.structure.NeuronStructure(gids)
-    structure  = ds.NeuronStructure(gids)
+    structure  = ds.morphology.NeuronStructure(gids)
     population = ds.Population.from_structure(structure)
     ens =  ds.EnsembleRW(population)
     sequence.append(ens)

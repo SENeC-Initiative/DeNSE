@@ -159,7 +159,7 @@ void ParallelismManager::set_status(const statusMap &status)
         }
         // check if seeds are unique
         std::set<long> seedset;
-        for (size_t i = 0; i < seeds.size(); i++)
+        for (stype i = 0; i < seeds.size(); i++)
         {
             long s = seeds[i];
             if (!seedset.insert(s).second)
@@ -169,10 +169,10 @@ void ParallelismManager::set_status(const statusMap &status)
             }
         }
         // seed RNGs [mpi_id*num_omp_, (mpi_id+1)*num_omp_)
-        size_t start = get_mpi_rank() * num_omp_;
-        size_t stop  = (get_mpi_rank() + 1) * num_omp_;
+        stype start = get_mpi_rank() * num_omp_;
+        stype stop  = (get_mpi_rank() + 1) * num_omp_;
         std::vector<long> local_seeds(stop - start);
-        for (size_t i = start; i < stop; i++)
+        for (stype i = start; i < stop; i++)
         {
             local_seeds[i - start] = seeds[i];
         }

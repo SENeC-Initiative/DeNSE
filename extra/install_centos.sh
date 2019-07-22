@@ -7,8 +7,10 @@ sudo yum -y install cmake gcc gcc-c++ python python-devel python-pip geos geos-d
 
 pip install --user setuptools
 pip install --user cython
-pip install --user numpy scipy shapely pint breathe sphinx-bootstrap-theme
-pip install --user networkx nngt svg.path dxfgrabber
+pip install --user numpy scipy pint pyneuroml
+pip install --user --no-binary shapely, shapely
+pip install --user sphinx breathe sphinx-bootstrap-theme
+pip install --user networkx nngt svg.path dxfgrabber PyOpenGL
 
 cd ..
 mkdir build

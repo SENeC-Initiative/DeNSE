@@ -31,6 +31,7 @@ import nngt
 import nngt.geometry as geom
 
 import dense as ds
+from dense.units import *
 from dense.tools import neurite_length
 
 
@@ -66,8 +67,8 @@ for k, resol in enumerate(resolutions):
     np.random.seed(1)
     ds.reset_kernel()
 
-    ds.get_kernel_status({
-        "resolution": resol,
+    ds.set_kernel_status({
+        "resolution": resol*ms,
         "num_local_threads": num_omp,
         "seeds": [2*i for i in range(num_omp)],
     })
@@ -75,13 +76,13 @@ for k, resol in enumerate(resolutions):
     ds.set_environment(shape)
 
     params = {
-        "sensing_angle": 0.12,
-        "persistence_length": 200.,
+        "sensing_angle": 70.*deg,
+        "persistence_length": 200.*um,
         "filopodia_wall_affinity": 2.5,
         "proba_down_move": 0.1,
         "scale_up_move": 0.,
-        "axon_angle": -179.,
-        "position": [(x, y) for x, y in zip(np.random.uniform(490, 510, num_neurons), np.random.uniform(-250, 250, num_neurons))],
+        "axon_angle": -179.*deg,
+        "position": [(x, y)*um for x, y in zip(np.random.uniform(490, 510, num_neurons), np.random.uniform(-250, 250, num_neurons))],
     }
 
     gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)

@@ -20,6 +20,7 @@
  */
 
 #include "module.hpp"
+#include "config.hpp"
 #include <iostream>
 #include <string>
 
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
     growth::simulate_(growth::Time(200, 0, 0, 0));
 
     growth::SkelNeurite axon, dendrites, nodes, growth_cones, somas;
-    std::vector<size_t> gid = {0};
+    std::vector<growth::stype> gid = {0};
     // growth::get_skeleton(axon, dendrites, nodes, growth_cones, somas, gid);
     growth::get_swc_("myswc", gid, 10);
 

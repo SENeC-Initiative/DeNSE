@@ -15,6 +15,15 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.vector cimport vector
 
 
+IF @MSVC@:
+    ctypedef unsigned long stype
+ELSE:
+    ctypedef size_t stype
+
+ctypedef unordered_map[string, Property] statusMap
+ctypedef unordered_map[ string, vector[double] ] mapParams
+
+
 # ---------------------- #
 # Load the c++ functions #
 # ---------------------- #
@@ -22,13 +31,6 @@ from libcpp.vector cimport vector
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef enum dtype:
         BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, MAP_DOUBLE
-
-IF @MSVC@:
-    ctypedef unsigned long stype
-ELSE:
-    ctypedef size_t stype
-
-    ctypedef unordered_map[string, Property] statusMap
 
     cdef cppclass Property:
         Property() except +
@@ -85,8 +87,6 @@ cdef extern from "../libgrowth/growth_time.hpp" namespace "growth":
 
 
 # kernel functions
-ctypedef unordered_map[ string, vector[double] ] mapParams
-
 
 cdef extern from "../module.hpp" namespace "growth":
     cdef void init_growth_(int* argc, char** argv[] )

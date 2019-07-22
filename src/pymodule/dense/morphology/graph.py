@@ -142,7 +142,6 @@ class SpatialMultiNetwork(object):
         -------
         Returns new edges only.
         '''
-        print("inside new edges")
         attr_keys = []
 
         for k in attributes:
@@ -399,18 +398,24 @@ class SpatialNetwork(_BaseNetwork):
         num_nodes        = population.size
         self._nodes      = set(population.ids)
         self._multigraph = equivalent_multigraph
-        self._population = population
+
+        if _with_nngt:
+            population = nngt.NeuralPop.uniform(len(population))
+            # don't pass population to nngt
+            super(SpatialNetwork, self).__init__(
+                nodes=num_nodes, name=name, weighted=weighted, directed=directed,
+                shape=shape, positions=positions, from_graph=from_graph,
+                **kwargs)
+            self._population = population
+            self.new_edge_attribute("multiplicity", "int", val=1)
+        else:
+            super(SpatialNetwork, self).__init__(
+                population, nodes=num_nodes, name=name, weighted=weighted,
+                directed=directed, shape=shape, positions=positions,
+                from_graph=from_graph, **kwargs)
 
         if population is None:
             raise RuntimeError("Network needs a NeuralPop to be created")
-
-        super(SpatialNetwork, self).__init__(
-            nodes=num_nodes, name=name, weighted=weighted, directed=directed,
-            shape=shape, positions=positions, from_graph=from_graph,
-            population=population, **kwargs)
-
-        if _with_nngt:
-            self.new_edge_attribute("multiplicity", "int", val=1)
 
     @property
     def population(self):

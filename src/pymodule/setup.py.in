@@ -52,7 +52,8 @@ except ImportError:
 copt =  {
     'msvc': [
         '/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',
-        '/MD', "-Zi", "/Od",
+        '/MDd' if "@CMAKE_BUILD_TYPE@" == "Debug" else "/MD", "-Zi", "/Od",
+        '/D_ITERATOR_DEBUG_LEVEL=2' if "@CMAKE_BUILD_TYPE@" == "Debug" else "",
     ],
     'unix': [
         '-std=c++11', '-Wno-cpp', '-Wno-unused-function', '-fopenmp',
@@ -62,7 +63,7 @@ copt =  {
 
 lopt =  {
     'unix': ['-fopenmp'],
-	'msvc': ['/subsystem:windows', "-debug"],
+	'msvc': ['/subsystem:windows', "/debug"],
 }
 
 # custom class
@@ -84,6 +85,9 @@ class CustomBuildExt(build_ext):
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
+        except:
+            pass
+        try:
             self.compiler.compiler_so.remove("-O3")
         except:
             pass

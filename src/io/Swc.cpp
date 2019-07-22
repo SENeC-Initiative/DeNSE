@@ -58,10 +58,10 @@ void Swc::close_file() { swc_file_.close(); }
  * @brief Write a neuron to swc
  *
  * @param Neuron neuron the smart pointer to the required neuron
- * @param size_t gid the identificative number of the neuron in the
+ * @param stype gid the identificative number of the neuron in the
  * NeuronManager
  */
-void Swc::to_swc(const Neuron *neuron, size_t gid)
+void Swc::to_swc(const Neuron *neuron, stype gid)
 {
     // write the number of the neuron, it can be whichever identifier used to
     // distinguish between neurons.
@@ -73,15 +73,15 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
     // as described in
     // https://www.neuron.yale.edu/phpbb/viewtopic.php?f=13&t=2161/
     // the previous point is set to -1
-    size_t last_sample = 0;
-    size_t sample      = 1;
+    stype last_sample = 0;
+    stype sample      = 1;
     BPoint pos         = neuron->get_position();
     swc_file_ << 1 << " " << somaID << " " << pos.x() << " " << pos.y()
               << " " << 0 << " " << neuron->get_soma_radius() << " " << -1
               << "\n";
     int neuriteID = -1;
     int ID        = -1;
-    size_t idxp;
+    stype idxp;
     double lgth, tap_r, final_diam;
     PointArray pp;
     BranchPtr b; // points and lengthof the branch
@@ -108,20 +108,20 @@ void Swc::to_swc(const Neuron *neuron, size_t gid)
         // since branching can happen save the branching point and when the
         // present branch is over start again from there.
         TNodePtr node = neurite.second->get_first_node()->get_child(0);
-        std::deque<std::pair<size_t, TNodePtr>> nodes{std::make_pair(1, node)};
+        std::deque<std::pair<stype, TNodePtr>> nodes{std::make_pair(1, node)};
 
         while (not nodes.empty())
         {
             idxp               = 0;
             auto node          = nodes.back();
             final_diam         = node.second->get_diameter();
-            size_t branch_size = node.second->get_branch()->size();
+            stype branch_size = node.second->get_branch()->size();
             b                  = node.second->get_branch();
             lgth               = b->get_length();
             ID                 = forkID;
             last_sample        = node.first;
             
-            for (size_t idx = 0; idx < branch_size; idx += resolution_)
+            for (stype idx = 0; idx < branch_size; idx += resolution_)
             {
                 pp = b->at(idx);
 

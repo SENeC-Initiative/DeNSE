@@ -44,7 +44,7 @@ void growth::RNGManager::seed(const std::vector<long> &seeds)
 
     rng_.resize(seeds.size());
     rng_seeds_.resize(seeds.size());
-    for (size_t i = 0; i < seeds.size(); i++)
+    for (stype i = 0; i < seeds.size(); i++)
     {
 #ifndef NDEBUG
         printf(" seeding the random generator\n");
@@ -68,11 +68,11 @@ void growth::RNGManager::create_rngs_()
     }
 
     // initialize
-    size_t mpi_rank = kernel().parallelism_manager.get_mpi_rank();
-    size_t num_omp  = kernel().parallelism_manager.get_num_local_threads();
+    stype mpi_rank = kernel().parallelism_manager.get_mpi_rank();
+    stype num_omp  = kernel().parallelism_manager.get_num_local_threads();
     rng_seeds_.resize(num_omp);
 
-    for (size_t i = 0; i < num_omp; i++)
+    for (stype i = 0; i < num_omp; i++)
     {
         long s = mpi_rank + i;
         /*

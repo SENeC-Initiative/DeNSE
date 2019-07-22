@@ -63,9 +63,10 @@ add_executable(growth "growth.cpp")
 target_include_directories( growth PRIVATE
      ${PROJECT_SOURCE_DIR}
      ${PROJECT_SOURCE_DIR}/kernel
+     ${PROJECT_SOURCE_DIR}/libgrowth
 )
 
-target_link_libraries( growth cgrowth )
+target_link_libraries( growth cgrowth libgrowth )
 install(TARGETS growth DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 # install target

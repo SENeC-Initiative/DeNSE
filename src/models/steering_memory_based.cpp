@@ -90,7 +90,7 @@ void MemBasedSteeringModel::compute_direction_probabilities(
                     / (volume + decay);
 
     // loop over the angles, get total probability, and add memory contribution
-    size_t n_max = filo.directions.size() - 1;
+    stype n_max = filo.directions.size() - 1;
     bool do_test = true;
 
     for (unsigned int n = 0; n < filo.directions.size(); n++)

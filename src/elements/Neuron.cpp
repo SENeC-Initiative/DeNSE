@@ -54,7 +54,7 @@ namespace growth
 // Constructors and destructor
 
 //! Default constructor
-Neuron::Neuron(size_t gid)
+Neuron::Neuron(stype gid)
     : gid_(gid)
     , description_("standard_neuron")
     , details()
@@ -269,7 +269,7 @@ void Neuron::finalize()
 /**
  * Function that simulates the growth of the neuron.
  */
-void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
+void Neuron::grow(mtPtr rnd_engine, stype current_step, double substep)
 {
     // if we use actin waves, tell each neurite to update them
     if (use_actin_waves_)
@@ -280,7 +280,7 @@ void Neuron::grow(mtPtr rnd_engine, size_t current_step, double substep)
         {
             next_actin_event(rnd_engine);
             // pick random neurite
-            size_t idx_neurite =
+            stype idx_neurite =
                 neurites_.size() * uniform_(*(rnd_engine).get());
             auto rnd_neurite = std::next(std::begin(neurites_), idx_neurite);
             rnd_neurite->second->start_actin_wave(actin_content_);
@@ -594,7 +594,7 @@ void Neuron::delete_neurites(const std::vector<std::string> &names)
 
 void Neuron::next_actin_event(mtPtr rnd_engine)
 {
-    // aw_generation_step_ += (size_t)1. / actin_freq_;
+    // aw_generation_step_ += (stype)1. / actin_freq_;
     // printf( "next actin event at %lu", aw_generation_step_);
 }
 
@@ -874,7 +874,7 @@ std::string Neuron::get_gc_model() const { return growth_cone_model_; }
 BPoint Neuron::get_position() const { return soma_->get_position(); }
 
 
-size_t Neuron::get_gid() const { return gid_; }
+stype Neuron::get_gid() const { return gid_; }
 
 
 bool Neuron::has_axon() const { return has_axon_; };

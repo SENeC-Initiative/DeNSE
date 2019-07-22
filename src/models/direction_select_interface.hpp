@@ -89,7 +89,7 @@ class DirectionSelectModel
         const std::vector<double> &directions_weights, const Filopodia &filo,
         mtPtr rnd_engine, double total_proba, bool interacting,
         double old_angle, double &substep, double &step_length,
-        double &new_angle, bool &stopped, size_t &default_direction) = 0;
+        double &new_angle, bool &stopped, stype &default_direction) = 0;
 
     void get_observables(std::vector<std::string> &obs) const
     {

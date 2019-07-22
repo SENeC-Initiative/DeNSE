@@ -145,7 +145,7 @@ void Branch::retract()
         {
             BPolygonPtr new_last_poly = segments_.back();
 
-            for (size_t i=0; i < ring.size() - 1; i++)
+            for (stype i=0; i < ring.size() - 1; i++)
             {
                 if (bg::covered_by(ring[i], *(new_last_poly.get())))
                 {
@@ -162,7 +162,7 @@ void Branch::retract()
 }
 
 
-void Branch::resize_tail(size_t new_size)
+void Branch::restypeail(stype new_size)
 {
     assert(new_size <= size());
 
@@ -171,7 +171,7 @@ void Branch::resize_tail(size_t new_size)
     points_[2].resize(new_size);
 
     // for segment, set new size
-    size_t size_seg = new_size == 0 ? 0 : new_size - 1;
+    stype size_seg = new_size == 0 ? 0 : new_size - 1;
 
     // recover the new last points
     if (size_seg > 0 and size_seg < segments_.size())
@@ -183,7 +183,7 @@ void Branch::resize_tail(size_t new_size)
 
         auto ring = end_poly->outer();
 
-        for (size_t i=0; i < ring.size() - 1; i++)
+        for (stype i=0; i < ring.size() - 1; i++)
         {
             if (bg::covered_by(ring[i], *(last_poly.get())))
             {
@@ -209,7 +209,7 @@ void Branch::resize_tail(size_t new_size)
  *
  * @return Branch object of size Branch.size - id_x
  */
-BranchPtr Branch::resize_head(size_t id_x) const
+BranchPtr Branch::resize_head(stype id_x) const
 {
     assert(size() > id_x);
     BranchPtr new_branch = std::make_shared<Branch>();
@@ -246,7 +246,7 @@ BranchPtr Branch::resize_head(size_t id_x) const
  */
 void Branch::append_branch(BranchPtr appended_branch)
 {
-    size_t total_size = points_[0].size() + appended_branch->size();
+    stype total_size = points_[0].size() + appended_branch->size();
 
     const BPoint lp = get_last_xy();
     const BPoint ip = appended_branch->xy_at(0);
@@ -332,7 +332,7 @@ double Branch::get_length() const
 }
 
 
-double Branch::get_segment_length_at(size_t idx) const
+double Branch::get_segment_length_at(stype idx) const
 {
     if (idx == 0)
     {
@@ -371,7 +371,7 @@ const BPolygonPtr Branch::get_last_segment() const
 }
 
 
-const BPolygonPtr Branch::get_segment_at(size_t idx) const
+const BPolygonPtr Branch::get_segment_at(stype idx) const
 {
     return segments_.at(idx);
 }
@@ -395,19 +395,19 @@ const std::vector<double>& Branch::get_ylist() const
 }
 
 
-PointArray Branch::at(size_t idx) const
+PointArray Branch::at(stype idx) const
 {
     return {{points_[0].at(idx), points_[1].at(idx), points_[2].at(idx)}};
 }
 
 
-BPoint Branch::xy_at(size_t idx) const
+BPoint Branch::xy_at(stype idx) const
 {
     return BPoint(points_[0].at(idx), points_[1].at(idx));
 }
 
 
-size_t Branch::size() const
+stype Branch::size() const
 {
     return points_[0].size();
 }

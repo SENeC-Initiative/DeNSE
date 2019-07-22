@@ -165,7 +165,8 @@ def generate_network(source_neurons=None, target_neurons=None,
         raise RuntimeError('Cannot create a network without any neurons '
                            'or environment.')
 
-    network = NetClass(population=population, shape=shape, positions=positions)
+    network = NetClass(population=population, shape=shape, positions=positions,
+                       multigraph=multigraph)
 
     num_synapses = len(edges)
 

@@ -68,7 +68,7 @@ class SpaceManager : public ManagerInterface
                     double length, double taper, const ObjectInfo& info,
                     BranchPtr b, int omp_id);
     void update_objects_branching(TNodePtr old_node, NodePtr new_node,
-                                  size_t branching_point, size_t neuron,
+                                  stype branching_point, stype neuron,
                                   const std::string &neurite, int omp_id);
     void remove_object(const BBox &box, const ObjectInfo& info, int omp_id);
     void get_objects_in_range(const BPoint &p, double radius,
@@ -83,7 +83,7 @@ class SpaceManager : public ManagerInterface
     inline BLineString line_from_points(const BPoint &pointA,
                                         const BPoint &pointB) const;
     bool env_contains(const BPoint &point) const;
-    bool is_inside(const BPoint &point, size_t neuron,
+    bool is_inside(const BPoint &point, stype neuron,
                    const std::string &neurite, double radius,
                    BPolygon &polygon) const;
 
@@ -123,30 +123,30 @@ class SpaceManager : public ManagerInterface
                              const Move &move, const BPolygonPtr last_segment);
 
     void check_synaptic_site(
-        const BPoint &position, double distance, size_t neuron_id,
-        const std::string &neurite_name, size_t other_neuron,
+        const BPoint &position, double distance, stype neuron_id,
+        const std::string &neurite_name, stype other_neuron,
         const std::string &other_neurite, BPolygonPtr poly);
     void generate_synapses_crossings(
         double synapse_density, bool only_new_syn, bool autapse_allowed,
-        const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
-        std::vector<size_t> &presyn_neurons,
-        std::vector<size_t> &postsyn_neurons,
+        const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
+        std::vector<stype> &presyn_neurons,
+        std::vector<stype> &postsyn_neurons,
         std::vector<std::string> &presyn_neurites,
         std::vector<std::string> &postsyn_neurites,
-        std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
-        std::vector<size_t> &presyn_segments,
-        std::vector<size_t> &postsyn_segments,
+        std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+        std::vector<stype> &presyn_segments,
+        std::vector<stype> &postsyn_segments,
         std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y);
     void generate_synapses_all(
         double spine_density, bool only_new_syn, bool autapse_allowed,
-        const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
-        std::vector<size_t> &presyn_neurons,
-        std::vector<size_t> &postsyn_neurons,
+        const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
+        std::vector<stype> &presyn_neurons,
+        std::vector<stype> &postsyn_neurons,
         std::vector<std::string> &presyn_neurites,
         std::vector<std::string> &postsyn_neurites,
-        std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
-        std::vector<size_t> &presyn_segments,
-        std::vector<size_t> &postsyn_segments,
+        std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+        std::vector<stype> &presyn_segments,
+        std::vector<stype> &postsyn_segments,
         std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
         std::vector<double> &post_syn_x, std::vector<double> &post_syn_y);
 

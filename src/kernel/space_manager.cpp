@@ -461,8 +461,8 @@ void SpaceManager::remove_object(const BBox &box, const ObjectInfo &info,
 
 
 void SpaceManager::update_objects_branching(TNodePtr old_node, NodePtr new_node,
-                                            size_t branching_point,
-                                            size_t neuron,
+                                            stype branching_point,
+                                            stype neuron,
                                             const std::string &neurite,
                                             int omp_id)
 {
@@ -470,15 +470,15 @@ void SpaceManager::update_objects_branching(TNodePtr old_node, NodePtr new_node,
     BBox box;
     ObjectInfo info;
 
-    size_t old_id(old_node->get_node_id()), new_id(new_node->get_node_id());
+    stype old_id(old_node->get_node_id()), new_id(new_node->get_node_id());
     const BranchPtr old_branch(old_node->get_branch());
     const BranchPtr new_branch(new_node->get_branch());
 
-    // size_t num_old_segments = max(old_branch->size() - 2, 0);
-    // size_t num_new_segments = max(new_branch->size() - 2, 0);
+    // stype num_old_segments = max(old_branch->size() - 2, 0);
+    // stype num_new_segments = max(new_branch->size() - 2, 0);
 
     // change node ids below branching point
-    for (size_t i = 0; i < branching_point; i++)
+    for (stype i = 0; i < branching_point; i++)
     {
         poly = new_branch->get_segment_at(i);
         box  = bg::return_envelope<BBox>(*(poly.get()));
@@ -496,9 +496,9 @@ void SpaceManager::update_objects_branching(TNodePtr old_node, NodePtr new_node,
     }
 
     // change segment ids above branching point
-    size_t imax = old_branch->size() > 0 ? old_branch->size() - 1 : 0;
+    stype imax = old_branch->size() > 0 ? old_branch->size() - 1 : 0;
 
-    for (size_t i = 0; i < imax; i++)
+    for (stype i = 0; i < imax; i++)
     {
         poly = old_branch->get_segment_at(i);
         box  = bg::return_envelope<BBox>(*(poly.get()));
@@ -592,7 +592,7 @@ void SpaceManager::update_rtree()
         // box buffer is keeping track of the proper order of the addition and
         // removal operations, so we follow it
 
-        for (size_t i = 0; i < box_buffer_.size(); i++)
+        for (stype i = 0; i < box_buffer_.size(); i++)
         {
             const space_tree_map &gmap = geom_add_buffer_[i];
             const auto &v              = box_buffer_[i];
@@ -673,7 +673,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     double wall_afty    = filopodia.wall_affinity;
     double lamel_factor = 2.;
 
-    size_t neuron_id                = gc_ptr->get_neuron_id();
+    stype neuron_id                = gc_ptr->get_neuron_id();
     const std::string &neurite_name = gc_ptr->get_neurite_name();
     BPolygonPtr last_segment        = gc_ptr->get_branch()->get_last_segment();
 
@@ -697,10 +697,10 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     BMultiPoint intersections;
     //~ std::vector<AreaPtr> new_areas;
     BLineString filo_line, tmp_line;
-    std::vector<size_t> indices;
+    std::vector<stype> indices;
     std::vector<bool> is_wall;
     std::string name_new_area;
-    size_t n_intersect;
+    stype n_intersect;
     AreaPtr new_area;
     GEOSGeom border;
     // recursive loop
@@ -759,7 +759,7 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
             get_intersected_objects(position, filo_pos, neighbors_info);
 
             BPolygonPtr other;
-            size_t other_neuron, other_node, other_segment;
+            stype other_neuron, other_node, other_segment;
             std::string other_neurite;
 
             for (const auto &info : neighbors_info)
@@ -1169,8 +1169,8 @@ void SpaceManager::check_accessibility(std::vector<double> &directions_weights,
 
 
 void SpaceManager::check_synaptic_site(
-    const BPoint &position, double distance, size_t neuron_id,
-    const std::string &neurite_name, size_t other_neuron,
+    const BPoint &position, double distance, stype neuron_id,
+    const std::string &neurite_name, stype other_neuron,
     const std::string &other_neurite, BPolygonPtr poly)
 {
     if (distance < max_syn_distance_)
@@ -1224,12 +1224,12 @@ void SpaceManager::check_synaptic_site(
  */
 void SpaceManager::generate_synapses_crossings(
   double synapse_density, bool only_new_syn, bool autapse_allowed,
-  const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
-  std::vector<size_t> &presyn_neurons, std::vector<size_t> &postsyn_neurons,
+  const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
+  std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
   std::vector<std::string> &presyn_neurites,
   std::vector<std::string> &postsyn_neurites,
-  std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
-  std::vector<size_t> &presyn_segments, std::vector<size_t> &postsyn_segments,
+  std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+  std::vector<stype> &presyn_segments, std::vector<stype> &postsyn_segments,
   std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y)
 {
     // range of points to test
@@ -1249,20 +1249,20 @@ void SpaceManager::generate_synapses_crossings(
         mtPtr rng  = kernel().rng_manager.get_rng(omp_id);
 
         // store the axons and dendrites in a map
-        std::unordered_map< std::string, std::vector<size_t> > ntypes({
+        std::unordered_map< std::string, std::vector<stype> > ntypes({
             {"axon", {}}, {"other", {}}
         });
 
         ObjectInfo segment_info, axon_info, other_info;
         BMultiPolygon intersection, covered_range;
         std::vector<ObjectInfo> neighbors_info;
-        size_t presyn_id, postsyn_id;
+        stype presyn_id, postsyn_id;
         bool check_syn, valid_syn;
         double tmp, area, x, y;
         BPoint centroid, p;
         int num_synapses;
 
-        for (size_t k=0; k < points.size(); k++)
+        for (stype k=0; k < points.size(); k++)
         {
             p = points[k];
 
@@ -1273,7 +1273,7 @@ void SpaceManager::generate_synapses_crossings(
             BPolygonPtr axon_poly, other_poly;
             ntypes.clear();
 
-            for (size_t i=0; i < neighbors_info.size(); i++)
+            for (stype i=0; i < neighbors_info.size(); i++)
             {
                 segment_info = neighbors_info[i];
 
@@ -1289,11 +1289,11 @@ void SpaceManager::generate_synapses_crossings(
 
             if (ntypes["other"].size() > 0 and ntypes["axon"].size() > 0)
             {
-                for (size_t i : ntypes["axon"])
+                for (stype i : ntypes["axon"])
                 {
                     axon_info = neighbors_info[i];
 
-                    for (size_t j : ntypes["other"])
+                    for (stype j : ntypes["other"])
                     {
                         // clear intersection
                         intersection.clear();
@@ -1336,7 +1336,7 @@ void SpaceManager::generate_synapses_crossings(
                                     num_synapses += 1;
                                 }
 
-                                for (size_t s=0; s < num_synapses; s++)
+                                for (stype s=0; s < num_synapses; s++)
                                 {
                                     // @todo get a random point in the
                                     // intersection
@@ -1383,12 +1383,12 @@ void SpaceManager::generate_synapses_crossings(
 
 void SpaceManager::generate_synapses_all(
   double spine_density, bool only_new_syn, bool autapse_allowed,
-  const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
-  std::vector<size_t> &presyn_neurons, std::vector<size_t> &postsyn_neurons,
+  const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
+  std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
   std::vector<std::string> &presyn_neurites,
   std::vector<std::string> &postsyn_neurites,
-  std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
-  std::vector<size_t> &presyn_segments, std::vector<size_t> &postsyn_segments,
+  std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+  std::vector<stype> &presyn_segments, std::vector<stype> &postsyn_segments,
   std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
   std::vector<double> &post_syn_x, std::vector<double> &post_syn_y)
 {
@@ -1416,21 +1416,21 @@ void SpaceManager::generate_synapses_all(
         mtPtr rng  = kernel().rng_manager.get_rng(omp_id);
 
         // store the axons and dendrites in a map
-        std::unordered_map< std::string, std::vector<size_t> > ntypes({
+        std::unordered_map< std::string, std::vector<stype> > ntypes({
             {"axon", {}}, {"other", {}}
         });
 
         ObjectInfo segment_info, axon_info, other_info;
         BMultiPolygon axon_buffer, other_buffer;
         std::vector<ObjectInfo> neighbors_info;
-        size_t presyn_id, postsyn_id;
+        stype presyn_id, postsyn_id;
         BMultiPolygon intersection;
         bool check_syn, valid_syn;
         BPoint centroid, p;
         int num_synapses;
         double tmp, area;
 
-        for (size_t k=0; k < all_points.size(); k++)
+        for (stype k=0; k < all_points.size(); k++)
         {
             p = all_points[k];
 
@@ -1441,7 +1441,7 @@ void SpaceManager::generate_synapses_all(
             BPolygonPtr axon_poly, other_poly;
             ntypes.clear();
 
-            for (size_t i=0; i < neighbors_info.size(); i++)
+            for (stype i=0; i < neighbors_info.size(); i++)
             {
                 segment_info = neighbors_info[i];
 
@@ -1457,11 +1457,11 @@ void SpaceManager::generate_synapses_all(
 
             if (ntypes["other"].size() > 0 and ntypes["axon"].size() > 0)
             {
-                for (size_t i : ntypes["axon"])
+                for (stype i : ntypes["axon"])
                 {
                     axon_info = neighbors_info[i];
 
-                    for (size_t j : ntypes["other"])
+                    for (stype j : ntypes["other"])
                     {
                         other_info = neighbors_info[j];
 
@@ -1512,7 +1512,7 @@ void SpaceManager::generate_synapses_all(
                                     num_synapses += 1;
                                 }
 
-                                for (size_t s=0; s < num_synapses; s++)
+                                for (stype s=0; s < num_synapses; s++)
                                 {
                                     // @todo get a random point in along the
                                     // segments
@@ -1580,7 +1580,7 @@ bool SpaceManager::env_contains(const BPoint &point) const
 }
 
 
-bool SpaceManager::is_inside(const BPoint &point, size_t neuron,
+bool SpaceManager::is_inside(const BPoint &point, stype neuron,
                              const std::string &neurite, double radius,
                              BPolygon &polygon) const
 {
@@ -1737,7 +1737,7 @@ double SpaceManager::unstuck_angle(const BPoint &position, double current_angle,
         }
     }
 
-    size_t num_intersect = intsct.size();
+    stype num_intersect = intsct.size();
     double angle_first(0.), angle_last(3.15);
 
     if (num_intersect)
@@ -1801,7 +1801,7 @@ void _get_p_at_dist(const BLineString &line, const BMultiPoint &intersections,
         printf("zero size distances\n");
     }
     auto it_min = std::min_element(distances.begin(), distances.end());
-    size_t nmin = std::distance(distances.begin(), it_min);
+    stype nmin = std::distance(distances.begin(), it_min);
 
     if (distances[nmin] > radius)
     {
@@ -1896,11 +1896,11 @@ void SpaceManager::copy_polygon(BMultiPolygonPtr copy, const BPolygon &p)
 
 void SpaceManager::copy_polygon(BMultiPolygonPtr copy, const BMultiPolygon &p)
 {
-    size_t num_poly = p.size();
+    stype num_poly = p.size();
     bg::clear(*(copy.get()));
     copy->resize(num_poly);
 
-    for (size_t i = 0; i < num_poly; i++)
+    for (stype i = 0; i < num_poly; i++)
     {
         auto &ring = copy->at(i).outer();
 
@@ -1937,7 +1937,7 @@ void SpaceManager::set_environment(
     BMultiPolygon area_multi_tmp;
     BMultiPolygonPtr b_area;
 
-    for (size_t i = 0; i < areas.size(); i++)
+    for (stype i = 0; i < areas.size(); i++)
     {
         b_area = std::make_shared<BMultiPolygon>();
         wkt    = GEOSWKTWriter_write_r(context_handler_, writer, areas[i]);

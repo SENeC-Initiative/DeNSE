@@ -26,6 +26,7 @@
 #include <limits>
 #include <mutex>
 
+#include "config.hpp"
 #include "config_impl.hpp"
 #include "kernel_manager.hpp"
 
@@ -87,20 +88,20 @@ void NeuronManager::finalize()
  *
  * @return Number of objects created.
  */
-size_t
+stype
 NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
                               const std::vector<statusMap> &axon_params,
                               const std::vector<statusMap> &dendrites_params)
 {
-    size_t first_id             = kernel().get_num_created_objects();
-    size_t previous_num_neurons = neurons_.size();
+    stype first_id             = kernel().get_num_created_objects();
+    stype previous_num_neurons = neurons_.size();
 
     // put the neurons on the thread list they belong to
-    size_t num_omp = kernel().parallelism_manager.get_num_local_threads();
+    stype num_omp = kernel().parallelism_manager.get_num_local_threads();
     int omp_id     = kernel().parallelism_manager.get_thread_local_id();
-    std::vector<std::vector<size_t>> thread_neurons(num_omp);
+    std::vector<std::vector<stype>> thread_neurons(num_omp);
 
-    for (size_t i = 0; i < neuron_params.size(); i++)
+    for (stype i = 0; i < neuron_params.size(); i++)
     {
         double x, y;
         get_param(neuron_params[i], "x", x);
@@ -117,9 +118,10 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         }
 
         // @TODO change temporary round-robin for neuron assignement
-        unsigned int omp_id = (first_id + i) % num_omp;
-        thread_neurons[omp_id].push_back(first_id + i);
-        thread_of_neuron_[first_id + i] = omp_id;
+        int omp_id = (first_id + i) % num_omp;
+        stype neuron_id = first_id + i;
+        thread_neurons[omp_id].push_back(neuron_id);
+        thread_of_neuron_[neuron_id] = omp_id;
     }
 
     // exception_capture_flag "guards" captured_exception. std::called_once()
@@ -139,11 +141,11 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         std::vector<NeuronPtr> local_neurons;
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
-        std::vector<size_t> gids(thread_neurons[omp_id]);
+        std::vector<stype> gids(thread_neurons[omp_id]);
 
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
-            size_t idx       = gid - first_id;
+            stype idx       = gid - first_id;
             NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
             try
@@ -163,7 +165,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
 
 #pragma omp critical
         {
-            for (size_t i = 0; i < gids.size(); i++)
+            for (stype i = 0; i < gids.size(); i++)
             {
                 neurons_.insert({gids[i], local_neurons[i]});
                 neurons_on_thread_[omp_id].push_back(local_neurons[i]);
@@ -179,16 +181,16 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
     }
 
     // tell the kernel manager to update the number of objects
-    size_t num_created = neurons_.size() - previous_num_neurons;
+    stype num_created = neurons_.size() - previous_num_neurons;
     kernel().update_num_objects(num_created);
 
     return num_created;
 }
 
 
-void NeuronManager::delete_neurons(const std::vector<size_t> &gids)
+void NeuronManager::delete_neurons(const std::vector<stype> &gids)
 {
-    for (size_t neuron : gids)
+    for (stype neuron : gids)
     {
         auto it = neurons_.find(neuron);
 
@@ -198,7 +200,7 @@ void NeuronManager::delete_neurons(const std::vector<size_t> &gids)
         {
             for (auto v : neurons_on_thread_)
             {
-                for (size_t i=0; i < v.size(); i++)
+                for (stype i=0; i < v.size(); i++)
                 {
                     if (v[i] == n)
                     {
@@ -219,8 +221,8 @@ void NeuronManager::init_neurons_on_thread(unsigned int num_local_threads)
 {
     assert(neurons_.size() == 0); // no changes once neurons exist
     neurons_on_thread_ = std::vector<std::vector<NeuronPtr>>(num_local_threads);
-    max_resolutions_   = std::vector<std::unordered_map<size_t, double>>(
-        num_local_threads, std::unordered_map<size_t, double>());
+    max_resolutions_   = std::vector<std::unordered_map<stype, double>>(
+        num_local_threads, std::unordered_map<stype, double>());
 }
 
 
@@ -269,7 +271,7 @@ void NeuronManager::update_kernel_variables()
 
 // getters
 
-NeuronPtr NeuronManager::get_neuron(size_t gid) { return neurons_[gid]; }
+NeuronPtr NeuronManager::get_neuron(stype gid) { return neurons_[gid]; }
 
 
 gidNeuronMap NeuronManager::get_local_neurons(int local_thread_id)
@@ -318,7 +320,7 @@ void NeuronManager::get_defaults(statusMap &status,
 }
 
 
-const statusMap NeuronManager::get_neuron_status(size_t gid) const
+const statusMap NeuronManager::get_neuron_status(stype gid) const
 {
     NeuronPtr n = neurons_.at(gid);
     statusMap neuron_status;
@@ -329,9 +331,9 @@ const statusMap NeuronManager::get_neuron_status(size_t gid) const
 }
 
 
-std::vector<size_t> NeuronManager::get_gids() const
+std::vector<stype> NeuronManager::get_gids() const
 {
-    std::vector<size_t> gids;
+    std::vector<stype> gids;
 
     for (auto it : neurons_)
     {
@@ -343,7 +345,7 @@ std::vector<size_t> NeuronManager::get_gids() const
 
 
 const statusMap
-NeuronManager::get_neurite_status(size_t gid, const std::string &neurite,
+NeuronManager::get_neurite_status(stype gid, const std::string &neurite,
                                   const std::string &level) const
 {
     statusMap status;
@@ -352,7 +354,7 @@ NeuronManager::get_neurite_status(size_t gid, const std::string &neurite,
 }
 
 
-bool NeuronManager::is_neuron(size_t gid) const
+bool NeuronManager::is_neuron(stype gid) const
 {
     auto it = neurons_.find(gid);
 
@@ -371,12 +373,18 @@ gidNeuronMap::const_iterator NeuronManager::iter_neurons()
 }
 
 
-size_t NeuronManager::num_neurons() const { return neurons_.size(); }
+stype NeuronManager::num_neurons() const { return neurons_.size(); }
 
 
-int NeuronManager::get_neuron_thread(size_t gid) const
+int NeuronManager::get_neuron_thread(stype gid) const
 {
+#ifdef MSVC
+    // insane error with MSVC requires unsigned long instead of stype
+    unsigned long ul_gid = gid;
+    return thread_of_neuron_.at(ul_gid);
+#else
     return thread_of_neuron_.at(gid);
+#endif
 }
 
 
@@ -386,7 +394,7 @@ void NeuronManager::register_model(std::string model_name, GCPtr model_ptr)
 }
 
 
-void NeuronManager::set_max_resol(size_t neuron, double max_resol)
+void NeuronManager::set_max_resol(stype neuron, double max_resol)
 {
     max_resolutions_[thread_of_neuron_[neuron]][neuron] = max_resol;
 }

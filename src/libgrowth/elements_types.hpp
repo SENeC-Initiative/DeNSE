@@ -60,7 +60,7 @@ typedef std::unordered_map<std::string, double> Param;
 
 
 // Event type, contains (event_time, neuron, neurite, gc, event_type)
-typedef std::tuple<Time, size_t, std::string, int, signed char> Event;
+typedef std::tuple<Time, stype, std::string, int, signed char> Event;
 
 namespace edata
 {
@@ -78,13 +78,13 @@ namespace edata
 typedef struct NodeProp
 {
     NodeProp() : n_id(0), p_id(0), diameter(0), dist_to_parent(0) {};
-    NodeProp(size_t n, size_t p, double diam, double dtp,
+    NodeProp(stype n, stype p, double diam, double dtp,
              const std::vector<double>& pos)
         : n_id(n), p_id(p), diameter(diam), dist_to_parent(dtp), position(pos)
     {};
 
-    size_t n_id;
-    size_t p_id;
+    stype n_id;
+    stype p_id;
     double diameter;
     double dist_to_parent;
     std::vector<double> position;

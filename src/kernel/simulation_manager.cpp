@@ -92,7 +92,7 @@ void SimulationManager::finalize()
 void SimulationManager::reset_culture() {}
 
 
-void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
+void SimulationManager::test_random_generator(Random_vecs &values, stype size)
 {
     std::uniform_real_distribution<> uniform_(0, 1.);
 
@@ -113,7 +113,7 @@ void SimulationManager::test_random_generator(Random_vecs &values, size_t size)
             int omp_id = kernel().parallelism_manager.get_thread_local_id();
             mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
             std::vector<double> randoms;
-            for (size_t n = 0; n < size; n++)
+            for (stype n = 0; n < size; n++)
             {
                 randoms.push_back(uniform_(*(rnd_engine).get()));
             }
@@ -250,7 +250,7 @@ void SimulationManager::initialize_simulation_(const Time &t)
 
 void SimulationManager::finalize_simulation_()
 {
-    for (size_t s : step_)
+    for (stype s : step_)
     {
         assert(s == final_step_);
     }
@@ -353,7 +353,7 @@ void SimulationManager::simulate(const Time &t)
 #pragma omp parallel
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
-        size_t current_step;
+        stype current_step;
         Time time_next_ev;
 
         double previous_substep = 0.;
@@ -462,7 +462,7 @@ void SimulationManager::simulate(const Time &t)
                 {
                     // someone has to branch
                     Event &ev            = branching_ev_.back();
-                    size_t gid_branching = std::get<edata::NEURON>(ev);
+                    stype gid_branching = std::get<edata::NEURON>(ev);
                     auto it              = local_neurons.find(gid_branching);
 
                     if (it != local_neurons.end())
@@ -610,7 +610,7 @@ Time SimulationManager::get_time() const
 double SimulationManager::get_resolution() const { return Time::RESOLUTION; }
 
 
-size_t SimulationManager::get_current_step() const
+stype SimulationManager::get_current_step() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     return step_.at(omp_id);

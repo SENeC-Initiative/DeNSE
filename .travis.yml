@@ -40,14 +40,14 @@ before_install:
       pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
       pip install --no-binary shapely, shapely;
     fi
-  # update brew and pip on mac
+  # update brew and pip on mac (note that mac is without nngt)
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew install gcc@8 cmake python3 geos doxygen boost libomp;
       pip3 install setuptools;
       pip3 install cython;
       pip3 install numpy scipy pint pyneuroml pytest;
       pip3 install --no-binary shapely, shapely;
-      pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL;
+      pip3 install matplotlib networkx svg.path dxfgrabber PyOpenGL;
     fi
   # use miniconda on windows
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
@@ -60,7 +60,7 @@ before_install:
       conda install python cmake geos boost;
       conda --version ; python --version ; pip --version;
       pip install cython;
-      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx neuroml;
+      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml;
       pip install nngt;
     fi
 

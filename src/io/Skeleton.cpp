@@ -54,7 +54,7 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
             {
                 TNodePtr node = nodes.back();
                 BranchPtr b   = node->get_branch();
-                size_t i, last(b->size());
+                stype i, last(b->size());
                 BPoint p;
 
                 for (i=0; i<last; i+=resolution)
@@ -103,7 +103,7 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
 
                 TNodePtr node = nodes.back();
                 BranchPtr b   = node->get_branch();
-                size_t i, last(b->size());
+                stype i, last(b->size());
                 BPoint p;
 
                 for (i=0; i<last; i+=resolution)

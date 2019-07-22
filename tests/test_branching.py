@@ -45,20 +45,20 @@ def test_branching():
     neuron_params = {
         "position" : np.random.uniform(
             -1000, 1000, (num_neurons, 2)) * um,
-        
+
         "growth_cone_model": gc_model,
         "sensing_angle": 45.*deg,
         "speed_growth_cone": .1 * um / minute,
         "persistence_length": 100. * um,
-        
+
         "filopodia_finger_length": 10. * um,
         "filopodia_min_number": 30,
-        
+
         "lateral_branching_angle_mean": 25.*deg,
         "lateral_branching_angle_std": 0.*deg,
         "taper_rate": 0.,
         "diameter_fraction_lb": 1.,
-        
+
         branching_type: True,
         "use_van_pelt": False,
     }
@@ -94,7 +94,7 @@ def test_branching():
                                 num_neurites=1)
         
         rec = ds.create_recorders(pop, 'num_growth_cones', levels = 'neuron')
-        
+
         ds.simulate(sim_time)
 
         branch_times = ds.get_recording(rec)['num_growth_cones']['times']

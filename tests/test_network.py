@@ -61,6 +61,7 @@ def test_2neuron_network(plot=False):
         ds.plot.plot_neurons(neurons, show_neuron_id=True)
 
     assert net.node_nb() == num_neurons, "Incorrect node number in the network"
+    print(net.node_nb(), net.edge_nb(), net._edges, net.edges_array)
     assert net.edge_nb() == 1, "Incorrect number of edges in the network"
     assert net.get_edge_attributes(name="weight")[0] > 1, "Incorrect weight"
 

@@ -183,10 +183,10 @@ std::string KernelManager::get_simulation_ID() const { return simulation_ID_; }
 /**
  * Returns the number of objects
  */
-size_t KernelManager::get_num_objects() const { return num_objects_; }
+stype KernelManager::get_num_objects() const { return num_objects_; }
 
 
-size_t KernelManager::get_num_created_objects() const
+stype KernelManager::get_num_created_objects() const
 {
     return num_created_objects_;
 }
@@ -201,7 +201,7 @@ double KernelManager::get_adaptive_timestep() const
 bool KernelManager::using_environment() const { return env_required_; }
 
 
-void KernelManager::update_num_objects(size_t num_new_objects)
+void KernelManager::update_num_objects(stype num_new_objects)
 {
     num_objects_          = neuron_manager.num_neurons();
     num_objects_         += record_manager.num_recorders();

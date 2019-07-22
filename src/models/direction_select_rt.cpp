@@ -81,7 +81,7 @@ void RTDirectionSelector::select_direction(
   const std::vector<double> &directions_weights, const Filopodia &filo,
   mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
   double &substep, double &step_length, double &new_angle, bool &stopped,
-  size_t &default_direction)
+  stype &default_direction)
 {
     new_angle = old_angle;
 
@@ -97,7 +97,7 @@ void RTDirectionSelector::select_direction(
         auto it_max = std::max_element(
             directions_weights.begin(), directions_weights.end());
         // get its index and the associated angle
-        size_t n_max     = std::distance(directions_weights.begin(), it_max);
+        stype n_max     = std::distance(directions_weights.begin(), it_max);
         double max_angle = filo.directions[n_max];
 
         // compute influence
@@ -115,7 +115,7 @@ void RTDirectionSelector::select_direction(
     // if not currently tumbling, check whether we're running into a wall
     if (not tumbling_)
     {
-        size_t middle = 0.5*directions_weights.size();
+        stype middle = 0.5*directions_weights.size();
         double weight = directions_weights[middle];
 
         bool wall = std::isnan(weight) or weight == 0.;
@@ -152,7 +152,7 @@ void RTDirectionSelector::select_direction(
         double weight, cumulated_weight(0);
         double x = total_proba * uniform_(*(rnd_engine.get()));
 
-        for (size_t i = 0; i < directions_weights.size(); i++)
+        for (stype i = 0; i < directions_weights.size(); i++)
         {
             weight = directions_weights[i];
 
@@ -171,7 +171,7 @@ void RTDirectionSelector::select_direction(
         // default angle is closest to new_angle
         double dist, min_dist(std::numeric_limits<double>::max());
 
-        for (size_t n=0; n < directions_weights.size(); n++)
+        for (stype n=0; n < directions_weights.size(); n++)
         {
             if (not std::isnan(directions_weights[n]))
             {
@@ -189,7 +189,7 @@ void RTDirectionSelector::select_direction(
         // keep straight: default angle is closest to zero
         double dist, min_dist(std::numeric_limits<double>::max());
 
-        for (size_t n=0; n < directions_weights.size(); n++)
+        for (stype n=0; n < directions_weights.size(); n++)
         {
             if (not std::isnan(directions_weights[n]))
             {

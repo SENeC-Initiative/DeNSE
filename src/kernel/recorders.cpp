@@ -60,7 +60,7 @@ void BaseRecorder::get_status(statusMap &status) const
     set_param(status, names::observable, observable_, "");
 
     // get the neuron ids
-    std::vector<size_t> gids;
+    std::vector<stype> gids;
     for (auto const &neuron : targets_)
     {
         gids.push_back(neuron.first);
@@ -98,7 +98,7 @@ void BaseRecorder::record(const Event &ev) {}
 /**
  * @brief Set the final times for the continuous recorders
  */
-void BaseRecorder::final_timestep(size_t step) {}
+void BaseRecorder::final_timestep(stype step) {}
 
 
 unsigned int BaseRecorder::get_level() const { return 3; }
@@ -129,7 +129,7 @@ void BaseRecorder::reset_iterations()
 }
 
 
-void BaseRecorder::neuron_deleted(size_t gid)
+void BaseRecorder::neuron_deleted(stype gid)
 {
     auto it = targets_.find(gid);
 
@@ -165,7 +165,7 @@ void NeuronContinuousRecorder::set_status(const statusMap &status)
     if (targets_.empty() || kernel().simulation_manager.get_current_step() == 0)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -176,7 +176,7 @@ void NeuronContinuousRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
@@ -208,7 +208,7 @@ void NeuronContinuousRecorder::record()
 /**
  * @brief Set the final times for the continuous records
  */
-void NeuronContinuousRecorder::final_timestep(size_t step)
+void NeuronContinuousRecorder::final_timestep(stype step)
 {
     times_[1] = kernel().simulation_manager.get_time();
 }
@@ -338,7 +338,7 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
     if (targets_.empty() || kernel().simulation_manager.get_current_step() == 0)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -348,7 +348,7 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
@@ -366,7 +366,7 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
 void NeuronDiscreteRecorder::record(const Event &ev)
 {
     Time event_time     = std::get<edata::TIME>(ev);
-    size_t neuron       = std::get<edata::NEURON>(ev);
+    stype neuron       = std::get<edata::NEURON>(ev);
     signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     // test which data is recorded
@@ -526,7 +526,7 @@ void NeuriteContinuousRecorder::set_status(const statusMap &status)
     if (targets_.empty() || kernel().simulation_manager.get_current_step() == 0)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -537,7 +537,7 @@ void NeuriteContinuousRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
@@ -574,13 +574,13 @@ void NeuriteContinuousRecorder::record()
 /**
  * @brief Set the final times for the continuous records
  */
-void NeuriteContinuousRecorder::final_timestep(size_t step)
+void NeuriteContinuousRecorder::final_timestep(stype step)
 {
     times_[1] = kernel().simulation_manager.get_time();
 }
 
 
-void NeuriteContinuousRecorder::new_neurite(size_t neuron,
+void NeuriteContinuousRecorder::new_neurite(stype neuron,
                                             const std::string& neurite)
 {
     // initialize the recording container
@@ -692,7 +692,7 @@ NeuriteDiscreteRecorder::NeuriteDiscreteRecorder() {}
 void NeuriteDiscreteRecorder::record(const Event &ev)
 {
     Time event_time     = std::get<edata::TIME>(ev);
-    size_t neuron       = std::get<edata::NEURON>(ev);
+    stype neuron       = std::get<edata::NEURON>(ev);
     std::string neurite = std::get<edata::NEURITE>(ev);
     signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
@@ -743,7 +743,7 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
     if (targets_.empty() || kernel().simulation_manager.get_current_step() == 0)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -753,7 +753,7 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
@@ -779,7 +779,7 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
 }
 
 
-void NeuriteDiscreteRecorder::new_neurite(size_t neuron,
+void NeuriteDiscreteRecorder::new_neurite(stype neuron,
                                           const std::string& neurite)
 {
     // initialize the recording container
@@ -993,14 +993,14 @@ void GrowthConeContinuousRecorder::record(const Event &ev)
 {
     // branching event occured on a neuron
     Time event_time     = std::get<edata::TIME>(ev);
-    size_t neuron       = std::get<edata::NEURON>(ev);
+    stype neuron       = std::get<edata::NEURON>(ev);
     std::string neurite = std::get<edata::NEURITE>(ev);
 
-    std::unordered_map<size_t, std::vector<double>> &gc_values =
+    std::unordered_map<stype, std::vector<double>> &gc_values =
         recording_[neuron][neurite];
-    std::unordered_map<size_t, std::array<Time, 2>> &gc_times =
+    std::unordered_map<stype, std::array<Time, 2>> &gc_times =
         times_[neuron][neurite];
-    std::unordered_map<size_t, size_t> &gc_num_times =
+    std::unordered_map<stype, stype> &gc_num_times =
         num_times_[neuron][neurite];
 
     // get the neuron and neurite objects
@@ -1026,7 +1026,7 @@ void GrowthConeContinuousRecorder::record(const Event &ev)
 /**
  * @brief Set the final times for the continuous records
  */
-void GrowthConeContinuousRecorder::final_timestep(size_t step)
+void GrowthConeContinuousRecorder::final_timestep(stype step)
 {
     for (auto &neuron_it : times_)
     {
@@ -1046,7 +1046,7 @@ void GrowthConeContinuousRecorder::final_timestep(size_t step)
 }
 
 
-void GrowthConeContinuousRecorder::new_neurite(size_t neuron,
+void GrowthConeContinuousRecorder::new_neurite(stype neuron,
                                                const std::string& neurite)
 {
     times_[neuron].insert({neurite, mapNumArrayTime()});
@@ -1054,9 +1054,9 @@ void GrowthConeContinuousRecorder::new_neurite(size_t neuron,
 }
 
 
-void GrowthConeContinuousRecorder::gc_died(size_t neuron,
+void GrowthConeContinuousRecorder::gc_died(stype neuron,
                                            const std::string& neurite,
-                                           size_t gc_id)
+                                           stype gc_id)
 {
     // add cone to dead cones
     dead_cones_[neuron][neurite].insert(gc_id);
@@ -1088,7 +1088,7 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
     if (targets_.empty() || t.get_total_seconds() == 0.)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -1098,7 +1098,7 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             targets_.insert({gid, n});
@@ -1108,19 +1108,19 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
             times_[gid] = std::unordered_map<std::string, mapNumArrayTime>();
             num_times_[gid] =
                 std::unordered_map<std::string,
-                                   std::unordered_map<size_t, size_t>>();
+                                   std::unordered_map<stype, stype>>();
             dead_cones_[gid] =
-                std::unordered_map< std::string, std::unordered_set<size_t> >();
+                std::unordered_map< std::string, std::unordered_set<stype> >();
 
             for (const auto &neurite : n->neurites_)
             {
-                size_t size = neurite.second->growth_cones_.size();
+                stype size = neurite.second->growth_cones_.size();
 
                 recording_[gid][neurite.first]  = mapNumVecDouble();
                 times_[gid][neurite.first]      = mapNumArrayTime();
-                dead_cones_[gid][neurite.first] = std::unordered_set<size_t>();
+                dead_cones_[gid][neurite.first] = std::unordered_set<stype>();
                 num_times_[gid][neurite.first]  =
-                    std::unordered_map<size_t, size_t>();
+                    std::unordered_map<stype, stype>();
             }
         }
     }
@@ -1334,9 +1334,9 @@ GrowthConeDiscreteRecorder::GrowthConeDiscreteRecorder() {}
 
 void GrowthConeDiscreteRecorder::record(const Event &event)
 {
-    //~ size_t step         = std::get<0>(event);
+    //~ stype step         = std::get<0>(event);
     //~ double substep      = std::get<1>(event);
-    //~ size_t neuron       = std::get<2>(event);
+    //~ stype neuron       = std::get<2>(event);
     //~ signed char ev_type = std::get<4>(event);
 
     //~ Time event_time = Time::from_steps(step, substep);
@@ -1381,7 +1381,7 @@ void GrowthConeDiscreteRecorder::set_status(const statusMap &status)
     if (targets_.empty() || kernel().simulation_manager.get_current_step() == 0)
     {
         // get the targets
-        std::vector<size_t> gids;
+        std::vector<stype> gids;
         bool targets_changed = get_param(status, names::targets, gids);
 
         if (targets_changed)
@@ -1391,7 +1391,7 @@ void GrowthConeDiscreteRecorder::set_status(const statusMap &status)
         }
 
         // initialize the recording container
-        for (size_t gid : gids)
+        for (stype gid : gids)
         {
             NeuronPtr n = kernel().neuron_manager.get_neuron(gid);
             //@todo: finish init

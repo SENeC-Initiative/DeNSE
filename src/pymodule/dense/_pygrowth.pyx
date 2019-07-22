@@ -27,7 +27,6 @@
 from libc.stdlib cimport malloc, free
 import ctypes
 
-from collections import Iterable
 from copy import deepcopy
 import datetime
 import types
@@ -362,7 +361,7 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
         immediately crash the kernel.
     '''
     cdef:
-        vector[size_t] cneurons
+        vector[stype] cneurons
         vector[double] cangles
         vector[string] cneurite_types, cneurite_names
         statusMap common_params
@@ -485,7 +484,7 @@ def create_recorders(targets, observables, sampling_intervals=None,
     cdef:
         statusMap status
         vector[statusMap] obj_params
-        size_t num_obj, num_created, num_obs
+        stype num_obj, num_created, num_obs
 
     # get initial number of objects
     num_obj = get_num_created_objects_()
@@ -537,7 +536,7 @@ def delete_neurons(neurons=None):
     neurons : list of neurons, optional (default: all neurons)
         Neurons to delete.
     '''
-    cdef vector[size_t] cneurons
+    cdef vector[stype] cneurons
 
     if neurons is not None:
         if not nonstring_container(neurons):
@@ -560,7 +559,7 @@ def delete_neurites(neurite_names=None, neurons=None):
         Neurons for which the neurites will be deleted.
     '''
     cdef:
-        vector[size_t] cneurons
+        vector[stype] cneurons
         vector[string] cnames
 
     if neurons is not None:
@@ -784,7 +783,7 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
 
     if not nonstring_container(gids):
         #creates a vector of size 1
-        gids = vector[size_t](1, <size_t>gids)
+        gids = vector[stype](1, <stype>gids)
 
     for gid in gids:
         if get_object_type(gid) == "neuron":
@@ -898,7 +897,7 @@ def get_object_state(gids, variable, level="neuron"):
 
     if isinstance(gids, int):
         #creates a vector of size 1
-        gids = vector[size_t](1, <size_t>gids)
+        gids = vector[stype](1, <stype>gids)
     for gid in gids:
         if get_object_type(gid) == "neuron":
             if not (level == "neuron" or is_neurite(gid, clevel)):
@@ -1381,7 +1380,7 @@ def set_object_properties(objects, params=None, axon_params=None,
     dendrites_params = {} if dendrites_params is None else dendrites_params
 
     cdef:
-        size_t i, n = len(gids)
+        stype i, n = len(gids)
         statusMap base_neuron_status, base_axon_status, base_dend_status
 
     it_p, it_a, it_d = params, axon_params, dendrites_params
@@ -1533,7 +1532,7 @@ def test_random_gen(size=10000):
     """
     cdef:
         vector[vector[double]] c_values
-        size_t size_c = size
+        stype size_c = size
 
     test_random_generator_(c_values, size_c)
 
@@ -1575,8 +1574,8 @@ def _get_branches_data(gid, neurite, start_point=0):
         vector[vector[vector[double]]] points
         vector[double] diameters
         vector[int] parents
-        vector[size_t] nodes
-        size_t cgid = int(gid)
+        vector[stype] nodes
+        stype cgid = int(gid)
 
     cneurite = _to_bytes(neurite)
 
@@ -1591,13 +1590,13 @@ def _get_branches_data(gid, neurite, start_point=0):
 # ------------ #
 
 cdef _create_neurons(dict params, dict ax_params, dict dend_params,
-                     dict optional_args, size_t n, bool return_ints) except +:
+                     dict optional_args, stype n, bool return_ints) except +:
     '''
     Create several neurons, return their GIDs.
     @todo: check for unused parameters.
     '''
     cdef:
-        size_t i, len_val, num_objects
+        stype i, len_val, num_objects
         int num_neurites
         statusMap base_neuron_status, base_axon_status, base_dendrites_status
         string description
@@ -1688,18 +1687,18 @@ def _get_pyskeleton(gid, unsigned int resolution=10):
     cdef:
         SkelNeurite axons, dendrites, nodes, growth_cones
         vector[vector[double]] somas = [[], [], []]
-        vector[size_t] gids
+        vector[stype] gids
     if gid is None:
         gids = get_neurons()
     elif isinstance(gid, (int, np.integer)):
         # creates a vector of size 1
         assert is_neuron_(gid) == "neuron", \
             "GID `{}` is not a neuron.".format(gid)
-        gids =  vector[size_t](1, <size_t>gid)
+        gids =  vector[stype](1, <stype>gid)
     elif nonstring_container(gid):
         for n in gid:
             assert is_neuron_(n), "GID `{}` is not a neuron.".format(n)
-            gids.push_back(<size_t>n)
+            gids.push_back(<stype>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
 
@@ -1741,7 +1740,7 @@ def _get_geom_skeleton(gid):
     cdef:
         vector[GEOSGeometry*] axons, dendrites
         vector[vector[double]] somas
-        vector[size_t] gids, dendrite_gids
+        vector[stype] gids, dendrite_gids
 
     if gid is None:
         gids = get_neurons()
@@ -1749,11 +1748,11 @@ def _get_geom_skeleton(gid):
         # creates a vector of size 1
         assert is_neuron_(gid) == "neuron", \
             "GID `{}` is not a neuron.".format(gid)
-        gids =  vector[size_t](1, <size_t>gid)
+        gids =  vector[stype](1, <stype>gid)
     elif nonstring_container(gid):
         for n in gid:
             assert is_neuron_(n), "GID `{}` is not a neuron.".format(n)
-            gids.push_back(<size_t>n)
+            gids.push_back(<stype>n)
     else:
         raise ArgumentError("`gid` should be an int, a list, or None.")
     get_geom_skeleton_(gids, axons, dendrites, dendrite_gids, somas)
@@ -1785,13 +1784,13 @@ def _generate_synapses(bool crossings_only, double density, bool only_new_syn,
     Generate the synapses from the neurons' morphologies.
     '''
     cdef:
-        vector[size_t] presyn_neurons, postsyn_neurons
+        vector[stype] presyn_neurons, postsyn_neurons
         vector[string] presyn_neurites, postsyn_neurites
-        vector[size_t] presyn_nodes, postsyn_nodes
-        vector[size_t] presyn_segments, postsyn_segments
+        vector[stype] presyn_nodes, postsyn_nodes
+        vector[stype] presyn_segments, postsyn_segments
         vector[double] pre_syn_x, pre_syn_y, post_syn_x, post_syn_y
-        cset[size_t] presyn_pop  = source_neurons
-        cset[size_t] postsyn_pop = target_neurons
+        cset[stype] presyn_pop  = source_neurons
+        cset[stype] postsyn_pop = target_neurons
 
     generate_synapses_(crossings_only, density, only_new_syn, autapse_allowed,
                        presyn_pop, postsyn_pop, presyn_neurons, postsyn_neurons,
@@ -1848,14 +1847,14 @@ def _neuron_to_swc(filename, gid=None, resolution=10):
     '''
     cdef:
         string cfname = _to_bytes(filename)
-        vector[size_t] gids
+        vector[stype] gids
     if gid is None:
         gids = get_neurons_()
     elif isinstance(gid, int):
-        gids = vector[size_t](1, <size_t>gid)
+        gids = vector[stype](1, <stype>gid)
     else:
         for n in gid:
-            gids.push_back(<size_t>n)
+            gids.push_back(<stype>n)
     get_swc_(cfname, gids, resolution)
 
 
@@ -1912,7 +1911,7 @@ cdef Property _to_property(key, value) except *:
         Property cprop
         string c_string, c_dim
         vector[long] c_lvec
-        vector[size_t] c_ulvec
+        vector[stype] c_ulvec
         vector[string] c_svec
         unordered_map[string, double] c_map
         # vector[int] c_int
@@ -1952,7 +1951,7 @@ cdef Property _to_property(key, value) except *:
             for val in value:
                 c_lvec.push_back(val)
             cprop = Property(c_lvec, c_dim)
-    elif isinstance(value, Iterable) and isinstance(next(iter(value)), str):
+    elif is_iterable(value) and isinstance(next(iter(value)), str):
         for val in value:
             c_svec.push_back(_to_bytes(val))
         cprop = Property(c_svec, c_dim)
@@ -2059,8 +2058,8 @@ cdef statusMap _get_scalar_status(dict params, int n) except *:
 cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                              dict params) except *:
     cdef:
-        size_t n = lst_statuses.size()
-        size_t len_val, len_v, i
+        stype n = lst_statuses.size()
+        stype len_val, len_v, i
 
     for key, val in params.items():
         key = _to_bytes(key)

@@ -38,11 +38,13 @@ Same dict is declared to deduce the type of event.
 
 import sys
 from math import modf
-from collections import defaultdict, Iterable, namedtuple
+from collections import defaultdict, namedtuple
 try:
     from collections.abc import Container as _container
+    from collections.abc import Iterable as _iterable
 except:
     from collections import Container as _container
+    from collections import Iterable as _iterable
 
 import warnings
 
@@ -460,7 +462,7 @@ def is_scalar(value):
 
     return (is_string(value)
             or isinstance(value, dict)
-            or not isinstance(value, Iterable))
+            or not isinstance(value, _iterable))
 
 
 def is_quantity(value):
@@ -470,7 +472,7 @@ def is_quantity(value):
 def is_iterable(obj):
     if is_quantity(obj):
         return is_iterable(obj.m)
-    return isinstance(obj, Iterable) or nonstring_container(obj)
+    return isinstance(obj, _iterable) or nonstring_container(obj)
 
 
 def neuron_param_parser(param, culture, n, on_area=None, rnd_pos=True):

@@ -521,7 +521,7 @@ std::string Neuron::new_neurite(const std::string &name,
     // @todo: clean up this mess!!
 
     // eventually create the growth cone, cloning the default model.
-    neurites_[name]->growth_cone_model_ = growth_cone_model_;
+    neurites_[name]->growth_cone_model_ = gc_model->get_model_name();
     GCPtr first_gc = gc_model->clone(neurites_[name]->get_first_node(),
                                      neurites_[name], details.soma_radius,
                                      cone_start_point, angle);

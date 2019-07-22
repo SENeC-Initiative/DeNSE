@@ -2068,7 +2068,9 @@ cdef void _set_vector_status(vector[statusMap]& lst_statuses,
             if not is_scalar(val[0]):
                 assert is_quantity(val), "Positions must have units."
                 # cast positions to floats (ints lead to undefined behavior)
-                val = np.array(val.to('micrometer')).astype(float, copy=False)
+                val = np.array(
+                    val.to('micrometer').m).astype(float, copy=False)
+
                 assert val.shape == (n, 2), "Positions array must be of " +\
                                             "shape (N, 2)."
                 for i in range(n):

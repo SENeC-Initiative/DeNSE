@@ -116,18 +116,6 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
         omp_neuron_vec[omp_id].push_back(i);
     }
 
-    // if (not names.empty())
-    // {
-    //     for (std::string name : names)
-    //     {
-    //         printf("%s\n", name.c_str());
-    //     }
-    // }
-    // else
-    // {
-    //     printf("names empty\n");
-    // }
-
 #pragma omp parallel
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();

@@ -175,6 +175,7 @@ class GrowthCone : public TopologicalNode,
     bool just_retracted() const;
     size_t get_neuron_id() const;
     const std::string& get_neurite_name() const;
+    const std::string& get_model_name() const;
     const BPolygonPtr get_last_segment() const;
     bool is_active() const;
     double get_self_affinity() const;

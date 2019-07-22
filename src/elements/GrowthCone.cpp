@@ -1240,6 +1240,12 @@ const std::string& GrowthCone::get_neurite_name() const
 }
 
 
+const std::string& GrowthCone::get_model_name() const
+{
+    return model_;
+}
+
+
 const BPolygonPtr GrowthCone::get_last_segment() const
 {
     return biology_.branch->get_last_segment();

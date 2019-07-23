@@ -150,7 +150,7 @@ else:
 
 setup(
     name = mod_name,
-    version = '@cgrowth_VERSION_VERSION@',
+    version = '@cgrowth_VERSION@',
     description = 'Package to study the growth of neuronal networks',
     package_dir = {} if @MSVC@ else {'': '@PYMODULE_DIR@'},
     packages = getpackages(

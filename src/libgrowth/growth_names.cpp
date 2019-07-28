@@ -152,10 +152,12 @@ const std::string T("T");
 const std::string taper_rate("taper_rate");
 
 const std::string uniform_branching_rate("uniform_branching_rate");
+const std::string uniform_split_rate("uniform_split_rate");
 const std::string use_actin_waves("use_actin_waves");
 const std::string use_critical_resource("use_critical_resource");
 const std::string use_flpl_branching("use_flpl_branching");
 const std::string use_uniform_branching("use_uniform_branching");
+const std::string use_uniform_split("use_uniform_split");
 const std::string use_van_pelt("use_van_pelt");
 
 // recorders

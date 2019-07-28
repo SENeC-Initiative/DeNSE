@@ -34,15 +34,6 @@
 #include "Neurite.hpp"
 #include "Node.hpp"
 
-// models includes
-//~ #include "gc_critical.hpp"
-
-
-// Integrate the differential equation
-// dA =  - (A_m-A)/tau
-double f_deterministic(double A_m, double A, double tau, double dt,
-                       double stochastic_tmp);
-
 
 namespace growth
 {
@@ -72,11 +63,17 @@ Branching::Branching(NeuritePtr neurite)
     , use_flpl_branching_(false)
     , flpl_branching_rate_(UNIFORM_BRANCHING_RATE)
     , next_flpl_event_(invalid_ev)
+    // parameters for uniform split
+    , use_uniform_split_(false)
+    , uniform_split_rate_(UNIFORM_BRANCHING_RATE)
+    , next_usplit_event_(invalid_ev)
 {
     exponential_uniform_ =
         std::exponential_distribution<double>(uniform_branching_rate_);
     exponential_flpl_ =
         std::exponential_distribution<double>(flpl_branching_rate_);
+    exponential_usplit_ =
+        std::exponential_distribution<double>(uniform_split_rate_);
 }
 
 
@@ -103,6 +100,10 @@ void Branching::initialize_next_event(mtPtr rnd_engine)
     if (use_flpl_branching_ and next_flpl_event_ == invalid_ev)
     {
         compute_flpl_event(rnd_engine);
+    }
+    if (use_uniform_split_ and next_usplit_event_ == invalid_ev)
+    {
+        compute_usplit_event(rnd_engine);
     }
     if (use_van_pelt_ and next_vanpelt_event_ == invalid_ev)
     {
@@ -160,6 +161,8 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
         std::get<edata::TIME>(next_uniform_event_) == std::get<edata::TIME>(ev);
     bool flpl_occurence =
         std::get<edata::TIME>(next_flpl_event_) == std::get<edata::TIME>(ev);
+    bool usplit_occurence =
+        std::get<edata::TIME>(next_usplit_event_) == std::get<edata::TIME>(ev);
     bool van_pelt_occurence =
         std::get<edata::TIME>(next_vanpelt_event_) == std::get<edata::TIME>(ev);
     bool res_occurence = std::get<edata::GC>(ev) != -1;
@@ -190,6 +193,12 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
         success = flpl_new_branch(branching_node, new_node, branching_point,
                                   rnd_engine);
     }
+    // check usplit event
+    else if (use_uniform_split_ and usplit_occurence)
+    {
+        success = usplit_new_branch(branching_node, new_node, branching_point,
+                                    rnd_engine, second_cone);
+    }
     // verify vanpelt event
     else if (use_van_pelt_ and van_pelt_occurence)
     {
@@ -208,7 +217,8 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
             neurite_->get_parent_neuron().lock()->get_gid(),
             neurite_->get_name(), omp_id);
 
-        if (van_pelt_occurence or res_occurence)
+        // for split events
+        if (van_pelt_occurence or res_occurence or usplit_occurence)
         {
             update_splitting_cones(branching_node, second_cone, new_node);
         }
@@ -379,6 +389,91 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
 
 
 /**
+ * @brief Branch the neurite in a uniformly randoim chosen node
+ *
+ * This function is enable with the flag 'use_lateral_branching'
+ * This function implement the branchin throught
+ * @function Neurite::lateral_branching
+ *
+ * @param rnd_engine
+ */
+bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                   size_t &branching_point, mtPtr rnd_engine)
+{
+#ifndef NDEBUG
+    printf("@@@@@@@ Lateral branching @@@@@@@@\n");
+#endif
+    branching_node = nullptr;
+    new_node       = nullptr;
+
+    if (not neurite_->growth_cones_.empty())
+    {
+        GCPtr branching_cone;
+        bool success = false;
+
+        // select a random node of the tree, excluding the firstNode_
+        // This is a reservoir sampling algorithm
+        double max = 0;
+        for (auto &cone : neurite_->gc_range())
+        {
+            // check if the elected cone is not dead and waiting for removal!
+            if (not cone.second->is_dead()
+                and cone.second->get_branch_size() > 3)
+            {
+                double key = powf(uniform_(*(rnd_engine).get()),
+                                  1. / cone.second->get_branch_size());
+                if (key > max)
+                {
+                    max            = key;
+                    branching_cone = cone.second;
+                }
+            }
+        }
+
+        branching_node = branching_cone;
+
+        for (auto &node : neurite_->nodes_)
+        {
+            if (node.second->get_branch()->size() > 3)
+            {
+                double key = powf(uniform_(*(rnd_engine).get()),
+                                  1. / node.second->get_branch()->size());
+                if (key > max)
+                {
+                    max            = key;
+                    branching_node = node.second;
+                }
+            }
+        }
+
+        // if no node was suited for lateral branching skip the branching.
+        if (max > 0)
+        {
+            // choose the point uniformly on the branch, except for firts 2 and
+            // last 2 points.
+            branching_point = uniform_(*(rnd_engine).get()) *
+                                  (branching_node->get_branch()->size() - 4) +
+                              2;
+
+            // actuate lateral branching on the elected node through the
+            // NEURITE.
+            success = neurite_->lateral_branching(
+                branching_node, branching_point, new_node, rnd_engine);
+            next_uniform_event_ = invalid_ev;
+        }
+
+        compute_uniform_event(rnd_engine);
+
+        return success;
+    }
+
+    next_uniform_event_ = invalid_ev;
+
+    return false;
+}
+
+
+/**
  * @brief Compute the next non-uniform flpl branching event
  * @details
  * The segment where next branching event will happen is computed
@@ -501,86 +596,93 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
 
 /**
- * @brief Branch the neurite in a uniformly randoim chosen node
- *
- * This function is enable with the flag 'use_lateral_branching'
- * This function implement the branchin throught
- * @function Neurite::lateral_branching
+ * @brief Compute the next uniform split event
+ * @details
+ * The time (in step unit) of next uniform split event is computed with an
+ * exponential distribution
+ * whose rate is set with Branching::set_status(...)
+ * Values are stored in the Branching instance itself.
  *
  * @param rnd_engine
  */
-bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                   size_t &branching_point, mtPtr rnd_engine)
+void Branching::compute_usplit_event(mtPtr rnd_engine)
 {
-#ifndef NDEBUG
-    printf("@@@@@@@ Lateral branching @@@@@@@@\n");
-#endif
+    if (not neurite_->growth_cones_.empty())
+    {
+        // here we compute next event with exponential distribution
+        double duration = exponential_usplit_(*(rnd_engine).get());
+
+        set_branching_event(next_usplit_event_, names::gc_splitting, duration);
+
+        // send it to the simulation and recorder managers
+        kernel().simulation_manager.new_branching_event(next_usplit_event_);
+    }
+}
+
+
+/**
+ * @brief Select the growth cone starting a uniform split and update GrowthCones
+ * This function will be run every time a branching happen if the
+ * 'use_uniform_split' flag is set True.
+ * This function implement the branching through
+ * @function growth_cone_split(...)
+ *
+ */
+bool Branching::usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                  size_t &branching_point, mtPtr rnd_engine,
+                                  GCPtr& second_cone)
+{
     branching_node = nullptr;
     new_node       = nullptr;
 
     if (not neurite_->growth_cones_.empty())
     {
-        GCPtr branching_cone;
-        bool success = false;
+        // simple implementation of a reservoir sampling algorithm for weigthed
+        // choice
+        GCPtr next_usplit_cone;
+        double total_weight = 0.;
+        std::unordered_map<size_t, double> weights;
 
-        // select a random node of the tree, excluding the firstNode_
-        // This is a reservoir sampling algorithm
-        double max = 0;
-        for (auto &cone : neurite_->gc_range())
+        for (auto cone : neurite_->growth_cones_)
         {
-            // check if the elected cone is not dead and waiting for removal!
-            if (not cone.second->is_dead()
-                and cone.second->get_branch_size() > 3)
+            weights[cone.first] = 1.;
+            total_weight += 1.;
+        }
+        double extracted = uniform_(*(rnd_engine).get()) * total_weight;
+
+        total_weight = 0;
+        for (auto cone : neurite_->growth_cones_)
+        {
+            total_weight      += weights[cone.first];
+            next_usplit_cone = cone.second;
+            if (total_weight >= extracted)
             {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / cone.second->get_branch_size());
-                if (key > max)
-                {
-                    max            = key;
-                    branching_cone = cone.second;
-                }
+                break;
             }
         }
 
-        branching_node = branching_cone;
+        // set branching node and point
+        branching_node  = next_usplit_cone;
+        branching_point = branching_node->get_branch()->size() - 1;
 
-        for (auto &node : neurite_->nodes_)
-        {
-            if (node.second->get_branch()->size() > 3)
-            {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / node.second->get_branch()->size());
-                if (key > max)
-                {
-                    max            = key;
-                    branching_node = node.second;
-                }
-            }
-        }
+        //@TODO define new legth for van pelt
+        double new_length = 0.;
+        double new_angle, old_angle;
+        double old_diameter = next_usplit_cone->get_diameter();
+        double new_diameter = old_diameter;
+        neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
+                                           new_diameter, old_diameter);
+        bool success =
+            neurite_->growth_cone_split(next_usplit_cone, new_length,
+                                        new_angle, old_angle, new_diameter,
+                                        old_diameter, new_node, second_cone);
 
-        // if no node was suited for lateral branching skip the branching.
-        if (max > 0)
-        {
-            // choose the point uniformly on the branch, except for firts 2 and
-            // last 2 points.
-            branching_point = uniform_(*(rnd_engine).get()) *
-                                  (branching_node->get_branch()->size() - 4) +
-                              2;
-
-            // actuate lateral branching on the elected node through the
-            // NEURITE.
-            success = neurite_->lateral_branching(
-                branching_node, branching_point, new_node, rnd_engine);
-            next_uniform_event_ = invalid_ev;
-        }
-
-        compute_uniform_event(rnd_engine);
-
+        next_usplit_event_ = invalid_ev;
+        compute_usplit_event(rnd_engine);
         return success;
     }
 
-    next_uniform_event_ = invalid_ev;
-
+    next_usplit_event_ = invalid_ev;
     return false;
 }
 
@@ -655,7 +757,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
     {
         // simple implementation of a reservoir sampling algorithm for weigthed
         // choice
-        GCPtr next_vanpelt_cone_;
+        GCPtr nex_vanpelt_cone;
         double weight, total_weight(0);
         std::unordered_map<size_t, double> weights;
 
@@ -671,7 +773,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto cone : neurite_->growth_cones_)
         {
             total_weight      += weights[cone.first];
-            next_vanpelt_cone_ = cone.second;
+            nex_vanpelt_cone = cone.second;
             if (total_weight >= extracted)
             {
                 break;
@@ -679,18 +781,18 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         }
 
         // set branching node and point
-        branching_node  = next_vanpelt_cone_;
+        branching_node  = nex_vanpelt_cone;
         branching_point = branching_node->get_branch()->size() - 1;
 
         //@TODO define new legth for van pelt
         double new_length = 0.;
         double new_angle, old_angle;
-        double old_diameter = next_vanpelt_cone_->get_diameter();
+        double old_diameter = nex_vanpelt_cone->get_diameter();
         double new_diameter = old_diameter;
         neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
                                            new_diameter, old_diameter);
         bool success =
-            neurite_->growth_cone_split(next_vanpelt_cone_, new_length,
+            neurite_->growth_cone_split(nex_vanpelt_cone, new_length,
                                         new_angle, old_angle, new_diameter,
                                         old_diameter, new_node, second_cone);
 
@@ -794,9 +896,19 @@ void Branching::set_status(const statusMap &status)
     exponential_flpl_ =
         std::exponential_distribution<double>(flpl_branching_rate_);
 
-    if (not use_flpl_branching_)
+    //                 Uniform split Params
+    //###################################################
+
+    get_param(status, names::use_uniform_split, use_uniform_split_);
+
+    get_param(status, names::uniform_split_rate, uniform_split_rate_);
+
+    exponential_usplit_ =
+        std::exponential_distribution<double>(uniform_split_rate_);
+
+    if (not use_uniform_split_)
     {
-        next_flpl_event_ = invalid_ev;
+        next_usplit_event_ = invalid_ev;
     }
 }
 
@@ -825,5 +937,13 @@ void Branching::get_status(statusMap &status) const
         set_param(status, names::flpl_branching_rate, flpl_branching_rate_,
                   "count / minute");
     }
+
+    set_param(status, names::use_uniform_split, use_uniform_split_, "");
+    if (use_uniform_split_)
+    {
+        set_param(status, names::uniform_split_rate, uniform_split_rate_,
+                  "count / minute");
+    }
 }
+
 } // namespace growth

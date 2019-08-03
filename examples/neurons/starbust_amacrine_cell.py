@@ -36,25 +36,11 @@ num_neurons = 1
 
 neuron_params = {
     "dendrite_diameter": 2. * um,
+    "soma_radius": 3. * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "has_axon": False,
     "growth_cone_model": "self-referential-forces",
-    # "growth_cone_model": "run-and-tumble",
 }
-
-#~ dend_params = {
-    #~ "sensing_angle": 45.,
-    #~ "persistence_length": 300. * um,
-    #~ "speed_growth_cone": 0.01 * um / minute,
-    #~ # diameter
-    #~ "taper_rate": 0.5/200.,
-    #~ # branching
-    #~ "use_van_pelt": True,
-    #~ "B": 10. * cpm,
-    #~ "T": 20000. * minute,
-    #~ "E": 0.,
-    #~ "gc_split_angle_mean": 30. * deg,
-#~ }
 
 dend_params = {
     "sensing_angle": 45.*deg,
@@ -64,14 +50,14 @@ dend_params = {
     "taper_rate": 0.4/100.,
     # branching
     "use_uniform_split": True,
-    "uniform_split_rate": 0.06*cph,
-    "gc_split_angle_mean": 60.*deg,
+    "uniform_split_rate": 0.08*cph,
+    "gc_split_angle_mean": 90.*deg,
     "gc_split_angle_std": 3.*deg,
     # avoidance
-    "somatropic_scale": 20.*um,
+    "somatropic_scale": 15.*um,
     "somatropic_factor": 0.2,
     "self_avoidance_factor": 0.7,
-    "self_avoidance_scale": 10.*um,
+    "self_avoidance_scale": 15.*um,
 }
 
 kernel = {
@@ -79,6 +65,7 @@ kernel = {
     "seeds": [5],
     "environment_required": False,
     "num_local_threads": num_omp,
+    # "interactions": False,
 }
 
 ds.set_kernel_status(kernel)
@@ -86,16 +73,16 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      dendrites_params=dend_params, num_neurites=7)
+                      dendrites_params=dend_params, num_neurites=8)
 
 ds.simulate(1.*day)
 
 ds.plot.plot_neurons()
 
 dend_params = {
-    "use_uniform_branching": True,
-    "uniform_branching_rate": 0.01*cph,
-    "lateral_branching_angle_mean": 70.*deg,
+    # "use_uniform_branching": True,
+    # "uniform_branching_rate": 0.02*cph,
+    # "lateral_branching_angle_mean": 70.*deg,
 }
 
 ds.set_object_properties(n, dendrites_params=dend_params)
@@ -106,10 +93,12 @@ ds.plot.plot_neurons()
 
 dend_params = {
     "speed_growth_cone": 0.005*um/minute,
+    "somatropic_scale": 30.*um,
+    "somatropic_factor": 0.1,
     # branching
     "uniform_branching_rate": 0.02*cph,
-    "uniform_split_rate": 0.03*cph,
-    "gc_split_angle_mean": 60.*deg,
+    "uniform_split_rate": 0.05*cph,
+    "gc_split_angle_mean": 90.*deg,
     "gc_split_angle_std": 3.*deg,
 }
 
@@ -117,7 +106,7 @@ ds.set_object_properties(n, dendrites_params=dend_params)
 
 ds.simulate(8.*day)
 
-ds.plot.plot_neurons()
+ds.plot.plot_neurons(scale_text=False)
 
 # tree = n[0].dendrites["dendrite_1"].get_tree()
 # tree.show_dendrogram()

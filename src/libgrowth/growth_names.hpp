@@ -66,6 +66,7 @@ extern const std::string initial_branch_lenght;
 //! default branching probability
 extern const std::string branching_proba_default;
 
+extern const std::string neurite_type;
 extern const std::string taper_rate;
 extern const std::string diameter_ratio_avg;
 extern const std::string diameter_ratio_std;

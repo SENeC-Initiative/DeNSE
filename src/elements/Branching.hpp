@@ -93,7 +93,7 @@ class Branching
 
     // van Pelt branching functions
     bool vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                            size_t &branching_point, mtPtr rnd_engine,
+                            stype &branching_point, mtPtr rnd_engine,
                             GCPtr &second_cone);
     void compute_vanpelt_event(mtPtr rnd_engine);
 
@@ -105,17 +105,17 @@ class Branching
 
     // uniform branching functions
     bool uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                            size_t &branching_point, mtPtr rnd_engine);
+                            stype &branching_point, mtPtr rnd_engine);
     void compute_uniform_event(mtPtr rnd_engine);
 
     // powerlaw branching functions
     bool flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                         size_t &branching_point, mtPtr rnd_engine);
+                         stype &branching_point, mtPtr rnd_engine);
     void compute_flpl_event(mtPtr rnd_engine);
 
     // critical_resource functions
     bool res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                        size_t &branching_point, mtPtr rnd_engine,
+                        stype &branching_point, mtPtr rnd_engine,
                         GCPtr& second_cone, const Event &ev);
 
     void initialize_next_event(mtPtr rnd_engine);

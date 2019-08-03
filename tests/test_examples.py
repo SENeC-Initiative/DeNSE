@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# test_create.py
+# test_examples.py
 #
 # This file is part of DeNSE.
 #
@@ -20,30 +20,38 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Testing delete functions """
+""" Testing main functions """
+
+import os
+import matplotlib
+matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
 
 import dense as ds
-from dense.units import *
 
 
-def test_create():
+root = os.path.abspath(os.path.dirname(__file__) + "/..")
+tuto = root + "/examples/tutorials"
+
+
+def mock_show():
+    pass
+
+
+def test_1_first_steps(monkeypatch):
     '''
-    Create neurons and neurites
+    Run first example.
     '''
+    monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-
-    # create one neuron
-    neuron = ds.create_neurons(num_neurites=1)
-
-    # create a new neurite
-    neuron.create_neurites(names="new_dendrite")
-
-    assert len(neuron.neurites) == 2
-    assert "new_dendrite" in neuron.neurites
-
-    neuron = ds.create_neurons()
-    assert not neuron.neurites
+    exec(open(tuto + "/1_first-steps.py").read())
 
 
-if __name__ == "__main__":
-    test_create()
+def test_2_interacting_neurons(monkeypatch):
+    '''
+    Run second example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(tuto + "/2_interacting-neurons.py").read())

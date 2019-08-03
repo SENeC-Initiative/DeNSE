@@ -32,7 +32,6 @@ const std::string actin_content_tau("actin_content_tau");
 const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
 const std::string active("active");
-
 const std::string affinity_axon_axon_other_neuron("affinity_axon_axon_other_neuron");
 const std::string affinity_axon_dendrite_other_neuron("affinity_axon_dendrite_other_neuron");
 const std::string affinity_axon_dendrite_same_neuron("affinity_axon_dendrite_same_neuron");
@@ -93,6 +92,7 @@ const std::string max_sensing_angle("max_sensing_angle");
 const std::string max_synaptic_distance("max_synaptic_distance");
 
 const std::string neurite_angles("neurite_angles");
+const std::string neurite_type("neurite_type");
 const std::string noise_amplitude("noise_amplitude");
 const std::string num_neurites("num_neurites");
 const std::string num_growth_cones("num_growth_cones");

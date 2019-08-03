@@ -38,7 +38,7 @@ class RTDirectionSelector: public virtual DirectionSelectModel
     double next_tumble_;         // distance left to next tumble
     double tumbling_;            // whether a tumble is happening
     double p_tumble_on_stop_;    // proba of tumbling if stopped
-    size_t num_tumbles_;         // keep track of tumbling occurrences
+    stype num_tumbles_;         // keep track of tumbling occurrences
 
     std::exponential_distribution<double> exponential_rt_;
     std::uniform_real_distribution<double> uniform_;
@@ -55,7 +55,7 @@ class RTDirectionSelector: public virtual DirectionSelectModel
         mtPtr rnd_engine, double total_proba, bool interacting,
         double old_angle, double &substep, double &step_length,
         double &new_angle, bool &stopped,
-        size_t &default_direction) override final;
+        stype &default_direction) override final;
 
     void initialize_rt();
 

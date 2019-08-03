@@ -22,7 +22,19 @@
 
 """ Tools relaetd to neuronal structure """
 
-from .algorithms import *
-from .connections import *
-from .graph import *
-from .neuron_shape import *
+from . import algorithms
+
+from .algorithms import tree_asymmetry
+from .connections import generate_network, get_connections
+from .graph import SpatialNetwork, SpatialMultiNetwork
+from .neuron_shape import NeuronStructure
+
+__all__ = [
+    "algorithms",
+    "generate_network",
+    "get_connections",
+    "NeuronStructure",
+    "SpatialNetwork",
+    "SpatialMultiNetwork",
+    "tree_asymmetry",
+]

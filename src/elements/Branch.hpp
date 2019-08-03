@@ -79,7 +79,7 @@ class Branch
      *
      * @param id_x the length of the new branch container
      */
-    void resize_tail(size_t new_size);
+    void restypeail(stype new_size);
 
     /**
      * @brief Create a new branch from tail of this Branch: tail invariate.
@@ -90,7 +90,7 @@ class Branch
      *
      * @return
      */
-    BranchPtr resize_head(size_t id_x) const;
+    BranchPtr resize_head(stype id_x) const;
 
     /**
      * @brief Remove one point from the container.
@@ -110,7 +110,7 @@ class Branch
     // Getter Functions
     double final_distance_to_soma() const;
     double initial_distance_to_soma() const;
-    double get_segment_length_at(size_t idx) const;
+    double get_segment_length_at(stype idx) const;
     double get_last_segment_length() const;
     double get_length() const;
     const std::pair<BPoint, BPoint>& get_last_points() const;
@@ -118,7 +118,7 @@ class Branch
     const std::vector<double>& get_ylist() const;
     PointArray get_last_point() const;
     const BPolygonPtr get_last_segment() const;
-    const BPolygonPtr get_segment_at(size_t idx) const;
+    const BPolygonPtr get_segment_at(stype idx) const;
     seg_range segment_range() const;
     // double get_normal_direction() const;
     //! return the last xy
@@ -126,9 +126,9 @@ class Branch
     /**
     Return a BPoint object from the 'idx' element of the Branch
     */
-    PointArray at(size_t idx) const;
-    BPoint xy_at(size_t idx) const;
-    size_t size() const;
+    PointArray at(stype idx) const;
+    BPoint xy_at(stype idx) const;
+    stype size() const;
 };
 } // namespace growth
 

@@ -216,7 +216,7 @@ double ResourceBasedExtensionModel::compute_CR(
                 ev_time.update(1UL, 0.);
 
                 auto neuron         = neurite_ptr_->get_parent_neuron().lock();
-                size_t neuron_gid   = neuron->get_gid();
+                stype neuron_gid   = neuron->get_gid();
                 std::string neurite = neurite_ptr_->get_name();
                 int cone_id         = gc_weakptr_.lock()->get_node_id();
 

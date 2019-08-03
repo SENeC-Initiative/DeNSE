@@ -54,10 +54,10 @@ const int INVALID_AXON_NAME(1);
 namespace growth
 {
 
-size_t create_objects_(const std::string &object_name,
+stype create_objects_(const std::string &object_name,
                       const std::vector<statusMap> &obj_params)
 {
-    size_t gid = 0;
+    stype gid = 0;
 
     if (object_name == "recorder")
     {
@@ -87,11 +87,11 @@ size_t create_objects_(const std::string &object_name,
  *
  * @return the gid of the neuron created.
  */
-size_t create_neurons_(const std::vector<statusMap> &neuron_params,
+stype create_neurons_(const std::vector<statusMap> &neuron_params,
                        const std::vector<statusMap> &axon_params,
                        const std::vector<statusMap> &dendrites_params)
 {
-    size_t num_created = kernel().neuron_manager.create_neurons(
+    stype num_created = kernel().neuron_manager.create_neurons(
         neuron_params, axon_params, dendrites_params);
 
     // update max_resolution
@@ -101,32 +101,20 @@ size_t create_neurons_(const std::vector<statusMap> &neuron_params,
 }
 
 
-void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
+void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
                       const std::vector<statusMap> &params,
                       const std::vector<std::string> &neurite_types,
                       const std::vector<double> &angles,
                       const std::vector<std::string> &names)
 {
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
-    std::vector< std::vector<size_t> > omp_neuron_vec(num_omp);
+    std::vector< std::vector<stype> > omp_neuron_vec(num_omp);
 
-    for (size_t i=0; i < neurons.size(); i++)
+    for (stype i=0; i < neurons.size(); i++)
     {
         int omp_id = kernel().neuron_manager.get_neuron_thread(neurons[i]);
         omp_neuron_vec[omp_id].push_back(i);
     }
-
-    // if (not names.empty())
-    // {
-    //     for (std::string name : names)
-    //     {
-    //         printf("%s\n", name.c_str());
-    //     }
-    // }
-    // else
-    // {
-    //     printf("names empty\n");
-    // }
 
 #pragma omp parallel
     {
@@ -136,12 +124,12 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
         bool gc_model_set;
         GCPtr gc_ptr;
 
-        for (size_t i : omp_neuron_vec[omp_id])
+        for (stype i : omp_neuron_vec[omp_id])
         {
             NeuronPtr neuron = kernel().neuron_manager.get_neuron(neurons[i]);
             statusMap status = params[i];
 
-            size_t existing_neurites = neuron->get_num_neurites();
+            stype existing_neurites = neuron->get_num_neurites();
             bool has_axon            = neuron->has_axon();
 
             gc_model_set = get_param(status, "growth_cone_model", gc_model);
@@ -155,7 +143,7 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
 
             if (neurite_types.empty())
             {
-                for (size_t j=0; j < num_neurites; j++)
+                for (stype j=0; j < num_neurites; j++)
                 {
                     if ((names.empty() and has_axon
                         and existing_neurites + j == 0) or
@@ -177,7 +165,7 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
             }
             else
             {
-                for (size_t j=0; j < num_neurites; j++)
+                for (stype j=0; j < num_neurites; j++)
                 {
                     if (neurite_types[j] == "axon")
                     {
@@ -205,7 +193,7 @@ void create_neurites_(const std::vector<size_t> &neurons, size_t num_neurites,
 }
 
 
-void delete_neurons_(const std::vector<size_t> &gids)
+void delete_neurons_(const std::vector<stype> &gids)
 {
     if (gids.empty())
     {
@@ -225,7 +213,7 @@ void delete_neurons_(const std::vector<size_t> &gids)
 }
 
 
-void delete_neurites_(const std::vector<size_t> &gids,
+void delete_neurites_(const std::vector<stype> &gids,
                       const std::vector<std::string> &names)
 {
     if (gids.empty())
@@ -241,7 +229,7 @@ void delete_neurites_(const std::vector<size_t> &gids,
     }
     else
     {
-        for (size_t neuron : gids)
+        for (stype neuron : gids)
         {
             NeuronPtr nptr = kernel().neuron_manager.get_neuron(neuron);
 
@@ -328,7 +316,7 @@ void set_kernel_status_(const statusMap &status_dict, std::string simulation_ID)
 }
 
 
-void set_status_(size_t gid, statusMap neuron_status, statusMap axon_status,
+void set_status_(stype gid, statusMap neuron_status, statusMap axon_status,
                  statusMap dendrites_status)
 {
     // @todo: do this in parallel
@@ -354,7 +342,7 @@ void set_status_(size_t gid, statusMap neuron_status, statusMap axon_status,
 }
 
 
-void set_neurite_status_(size_t neuron, std::string neurite, statusMap status)
+void set_neurite_status_(stype neuron, std::string neurite, statusMap status)
 {
     NeuronPtr nptr = kernel().neuron_manager.get_neuron(neuron);
 
@@ -374,7 +362,7 @@ void get_models_(std::unordered_map<std::string, std::string> &models,
 }
 
 
-std::vector<std::string> get_extension_types_()
+std::vector<std::string> get_elongation_types_()
 {
     return kernel().model_manager.get_extension_types();
 }
@@ -405,7 +393,7 @@ const Time get_current_time_()
 statusMap get_kernel_status_() { return kernel().get_status(); }
 
 
-statusMap get_status_(size_t gid)
+statusMap get_status_(stype gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
     {
@@ -423,7 +411,7 @@ statusMap get_status_(size_t gid)
 }
 
 
-double get_state_(size_t gid, const std::string& level,
+double get_state_(stype gid, const std::string& level,
                   const std::string& variable)
 {
     const char* cvar = variable.c_str();
@@ -440,13 +428,13 @@ double get_state_(size_t gid, const std::string& level,
 }
 
 
-size_t get_num_objects_() { return kernel().get_num_objects(); }
+stype get_num_objects_() { return kernel().get_num_objects(); }
 
 
-size_t get_num_created_objects_() { return kernel().get_num_created_objects(); }
+stype get_num_created_objects_() { return kernel().get_num_created_objects(); }
 
 
-statusMap get_neurite_status_(size_t gid, const std::string &neurite,
+statusMap get_neurite_status_(stype gid, const std::string &neurite,
                              const std::string &level)
 {
     return kernel().neuron_manager.get_neurite_status(gid, neurite, level);
@@ -488,19 +476,19 @@ void get_defaults_(const std::string &object_name,
 }
 
 
-bool is_neuron_(size_t gid)
+bool is_neuron_(stype gid)
 {
     return kernel().neuron_manager.is_neuron(gid);
 }
 
 
-bool is_neurite_(size_t gid, const std::string& neurite)
+bool is_neurite_(stype gid, const std::string& neurite)
 {
     return kernel().neuron_manager.get_neuron(gid)->is_neurite(neurite);
 }
 
 
-std::string object_type_(size_t gid)
+std::string object_type_(stype gid)
 {
     if (kernel().neuron_manager.is_neuron(gid))
     {
@@ -520,13 +508,13 @@ std::string object_type_(size_t gid)
 // ------------------------------------------------------------------------- //
 // Neuron/structure related
 
-std::vector<size_t> get_neurons_()
+std::vector<stype> get_neurons_()
 {
     return kernel().neuron_manager.get_gids();
 }
 
 
-std::vector<std::string> get_neurites_(size_t gid)
+std::vector<std::string> get_neurites_(stype gid)
 {
     std::vector<std::string> neurite_names;
 
@@ -547,7 +535,7 @@ std::vector<std::string> get_neurites_(size_t gid)
 }
 
 
-bool neuron_has_axon_(size_t gid)
+bool neuron_has_axon_(stype gid)
 {
     return kernel().neuron_manager.get_neuron(gid)->has_axon();
 }
@@ -557,16 +545,16 @@ bool neuron_has_axon_(size_t gid)
  * Morphology data
  */
 
-void get_branches_data_(size_t neuron, const std::string &neurite_name,
+void get_branches_data_(stype neuron, const std::string &neurite_name,
                         std::vector<std::vector<std::vector<double>>> &points,
                         std::vector<double> &diameters,
-                        std::vector<int> &parents, std::vector<size_t> &nodes,
-                        size_t start_point)
+                        std::vector<int> &parents, std::vector<stype> &nodes,
+                        stype start_point)
 {
     NeuronPtr n            = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite = n->get_neurite(neurite_name);
 
-    size_t idx = 0;
+    stype idx = 0;
 
     auto node_it  = neurite.lock()->nodes_cbegin();
     auto node_end = neurite.lock()->nodes_cend();
@@ -622,7 +610,7 @@ void get_branches_data_(size_t neuron, const std::string &neurite_name,
             points_tmp.push_back(b->get_xlist());
             points_tmp.push_back(b->get_ylist());
 
-            size_t parent_id = gc.second->get_parent().lock()->get_node_id();
+            stype parent_id = gc.second->get_parent().lock()->get_node_id();
 
             parents.push_back(parent_id);
             nodes.push_back(gc.second->get_node_id());
@@ -637,7 +625,7 @@ void get_branches_data_(size_t neuron, const std::string &neurite_name,
 
 void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
                    SkelNeurite &nodes, SkelNeurite &growth_cones,
-                   SkelSomas &somas, std::vector<size_t> gids,
+                   SkelSomas &somas, std::vector<stype> gids,
                    unsigned int resolution)
 {
     std::vector<NeuronPtr> neurons_vector;
@@ -673,10 +661,10 @@ void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
 }
 
 
-void get_geom_skeleton_(std::vector<size_t> gids,
+void get_geom_skeleton_(std::vector<stype> gids,
                         std::vector<GEOSGeometry*>& axons,
                         std::vector<GEOSGeometry*>& dendrites,
-                        std::vector<size_t>& dendrite_gids,
+                        std::vector<stype>& dendrite_gids,
                         std::vector< std::vector<double> >& somas)
 {
     std::vector<GEOSGeometry *> vec;
@@ -690,9 +678,9 @@ void get_geom_skeleton_(std::vector<size_t> gids,
     std::stringstream s;
     BMultiPolygon mp;
     std::string wkt;
-    size_t num_poly;
+    stype num_poly;
 
-    for (size_t gid : gids)
+    for (stype gid : gids)
     {
         NeuronPtr neuron = kernel().neuron_manager.get_neuron(gid);
         auto neurite_it  = neuron->neurite_cbegin();
@@ -776,12 +764,12 @@ void get_geom_skeleton_(std::vector<size_t> gids,
 
 void generate_synapses_(
   bool crossings_only, double density, bool only_new_syn, bool autapse_allowed,
-  const std::set<size_t> &presyn_pop, const std::set<size_t> &postsyn_pop,
-  std::vector<size_t> &presyn_neurons, std::vector<size_t> &postsyn_neurons,
+  const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
+  std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
   std::vector<std::string> &presyn_neurites,
   std::vector<std::string> &postsyn_neurites,
-  std::vector<size_t> &presyn_nodes, std::vector<size_t> &postsyn_nodes,
-  std::vector<size_t> &presyn_segments, std::vector<size_t> &postsyn_segments,
+  std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+  std::vector<stype> &presyn_segments, std::vector<stype> &postsyn_segments,
   std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
   std::vector<double> &post_syn_x, std::vector<double> &post_syn_y)
 {
@@ -807,8 +795,8 @@ void generate_synapses_(
 }
 
 
-void get_distances_(size_t gid, const std::string &neurite_name, size_t node,
-                    size_t segment, double &dist_to_parent,
+void get_distances_(stype gid, const std::string &neurite_name, stype node,
+                    stype segment, double &dist_to_parent,
                     double &dist_to_soma)
 {
     NeuronPtr neuron = kernel().neuron_manager.get_neuron(gid);
@@ -829,7 +817,7 @@ void get_distances_(size_t gid, const std::string &neurite_name, size_t node,
 }
 
 
-void get_swc_(std::string output_file, std::vector<size_t> gids,
+void get_swc_(std::string output_file, std::vector<stype> gids,
               unsigned int resolution)
 {
     std::sort(gids.begin(), gids.end());
@@ -849,21 +837,21 @@ void get_swc_(std::string output_file, std::vector<size_t> gids,
 // ------------------------------------------------------------------------- //
 // Recorder related
 
-bool get_next_recording_(size_t gid, std::vector<Property> &ids,
+bool get_next_recording_(stype gid, std::vector<Property> &ids,
                          std::vector<double> &values)
 {
     return kernel().record_manager.get_next_recording(gid, ids, values);
 }
 
 
-bool get_next_time_(size_t gid, std::vector<Property> &ids,
+bool get_next_time_(stype gid, std::vector<Property> &ids,
                     std::vector<double> &values, const std::string &time_units)
 {
     return kernel().record_manager.get_next_time(gid, ids, values, time_units);
 }
 
 
-void get_recorder_type_(size_t gid, std::string &level, std::string &event_type)
+void get_recorder_type_(stype gid, std::string &level, std::string &event_type)
 {
     kernel().record_manager.get_recorder_type(gid, level, event_type);
 }
@@ -905,7 +893,7 @@ void _fill_swc(const SkelNeurite &source_container,
 }
 
 
-bool walk_neurite_tree_(size_t neuron, std::string neurite, NodeProp& np)
+bool walk_neurite_tree_(stype neuron, std::string neurite, NodeProp& np)
 {
     NeuronPtr n                = kernel().neuron_manager.get_neuron(neuron);
     NeuriteWeakPtr neurite_ptr = n->get_neurite(neurite);
@@ -961,7 +949,7 @@ void get_backtrace_(std::string &msg, int depth = 0)
 }
 
 
-void test_random_generator_(Random_vecs &values, size_t size)
+void test_random_generator_(Random_vecs &values, stype size)
 {
     kernel().simulation_manager.test_random_generator(values, size);
     printf("%lu number generated from rng\n", values[0].size());

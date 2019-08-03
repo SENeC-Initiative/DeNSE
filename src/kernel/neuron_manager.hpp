@@ -33,8 +33,8 @@ namespace growth
 {
 
 // typedefs
-typedef std::unordered_map<size_t, NeuronPtr> gidNeuronMap;
-typedef std::unordered_map<size_t, int> gidThreadMap;
+typedef std::unordered_map<stype, NeuronPtr> gidNeuronMap;
+typedef std::unordered_map<stype, int> gidThreadMap;
 typedef std::unordered_map<std::string, GCPtr> modelMap;
 typedef std::vector<std::vector<NeuronPtr>> threadNeurons;
 
@@ -55,34 +55,34 @@ class NeuronManager : public ManagerInterface
     /**
      * Create neurons.
      */
-    size_t create_neurons(const std::vector<statusMap> &neuron_params,
+    stype create_neurons(const std::vector<statusMap> &neuron_params,
                           const std::vector<statusMap> &axon_params,
                           const std::vector<statusMap> &dendrites_params);
   
-    void delete_neurons(const std::vector<size_t> &gids);
+    void delete_neurons(const std::vector<stype> &gids);
 
-    NeuronPtr get_neuron(size_t gid);
+    NeuronPtr get_neuron(stype gid);
     void get_all_neurons(std::vector<NeuronPtr> &);
-    std::vector<size_t> get_gids() const;
+    std::vector<stype> get_gids() const;
     gidNeuronMap get_local_neurons(int local_thread_id);
-    int get_neuron_thread(size_t gid) const;
+    int get_neuron_thread(stype gid) const;
 
     void init_neurons_on_thread(unsigned int num_local_threads);
     void update_kernel_variables();
 
     void get_defaults(statusMap &status, const std::string &object,
                       bool detailed) const;
-    const statusMap get_neuron_status(size_t gid) const;
-    const statusMap get_neurite_status(size_t gid, const std::string &type,
+    const statusMap get_neuron_status(stype gid) const;
+    const statusMap get_neurite_status(stype gid, const std::string &type,
                                        const std::string &level) const;
 
-    bool is_neuron(size_t gid) const;
+    bool is_neuron(stype gid) const;
 
-    size_t num_neurons() const;
+    stype num_neurons() const;
 
     gidNeuronMap::const_iterator iter_neurons();
 
-    void set_max_resol(size_t neuron, double max_resol);
+    void set_max_resol(stype neuron, double max_resol);
     double get_max_resol() const;
 
     //! here we call the models file and register each model in the map
@@ -90,12 +90,12 @@ class NeuronManager : public ManagerInterface
     modelMap model_map_;
 
   private:
-    size_t num_created_neurons_;
+    stype num_created_neurons_;
     NeuronPtr model_neuron_;          // unused model neuron for get_defaults
     gidNeuronMap neurons_;            // get neuron from gid
     threadNeurons neurons_on_thread_; // group neurons by thread
     gidThreadMap thread_of_neuron_;   // get thread from gid
-    std::vector<std::unordered_map<size_t, double>>
+    std::vector<std::unordered_map<stype, double>>
         max_resolutions_; // max allowed resol
 };
 

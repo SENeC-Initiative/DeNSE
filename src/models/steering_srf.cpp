@@ -109,16 +109,16 @@ void SrfSteeringModel::compute_direction_probabilities(
     ObjectInfo info;
 
     double max_dist     = 5*self_avoidance_scale_;
-    size_t neuron_id    = neurite_ptr_->get_parent_neuron().lock()->get_gid();
+    stype neuron_id    = neurite_ptr_->get_parent_neuron().lock()->get_gid();
     std::string neurite = neurite_ptr_->get_name();
-    size_t gc_id        = gc_weakptr_.lock()->get_node_id();
+    stype gc_id        = gc_weakptr_.lock()->get_node_id();
     double radius       = 0.5*gc_weakptr_.lock()->get_diameter();
 
     // loop over the angles, get total probability, and add memory contribution
     double weight, abs_angle, angle, gfactor, sangle, sfactor, distance, tmp;
     double inv_pi = 1./M_PI;
     std::string nneurite;
-    size_t nneuron, ngc;
+    stype nneuron, ngc;
     BPoint target_pos;
 
     for (unsigned int n = 0; n < filo.directions.size(); n++)
@@ -173,7 +173,7 @@ void SrfSteeringModel::compute_direction_probabilities(
 
             distance = std::nan("");
             
-            for (size_t i=0; i < neighbors_info.size(); i++)
+            for (stype i=0; i < neighbors_info.size(); i++)
             {
                 info     = neighbors_info[i];
                 neighbor = neighbors[i];

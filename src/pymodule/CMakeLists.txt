@@ -38,9 +38,13 @@ if ( HAVE_PYTHON )
       set( SKIP_BUILD 0 )
   endif()
 
-  # Define MSVC variable to 0 for python if MSVC is not being used
+  # Define MSVC and APPLE variable to 0 for python if they are not defined
   if (NOT MSVC)
     set(MSVC 0)
+  endif ()
+
+  if (NOT APPLE)
+    set(APPLE 0)
   endif ()
 
   # configure _pygrowth.pxd and setup.py
@@ -67,29 +71,25 @@ if ( HAVE_PYTHON )
     )
   else ()
 	  if (PYTHON_DEVELOPER_MODE)
-		install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
-		execute_process(
-			COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
-				build -b ${CMAKE_CURRENT_BINARY_DIR}
-				develop --prefix=${PYTHON_INSTALL_DIR}
-						--install-scripts=${PYTHON_INSTALL_DIR}
-						--install-data=${PYTHON_INSTALL_DIR}/${PY_NAME}
-						--install-headers=${PYTHON_INSTALL_DIR}
-						--install-lib=${PYTHON_INSTALL_DIR}
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
-		)
+      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
+      execute_process(
+        COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
+          build -b ${CMAKE_CURRENT_BINARY_DIR}
+          develop --prefix=${PYTHON_INSTALL_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
+      )
 	  else()
-		install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
-		execute_process(
-			COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
-				build -b ${CMAKE_CURRENT_BINARY_DIR}
-				install --prefix=${PYTHON_INSTALL_DIR}
-						--install-scripts=${PYTHON_INSTALL_DIR}
-						--install-data=${PYTHON_INSTALL_DIR}/${PY_NAME}
-						--install-headers=${PYTHON_INSTALL_DIR}
-						--install-lib=${PYTHON_INSTALL_DIR}
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
-		)
+      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
+      execute_process(
+        COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
+          build -b ${CMAKE_CURRENT_BINARY_DIR}
+          install --prefix=${PYTHON_INSTALL_DIR}
+              --install-scripts=${PYTHON_INSTALL_DIR}
+              --install-data=${PYTHON_INSTALL_DIR}/${PY_NAME}
+              --install-headers=${PYTHON_INSTALL_DIR}
+              --install-lib=${PYTHON_INSTALL_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
+      )
 	  endif()
 	endif ()
 else ()

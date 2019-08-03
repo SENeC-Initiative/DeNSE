@@ -130,7 +130,7 @@ void Branching::set_branching_event(Event &ev, signed char ev_type,
     unsigned char minutes = duration - 60*total_hours;
     ev_time.set_min(ev_time.get_min() + minutes);
 
-    size_t days = total_hours / 24.;
+    stype days = total_hours / 24.;
     ev_time.set_day(ev_time.get_day() + days);
 
     unsigned char hours = total_hours - 24*days;
@@ -138,7 +138,7 @@ void Branching::set_branching_event(Event &ev, signed char ev_type,
 
     // set the informations of the event
     auto n                   = neurite_->get_parent_neuron().lock();
-    size_t neuron_gid        = n->get_gid();
+    stype neuron_gid        = n->get_gid();
     std::string neurite_name = neurite_->get_name();
 
     ev = std::make_tuple(ev_time, neuron_gid, neurite_name, -1, ev_type);
@@ -171,7 +171,7 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
     TNodePtr branching_node(nullptr);
     GCPtr second_cone(nullptr);
     NodePtr new_node = nullptr;
-    size_t branching_point;
+    stype branching_point;
 
     bool success(false);
 
@@ -511,7 +511,7 @@ void Branching::compute_flpl_event(mtPtr rnd_engine)
  * @param rnd_engine
  */
 bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                size_t &branching_point, mtPtr rnd_engine)
+                                stype &branching_point, mtPtr rnd_engine)
 {
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching (FLPL) @@@@@@@@\n");
@@ -605,32 +605,8 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
  *
  * @param rnd_engine
  */
-void Branching::compute_usplit_event(mtPtr rnd_engine)
-{
-    if (not neurite_->growth_cones_.empty())
-    {
-        // here we compute next event with exponential distribution
-        double duration = exponential_usplit_(*(rnd_engine).get());
-
-        set_branching_event(next_usplit_event_, names::gc_splitting, duration);
-
-        // send it to the simulation and recorder managers
-        kernel().simulation_manager.new_branching_event(next_usplit_event_);
-    }
-}
-
-
-/**
- * @brief Select the growth cone starting a uniform split and update GrowthCones
- * This function will be run every time a branching happen if the
- * 'use_uniform_split' flag is set True.
- * This function implement the branching through
- * @function growth_cone_split(...)
- *
- */
-bool Branching::usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                  size_t &branching_point, mtPtr rnd_engine,
-                                  GCPtr& second_cone)
+bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                   stype &branching_point, mtPtr rnd_engine)
 {
     branching_node = nullptr;
     new_node       = nullptr;
@@ -712,7 +688,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
         // get the current second to compute the time-dependent
         // exponential decreasing probability of having a branch.
         double t_0     = kernel().simulation_manager.get_current_minutes();
-        size_t num_gcs = neurite_->growth_cones_.size() +
+        stype num_gcs = neurite_->growth_cones_.size() +
                          neurite_->growth_cones_inactive_.size();
 
         double delta = exp((t_0 + 1) / T_) * T_ / B_ * powf(num_gcs, E_);
@@ -723,7 +699,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
 
         double duration = exponential_(*(rnd_engine).get());
 
-        if (duration > std::numeric_limits<size_t>::max())
+        if (duration > std::numeric_limits<stype>::max())
         {
             next_vanpelt_event_ = invalid_ev;
         }
@@ -747,7 +723,7 @@ void Branching::compute_vanpelt_event(mtPtr rnd_engine)
  *
  */
 bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                   size_t &branching_point, mtPtr rnd_engine,
+                                   stype &branching_point, mtPtr rnd_engine,
                                    GCPtr& second_cone)
 {
     branching_node = nullptr;
@@ -759,7 +735,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         // choice
         GCPtr nex_vanpelt_cone;
         double weight, total_weight(0);
-        std::unordered_map<size_t, double> weights;
+        std::unordered_map<stype, double> weights;
 
         for (auto cone : neurite_->growth_cones_)
         {
@@ -827,7 +803,7 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
  * @param splitting_cone the cone who is going to split
  */
 bool Branching::res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                               size_t &branching_point, mtPtr rnd_engine,
+                               stype &branching_point, mtPtr rnd_engine,
                                GCPtr& second_cone, const Event &ev)
 {
     int gc_id = std::get<edata::GC>(ev);

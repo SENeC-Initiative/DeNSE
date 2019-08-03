@@ -249,7 +249,7 @@ Make sure you get the .NET, C++ compiler, and MSBuild in the proposed packages,
 
 Once in the Anaconda Prompt, run::
 
-    conda install cmake geos
+    conda install cmake geos boost
     pip install cython
     pip install shapely pint PyOpenGL svg.path dxfgrabber
 

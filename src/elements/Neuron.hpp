@@ -86,7 +86,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
 
   public:
     Neuron() = delete;
-    Neuron(size_t gid);
+    Neuron(stype gid);
     ~Neuron();
 
     // Init functions
@@ -96,7 +96,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void finalize();
 
     // Growth functions
-    void grow(mtPtr rnd_engine, size_t current_step, double substep);
+    void grow(mtPtr rnd_engine, stype current_step, double substep);
     bool branch(mtPtr rnd_engine, const Event &ev);
     void next_actin_event(mtPtr rnd_engine);
 
@@ -110,7 +110,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     // Getter/setter functions
     BaseNodePtr get_soma() const;
     BPoint get_position() const;
-    size_t get_gid() const;
+    stype get_gid() const;
     std::string get_gc_model() const;
     NeuriteWeakPtr get_neurite(const std::string &name) const;
     double get_state(const char *observable) const;
@@ -142,7 +142,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     }
 
   private:
-    size_t gid_;
+    stype gid_;
     std::string description_;
     //! Container for the ``NeuritePtr`` objects
     NeuriteMap neurites_;
@@ -154,9 +154,9 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     std::vector<std::string> observables_;
     // Actin waves
     bool use_actin_waves_;
-    size_t aw_generation_step_;
+    stype aw_generation_step_;
     double actin_content_;
-    size_t next_actin_event_;
+    stype next_actin_event_;
     double axon_angle_;
     std::unordered_map<std::string, double> neurite_angles_;
     double axon_polarization_weight_;

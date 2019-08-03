@@ -25,6 +25,9 @@
 #include <cstdlib>
 #include <limits>
 
+#include "config.hpp"
+
+
 namespace growth
 {
 
@@ -43,13 +46,13 @@ class Time
 
     Time();
     Time(double seconds, unsigned char minutes, unsigned char hours,
-         size_t days);
+         stype days);
     Time(const Time &initial_time, timeStep steps);
 
     static void reset_resolution();
     static void set_resolution(double resolution);
 
-    static Time from_steps(size_t step, double substep);
+    static Time from_steps(stype step, double substep);
     static void to_steps(const Time &t, timeStep &steps, double &substep);
 
   private:
@@ -60,7 +63,7 @@ class Time
     double sec_;
     unsigned char min_;
     unsigned char hour_;
-    size_t day_;
+    stype day_;
 
   public:
     Time &operator+=(const Time &rhs);
@@ -73,7 +76,7 @@ class Time
     double get_sec() const;
     unsigned char get_min() const;
     unsigned char get_hour() const;
-    size_t get_day() const;
+    stype get_day() const;
 
     // void get_sec(double sec) const;
     // void get_min(double min) const;
@@ -88,7 +91,7 @@ class Time
     void set_sec(double seconds);
     void set_min(unsigned char minutes);
     void set_hour(unsigned char hours);
-    void set_day(size_t days);
+    void set_day(stype days);
 };
 
 /*

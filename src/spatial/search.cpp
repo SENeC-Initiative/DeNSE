@@ -33,7 +33,7 @@ void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
                           double distanceToNode)
 {
     /*    //implemnet BINARY SEARCH TREE*/
-    // size_t size     = branch->size();
+    // stype size     = branch->size();
     // while (distance <= distanceToTarget_)
     //{
     // id_x--;
@@ -58,7 +58,7 @@ void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
 }
 
 void locate_from_idx(BPoint &xy, double &angle, double &distance,
-                     const BranchPtr branch, size_t id_x)
+                     const BranchPtr branch, stype id_x)
 {
     xy       = branch->xy_at(id_x);
     distance = branch->at(id_x)[2];

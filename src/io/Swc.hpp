@@ -50,7 +50,7 @@ class Swc
 
   public:
     Swc(std::string output_file, unsigned int resolution);
-    void to_swc(const Neuron *, size_t gid);
+    void to_swc(const Neuron *, stype gid);
     void close_file();
     ~Swc();
 };

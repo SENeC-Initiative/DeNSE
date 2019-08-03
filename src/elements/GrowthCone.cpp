@@ -241,14 +241,14 @@ void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
  *
  * @param rnd_engine
  */
-void GrowthCone::grow(mtPtr rnd_engine, size_t cone_n, double substep)
+void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 {
     double total_distance = 0.;
     // useful values
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     double current_time(0.), local_substep(substep), tmp, old_substep;
     double angle_widening, unstuck_angle, waiting_time;
-    size_t n_direction, i;
+    stype n_direction, i;
 
     std::vector<double> directions_weights;
     std::vector<std::string> new_pos_area;
@@ -520,7 +520,7 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 }
 
 
-void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
+void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
 {
     assert(distance >= 0.);
 
@@ -585,7 +585,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
     }
 
     // set the new growth cone angle
-    size_t last = biology_.branch->size();
+    stype last = biology_.branch->size();
     double x0, y0, x1, y1;
     BPoint p;
 
@@ -647,7 +647,7 @@ void GrowthCone::retraction(double distance, size_t cone_n, int omp_id)
 }
 
 
-void GrowthCone::prune(size_t cone_n)
+void GrowthCone::prune(stype cone_n)
 {
 #ifndef NDEBUG
     printf("pruning %lu %s %lu because (%i, %i, %f)\n", neuron_id_, neurite_name_.c_str(), get_node_id(), stuck_, stopped_, total_proba_);
@@ -712,7 +712,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
     if (not stopped_)
     {
         double new_angle = move_.angle;
-        size_t default_direction;
+        stype default_direction;
 
         select_direction(directions_weights, rnd_engine, substep, new_angle,
                          default_direction);
@@ -1228,7 +1228,7 @@ void GrowthCone::update_filopodia()
 }
 
 
-size_t GrowthCone::get_neuron_id() const
+stype GrowthCone::get_neuron_id() const
 {
     return neuron_id_;
 }
@@ -1237,6 +1237,12 @@ size_t GrowthCone::get_neuron_id() const
 const std::string& GrowthCone::get_neurite_name() const
 {
     return neurite_name_;
+}
+
+
+const std::string& GrowthCone::get_model_name() const
+{
+    return model_;
 }
 
 

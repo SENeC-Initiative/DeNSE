@@ -60,14 +60,14 @@ class SimulationManager : public ManagerInterface
     const Time& get_initial_time() const;
     double get_resolution() const;
     double get_current_minutes() const;
-    size_t get_current_step() const;
+    stype get_current_step() const;
     double get_current_substep() const;
 
     void set_max_resolution();
     void push_max_resolution(int omp_id, double max_resol,
                              double old_max_resol);
 
-    void test_random_generator(Random_vecs &values, size_t size);
+    void test_random_generator(Random_vecs &values, stype size);
 
   private:
     void initialize_simulation_(const Time &t);

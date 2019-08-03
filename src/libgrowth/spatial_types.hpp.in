@@ -30,6 +30,8 @@
 // include GEOS C-API
 #include <geos_c.h>
 
+#include "config.hpp"
+
 
 namespace bg  = boost::geometry;
 namespace bgi = boost::geometry::index;
@@ -118,7 +120,7 @@ typedef struct Move
  */
 
 // ObjectInfo tuple (neuron ID, neurite name, node ID, index on branch)
-typedef std::tuple<size_t, std::string, size_t, size_t> ObjectInfo;
+typedef std::tuple<stype, std::string, stype, stype> ObjectInfo;
 
 
 namespace ndata
@@ -146,8 +148,8 @@ typedef std::tuple<ObjectInfo, BBox, bool> box_tree_tuple;
  * Synapses
  */
 
-typedef std::vector< std::pair<size_t, size_t> > synapse_vec;
-typedef std::vector< std::tuple<std::string, size_t, size_t> > synapse_ref;
+typedef std::vector< std::pair<stype, stype> > synapse_vec;
+typedef std::vector< std::tuple<std::string, stype, stype> > synapse_ref;
 
 typedef boost::range::joined_range<
     std::vector<BPoint>, std::vector<BPoint> > point_range;

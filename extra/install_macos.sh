@@ -4,18 +4,19 @@
 
 brew tap homebrew/core
 
-brew install gcc-8 cmake python3 geos doxygen
+brew install gcc@8 cmake python3 geos doxygen boost libomp
 
 pip3 install setuptools
 pip3 install cython
-pip3 install numpy scipy pint breathe sphinx-bootstrap-theme
+pip3 install numpy scipy pint pyneuroml
+pip3 install sphinx breathe sphinx-bootstrap-theme
 pip3 install --no-binary shapely, shapely
 pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
 
 cd ..
 mkdir build
 cd build
-CC=gcc-8 CXX=g++-8 cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local -Dwith-docs=ON -Dwith-python=3
+CC=gcc-8 CXX=g++-8 cmake .. -Dwith-docs=ON -Dwith-python=3
 
 make
 CC=gcc-8 CXX=g++-8 make install

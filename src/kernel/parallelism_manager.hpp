@@ -58,7 +58,7 @@ class ParallelismManager : public ManagerInterface
     /*
      * Get number of virtual processes
      */
-    size_t get_num_virtual_processes() const;
+    stype get_num_virtual_processes() const;
 
     /*
      * Get rank of MPI process
@@ -71,7 +71,7 @@ class ParallelismManager : public ManagerInterface
      * where T is the total number of processes.
      */
     int get_thread_local_id() const;
-    int get_thread_local_id(size_t vp) const;
+    int get_thread_local_id(stype vp) const;
 
     int get_num_local_threads() const;
     void set_num_local_threads(int n_threads);
@@ -115,12 +115,12 @@ inline int ParallelismManager::get_num_local_threads() const
 
 // Mixed implementations
 
-inline int ParallelismManager::get_thread_local_id(size_t vp) const
+inline int ParallelismManager::get_thread_local_id(stype vp) const
 {
     return vp % num_mpi_;
 }
 
-inline size_t ParallelismManager::get_num_virtual_processes() const
+inline stype ParallelismManager::get_num_virtual_processes() const
 {
     return num_omp_ * num_mpi_;
 }

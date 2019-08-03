@@ -54,14 +54,14 @@ void NWADirectionSelector::select_direction(
   const std::vector<double> &directions_weights, const Filopodia &filo,
   mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
   double &substep, double &step_length, double &new_angle, bool &stopped,
-  size_t &default_direction)
+  stype &default_direction)
 {
     double weight, norm(0.);
 
     new_angle = 0.;
 
     // get weighted values
-    for (size_t n=0; n < directions_weights.size(); n++)
+    for (stype n=0; n < directions_weights.size(); n++)
     {
         weight = directions_weights[n];
 
@@ -78,7 +78,7 @@ void NWADirectionSelector::select_direction(
     // default angle is closest to new_angle
     double dist, min_dist(std::numeric_limits<double>::max());
 
-    for (size_t n=0; n < directions_weights.size(); n++)
+    for (stype n=0; n < directions_weights.size(); n++)
     {
         if (not std::isnan(directions_weights[n]))
         {

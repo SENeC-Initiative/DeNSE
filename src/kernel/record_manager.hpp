@@ -47,40 +47,40 @@ class RecordManager : public ManagerInterface
     virtual void initialize();
     virtual void finalize();
 
-    size_t create_recorder(const std::vector<statusMap> &obj_params);
+    stype create_recorder(const std::vector<statusMap> &obj_params);
 
     void record(int omp_id);
-    void finalize_simulation(size_t steps);
+    void finalize_simulation(stype steps);
 
     void get_status(statusMap &status) const;
     void get_defaults(statusMap &status) const;
-    bool is_recorder(size_t gid) const;
-    size_t num_recorders() const;
+    bool is_recorder(stype gid) const;
+    stype num_recorders() const;
     void set_status(const statusMap &status);
     void num_threads_changed(int num_omp);
     void new_branching_event(const Event &ev);
 
-    void neurons_deleted(const std::vector<size_t> &gids);
-    void new_neurite(size_t neuron, const std::string& neurite);
-    void gc_died(size_t neuron, const std::string& neurite, size_t gc_id);
+    void neurons_deleted(const std::vector<stype> &gids);
+    void new_neurite(stype neuron, const std::string& neurite);
+    void gc_died(stype neuron, const std::string& neurite, stype gc_id);
 
-    statusMap get_recorder_status(size_t gid) const;
-    void get_recorder_type(size_t gid, std::string &level,
+    statusMap get_recorder_status(stype gid) const;
+    void get_recorder_type(stype gid, std::string &level,
                            std::string &event_type) const;
-    bool get_next_recording(size_t gid, std::vector<Property> &ids,
+    bool get_next_recording(stype gid, std::vector<Property> &ids,
                             std::vector<double> &values);
-    bool get_next_time(size_t gid, std::vector<Property> &ids,
+    bool get_next_time(stype gid, std::vector<Property> &ids,
                        std::vector<double> &values,
                        const std::string &time_units);
 
   private:
-    std::unordered_map<size_t, std::shared_ptr<BaseRecorder>> c_recorders_;
-    std::unordered_map<size_t, std::shared_ptr<BaseRecorder>> d_recorders_;
-    std::unordered_map<size_t, std::vector<size_t>> neuron_to_d_recorder_;
-    std::unordered_map<size_t, std::vector<size_t>> neuron_to_c_recorder_;
-    std::vector<std::vector<size_t>> omp_id_crec_;
-    std::vector<std::vector<size_t>> omp_id_drec_;
-    size_t last_omp_id_;
+    std::unordered_map<stype, std::shared_ptr<BaseRecorder>> c_recorders_;
+    std::unordered_map<stype, std::shared_ptr<BaseRecorder>> d_recorders_;
+    std::unordered_map<stype, std::vector<stype>> neuron_to_d_recorder_;
+    std::unordered_map<stype, std::vector<stype>> neuron_to_c_recorder_;
+    std::vector<std::vector<stype>> omp_id_crec_;
+    std::vector<std::vector<stype>> omp_id_drec_;
+    stype last_omp_id_;
     int num_threads_;
     std::vector<Event> events_;
 };

@@ -48,32 +48,34 @@ class SpatialMultiNetwork(object):
 
     def __init__(self, population, name="Graph", weighted=True, directed=True,
                  shape=None, positions=None, multigraph=False, **kwargs):
-        self.name = name
-        self.population  = population
+        self.name        = name
+        self._population = population
         self.weighted    = weighted
         self.directed    = directed
         self.shape       = shape
         self.positions   = positions
         self._multigraph = multigraph
         # graph informations
-        self._nodes   = set()
+        self._nodes   = {int(n) for n in population}
         self._edge_nb = 0
         self._edges   = defaultdict(set)
         self._weights = []
         # synaptic details
         syn_details = {
-            "presyn_neurites": [],
-            "postsyn_neurites": [],
-            "presyn_nodes": [],
-            "postsyn_nodes": [],
-            "presyn_segments": [],
-            "postsyn_segments": [],
-            "presyn_distances": [],
-            "postsyn_distances": [],
-            "presyn_pos": [],
-            "postsyn_pos": [],
+            # "presyn_neurites": [],
+            # "postsyn_neurites": [],
+            # "presyn_nodes": [],
+            # "postsyn_nodes": [],
+            # "presyn_segments": [],
+            # "postsyn_segments": [],
+            # "presyn_distances": [],
+            # "postsyn_distances": [],
+            # "presyn_pos": [],
+            # "postsyn_pos": [],
+            "distance": [],
+            "synapse_position": [],
         }
-        self._attributes = syn_details if multigraph else {}
+        self._attributes = syn_details if multigraph else {"distance": []}
 
     def new_edge(self, source, target, attributes=None, **kwargs):
         '''
@@ -151,7 +153,7 @@ class SpatialMultiNetwork(object):
 
         self._nodes.update(np.ravel(edge_list))
 
-        enum = self._edge_nb
+        enum = self.edge_nb
 
         for i, e in enumerate(edge_list):
             connection = tuple(e)
@@ -183,11 +185,16 @@ class SpatialMultiNetwork(object):
             ids = self._edges[edge]
 
             if len(ids) == 1 and not return_set:
-                return ids[0]
+                return next(iter(ids))
             else:
                 return ids
         else:
-            raise RuntimeError("SpatialNetwork has no edge " + str(edge) + ".")
+            raise KeyError("SpatialNetwork has no edge " + str(edge) + ".")
+
+    @property
+    def population(self):
+        ''' The neuronal population '''
+        return self._population
 
     @property
     def edges_array(self):
@@ -198,9 +205,14 @@ class SpatialMultiNetwork(object):
         edges = []
         eids  = []
 
-        for k, v in self._edges.items():
-            eids.extend(v)
-            edges.extend([k]*len(v))
+        if self._multigraph:
+            for k, v in self._edges.items():
+                eids.extend(v)
+                edges.extend([k]*len(v))
+        else:
+            for k, v in self._edges.items():
+                eids.append(min(v))
+                edges.append(k)
 
         esort = np.argsort(eids)
 
@@ -252,10 +264,11 @@ class SpatialMultiNetwork(object):
                 attributes = [self._weights[i] for i in eids]
             else:
                 attributes = [self._attributes[name][i] for i in eids]
+
             if len(eids) == 1:
                 return attributes[0]
-            else:
-                return attributes
+
+            return attributes
         elif name is None and edges is None:
             attributes = self._attributes.copy()
             attributes["weight"] = self._weights
@@ -270,6 +283,9 @@ class SpatialMultiNetwork(object):
                 attributes["weight"].append(self._weights[eid])
             return attributes
         else:
+            if name == "weight":
+                return [v for v in self._weights]
+
             return [v for v in self._attributes[name]]
 
     def set_edge_attribute(self, attribute, values=None, val=None,
@@ -382,17 +398,24 @@ class SpatialNetwork(_BaseNetwork):
         num_nodes        = population.size
         self._nodes      = set(population.ids)
         self._multigraph = equivalent_multigraph
-        self._population = population
+
+        if _with_nngt:
+            population = nngt.NeuralPop.uniform(len(population))
+            # don't pass population to nngt
+            super(SpatialNetwork, self).__init__(
+                nodes=num_nodes, name=name, weighted=weighted, directed=directed,
+                shape=shape, positions=positions, from_graph=from_graph,
+                **kwargs)
+            self._population = population
+            self.new_edge_attribute("multiplicity", "int", val=1)
+        else:
+            super(SpatialNetwork, self).__init__(
+                population, nodes=num_nodes, name=name, weighted=weighted,
+                directed=directed, shape=shape, positions=positions,
+                from_graph=from_graph, **kwargs)
 
         if population is None:
             raise RuntimeError("Network needs a NeuralPop to be created")
-
-        super(SpatialNetwork, self).__init__(
-            nodes=num_nodes, name=name, weighted=weighted, directed=directed,
-            shape=shape, positions=positions, from_graph=from_graph, **kwargs)
-
-        if _with_nngt:
-            self.new_edge_attribute("multiplicity", "int", val=1)
 
     @property
     def population(self):
@@ -507,35 +530,58 @@ class SpatialNetwork(_BaseNetwork):
 
         if not _with_nngt:
             # Backup instance, the existing edges need to be updated
-            existing = np.zeros(len(edge_list), dtype=bool)
+            ecount = 0
             for i, e in enumerate(edge_list):
+                e = tuple(e)
                 try:
-                    self.edge_id(e)
-                    existing[i] = 1
+                    idx = self.edge_id(e)
+                    exists = True
+                except KeyError:
+                    exists = False
 
+                if exists:
                     if self.is_weighted():
                         w = attributes["weight"][i]
-                        self._weights[i] += w
+                        self._weights[idx] += w
 
                     # weighted average for other attributes
                     mult = len(self._edges[e])
 
                     for k, v in self._attributes.items():
-                        v[i] = (mult*v[i] + attributes[k][i]) / (mult + 1.)
-
-                    # update edge set
-                    self._edges[e].add(enum + i)
-                except:
+                        # some attributes may be skipped but they must be
+                        # for all connections
+                        if k in attributes:
+                            v[idx] = (mult*v[idx] + attributes[k][i]) / (mult + 1.)
+                        else:
+                            assert not self._attributes[k], \
+                                "Attribute '" + k + "' is required."
+                else:
                     if self.is_weighted():
                         self._weights.append(attributes["weight"][i])
 
+                    # tmp dict because attributes may be skipped
+                    tmp_dict = {k: [] for k in self._attributes}
+
                     for k, v in self._attributes.items():
-                        v.append(attributes[k][i])
+                        # some attributes may be skipped but they must be
+                        # for all connections
+                        if k in attributes:
+                            tmp_dict[k].append(attributes[k][i])
+
+                    for k, v in tmp_dict.items():
+                        # if skipped, checked that it was for all connections
+                        if not v:
+                            assert not self._attributes[k], \
+                                "Attribute '" + k + "' is required."
+                        else:
+                            self._attributes[k].extend(v)
 
                     # add edge set
-                    self._edges[e] = {enum + i}
+                    self._edges[e] = {enum + ecount}
+                    self._edge_nb += 1
+                    ecount        += 1
         else:
-            existing   = np.zeros(len(edge_list), dtype=bool)
+            existing = np.zeros(len(edge_list), dtype=bool)
 
             for i, e in enumerate(edge_list):
                 try:

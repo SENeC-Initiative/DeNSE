@@ -50,7 +50,7 @@ class NWADirectionSelector: public virtual DirectionSelectModel
         mtPtr rnd_engine, double total_proba, bool interacting,
         double old_angle, double &substep, double &step_length,
         double &new_angle, bool &stopped,
-        size_t &default_direction) override final;
+        stype &default_direction) override final;
 
     virtual void set_status(const statusMap &status) override final;
     virtual void get_status(statusMap &status) const override final;

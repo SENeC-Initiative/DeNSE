@@ -97,10 +97,10 @@ class KernelManager
     std::string get_simulation_ID() const;
 
     //! Get the number of objects in the simulator.
-    size_t get_num_created_objects() const;
-    size_t get_num_objects() const;
+    stype get_num_created_objects() const;
+    stype get_num_objects() const;
     //! Update the object count
-    void update_num_objects(size_t num_new_objects);
+    void update_num_objects(stype num_new_objects);
 
     std::string simulation_ID_;
     double get_adaptive_timestep() const;
@@ -122,8 +122,8 @@ class KernelManager
     bool record_enabled_;
     //!< to create neurons
     bool initialized_;   //!< true if all sub-managers initialized
-    size_t num_created_objects_; //!< number of objects created
-    size_t num_objects_; //!< current number of objects
+    stype num_created_objects_; //!< number of objects created
+    stype num_objects_; //!< current number of objects
     std::string version_;
     double adaptive_timestep_; //! if > 1, step divider when interacting
 };

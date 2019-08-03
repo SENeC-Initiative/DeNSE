@@ -605,8 +605,9 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
  *
  * @param rnd_engine
  */
-bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                   stype &branching_point, mtPtr rnd_engine)
+bool Branching::usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                                  stype &branching_point, mtPtr rnd_engine,
+                                  GCPtr &second_cone)
 {
     branching_node = nullptr;
     new_node       = nullptr;
@@ -660,6 +661,32 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
     next_usplit_event_ = invalid_ev;
     return false;
+}
+
+
+/**
+ * @brief Compute the next uniform split event
+ * @details
+ * The time (in step unit) of next uniform split event is computed with an
+ * exponential distribution
+ * whose rate is set with Branching::set_status(...)
+ * Values are stored in the Branching instance itself.
+ * @brief Branch the neurite in a uniformly randoim chosen node
+ *
+ * @param rnd_engine
+ */
+void Branching::compute_usplit_event(mtPtr rnd_engine)
+{
+    if (not neurite_->growth_cones_.empty())
+    {
+        // here we compute next event with exponential distribution
+        double duration = exponential_usplit_(*(rnd_engine).get());
+
+        set_branching_event(next_usplit_event_, names::gc_splitting, duration);
+
+        // send it to the simulation and recorder managers
+        kernel().simulation_manager.new_branching_event(next_usplit_event_);
+    }
 }
 
 

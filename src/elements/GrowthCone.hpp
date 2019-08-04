@@ -31,7 +31,6 @@
 
 // lib include
 #include "config_impl.hpp"
-#include "cttrie.hpp"
 #include "elements_types.hpp"
 #include "spatial_types.hpp"
 
@@ -169,7 +168,7 @@ class GrowthCone : public TopologicalNode,
 
     // get functions
     double get_module() const;
-    virtual double get_state(const char *observable) const;
+    virtual double get_state(const std::string& observable) const;
     virtual double get_growth_cone_speed() const;
     virtual double get_diameter() const override;
     bool just_retracted() const;

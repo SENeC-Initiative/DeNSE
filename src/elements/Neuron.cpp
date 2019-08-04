@@ -770,17 +770,14 @@ void Neuron::set_neurite_status(const std::string &neurite,
 /**
  * @brief Get the current value of one of the observables
  */
-double Neuron::get_state(const char *observable) const
+double Neuron::get_state(const std::string& observable) const
 {
     double value = 0.;
 
-    TRIE(observable)
-    // default case, just sum up
     for (const auto &neurite : neurites_)
     {
         value += neurite.second->get_state(observable);
     }
-    ENDTRIE;
 
     return value;
 }

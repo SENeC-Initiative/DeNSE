@@ -324,14 +324,14 @@ void ResourceBasedExtensionModel::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double ResourceBasedExtensionModel::get_state(const char *observable) const
+double ResourceBasedExtensionModel::get_state(const std::string& observable) const
 {
     double value = 0.;
 
-    TRIE(observable)
-    CASE("resource")
-    value = stored_;
-    ENDTRIE;
+    if (observable == "resource")
+    {
+        value = stored_;
+    }
 
     return value;
 }

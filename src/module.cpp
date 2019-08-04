@@ -414,16 +414,14 @@ statusMap get_status_(stype gid)
 double get_state_(stype gid, const std::string& level,
                   const std::string& variable)
 {
-    const char* cvar = variable.c_str();
-
     if (level == "neuron")
     {
-        return kernel().neuron_manager.get_neuron(gid)->get_state(cvar);
+        return kernel().neuron_manager.get_neuron(gid)->get_state(variable);
     }
     else
     {
         return kernel().neuron_manager.get_neuron(gid)->get_neurite(level)
-                   .lock()->get_state(cvar);
+                   .lock()->get_state(variable);
     }
 }
 

@@ -28,7 +28,6 @@
 #include <string>
 
 // lib includes
-#include "cttrie.hpp"
 #include "elements_types.hpp"
 
 // elements include
@@ -99,7 +98,7 @@ class SteeringModel
     // Standard methods for growth cone, should not they
     virtual void prepare_for_split() {};
     virtual void after_split() {};
-    virtual double get_state(const char *observable) const { return std::nan(""); };
+    virtual double get_state(const std::string& observable) const { return std::nan(""); };
     virtual void set_status(const statusMap &status) = 0;
     virtual void get_status(statusMap &status) const = 0;
 };

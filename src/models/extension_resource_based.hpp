@@ -90,7 +90,7 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
     // status
     void set_status(const statusMap &) override;
     void get_status(statusMap &) const override;
-    virtual double get_state(const char *observable) const override;
+    virtual double get_state(const std::string& observable) const override;
 };
 
 } // namespace growth

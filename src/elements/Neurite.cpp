@@ -1420,23 +1420,26 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
 /**
  * @brief Get the current value of one of the observables
  */
-double Neurite::get_state(const char *observable) const
+double Neurite::get_state(const std::string& observable) const
 {
     double value = 0.;
 
-    TRIE(observable)
-    // default case, just sum up
-    for (const auto &gc : growth_cones_)
+    if (observable == "A")
     {
-        value += gc.second->get_state(observable);
+        value = cr_neurite_.available;
     }
-    for (const auto &gc : growth_cones_inactive_)
+    else
     {
-        value += gc.second->get_state(observable);
+        // default case, just sum up
+        for (const auto &gc : growth_cones_)
+        {
+            value += gc.second->get_state(observable);
+        }
+        for (const auto &gc : growth_cones_inactive_)
+        {
+            value += gc.second->get_state(observable);
+        }
     }
-    CASE("A")
-    value = cr_neurite_.available;
-    ENDTRIE;
 
     return value;
 }

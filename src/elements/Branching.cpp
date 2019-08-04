@@ -398,7 +398,7 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
  * @param rnd_engine
  */
 bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                                   size_t &branching_point, mtPtr rnd_engine)
+                                   stype &branching_point, mtPtr rnd_engine)
 {
 #ifndef NDEBUG
     printf("@@@@@@@ Lateral branching @@@@@@@@\n");
@@ -618,7 +618,7 @@ bool Branching::usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         // choice
         GCPtr next_usplit_cone;
         double total_weight = 0.;
-        std::unordered_map<size_t, double> weights;
+        std::unordered_map<stype, double> weights;
 
         for (auto cone : neurite_->growth_cones_)
         {

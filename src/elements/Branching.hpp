@@ -99,7 +99,7 @@ class Branching
 
     // uniform split functions
     bool usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                          size_t &branching_point, mtPtr rnd_engine,
+                          stype &branching_point, mtPtr rnd_engine,
                           GCPtr &second_cone);
     void compute_usplit_event(mtPtr rnd_engine);
 

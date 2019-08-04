@@ -366,7 +366,7 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
 void NeuronDiscreteRecorder::record(const Event &ev)
 {
     Time event_time     = std::get<edata::TIME>(ev);
-    stype neuron       = std::get<edata::NEURON>(ev);
+    stype neuron        = std::get<edata::NEURON>(ev);
     signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     // test which data is recorded
@@ -1114,8 +1114,6 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
 
             for (const auto &neurite : n->neurites_)
             {
-                stype size = neurite.second->growth_cones_.size();
-
                 recording_[gid][neurite.first]  = mapNumVecDouble();
                 times_[gid][neurite.first]      = mapNumArrayTime();
                 dead_cones_[gid][neurite.first] = std::unordered_set<stype>();

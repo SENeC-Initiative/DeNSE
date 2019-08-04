@@ -44,7 +44,7 @@ get_target_triple( CGROWTH_TARGET_TRIPLE CGROWTH_TARGET_ARCH CGROWTH_TARGET_VEND
 
 # process compiler and options
 if (MSVC)
-   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase-" )
+   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase- /Ox" )
    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 else ()
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )

@@ -92,7 +92,7 @@ class GrowthConeModel
 
     void set_status(const statusMap &) override final;
     void get_status(statusMap &) const override final;
-    double get_state(const char *observable) const override final;
+    double get_state(const std::string& observable) const override final;
 };
 
 
@@ -309,7 +309,7 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_status(
 
 template <class ElType, class SteerMethod, class DirSelMethod>
 double GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_state(
-  const char *observable) const
+  const std::string& observable) const
 {
     double value = GrowthCone::get_state(observable);
 

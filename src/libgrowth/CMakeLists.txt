@@ -7,8 +7,6 @@ set( libgrowth_sources
      growth_time.hpp growth_time.cpp
      growth_names.hpp growth_names.cpp
      tools.hpp
-     # included "external" functions for "switch with string"
-     cstr.hpp cttrie.hpp getindex.hpp stringview.hpp
 )
 
 configure_file(

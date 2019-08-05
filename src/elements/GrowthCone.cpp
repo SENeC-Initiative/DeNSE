@@ -1080,26 +1080,38 @@ void GrowthCone::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double GrowthCone::get_state(const char *observable) const
+double GrowthCone::get_state(const std::string& observable) const
 {
     double value = std::nan("");
 
-    TRIE(observable)
-    CASE("length")
-    value = biology_.branch->get_length();
-    CASE("speed")
-    value = move_.speed;
-    CASE("angle")
-    value = move_.angle;
-    CASE("status")
-    value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
-    CASE("retraction_time")
-    value = retraction_time_;
-    CASE("diameter")
-    value = current_diameter_;
-    CASE("stepping_probability")
-    value = total_proba_;
-    ENDTRIE;
+    if (observable == "length")
+    {
+        value = biology_.branch->get_length();
+    }
+    else if (observable == "speed")
+    {
+        value = move_.speed;
+    }
+    else if (observable == "angle")
+    {
+        value = move_.angle;
+    }
+    else if (observable == "status")
+    {
+        value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
+    }
+    else if (observable == "retraction_time")
+    {
+        value = retraction_time_;
+    }
+    else if (observable == "diameter")
+    {
+        value = current_diameter_;
+    }
+    else if (observable == "stepping_probability")
+    {
+        value = total_proba_;
+    }
 
     return value;
 }

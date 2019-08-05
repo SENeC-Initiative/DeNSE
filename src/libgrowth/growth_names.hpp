@@ -259,6 +259,8 @@ extern const std::string lateral_branching_angle_std;
 extern const std::string use_flpl_branching;
 extern const std::string use_uniform_branching;
 extern const std::string uniform_branching_rate;
+extern const std::string use_uniform_split;
+extern const std::string uniform_split_rate;
 
 #define DIAM_FRAC_LB 0.8
 #define LATERAL_BRANCHING_ANGLE_MEAN 60. * 3.14 / 180.

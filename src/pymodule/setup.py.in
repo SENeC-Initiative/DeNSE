@@ -51,8 +51,8 @@ except ImportError:
 
 copt =  {
     'msvc': [
-        '/openmp', '/O2', '/fp:precise', '/permissive-', '/Zc:twoPhase-',
-        '/MDd' if "@CMAKE_BUILD_TYPE@" == "Debug" else "/MD", "-Zi", "/Od",
+        '/openmp', '/Od', '/fp:precise', '/permissive-', '/Zc:twoPhase-',
+        '/MDd' if "@CMAKE_BUILD_TYPE@" == "Debug" else "/MD", "-Zi", "/Ox",
         '/D_ITERATOR_DEBUG_LEVEL=2' if "@CMAKE_BUILD_TYPE@" == "Debug" else "",
     ],
     'unix': [

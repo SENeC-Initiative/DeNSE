@@ -59,7 +59,7 @@ class RTDirectionSelector: public virtual DirectionSelectModel
 
     void initialize_rt();
 
-    virtual double get_state(const char *observable) const override final;
+    virtual double get_state(const std::string& observable) const override final;
     virtual void set_status(const statusMap &status) override final;
     virtual void get_status(statusMap &status) const override final;
 };

@@ -26,7 +26,6 @@
 #include <string>
 
 // lib includes
-#include "cttrie.hpp"
 #include "elements_types.hpp"
 
 // elements include
@@ -92,7 +91,7 @@ class ExtensionModel
 
     virtual void prepare_for_split() {};
     virtual void after_split() {};
-    virtual double get_state(const char *observable) const {
+    virtual double get_state(const std::string& observable) const {
         return std::nan("");
     };
     virtual void set_status(const statusMap &status) = 0;

@@ -47,7 +47,6 @@ BaseRecorder::BaseRecorder()
     , restrict_to_("")
     , v_iterating_(false)
     , t_iterating_(false)
-    , cstr_obs_("")
 {
 }
 
@@ -82,7 +81,6 @@ void BaseRecorder::set_status(const statusMap &status)
     {
         get_param(status, names::restrict_to, restrict_to_);
         get_param(status, names::observable, observable_);
-        cstr_obs_ = observable_.c_str();
     }
 
     // @todo if record_to_ changed, do the necessary updates
@@ -194,7 +192,7 @@ void NeuronContinuousRecorder::record()
         for (const auto &neuron : targets_)
         {
             recording_[neuron.first].push_back(
-                neuron.second->get_state(cstr_obs_));
+                neuron.second->get_state(observable_));
         }
         num_times_ += 1;
     }
@@ -293,22 +291,31 @@ bool NeuronContinuousRecorder::get_next_time(std::vector<Property> &ids,
                                              const std::string &time_units)
 {
     double t0, tf;
-    const char *ctu = time_units.c_str();
 
-    TRIE(ctu)
-    CASE("seconds")
-    t0 = times_[0].get_total_seconds();
-    tf = times_[1].get_total_seconds();
-    CASE("minutes")
-    t0 = times_[0].get_total_minutes();
-    tf = times_[1].get_total_minutes();
-    CASE("hours")
-    t0 = times_[0].get_total_hours();
-    tf = times_[1].get_total_hours();
-    CASE("days")
-    t0 = times_[0].get_total_days();
-    tf = times_[1].get_total_days();
-    ENDTRIE;
+    if (time_units == "seconds")
+    {
+        t0 = times_[0].get_total_seconds();
+        tf = times_[1].get_total_seconds();
+    }
+    else if (time_units == "minutes")
+    {
+        t0 = times_[0].get_total_minutes();
+        tf = times_[1].get_total_minutes();
+    }
+    else if (time_units == "hours")
+    {
+        t0 = times_[0].get_total_hours();
+        tf = times_[1].get_total_hours();
+    }
+    else if (time_units == "days")
+    {
+        t0 = times_[0].get_total_days();
+        tf = times_[1].get_total_days();
+    }
+    else
+    {
+        throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+    }
 
     values.push_back(t0);
     values.push_back(tf);
@@ -366,7 +373,7 @@ void NeuronDiscreteRecorder::set_status(const statusMap &status)
 void NeuronDiscreteRecorder::record(const Event &ev)
 {
     Time event_time     = std::get<edata::TIME>(ev);
-    stype neuron       = std::get<edata::NEURON>(ev);
+    stype neuron        = std::get<edata::NEURON>(ev);
     signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
     // test which data is recorded
@@ -374,10 +381,7 @@ void NeuronDiscreteRecorder::record(const Event &ev)
     bool branching_event =
         (ev_type == names::lateral_branching || ev_type == names::gc_splitting);
 
-    // test which data is recorded
-
-    TRIE(cstr_obs_)
-    CASE("num_growth_cones")
+    // only growth cone number provide discrete recording
     if (branching_event)
     {
         recording_[neuron].push_back(recording_[neuron].back() + 1);
@@ -386,8 +390,8 @@ void NeuronDiscreteRecorder::record(const Event &ev)
     {
         recording_[neuron].push_back(recording_[neuron].back() - 1);
     }
+
     times_[neuron].push_back(event_time);
-    ENDTRIE;
 }
 
 
@@ -441,8 +445,6 @@ bool NeuronDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                                            std::vector<double> &values,
                                            const std::string &time_units)
 {
-    const char *ctu = time_units.c_str();
-
     if (!t_iterating_)
     {
         t_iterating_ = true;
@@ -458,28 +460,38 @@ bool NeuronDiscreteRecorder::get_next_time(std::vector<Property> &ids,
         // set the values
         values.reserve(values.size() + time_it_->second.size());
 
-        TRIE(ctu)
-        CASE("seconds")
-        for (auto t : time_it_->second)
+        if (time_units == "seconds")
         {
-            values.push_back(t.get_total_seconds());
+            for (auto t : time_it_->second)
+            {
+                values.push_back(t.get_total_seconds());
+            }
         }
-        CASE("minutes")
-        for (auto t : time_it_->second)
+        else if (time_units == "minutes")
         {
-            values.push_back(t.get_total_minutes());
+            for (auto t : time_it_->second)
+            {
+                values.push_back(t.get_total_minutes());
+            }
         }
-        CASE("hours")
-        for (auto t : time_it_->second)
+        else if (time_units == "hours")
         {
-            values.push_back(t.get_total_hours());
+            for (auto t : time_it_->second)
+            {
+                values.push_back(t.get_total_hours());
+            }
         }
-        CASE("days")
-        for (auto t : time_it_->second)
+        else if (time_units == "days")
         {
-            values.push_back(t.get_total_days());
+            for (auto t : time_it_->second)
+            {
+                values.push_back(t.get_total_days());
+            }
         }
-        ENDTRIE;
+        else
+        {
+            throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+        }
 
         time_it_++;
 
@@ -559,7 +571,7 @@ void NeuriteContinuousRecorder::record()
             for (const auto &neurite : neuron.second->neurites_)
             {
                 recording_[neuron.first][neurite.first].push_back(
-                    neurite.second->get_state(cstr_obs_));
+                    neurite.second->get_state(observable_));
             }
         }
         num_times_ += 1;
@@ -658,22 +670,31 @@ bool NeuriteContinuousRecorder::get_next_time(std::vector<Property> &ids,
                                               const std::string &time_units)
 {
     double t0, tf;
-    const char *ctu = time_units.c_str();
 
-    TRIE(ctu)
-    CASE("seconds")
-    t0 = times_[0].get_total_seconds();
-    tf = times_[1].get_total_seconds();
-    CASE("minutes")
-    t0 = times_[0].get_total_minutes();
-    tf = times_[1].get_total_minutes();
-    CASE("hours")
-    t0 = times_[0].get_total_hours();
-    tf = times_[1].get_total_hours();
-    CASE("days")
-    t0 = times_[0].get_total_days();
-    tf = times_[1].get_total_days();
-    ENDTRIE;
+    if (time_units == "seconds")
+    {
+        t0 = times_[0].get_total_seconds();
+        tf = times_[1].get_total_seconds();
+    }
+    else if (time_units == "minutes")
+    {
+        t0 = times_[0].get_total_minutes();
+        tf = times_[1].get_total_minutes();
+    }
+    else if (time_units == "hours")
+    {
+        t0 = times_[0].get_total_hours();
+        tf = times_[1].get_total_hours();
+    }
+    else if (time_units == "days")
+    {
+        t0 = times_[0].get_total_days();
+        tf = times_[1].get_total_days();
+    }
+    else
+    {
+        throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+    }
 
     values.push_back(t0);
     values.push_back(tf);
@@ -701,12 +722,7 @@ void NeuriteDiscreteRecorder::record(const Event &ev)
     bool branching_event =
         (ev_type == names::lateral_branching || ev_type == names::gc_splitting);
 
-#ifndef NDEBUG
-    printf("got branching event at %f\n", event_time.get_total_minutes());
-#endif
-
-    TRIE(cstr_obs_)
-    CASE("num_growth_cones")
+    // only growth cone number is there for discrete records
     double old_val = recording_[neuron][neurite].back();
 
     if (branching_event)
@@ -719,7 +735,6 @@ void NeuriteDiscreteRecorder::record(const Event &ev)
     }
 
     times_[neuron][neurite].push_back(event_time);
-    ENDTRIE;
 }
 
 
@@ -860,8 +875,6 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                                             std::vector<double> &values,
                                             const std::string &time_units)
 {
-    const char *ctu = time_units.c_str();
-
     if (!t_iterating_)
     {
         t_iterating_ = true;
@@ -888,28 +901,38 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
             // set the values
             values.reserve(values.size() + t_neurite_it_->second.size());
 
-            TRIE(ctu)
-            CASE("seconds")
-            for (auto t : t_neurite_it_->second)
+            if (time_units == "seconds")
             {
-                values.push_back(t.get_total_seconds());
+                for (auto t : t_neurite_it_->second)
+                {
+                    values.push_back(t.get_total_seconds());
+                }
             }
-            CASE("minutes")
-            for (auto t : t_neurite_it_->second)
+            else if (time_units == "minutes")
             {
-                values.push_back(t.get_total_minutes());
+                for (auto t : t_neurite_it_->second)
+                {
+                    values.push_back(t.get_total_minutes());
+                }
             }
-            CASE("hours")
-            for (auto t : t_neurite_it_->second)
+            else if (time_units == "hours")
             {
-                values.push_back(t.get_total_hours());
+                for (auto t : t_neurite_it_->second)
+                {
+                    values.push_back(t.get_total_hours());
+                }
             }
-            CASE("days")
-            for (auto t : t_neurite_it_->second)
+            else if (time_units == "days")
             {
-                values.push_back(t.get_total_days());
+                for (auto t : t_neurite_it_->second)
+                {
+                    values.push_back(t.get_total_days());
+                }
             }
-            ENDTRIE;
+            else
+            {
+                throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+            }
 
             // increment iterator
             t_neurite_it_++;
@@ -967,12 +990,12 @@ void GrowthConeContinuousRecorder::record()
                         gc_times[gc.first]     = std::array<Time, 2>({t0, t0});
                         gc_num_times[gc.first] = 1;
                         gc_values[gc.first]    = std::vector<double>(
-                            {gc.second->get_state(cstr_obs_)});
+                            {gc.second->get_state(observable_)});
                     }
                     else
                     {
                         gc_values[gc.first].push_back(
-                            gc.second->get_state(cstr_obs_));
+                            gc.second->get_state(observable_));
                         gc_num_times[gc.first] += 1;
                     }
                 }
@@ -1015,7 +1038,7 @@ void GrowthConeContinuousRecorder::record(const Event &ev)
         {
             Time t0 = kernel().simulation_manager.get_time();
             gc_values[gc.first] =
-                std::vector<double>({gc.second->get_state(cstr_obs_)});
+                std::vector<double>({gc.second->get_state(observable_)});
             gc_times[gc.first] = std::array<Time, 2>({event_time, event_time});
             gc_num_times[gc.first] = 1;
         }
@@ -1114,8 +1137,6 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
 
             for (const auto &neurite : n->neurites_)
             {
-                stype size = neurite.second->growth_cones_.size();
-
                 recording_[gid][neurite.first]  = mapNumVecDouble();
                 times_[gid][neurite.first]      = mapNumArrayTime();
                 dead_cones_[gid][neurite.first] = std::unordered_set<stype>();
@@ -1222,8 +1243,6 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                                                  std::vector<double> &values,
                                                  const std::string &time_units)
 {
-    const char *ctu = time_units.c_str();
-
     if (!t_iterating_)
     {
         t_iterating_ = true;
@@ -1257,28 +1276,38 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                 ids.push_back(p_gc);
 
                 // set the values
-                TRIE(ctu)
-                CASE("seconds")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                if (time_units == "seconds")
                 {
-                    values.push_back(t.get_total_seconds());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_seconds());
+                    }
                 }
-                CASE("minutes")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "minutes")
                 {
-                    values.push_back(t.get_total_minutes());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_minutes());
+                    }
                 }
-                CASE("hours")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "hours")
                 {
-                    values.push_back(t.get_total_hours());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_hours());
+                    }
                 }
-                CASE("days")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "days")
                 {
-                    values.push_back(t.get_total_days());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_days());
+                    }
                 }
-                ENDTRIE;
+                else
+                {
+                    throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+                }
                 // increment gc
                 t_gc_pos_++;
             }
@@ -1495,8 +1524,6 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                                                std::vector<double> &values,
                                                const std::string &time_units)
 {
-    const char *ctu = time_units.c_str();
-
     if (!t_iterating_)
     {
         t_iterating_ = true;
@@ -1534,28 +1561,38 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                     values.size() +
                     t_neurite_it_->second.at(t_gc_pos_->first).size());
 
-                TRIE(ctu)
-                CASE("seconds")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                if (time_units == "seconds")
                 {
-                    values.push_back(t.get_total_seconds());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_seconds());
+                    }
                 }
-                CASE("minutes")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "minutes")
                 {
-                    values.push_back(t.get_total_minutes());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_minutes());
+                    }
                 }
-                CASE("hours")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "hours")
                 {
-                    values.push_back(t.get_total_hours());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_hours());
+                    }
                 }
-                CASE("days")
-                for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                else if (time_units == "days")
                 {
-                    values.push_back(t.get_total_days());
+                    for (auto t : t_neurite_it_->second.at(t_gc_pos_->first))
+                    {
+                        values.push_back(t.get_total_days());
+                    }
                 }
-                ENDTRIE;
+                else
+                {
+                    throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+                }
 
                 // increment gc
                 t_gc_pos_++;

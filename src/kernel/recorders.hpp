@@ -114,7 +114,6 @@ class BaseRecorder
     bool t_iterating_;
     // model-related parameters
     std::string observable_;
-    const char *cstr_obs_;
 };
 
 

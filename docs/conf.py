@@ -67,6 +67,11 @@ sys.modules["dense._pygrowth"] = pg_mock
 import dense
 
 
+# Simlink to geometry.examples
+src = os.path.abspath('/home/silmathoron/Documents/GitLabo/DeNSE/src/pymodule/dense/environment/examples')
+tgt = os.path.abspath('/home/silmathoron/Documents/GitLabo/DeNSE/docs/modules/examples/')
+
+
 # -- Setup all autosum then start --------------------------------------------
 
 # find all *.in files
@@ -171,7 +176,7 @@ html_theme_options = {
     'navbar_links': [
         ("Modules", "py-modindex"),
         ("Index", "genindex"),
-        #("GitHub", "https://github.com/Silmathoron/NNGT", True),
+        ("GitHub", "https://github.com/SENeC-Initiative/DeNSE", True),
     ],
 
     # Render the next and previous page links in navbar. (Default: true)
@@ -202,10 +207,10 @@ html_theme_options = {
 
     # Location of link to source.
     # Options are "nav" (default), "footer" or anything else to exclude.
-    'source_link_position': "",
+    'source_link_position': "nav",
 
     # Bootswatch (http://bootswatch.com/) theme.
-    'bootswatch_theme': "cosmo"
+    'bootswatch_theme': "lumen"
 }
 
 html_sidebars = {'**': ['customtoc.html', 'searchbox.html']}

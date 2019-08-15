@@ -365,8 +365,10 @@ std::string Neuron::new_neurite(const std::string &name,
 
             contained =
                 kernel().space_manager.env_contains(cone_start_point);
+            
+            int num_test = 0;
 
-            while (not contained)
+            while (not contained and num_test < 1000)
             {
                 angle         += sgn(uniform_(*(rnd_engine).get()) - 0.5)*0.1;
                 axon_angle_    = angle;
@@ -376,6 +378,15 @@ std::string Neuron::new_neurite(const std::string &name,
                           position.y() + details.soma_radius * sin(angle));
                 contained =
                     kernel().space_manager.env_contains(cone_start_point);
+                
+                num_test++;
+            }
+
+            if (num_test == 1000)
+            {
+                throw std::runtime_error("Could not initialize neurite, please "
+                                         "that your neuron does not lay outside "
+                                         "of the environment.");
             }
         }
         else

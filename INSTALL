@@ -1,8 +1,8 @@
 
-                     ____       _   _ ____  _____ 
+                     ____       _   _ ____  _____
                     |  _ \  ___| \ | / ___|| ____|
-                    | | | |/ _ \  \| \___ \|  _|  
-                    | |_| |  __/ |\  |___) | |___ 
+                    | | | |/ _ \  \| \___ \|  _|
+                    | |_| |  __/ |\  |___) | |___
                     |____/ \___|_| \_|____/|_____|
 
 
@@ -169,7 +169,7 @@ Theoretically, you can then run ``./install_fedora.sh``.
 
 Otherwise, you can then install the required tools::
 
-    sudo yum install gcc gcc-c++ cmake python python-devel python-pip
+    sudo yum install gcc gcc-c++ cmake python python-devel python-pip boost boost-devel
 
 However, you will then have to install GEOS yourself (see
 `geos <https://trac.osgeo.org/geos/>`_ to get the source and find out about the

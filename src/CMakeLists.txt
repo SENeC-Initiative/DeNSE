@@ -16,7 +16,8 @@ set (cgrowth_VERSION_MAJOR ${cgrowth_VERSION_MAJOR} PARENT_SCOPE)
 set (cgrowth_VERSION_MINOR ${cgrowth_VERSION_MINOR} PARENT_SCOPE)
 set( cgrowth_VERSION_PATCHLEVEL ${cgrowth_VERSION_PATCHLEVEL} PARENT_SCOPE)
 
-set( cgrowth_VERSION_VERSION "${cgrowth_VERSION_MAJOR}.${cgrowth_VERSION_MINOR}.${cgrowth_VERSION_PATCHLEVEL}" )
+set( cgrowth_VERSION "${cgrowth_VERSION_MAJOR}.${cgrowth_VERSION_MINOR}.${cgrowth_VERSION_PATCHLEVEL}" )
+set( cgrowth_VERSION "${cgrowth_VERSION}" PARENT_SCOPE)
 
 set (SOURCE_FILES "module.hpp" "module.cpp")
 add_subdirectory( elements )

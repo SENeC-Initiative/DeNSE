@@ -90,9 +90,6 @@ if use_run_tumble:
 if use_uniform_branching:
     neuron_params["uniform_branching_rate"] = 0.001
 
-
-
-
 '''
 Simulation
 '''
@@ -101,8 +98,9 @@ Simulation
 def step(n, loop_n, plot=True):
     ds.simulate(n)
     if plot:
+        print("Plot neurons")
         ds.plot_neurons(show_nodes=True, show=True)
-
+        print("Plot neurons OK")
 
 if __name__ == '__main__':
     #~ kernel={"seeds":[33, 64, 84, 65],

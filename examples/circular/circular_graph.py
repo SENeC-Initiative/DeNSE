@@ -2,6 +2,9 @@
 #
 # circular_graph.py
 #
+# This program generations a connections graph between neurons generated in a
+# circular culture
+#
 # This file is part of DeNSE.
 #
 # Copyright (C) 2019 SeNEC Initiative

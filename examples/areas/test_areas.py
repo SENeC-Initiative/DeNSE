@@ -93,6 +93,7 @@ ds.create_neurons(n=1, on_area="default_area", num_neurites=1, params=params)
 # ~ ds.simulate(400*minute)
 # ~ ds.simulate(600*mniute)
 for i in range(15):
+    print ('running')
     ds.simulate(22*minute)
     ds.plot_neurons(show=True)
 

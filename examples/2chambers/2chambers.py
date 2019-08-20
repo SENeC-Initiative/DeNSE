@@ -28,8 +28,8 @@ import numpy as np
 # import matplotlib
 # matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
-import random, shutil
-import os
+
+#  import pdb
 
 import nngt
 nngt.set_config("palette", "Spectral")
@@ -56,12 +56,18 @@ def CleanFolder(tmp_dir, make=True):
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
 
+num_omp = 6  # Number of threads
 
 '''
 Main parameters
 '''
 
-soma_radius = 8.
+# Number of neurons created in each chamber
+num_neurons_left = 4
+num_neurons_right = 4
+
+soma_radius = 8.*um
+culture_size = 900.
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
@@ -82,7 +88,7 @@ neuron_params = {
     "persistence_length" : 600. * um,
     "taper_rate": 2./1000.,
 
-    "soma_radius": soma_radius * um,
+    "soma_radius": soma_radius ,
     'B' : 10. * cpm,
     'T' : 10000. * minute,
     'E' : 0.7,
@@ -118,7 +124,6 @@ if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
 '''
 Simulation
 '''
-
 def step(time, loop_n, plot=True):
     ds.simulate(time)
     if plot:
@@ -126,53 +131,74 @@ def step(time, loop_n, plot=True):
 
 
 if __name__ == '__main__':
-    #~ kernel={"seeds":[33, 64, 84, 65],
-            #~ "num_local_threads":4,
-            #~ "resolution": 30.}
-    kernel = {"seeds": [33, 64, 84, 65, 68, 23],
-              "num_local_threads": 6,
-              "resolution": 10. * minute,
-              "adaptive_timestep": -1.}
-    #~ kernel={"seeds":[33],
-     #~ "num_local_threads": 1,
-    #~ "resolution": 10.}
-    #~ kernel={"seeds":[23, 68],
-    #~ "num_local_threads": 2,
-    #~ "resolution": 30.}
+
+    print('Creating kernel with {0} threads'.format(num_omp))
+    kernel = {
+        "seeds": range(num_omp),
+        "num_local_threads": num_omp,
+        "resolution": 10. * minute,
+        "adaptive_timestep": -1.,
+        "environment_required": True,
+    }
+
+
     kernel["environment_required"] = True
 
     culture_file = current_dir + "/2chamber_culture_sharpen.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
+    #pdb.set_trace()
     if kernel["environment_required"]:
-        culture = ds.set_environment(culture_file, min_x=0, max_x=1500)
+        culture = ds.set_environment(culture_file, min_x=0*um, max_x=1500*um)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=100, xmax=440, soma_radius=soma_radius)
+            neurons=num_neurons_left, xmax=440*um, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
-            neurons=100, xmin=1000, soma_radius=soma_radius)
+            neurons=num_neurons_right, xmin=1000*um, soma_radius=soma_radius)
+
+        # ### HERE
+        # /home/ele/.local/lib/python3.7/site-packages/pint/quantity.py:1377: UnitStrippedWarning: The unit of the quantity is stripped.
+        # warnings.warn("The unit of the quantity is stripped.", UnitStrippedWarning)
+
+        # Je comprends que ça doit être un warning anodin qui vient de l'opération de
+        # concaténation des deux listes pos_left et pos_right qui sont dimensionées
+        # la concaténation détruit l'unité qui'il faut assigner à nouveau
+        # en multipliant par "*um" après la concaténation
+        # >>>>>>>>> voir comment enlever le warning
+
         neuron_params['position'] = np.concatenate((pos_right, pos_left)) * um
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
-    gids = ds.create_neurons(n=200, culture=culture, params=neuron_params,
-                            dendrites_params=dendrite_params, num_neurites=2)
 
+    # ##### HERE SEGMENTATION FAULT
+    # même avec un nombre réduit (n=2) de neurones
+    gids = ds.create_neurons(n=num_neurons_left+num_neurons_right, culture=culture, params=neuron_params,
+                             dendrites_params=dendrite_params, num_neurites=2)
+
+    print("Neurons creation OK")
     start = time.time()
     fig, ax = plt.subplots()
     # ~ for _ in range(10):
-        # ~ step(200, 0, True)
+    # ~ step(200, 0, True)
+
+    print("Simulation start")
     step(5 * day, 0, False)
     duration = time.time() - start
+    print("Simulation OK")
 
+    print("Preparing plots")
     # prepare the plot
-    ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
-                       axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.plot_neurons(gid=range(100, 200), show_culture=False, axis=ax,
-                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                       show=False)
+    ds.plot.plot_neurons(gid=range(num_neurons_left), culture=culture, soma_alpha=0.8,
+                         axon_color='g', gc_color="r", axis=ax, show=False)
+    ds.plot.plot_neurons(gid=range(num_neurons_left, num_neurons_left+
+                         num_neurons_right), show_culture=False, axis=ax,
+                         soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                         show=False)
+    print("Preparing plots OK")
+
     plt.tight_layout()
     ax.set_xlabel("x ($\mu$m)")
     ax.set_ylabel("y ($\mu$m)")
@@ -183,21 +209,19 @@ if __name__ == '__main__':
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
-    ds.save_json_info(filepath=save_path)
-    ds.SaveSwc(filepath=save_path, swc_resolution=10)
+    ds.io.save_json_info(filepath=save_path)
+    ds.io.save_to_swc(filepath=save_path, swc_resolution=10)
 
-    #~ graph = ds.generate_network(method="spine_based", connection_proba=0.5)
+    # ~ graph = ds.generate_network(method="spine_based", connection_proba=0.5)
     print("\nmaking graph\n")
     graph = ds.generate_network(connection_proba=1)
     population = nngt.NeuralPop(with_models=False)
     population.create_group("chamber_1", range(100))
     population.create_group("chamber_2", range(100, 200))
-    
     nngt.Graph.make_network(graph, population)
     print(graph.node_nb(), graph.edge_nb())
 
-
     graph.to_file("diode.el")
 
-    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",# decimate=5,
+    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",#  decimate=5
                            show_environment=False, colorbar=False, show=True)

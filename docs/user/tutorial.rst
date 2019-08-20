@@ -19,7 +19,7 @@ for the simulation:
 .. literalinclude:: ../../examples/tutorials/1_first-steps.py
     :linenos:
     :language: python
-    :lines: 33-34
+    :lines: 30-31
 
 The first line makes the DeNSE simulator available and let us call it through the variable ``ds``. The second line imports all the
 units (e.g. time units like ``ms``, ``minutes``...) which will be used to set the properties of the simulation and of the neurons.
@@ -29,14 +29,14 @@ Once this is done, we can create our first neuron:
 .. literalinclude:: ../../examples/tutorials/1_first-steps.py
     :linenos:
     :language: python
-    :lines: 40
+    :lines: 37
 
 This creates a default neuron without any neurites (a single soma). Let's add an axon and a dendrite:
 
 .. literalinclude:: ../../examples/tutorials/1_first-steps.py
     :linenos:
     :language: python
-    :lines: 43
+    :lines: 40
 
 by default, neurons have their ``has_axon`` variable set to ``True``, meaning that the first created neurite will be
 an axon and all subsequent neurites will be dendrites.
@@ -48,14 +48,14 @@ Because the default name of the first dendrite is ``"dendrite_1"``, this reads:
 .. literalinclude:: ../../examples/tutorials/1_first-steps.py
     :linenos:
     :language: python
-    :lines: 48-60
+    :lines: 45-57
 
 One can then plot and simulate the growth of this neuron:
 
 .. literalinclude:: ../../examples/tutorials/1_first-steps.py
     :linenos:
     :language: python
-    :lines: 63-71
+    :lines: 60-68
 
 
 Two interacting neurons
@@ -66,14 +66,14 @@ Again, import all necessary modules and variables:
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 32-33
+    :lines: 29-30
 
 Once this is done, we can set the various parameters for the simulation and the neuronal properties:
 
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 38-58
+    :lines: 35-55
 
 The first line here declares the number of OpenMP processes that will be used, i.e. how many parallel threads will be used to perform the simulation.
 The second line will be used to set the number of neurons that will be simulated.
@@ -93,7 +93,7 @@ Once all these parameters are declared, we can configure DeNSE and create the ne
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 60-66
+    :lines: 57-63
 
 As can be seen above, one uses the ``ds`` variable to access the simulator main function. 
 The :func:`~dense.set_kernel_status` function is used here to transfer the parameters to the kernel of DeNSE (the main simulator units).
@@ -109,7 +109,7 @@ Following neuron creation, the simulation can be started and its result can be v
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 69-77
+    :lines: 66-74
 
 After this first 7 day simulation, the parameters of the neurons can be changed to account for changes in developmental mechanisms, so that these new
 parameters can be used to simulate the next part of these cells' growth.
@@ -117,7 +117,7 @@ parameters can be used to simulate the next part of these cells' growth.
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 80-98
+    :lines: 77-95
 
 Here we changed separately the dendritic and axonal parameters using the :func:`~dense.set_object_properties` function on the two neurons which are
 stored in the ``n`` variable (the neurons stored in a :class:`~dense.elements.Population` object).
@@ -128,7 +128,7 @@ Note that the ``neuroml`` python module is necessary to use :func:`~dense.io.sav
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 103-104
+    :lines: 100-101
 
 
 Multiprocessing and random number generation
@@ -184,6 +184,47 @@ To increase speed, several approaches may or may not be attractive to you.
 
 Embedding neurons in space
 ==========================
+
+One of the original aims for DeNSE was the study of neuronal cultures and devices, where the neurons
+can be embedded in more or less complex structures.
+In the simulator, simple spatial structures such as disks or rectangles can be generated directly
+from the :class:`~dense.environment.Shape` object.
+For more complex shapes, pre-constructed images in SVG or DXF formats using the
+:func:`~dense.environment.culture_from_file` function.
+
+.. literalinclude:: ../../examples/tutorials/3_space-embedding.py
+    :linenos:
+    :language: python
+    :lines: 28-53
+
+Once the environment is created, we can seed randomly the neurons inside it.
+
+.. literalinclude:: ../../examples/tutorials/3_space-embedding.py
+    :linenos:
+    :language: python
+    :lines: 56-57
+
+.. warning::
+    Setting the soma radius correctly is critical, otherwise the soma might "protrude" out of
+    the environment, which will lead to issues for neurite creation.
+
+We can then create the neurons:
+
+.. literalinclude:: ../../examples/tutorials/3_space-embedding.py
+    :linenos:
+    :language: python
+    :lines: 59-85
+
+And simulate:
+
+.. literalinclude:: ../../examples/tutorials/3_space-embedding.py
+    :linenos:
+    :language: python
+    :lines: 95-99
+
+Which leads to the following structure:
+
+.. image:: ./images/neurons_in_square.png
 
 
 Complex structures

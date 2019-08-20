@@ -51,20 +51,22 @@ status is set during the simulation.
 The models of |name| are implemented in C++
 
 .. doxygenclass:: growth::Neuron
+    :members:
 
 .. doxygenclass:: growth::Neurite
+    :members:
 
 .. doxygenclass:: growth::ActinWave
+    :members:
 
 .. doxygenclass:: growth::Node
+    :members:
 
 .. doxygenclass:: growth::GrowthCone
+    :members:
 
 .. doxygenclass:: growth::Branch
-
-.. doxygenclass:: growth::GrowthCone_RandomWalk
-
-.. doxygenclass:: growth::GrowthCone_Tubuline
+    :members:
 
 
 .. _parameters:

@@ -46,10 +46,10 @@ class Branching
 
   private:
     std::uniform_real_distribution<double> uniform_;
-    std::poisson_distribution<> poisson_;
     std::exponential_distribution<> exponential_;
     std::exponential_distribution<> exponential_uniform_;
     std::exponential_distribution<> exponential_flpl_;
+    std::exponential_distribution<> exponential_usplit_;
 
     NeuritePtr neurite_;
 
@@ -74,6 +74,11 @@ class Branching
     Event next_flpl_event_;
     double flpl_branching_rate_;
 
+    // variables for non-uniform lateral branching
+    bool use_uniform_split_;
+    Event next_usplit_event_;
+    double uniform_split_rate_;
+
   public:
     Branching(NeuritePtr neurite);
     Branching();
@@ -91,6 +96,12 @@ class Branching
                             stype &branching_point, mtPtr rnd_engine,
                             GCPtr &second_cone);
     void compute_vanpelt_event(mtPtr rnd_engine);
+
+    // uniform split functions
+    bool usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
+                          stype &branching_point, mtPtr rnd_engine,
+                          GCPtr &second_cone);
+    void compute_usplit_event(mtPtr rnd_engine);
 
     // uniform branching functions
     bool uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,

@@ -2,6 +2,17 @@
 Welcome to DeNSE's documentation!
 =================================
 
+.. image:: https://travis-ci.com/SENeC-Initiative/DeNSE.svg?branch=master
+    :target: https://travis-ci.com/SENeC-Initiative/DeNSE
+    :height: 20px
+    :width: 90px
+
+.. image:: http://img.shields.io/:license-GPLv2+-green.svg
+    :target: http://www.gnu.org/licenses/gpl-2.0.html
+    :height: 20px
+    :width: 99px
+
+
 A word about |name|
 ===================
 

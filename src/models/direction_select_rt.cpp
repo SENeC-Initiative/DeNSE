@@ -225,14 +225,14 @@ void RTDirectionSelector::select_direction(
 }
 
 
-double RTDirectionSelector::get_state(const char *observable) const
+double RTDirectionSelector::get_state(const std::string& observable) const
 {
     double value = 0.;
 
-    TRIE(observable)
-    CASE("num_tumbles")
-    value = num_tumbles_;
-    ENDTRIE;
+    if (observable == "num_tumbles")
+    {
+        value = num_tumbles_;
+    }
 
     return value;
 }

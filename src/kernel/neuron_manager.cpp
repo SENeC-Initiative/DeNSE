@@ -54,6 +54,7 @@ void NeuronManager::initialize()
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
     std::vector<std::string> options({"use_van_pelt",
+                                      "use_uniform_split",
                                       "use_uniform_branching",
                                       "use_flpl_branching"});
 

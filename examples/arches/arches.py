@@ -101,6 +101,7 @@ if __name__ == '__main__':
         "resolution": 30. * minute,
         "adaptive_timestep": -1.,
         "environment_required": True,
+        "interactions" : False
     }
 
     culture_file = current_dir + "arches_3.svg"

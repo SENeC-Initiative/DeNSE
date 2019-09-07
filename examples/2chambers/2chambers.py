@@ -63,8 +63,8 @@ Main parameters
 '''
 
 # Number of neurons created in each chamber
-num_neurons_left = 4
-num_neurons_right = 4
+num_neurons_left = 5
+num_neurons_right = 5
 
 soma_radius = 8.*um
 culture_size = 900.
@@ -139,10 +139,8 @@ if __name__ == '__main__':
         "resolution": 10. * minute,
         "adaptive_timestep": -1.,
         "environment_required": True,
+        "interactions": False
     }
-
-
-    kernel["environment_required"] = True
 
     culture_file = current_dir + "/2chamber_culture_sharpen.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
@@ -197,8 +195,8 @@ if __name__ == '__main__':
                          num_neurons_right), show_culture=False, axis=ax,
                          soma_alpha=0.8, axon_color='darkorange', gc_color="r",
                          show=False)
-    print("Preparing plots OK")
 
+    print("Preparing plots OK")
     plt.tight_layout()
     ax.set_xlabel("x ($\mu$m)")
     ax.set_ylabel("y ($\mu$m)")
@@ -208,20 +206,26 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
+    print("Preparing to save")
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
     ds.io.save_json_info(filepath=save_path)
-    ds.io.save_to_swc(filepath=save_path, swc_resolution=10)
+    ds.io.save_to_swc(filename=save_path, resolution=10)
+    print("Preparing to save OK")
 
+    print("Preparing to generate graph")
     # ~ graph = ds.generate_network(method="spine_based", connection_proba=0.5)
     print("\nmaking graph\n")
-    graph = ds.generate_network(connection_proba=1)
+    graph = ds.morphology.generate_network(connection_proba=1)
     population = nngt.NeuralPop(with_models=False)
     population.create_group("chamber_1", range(100))
     population.create_group("chamber_2", range(100, 200))
     nngt.Graph.make_network(graph, population)
     print(graph.node_nb(), graph.edge_nb())
+    print("Preparing to generate graph")
+
+
+
+    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",  # decimate=5
+                           show_environment=False, colorbar=False, show=True)
 
     graph.to_file("diode.el")
-
-    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",#  decimate=5
-                           show_environment=False, colorbar=False, show=True)

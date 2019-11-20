@@ -852,7 +852,7 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
             // update the new node
             // NB: it's diameter is the one at the root of the branch!
             // NB2: the + 1 is necessary for the segment between the branches
-            new_node->get_branch()->restypeail(branch_point + 1);
+            new_node->get_branch()->resize_tail(branch_point + 1);
             new_node->set_position(xy, distance_to_soma, new_node->get_branch());
             new_node->set_diameter(new_diam);
 

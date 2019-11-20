@@ -68,6 +68,7 @@ class Branching
     bool use_uniform_branching_;
     Event next_uniform_event_;
     double uniform_branching_rate_;
+    double latbranch_dist_;
 
     // variables for non-uniform lateral branching
     bool use_flpl_branching_;

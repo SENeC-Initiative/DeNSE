@@ -24,6 +24,7 @@
 #include <cassert>
 #include <cmath>
 
+#include "Node.hpp"
 #include "Branch.hpp"
 
 namespace growth
@@ -56,6 +57,56 @@ void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
     // targetNode_->get_branch()->at(id_x)[1]);
     /*angle = get_angle(rnd_engine, direction);*/
 }
+
+
+/**
+ * Get point closest to a given distance along the branch
+ */
+stype get_closest_point(TNodePtr branching_node, double branching_dist)
+{
+    BranchPtr branch = branching_node->get_branch();
+
+    // remove distance to soma
+    double initial_distance = branch->initial_distance_to_soma();
+
+    stype left  = 0;
+    stype right = branching_node->get_branch_size() - 1;
+    stype mid   = 0.5*right;
+
+    PointArray ppl, ppr, ppm;
+    double distl, distr, distm;
+
+    while (left != right - 1)
+    {
+        ppm = branch->at(mid);
+        distm = ppm[2] - initial_distance - branching_dist;
+
+        if (distm < 0)
+        {
+            left = mid;
+            mid  = 0.5*(left + right);
+        }
+        else
+        {
+            right = mid;
+            mid   = 0.5*(left + right);
+        }
+    }
+
+    ppl = branch->at(left);
+    ppr = branch->at(right);
+
+    distl = std::abs(ppl[2] - initial_distance - branching_dist);
+    distr = std::abs(ppr[2] - initial_distance - branching_dist);
+
+    if (distl < distr)
+    {
+        return left;
+    }
+
+    return right;
+}
+
 
 void locate_from_idx(BPoint &xy, double &angle, double &distance,
                      const BranchPtr branch, stype id_x)

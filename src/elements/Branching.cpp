@@ -34,6 +34,9 @@
 #include "Neurite.hpp"
 #include "Node.hpp"
 
+// spatial include
+#include "search.hpp"
+
 
 namespace growth
 {
@@ -59,6 +62,7 @@ Branching::Branching(NeuritePtr neurite)
     , use_uniform_branching_(false)
     , uniform_branching_rate_(UNIFORM_BRANCHING_RATE)
     , next_uniform_event_(invalid_ev)
+    , latbranch_dist_(20.) // todo: make user-defined param
     // parameters for front lateral branching
     , use_flpl_branching_(false)
     , flpl_branching_rate_(UNIFORM_BRANCHING_RATE)
@@ -418,10 +422,10 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             // check if the elected cone is not dead and waiting for removal!
             if (not cone.second->is_dead()
-                and cone.second->get_branch_size() > 3)
+                and cone.second->get_branch()->get_length() > 2*latbranch_dist_)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / cone.second->get_branch_size());
+                                  1. / cone.second->get_branch()->get_length());
                 if (key > max)
                 {
                     max            = key;
@@ -434,10 +438,10 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->size() > 3)
+            if (node.second->get_branch()->get_length() > 2*latbranch_dist_)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / node.second->get_branch()->size());
+                                  1. / node.second->get_branch()->get_length());
                 if (key > max)
                 {
                     max            = key;
@@ -449,11 +453,13 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         // if no node was suited for lateral branching skip the branching.
         if (max > 0)
         {
-            // choose the point uniformly on the branch, except for firts 2 and
-            // last 2 points.
-            branching_point = uniform_(*(rnd_engine).get()) *
-                                  (branching_node->get_branch()->size() - 4) +
-                              2;
+            // choose the point uniformly on the branch but at leat
+            // `latbranch_idst` away from the edges
+            double branching_dist  = uniform_(*(rnd_engine).get()) *
+                (branching_node->get_branch()->get_length() - 2*latbranch_dist_)
+                + latbranch_dist_;
+
+            branching_point = get_closest_point(branching_node, branching_dist);
 
             // actuate lateral branching on the elected node through the
             // NEURITE.
@@ -530,10 +536,10 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             // check if the elected cone is not dead and waiting for removal!
             if (not cone.second->is_dead()
-                and cone.second->get_branch_size() > 3)
+                and cone.second->get_branch()->get_length() > 2*latbranch_dist_)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / cone.second->get_branch_length());
+                                  1. / cone.second->get_branch()->get_length());
                 if (key > max)
                 {
                     max            = key;
@@ -546,10 +552,10 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->size() > 3)
+            if (node.second->get_branch()->get_length() > 2*latbranch_dist_)
             {
                 double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / node.second->get_branch()->size());
+                                  1. / node.second->get_branch()->get_length());
                 if (key > max)
                 {
                     max            = key;
@@ -567,15 +573,16 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             // x0 and x1 define the range of the distribution, and x is your
             // power-law distributed variate.
             double y = uniform_(*(rnd_engine).get());
-            int x_0  = 2;
-            int x_1  = branching_node->get_branch()->size() - 2;
-            // TODO check where this 2 come from.
+            int x_0  = latbranch_dist_;
+            int x_1  =
+                branching_node->get_branch()->get_length() - latbranch_dist_;
+            // TODO check if we should not make n user-defined.
             int n = 2;
             double a =
-                (powf(x_1, (n + 1)) - powf(x_0, (n + 1))) * y + powf(x_0, (n + 1));
-            int x = (int)powf(a, 1. / (n + 1));
+                (powf(x_1, (n + 1)) - powf(x_0, (n + 1)))*y + powf(x_0, (n + 1));
+            double branching_dist = powf(a, 1. / (n + 1));
 
-            branching_point = x;
+            branching_point = get_closest_point(branching_node, branching_dist);
 
             // lateral branching on the elected node through the NEURITE.
             success = neurite_->lateral_branching(

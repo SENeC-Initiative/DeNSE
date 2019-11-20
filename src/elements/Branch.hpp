@@ -79,7 +79,7 @@ class Branch
      *
      * @param id_x the length of the new branch container
      */
-    void restypeail(stype new_size);
+    void resize_tail(stype new_size);
 
     /**
      * @brief Create a new branch from tail of this Branch: tail invariate.

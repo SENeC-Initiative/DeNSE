@@ -82,7 +82,7 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
     int neuriteID = -1;
     int ID        = -1;
     stype idxp;
-    double lgth, tap_r, final_diam;
+    double final_dts, tap_r, final_diam;
     PointArray pp;
     BranchPtr b; // points and lengthof the branch
 
@@ -115,9 +115,9 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
             idxp               = 0;
             auto node          = nodes.back();
             final_diam         = node.second->get_diameter();
-            stype branch_size = node.second->get_branch()->size();
+            stype branch_size  = node.second->get_branch()->size();
             b                  = node.second->get_branch();
-            lgth               = b->get_length();
+            final_dts          = b->final_distance_to_soma();
             ID                 = forkID;
             last_sample        = node.first;
             
@@ -129,7 +129,7 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
 
                 swc_file_ << sample << " " << ID << " " << pp[0] << " " << pp[1]
                           << " " << 0 << " "
-                          << 0.5*(final_diam + tap_r*(lgth - pp[2]))
+                          << 0.5*(final_diam + tap_r*(final_dts - pp[2]))
                           << " " << last_sample << "\n";
 
                 ID          = neuriteID;

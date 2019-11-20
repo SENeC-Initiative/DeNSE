@@ -45,11 +45,11 @@ Branch::Branch(const Branch &copy)
     , segments_(copy.segments_)
 {
     points_[0].insert(points_[0].end(), copy.points_[0].begin(),
-                     copy.points_[0].end());
+                      copy.points_[0].end());
     points_[1].insert(points_[1].end(), copy.points_[0].begin(),
-                     copy.points_[1].end());
+                      copy.points_[1].end());
     points_[2].insert(points_[2].end(), copy.points_[2].begin(),
-                     copy.points_[2].end());
+                      copy.points_[2].end());
 }
 
 
@@ -162,7 +162,7 @@ void Branch::retract()
 }
 
 
-void Branch::restypeail(stype new_size)
+void Branch::resize_tail(stype new_size)
 {
     assert(new_size <= size());
 

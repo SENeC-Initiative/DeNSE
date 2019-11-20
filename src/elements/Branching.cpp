@@ -409,69 +409,78 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 #endif
     branching_node = nullptr;
     new_node       = nullptr;
+    GCPtr branching_cone;
 
-    if (not neurite_->growth_cones_.empty())
-    {
-        GCPtr branching_cone;
-        bool success = false;
+    // Compute the total length of dendritic branch for nodes and gcs
+    //###################################################################
+    if (not neurite_->growth_cones_.empty()) {
+    bool success = false;
+    double total_length = 0;
 
-        // select a random node of the tree, excluding the firstNode_
-        // This is a reservoir sampling algorithm
-        double max = 0;
-        for (auto &cone : neurite_->gc_range())
-        {
-            // check if the elected cone is not dead and waiting for removal!
+    for (auto &cone : neurite_->gc_range()) {
             if (not cone.second->is_dead()
-                and cone.second->get_branch()->get_length() > 2*latbranch_dist_)
-            {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / cone.second->get_branch()->get_length());
-                if (key > max)
-                {
-                    max            = key;
+                and cone.second->get_branch_size() > 2*latbranch_dist_) { total_length += cone.second->get_branch()->get_length(); }
+        }
+     for (auto &node : neurite_->nodes_)
+    {
+        if (node.second->get_branch()->size() > 2*latbranch_dist_)
+        {total_length        += node.second->get_branch()->get_length();}
+    }
+    //###################################################################
+
+
+    // Pick up a random number and check which interval it belongs: length_i < random < length_i+1
+    // It is equivalent to make a weight choice over the branches
+    //###################################################################
+    double random_length = total_length*uniform_(*(rnd_engine).get());
+
+    for (auto &cone : neurite_->gc_range()) {
+        while (branching_node == nullptr) {
+            if (not cone.second->is_dead()
+                and cone.second->get_branch_size() > 2*latbranch_dist_) {
+                total_length += cone.second->get_branch()->get_length();
+                if (total_length < random_length) {
                     branching_cone = cone.second;
+                    branching_node =branching_cone;
                 }
             }
         }
-
-        branching_node = branching_cone;
-
-        for (auto &node : neurite_->nodes_)
-        {
-            if (node.second->get_branch()->get_length() > 2*latbranch_dist_)
-            {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / node.second->get_branch()->get_length());
-                if (key > max)
-                {
-                    max            = key;
+    }
+    for (auto &node : neurite_->nodes_)
+    {
+        while (branching_node== nullptr) {
+            if (not node.second->is_dead()
+                and node.second->get_branch_size() > 2*latbranch_dist_) {
+                total_length += node.second->get_branch()->get_length();
+                if (total_length < random_length) {
                     branching_node = node.second;
                 }
             }
         }
+    }
+    //###################################################################
 
-        // if no node was suited for lateral branching skip the branching.
-        if (max > 0)
-        {
-            // choose the point uniformly on the branch but at leat
-            // `latbranch_idst` away from the edges
-            double branching_dist  = uniform_(*(rnd_engine).get()) *
-                (branching_node->get_branch()->get_length() - 2*latbranch_dist_)
-                + latbranch_dist_;
+    // if no node was suited for lateral branching skip the branching.
+    if (branching_node== nullptr)
+    {
+        // choose the point uniformly on the branch, except for first 2 and
+        // last 2 points.
+        branching_point = uniform_(*(rnd_engine).get()) *
+                              (branching_node->get_branch()->size() - 4) +
+                          2;
 
-            branching_point = get_closest_point(branching_node, branching_dist);
-
-            // actuate lateral branching on the elected node through the
-            // NEURITE.
-            success = neurite_->lateral_branching(
-                branching_node, branching_point, new_node, rnd_engine);
-            next_uniform_event_ = invalid_ev;
-        }
+        // actuate lateral branching on the elected node through the
+        // NEURITE.
+        success = neurite_->lateral_branching(
+            branching_node, branching_point, new_node, rnd_engine);
+        next_uniform_event_ = invalid_ev;
+    }
 
         compute_uniform_event(rnd_engine);
 
         return success;
     }
+
 
     next_uniform_event_ = invalid_ev;
 
@@ -523,50 +532,61 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
     printf("@@@@@@@ Lateral branching (FLPL) @@@@@@@@\n");
 #endif
     branching_node = nullptr;
+    GCPtr branching_cone;
 
-    if (not neurite_->growth_cones_.empty())
-    {
-        GCPtr branching_cone;
-        bool success = false;
+    // Compute the total length of dendritic branch for nodes and gcs
+    //###################################################################
+    if (not neurite_->growth_cones_.empty()) {
+    bool success = false;
+    double total_length = 0;
 
-        // select a random node of the tree, excluding the firstNode_
-        // This is a reservoir sampling algorithm
-        double max = 0;
-        for (auto &cone : neurite_->gc_range())
-        {
-            // check if the elected cone is not dead and waiting for removal!
+    for (auto &cone : neurite_->gc_range()) {
             if (not cone.second->is_dead()
-                and cone.second->get_branch()->get_length() > 2*latbranch_dist_)
-            {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / cone.second->get_branch()->get_length());
-                if (key > max)
-                {
-                    max            = key;
+                and cone.second->get_branch_size() > 2*latbranch_dist_)
+            { total_length += cone.second->get_branch()->get_length(); }
+        }
+     for (auto &node : neurite_->nodes_)
+    {
+        if (node.second->get_branch()->size() > 2*latbranch_dist_)
+        {total_length        += node.second->get_branch()->get_length();}
+    }
+    //###################################################################
+
+
+    // Pick up a random number and check which interval it belongs: length_i < random < length_i+1
+    // It is equivalent to make a weight choice over the branches
+    //###################################################################
+    double random_length = total_length*uniform_(*(rnd_engine).get());
+
+    for (auto &cone : neurite_->gc_range()) {
+        while (branching_node == nullptr) {
+            if (not cone.second->is_dead()
+                and cone.second->get_branch_size() > 2*latbranch_dist_) {
+                total_length += cone.second->get_branch()->get_length();
+                if (total_length < random_length) {
                     branching_cone = cone.second;
+                    branching_node =branching_cone;
                 }
             }
         }
-
-        branching_node = branching_cone;
-
-        for (auto &node : neurite_->nodes_)
-        {
-            if (node.second->get_branch()->get_length() > 2*latbranch_dist_)
-            {
-                double key = powf(uniform_(*(rnd_engine).get()),
-                                  1. / node.second->get_branch()->get_length());
-                if (key > max)
-                {
-                    max            = key;
+    }
+    for (auto &node : neurite_->nodes_)
+    {
+        while (branching_node== nullptr) {
+            if (not node.second->is_dead()
+                and node.second->get_branch_size() > 2*latbranch_dist_) {
+                total_length += node.second->get_branch()->get_length();
+                if (total_length < random_length) {
                     branching_node = node.second;
                 }
             }
         }
+    }
+    //###################################################################
 
-        // if no node was suited for lateral branching skip the branching.
-        if (max > 0)
-        {
+    // if no node was suited for lateral branching skip the branching.
+    if (branching_node== nullptr)
+    {
             // choose the point with a power law distribution over the branch
             // length,
             // where y is a uniform variate, n is the distribution power,

@@ -560,12 +560,25 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             BPoint p1 = biology_.branch->xy_at(biology_.branch->size() - 2);
             BPoint p2 = biology_.branch->get_last_xy();
 
+            //~ std::cout << "p1 " << bg::wkt(p1) << std::endl;
+            //~ std::cout << "p2 " << bg::wkt(p2) << std::endl;
+
+            //~ if (biology_.branch->size() > 2)
+            //~ {
+                //~ BPoint p0 = biology_.branch->xy_at(biology_.branch->size() - 3);
+                //~ std::cout << "p0 " << bg::wkt(p0) << std::endl;
+            //~ }
+
             double new_x =
                 (p2.x() * remaining + p1.x() * (distance_done - remaining)) / distance_done;
             double new_y =
                 (p2.y() * remaining + p1.y() * (distance_done - remaining)) / distance_done;
 
             BPoint new_p = BPoint(new_x, new_y);
+
+            //~ std::cout << "newp " << bg::wkt(new_p) << std::endl;
+
+            //~ std::cout << "previous seg " << bg::wkt(*(biology_.branch->get_last_segment().get())) << std::endl;
 
             biology_.branch->retract();
 
@@ -714,91 +727,71 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
         double new_angle = move_.angle;
         stype default_direction;
 
+        // select direction updates the angle by delta_angle without
+        // renormalizing it
         select_direction(directions_weights, rnd_engine, substep, new_angle,
                          default_direction);
 
+        BPolygonPtr last_segment = get_branch()->get_last_segment();
+
+        // default angle
         double default_angle = filopodia_.directions[default_direction]
                                + move_.angle;
 
         BPoint p(geometry_.position.x() + cos(new_angle) * move_.module,
-                geometry_.position.y() + sin(new_angle) * move_.module);
+                 geometry_.position.y() + sin(new_angle) * move_.module);
 
         BLineString line = kernel().space_manager.line_from_points(
             geometry_.position, p);
-        
-        bool update         = false;
-        double min_distance = std::numeric_limits<double>::max();
-        double radius       = 0.5*get_diameter();
-        double distance;
 
-        // check forbidden self overlap
-        BPolygonPtr last_segment = get_branch()->get_last_segment();
-
-        if (std::isnan(aff_.affinity_self) and last_segment != nullptr)
+        // check that delta_angle is less than PI/2
+        if (last_segment != nullptr
+            and (bg::crosses(line, *(last_segment.get()))
+            or bg::covered_by(line, *(last_segment.get()))))
         {
-            while (bg::covered_by(p, *(last_segment.get()))
-                   and new_angle != default_angle)
-            {
-                new_angle = 0.5*(new_angle + default_angle);
-
-                p = BPoint(
-                    geometry_.position.x() + cos(new_angle) * move_.module,
-                    geometry_.position.y() + sin(new_angle) * move_.module
-                );
-            }
+            // check without covered by why the angle of move_.angle seem to
+            // be shifted by Pi on 3chambers
+            stopped_ = true;
         }
-
-        // set the new angle (chose a valid position if target position
-        // is outside the environment)
-        if (using_environment_)
+        else
         {
-            if (kernel().space_manager.intersects("environment", line))
-            {
-                // stop at `radius` from the environment 
-                bool intsct = kernel().space_manager.get_point_at_distance(
-                    line, "environment", radius, p, distance);
+            bool update         = false;
+            double min_distance = std::numeric_limits<double>::max();
+            double radius       = 0.5*get_diameter();
+            double distance;
 
-                if (intsct)
+            // check forbidden self overlap
+
+            if (std::isnan(aff_.affinity_self) and last_segment != nullptr)
+            {
+                while (bg::covered_by(p, *(last_segment.get()))
+                       and new_angle != default_angle)
                 {
-                    // check if we moved a bit or if we were stopped
-                    if (distance > 0 and distance < min_distance)
-                    {
-                        // we moved: modify move_.module and substep accordingly
-                        substep     *= distance / move_.module;
-                        move_.module = distance;
-                        min_distance = distance;
-                        update       = true;
-                    }
-                    else
-                    {
-                        stopped_     = true;
-                    }
+                    new_angle = 0.5*(new_angle + default_angle);
+
+                    p = BPoint(
+                        geometry_.position.x() + cos(new_angle) * move_.module,
+                        geometry_.position.y() + sin(new_angle) * move_.module
+                    );
                 }
             }
-        }
 
-        // check forbidden overlap with other neurites
-        if (not stopped_)
-        {
-            for (auto obstacle : current_neighbors_)
+            // set the new angle (chose a valid position if target position
+            // is outside the environment)
+            if (using_environment_)
             {
-                // Note for unknown reasons, this was previously "intersects",
-                // switched to covered_by but does not prevent cases where
-                // "intersection" in "get_point_at_distance" is empty.
-                if (bg::covered_by(p, *(obstacle.second.get())))
+                if (kernel().space_manager.intersects("environment", line))
                 {
-                    // stop at "radius" from the obstacle
+                    // stop at `radius` from the environment
                     bool intsct = kernel().space_manager.get_point_at_distance(
-                        line, obstacle.second, radius, p, distance);
+                        line, "environment", radius, p, distance);
 
-                    // check if the intersection was indeed obtained
                     if (intsct)
                     {
                         // check if we moved a bit or if we were stopped
                         if (distance > 0 and distance < min_distance)
                         {
-                            // we moved: modify move_.module and substep
-                            // accordingly
+                            // we moved: modify move_.module and substep accordingly
                             substep     *= distance / move_.module;
                             move_.module = distance;
                             min_distance = distance;
@@ -812,55 +805,111 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                 }
             }
 
-            if (update)
+            // check forbidden overlap with other neurites
+            if (not stopped_)
             {
-                if (move_.module < 1e-6)
+                for (auto obstacle : current_neighbors_)
                 {
-                    stopped_ = true;
+                    // Note: for unknown reasons, this was previously "intersects",
+                    // switched to covered_by but does not prevent cases where
+                    // "intersection" in "get_point_at_distance" is empty.
+                    if (bg::covered_by(p, *(obstacle.second.get())))
+                    {
+                        // stop at "radius" from the obstacle
+                        bool intsct = kernel().space_manager.get_point_at_distance(
+                            line, obstacle.second, radius, p, distance);
+
+                        // check if the intersection was indeed obtained
+                        if (intsct)
+                        {
+                            // check if we moved a bit or if we were stopped
+                            if (distance > 0 and distance < min_distance)
+                            {
+                                // we moved: modify move_.module and substep
+                                // accordingly
+                                substep     *= distance / move_.module;
+                                move_.module = distance;
+                                min_distance = distance;
+                                update       = true;
+                            }
+                            else
+                            {
+                                stopped_     = true;
+                            }
+                        }
+                    }
                 }
-                else
+
+                if (update)
                 {
-                    p = BPoint(
-                        geometry_.position.x() + cos(new_angle) * move_.module,
-                        geometry_.position.y() + sin(new_angle) * move_.module
-                    );
+                    if (move_.module < 1e-6)
+                    {
+                        stopped_ = true;
+                    }
+                    else
+                    {
+                        p = BPoint(
+                            geometry_.position.x() + cos(new_angle) * move_.module,
+                            geometry_.position.y() + sin(new_angle) * move_.module
+                        );
+                    }
                 }
-            }
 
-            // update angle
-            delta_angle_ = new_angle - move_.angle;
-            move_.angle  = new_angle;
+                if (not stopped_)
+                {
+                    // update angle
+                    delta_angle_ = new_angle - move_.angle;
+                    move_.angle  = new_angle;
 
-            // send the new segment to the space manager
-            // note the size - 1 inthe tuple because there is always one segment
-            // less than the number of points
-            try
-            {
-                kernel().space_manager.add_object(
-                    geometry_.position, p, get_diameter(), move_.module,
-                    biology_.own_neurite->get_taper_rate(),
-                    std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
-                                    biology_.branch->size() - 1),
-                    biology_.branch, omp_id
-                );
-            }
-            catch (...)
-            {
-                std::throw_with_nested(std::runtime_error(
-                    "Passed from `GrowthCone::make_move`."));
-            }
+                    // send the new segment to the space manager
+                    // note the size - 1 in the tuple because there is always one
+                    // less segment than the number of points
+                    try
+                    {
+                        kernel().space_manager.add_object(
+                            geometry_.position, p, get_diameter(), move_.module,
+                            biology_.own_neurite->get_taper_rate(),
+                            std::make_tuple(neuron_id_, neurite_name_,
+                                            get_node_id(),
+                                            biology_.branch->size() - 1),
+                            biology_.branch, omp_id
+                        );
+                    }
+                    catch (...)
+                    {
+                        printf("module %f - delta angle: %f - old angle %f - new angle %f\n", move_.module, delta_angle_, move_.angle, new_angle);
 
-            // store new position
-            geometry_.position = p;
+                        std::cout << "p " << bg::wkt(p) << std::endl;
 
-            // check if we switched to a new area
-            std::string new_area =
-                kernel().space_manager.get_containing_area(p);
+                        BPoint p2 = biology_.branch->get_last_xy();
+                        std::cout << "p2 " << bg::wkt(p2) << std::endl;
+                        
+                        if (biology_.branch->size() > 1)
+                        {
+                            BPoint p1 = biology_.branch->xy_at(biology_.branch->size() - 2);
+                            std::cout << "p1 " << bg::wkt(p1) << std::endl;
 
-            if (new_area != current_area_)
-            {
-                update_growth_properties(new_area);
-                update_filopodia();
+                            double old_angle = std::atan2(p2.y() - p1.y(), p2.x() - p1.x());
+                            printf("old angle 2: %f\n", old_angle);
+                        }
+                        
+                        std::throw_with_nested(std::runtime_error(
+                            "Passed from `GrowthCone::make_move`."));
+                    }
+
+                    // store new position
+                    geometry_.position = p;
+
+                    // check if we switched to a new area
+                    std::string new_area =
+                        kernel().space_manager.get_containing_area(p);
+
+                    if (new_area != current_area_)
+                    {
+                        update_growth_properties(new_area);
+                        update_filopodia();
+                    }
+                }
             }
         }
     }
@@ -1205,10 +1254,10 @@ void GrowthCone::change_sensing_angle(double angle)
             std::min(move_.sigma_angle + angle, max_sensing_angle_);
 
         // when not moving, start turning
-        if (turning_ != 0 and turned_ < 0.39269908169872414)
+        if (turning_ != 0 and std::abs(turned_) < 0.39269908169872414)
         {
-            move_.angle += turning_ * angle;
-            turned_ += angle;
+            move_.angle += turning_*angle;
+            turned_ += turning_*angle;
         }
     }
     else

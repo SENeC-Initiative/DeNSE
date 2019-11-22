@@ -311,11 +311,11 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
             {
                 if (failure == bg::failure_self_intersections)
                 {
-                    // self intersecting clear it up
-                    outer.clear();
-                    
-                    if (bg::covered_by(stop, *(last_segment.get())))
+                    // simplest explanation is that the order of the points is wrong
+                    // invert lp_1 and lp_2
+                    if (not checked_order)
                     {
+                        outer.clear();
                         outer.push_back(old_lp1);
                         outer.push_back(lp_1);
                         outer.push_back(lp_2);
@@ -325,9 +325,10 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                                     << std::get<1>(info)
                                     << " " << std::get<2>(info) << " "
                                     << std::get<3>(info)
-                                    << " covered by last segment; branch is "
-                                    << b->size() << " and step length was "
-                                    << std::to_string(length)
+                                    << " covered by last segment; branch has "
+                                    << b->size() << " segments and length "
+                                    << b->get_length() << " while step length "
+                                    << "is " << std::to_string(length)
                                     << std::endl;
                         std::cout << bg::wkt(*(poly.get())) << std::endl;
                         std::cout << bg::wkt(*(last_segment.get())) << std::endl;
@@ -337,6 +338,9 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                     }
                     else
                     {
+                        // clean up polygon
+                        outer.clear();
+
                         // get intersection between new and old last points
                         BLineString ls_new({lp_1, lp_2});
                         BLineString ls_old({old_lp1, old_lp2});

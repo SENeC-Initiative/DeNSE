@@ -218,6 +218,11 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_direction_proba
 
 /**
  * @brief use the `dir_selector_` member to chose the next direction.
+ *
+ * The select_direction method computes the `new_angle` by updating the old
+ * value of `move_.angle` by an angular increment.
+ * This is absolutely necessary to be able to compare the two angles (e.g. in
+ * GrowthCone::make_move).
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::select_direction(

@@ -22,8 +22,8 @@
 #ifndef NAMES_MODELS_H
 #define NAMES_MODELS_H
 
-#include <string>
 #include <limits>
+#include <string>
 
 #include "config.hpp"
 
@@ -77,10 +77,10 @@ extern const std::string diameter_eta_exp;
 #define AXON_DIAMETER 6.
 #define DENDRITE_DIAMETER 6.
 #define SOMA_RADIUS 8.
-#define THINNING_RATIO 0.005  // lose 1 micrometer every 200 micrometers
-#define MIN_DIAMETER 0.1      // diameter when a gc stops growing [micrometers]
+#define THINNING_RATIO 0.005 // lose 1 micrometer every 200 micrometers
+#define MIN_DIAMETER 0.1     // diameter when a gc stops growing [micrometers]
 #define DIAMETER_RATIO_AVG 1.
-#define DIAM_RATIO_STD 0.02   // deviation from identical diameters on split
+#define DIAM_RATIO_STD 0.02 // deviation from identical diameters on split
 #define DIAMETER_ETA_EXP 2.67
 #define POLA_STRENGTH 5.
 #define AXON_POLA_WEIGHT 2.
@@ -132,11 +132,12 @@ extern const std::string points_per_circle;
 #define SCALE_UP_MOVE 20.
 #define SENSING_ANGLE 1.2217 // approximately 70 deg
 #define SPEED_RATIO_RETRACTION 0.2
-#define SPEED_GROWTH_CONE 0.05  // um/min
+#define SPEED_GROWTH_CONE 0.05                  // um/min
 #define WALL_AFNTY_DECAY_CST 19.098593171027442 // inverse of 3 deg in radians
 #define DEFAULT_POINTS_PER_CIRCLE 12 // number of points used to create a circle
-#define MIN_FILOPODIA_FINGER_LENGTH 5. // WARNING: THIS VALUE *MUST* BE EQUAL TO
-                                       // MAX_MAX_SYN_DIST
+#define MIN_FILOPODIA_FINGER_LENGTH                                            \
+    5. // WARNING: THIS VALUE *MUST* BE EQUAL TO
+       // MAX_MAX_SYN_DIST
 
 
 /*

@@ -32,15 +32,16 @@ namespace growth
 class PullOnlySteeringModel : public virtual SteeringModel
 {
   public:
-    PullOnlySteeringModel(GCPtr gc, NeuritePtr neurite) : SteeringModel(gc, neurite) {};
+    PullOnlySteeringModel(GCPtr gc, NeuritePtr neurite)
+        : SteeringModel(gc, neurite){};
     PullOnlySteeringModel(const PullOnlySteeringModel &copy) = delete;
-    PullOnlySteeringModel(const PullOnlySteeringModel &copy, GCPtr gc, NeuritePtr neurite)
-    : SteeringModel(copy, gc, neurite) {};
+    PullOnlySteeringModel(const PullOnlySteeringModel &copy, GCPtr gc,
+                          NeuritePtr neurite)
+        : SteeringModel(copy, gc, neurite){};
 
-    virtual void
-    compute_direction_probabilities(
-      std::vector<double> &directions_weights, const Filopodia& filo,
-      double substep, double &total_proba, bool &stuck) override final
+    virtual void compute_direction_probabilities(
+        std::vector<double> &directions_weights, const Filopodia &filo,
+        double substep, double &total_proba, bool &stuck) override final
     {
         total_proba = 0.;
         stuck       = true;
@@ -50,14 +51,14 @@ class PullOnlySteeringModel : public virtual SteeringModel
             if (not std::isnan(weight))
             {
                 total_proba += weight;
-                stuck        = false;
+                stuck = false;
             }
         }
     };
 
-    virtual void set_status(const statusMap &status) override final {};
+    virtual void set_status(const statusMap &status) override final{};
 
-    virtual void get_status(statusMap &status) const override final {};
+    virtual void get_status(statusMap &status) const override final{};
 };
 
 } // namespace growth

@@ -24,8 +24,8 @@
 #include <cassert>
 #include <cmath>
 
-#include "Node.hpp"
 #include "Branch.hpp"
+#include "Node.hpp"
 
 namespace growth
 {
@@ -71,25 +71,25 @@ stype get_closest_point(TNodePtr branching_node, double branching_dist)
 
     stype left  = 0;
     stype right = branching_node->get_branch_size() - 1;
-    stype mid   = 0.5*right;
+    stype mid   = 0.5 * right;
 
     PointArray ppl, ppr, ppm;
     double distl, distr, distm;
 
     while (left != right - 1)
     {
-        ppm = branch->at(mid);
+        ppm   = branch->at(mid);
         distm = ppm[2] - initial_distance - branching_dist;
 
         if (distm < 0)
         {
             left = mid;
-            mid  = 0.5*(left + right);
+            mid  = 0.5 * (left + right);
         }
         else
         {
             right = mid;
-            mid   = 0.5*(left + right);
+            mid   = 0.5 * (left + right);
         }
     }
 
@@ -114,7 +114,7 @@ void locate_from_idx(BPoint &xy, double &angle, double &distance,
     xy       = branch->xy_at(id_x);
     distance = branch->at(id_x)[2];
 
-    BPoint xy_1;      // second point to get the local direction of the branch
+    BPoint xy_1;     // second point to get the local direction of the branch
     double sign = 0; // correct the direction if xy_1 before xy
 
     // all branches must always be of size at least 2 (branching events occur

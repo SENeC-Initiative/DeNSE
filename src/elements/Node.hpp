@@ -66,15 +66,16 @@ typedef struct NodeGeometry
     double dis_to_soma;
     double dis_to_parent;
     NodeGeometry()
-      : position(BPoint())
-      , dis_to_soma(-1)
-      , dis_to_parent(-1)
+        : position(BPoint())
+        , dis_to_soma(-1)
+        , dis_to_parent(-1)
     {
     }
-    NodeGeometry(const BPoint &position, double dis_to_soma, double dis_to_parent)
-      : position(position)
-      , dis_to_soma(dis_to_soma)
-      , dis_to_parent(dis_to_parent)
+    NodeGeometry(const BPoint &position, double dis_to_soma,
+                 double dis_to_parent)
+        : position(position)
+        , dis_to_soma(dis_to_soma)
+        , dis_to_parent(dis_to_parent)
     {
     }
 } NodeGeometry;
@@ -204,7 +205,7 @@ class Node : public TopologicalNode
 
   protected:
     std::vector<TNodePtr> children_;
-    double diameter_;  // diameter at the node's position
+    double diameter_; // diameter at the node's position
 
   public:
     Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &pos);

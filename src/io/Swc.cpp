@@ -75,10 +75,9 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
     // the previous point is set to -1
     stype last_sample = 0;
     stype sample      = 1;
-    BPoint pos         = neuron->get_position();
-    swc_file_ << 1 << " " << somaID << " " << pos.x() << " " << pos.y()
-              << " " << 0 << " " << neuron->get_soma_radius() << " " << -1
-              << "\n";
+    BPoint pos        = neuron->get_position();
+    swc_file_ << 1 << " " << somaID << " " << pos.x() << " " << pos.y() << " "
+              << 0 << " " << neuron->get_soma_radius() << " " << -1 << "\n";
     int neuriteID = -1;
     int ID        = -1;
     stype idxp;
@@ -112,15 +111,15 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
 
         while (not nodes.empty())
         {
-            idxp               = 0;
-            auto node          = nodes.back();
-            final_diam         = node.second->get_diameter();
-            stype branch_size  = node.second->get_branch()->size();
-            b                  = node.second->get_branch();
-            final_dts          = b->final_distance_to_soma();
-            ID                 = forkID;
-            last_sample        = node.first;
-            
+            idxp              = 0;
+            auto node         = nodes.back();
+            final_diam        = node.second->get_diameter();
+            stype branch_size = node.second->get_branch()->size();
+            b                 = node.second->get_branch();
+            final_dts         = b->final_distance_to_soma();
+            ID                = forkID;
+            last_sample       = node.first;
+
             for (stype idx = 0; idx < branch_size; idx += resolution_)
             {
                 pp = b->at(idx);
@@ -129,7 +128,7 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
 
                 swc_file_ << sample << " " << ID << " " << pp[0] << " " << pp[1]
                           << " " << 0 << " "
-                          << 0.5*(final_diam + tap_r*(final_dts - pp[2]))
+                          << 0.5 * (final_diam + tap_r * (final_dts - pp[2]))
                           << " " << last_sample << "\n";
 
                 ID          = neuriteID;
@@ -156,8 +155,8 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
                 sample++;
                 swc_file_ << sample << " " << endID << " "
                           << node.second->get_position().x() << " "
-                          << node.second->get_position().y() << " " << 0
-                          << " " << 0.5*node.second->get_diameter() << " "
+                          << node.second->get_position().y() << " " << 0 << " "
+                          << 0.5 * node.second->get_diameter() << " "
                           << last_sample << "\n";
                 /*                if (not nodes.empty())*/
                 //{

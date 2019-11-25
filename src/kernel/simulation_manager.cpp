@@ -50,15 +50,15 @@ auto ev_greater = [](const Event &lhs, const Event &rhs) {
 
 
 SimulationManager::SimulationManager()
-    : simulating_(false)    //!< true if simulation in progress
-    , step_()               //!< Current step of the simulation
-    , substep_()            //!< Precise time inside current step
-    , final_substep_(0.)    //!< Last substep, updated once per simulation call
-    , final_step_(0)        //!< Last step, updated once per simulation call
-    , initial_time_()       //!< Initial time (day, hour, min, sec)
-    , final_time_()         //!< Final time (day, hour, min, sec)
-    , maximal_time_()       //!< Maximal time (day, hour, min, sec)
-    , terminate_(false)     //!< Terminate on signal or error
+    : simulating_(false) //!< true if simulation in progress
+    , step_()            //!< Current step of the simulation
+    , substep_()         //!< Precise time inside current step
+    , final_substep_(0.) //!< Last substep, updated once per simulation call
+    , final_step_(0)     //!< Last step, updated once per simulation call
+    , initial_time_()    //!< Initial time (day, hour, min, sec)
+    , final_time_()      //!< Final time (day, hour, min, sec)
+    , maximal_time_()    //!< Maximal time (day, hour, min, sec)
+    , terminate_(false)  //!< Terminate on signal or error
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
     , max_resol_(DEFAULT_MAX_RESOL)
@@ -302,14 +302,15 @@ void SimulationManager::finalize_simulation_()
     //! IMPORTANT: THIS UPDATE MUST COME LAST!
 #ifndef NDEBUG
     initial_time_.update(final_step_, final_substep_);
-    assert(std::abs(initial_time_.get_total_seconds() - final_time_.get_total_seconds()) < 1e-4);
+    assert(std::abs(initial_time_.get_total_seconds() -
+                    final_time_.get_total_seconds()) < 1e-4);
 #endif
 
     initial_time_ = final_time_;
 
     // do not reset final_substep_ to zero!
-    final_step_    = 0;
-    simulating_    = false;
+    final_step_ = 0;
+    simulating_ = false;
 }
 
 
@@ -367,9 +368,9 @@ void SimulationManager::simulate(const Time &t)
         try
         {
             // then run the simulation
-            while (step_[omp_id] < final_step_
-                   or (step_[omp_id] == final_step_
-                       and substep_[omp_id] < final_substep_))
+            while (step_[omp_id] < final_step_ or
+                   (step_[omp_id] == final_step_ and
+                    substep_[omp_id] < final_substep_))
             {
                 current_step     = step_[omp_id];
                 previous_substep = substep_[omp_id];
@@ -400,8 +401,8 @@ void SimulationManager::simulate(const Time &t)
                 // check when the next event will occur and set step/substep
                 if (branching_ev_.empty())
                 {
-                    new_step     = true;
-                    branching    = false;
+                    new_step  = true;
+                    branching = false;
 
                     if (current_step + 1 == final_step_)
                     {
@@ -427,15 +428,15 @@ void SimulationManager::simulate(const Time &t)
                                            (next_time.get_total_minutes() -
                                             time_next_ev.get_total_minutes());
 
-                        if (current_step == final_step_
-                            and substep_[omp_id] > final_substep_)
+                        if (current_step == final_step_ and
+                            substep_[omp_id] > final_substep_)
                         {
                             substep_[omp_id] = final_substep_;
                         }
                         else
                         {
-                           new_step  = (substep_[omp_id] == Time::RESOLUTION);
-                           branching = true;
+                            new_step  = (substep_[omp_id] == Time::RESOLUTION);
+                            branching = true;
                         }
                     }
                     else if (current_step == final_step_)
@@ -461,9 +462,9 @@ void SimulationManager::simulate(const Time &t)
                 if (branching)
                 {
                     // someone has to branch
-                    Event &ev            = branching_ev_.back();
+                    Event &ev           = branching_ev_.back();
                     stype gid_branching = std::get<edata::NEURON>(ev);
-                    auto it              = local_neurons.find(gid_branching);
+                    auto it             = local_neurons.find(gid_branching);
 
                     if (it != local_neurons.end())
                     {
@@ -504,8 +505,7 @@ void SimulationManager::simulate(const Time &t)
                 if (omp_id == 0 and step_[0] % 50 == 0)
                 {
                     printf("##simulation step is %lu \n", step_[omp_id]);
-                    printf("##simulated minutes: %f \n",
-                           get_current_minutes());
+                    printf("##simulated minutes: %f \n", get_current_minutes());
                 }
 #endif /* NDEBUG */
             }
@@ -587,7 +587,7 @@ double SimulationManager::get_current_minutes() const
 /**
  * Gives initial time.
  */
-const Time& SimulationManager::get_initial_time() const
+const Time &SimulationManager::get_initial_time() const
 {
     return initial_time_;
 }
@@ -598,10 +598,10 @@ Time SimulationManager::get_time() const
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
     //~ printf("initial time: %lu days %i hours %i minutes %f seconds\n",
-           //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
+    //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
     t0.update(step_[omp_id], substep_[omp_id]);
     //~ printf("final time: %lu days %i hours %i minutes %f seconds\n",
-           //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
+    //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
     return t0;
 }
 
@@ -659,9 +659,6 @@ void SimulationManager::set_max_resolution()
 }
 
 
-bool SimulationManager::simulating() const
-{
-    return simulating_;
-}
+bool SimulationManager::simulating() const { return simulating_; }
 
 } // namespace growth

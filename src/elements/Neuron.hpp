@@ -113,11 +113,11 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     stype get_gid() const;
     std::string get_gc_model() const;
     NeuriteWeakPtr get_neurite(const std::string &name) const;
-    double get_state(const std::string& observable) const;
+    double get_state(const std::string &observable) const;
     void get_status(statusMap &status) const;
     int get_num_neurites() const;
     double get_soma_radius() const;
-    bool is_neurite(const std::string& neurite);
+    bool is_neurite(const std::string &neurite);
 
     void set_status(const statusMap &status);
     void set_neurite_status(const std::string &neurite,

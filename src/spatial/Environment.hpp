@@ -55,7 +55,7 @@ class Environment
 
   public:
     const BMultiPolygonPtr get_environment() const;
-    const BMultiLineString& get_boundary() const;
+    const BMultiLineString &get_boundary() const;
 };
 
 } // namespace growth

@@ -91,13 +91,13 @@ void Time::update(Time::timeStep steps, double substeps)
         std::ldiv_t dv{};
 
         // total minutes in the step duration
-        double total_min       = steps*RESOLUTION + substeps;
+        double total_min       = steps * RESOLUTION + substeps;
         Time::timeStep int_min = std::floor(total_min);
         double frac_min        = total_min - int_min;
-        double frac_sec        = frac_min*60. - (int)(frac_min*60.);
+        double frac_sec        = frac_min * 60. - (int)(frac_min * 60.);
 
         // seconds
-        dv   = std::div(sec_ + frac_min*60., 60L);
+        dv   = std::div(sec_ + frac_min * 60., 60L);
         sec_ = (float)(dv.rem + frac_sec);
         // minutes
         dv   = std::div(min_ + int_min + dv.quot, 60L);
@@ -262,7 +262,7 @@ Time &Time::operator-=(const Time &rhs)
     {
         throw InvalidTime(__FUNCTION__, __FILE__, __LINE__);
     }
-    
+
     day_ = signed_tmp;
 
     return *this;

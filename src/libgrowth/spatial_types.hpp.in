@@ -10,9 +10,9 @@
 // C++ include
 #include <cmath>
 #include <memory>
-#include <vector>
-#include <unordered_map>
 #include <tuple>
+#include <unordered_map>
+#include <vector>
 
 // Boost includes
 #ifndef BOOST_1_67_PLUS
@@ -62,7 +62,7 @@ typedef std::shared_ptr<BGeometry> BGeometryPtr;
 
 
 typedef std::vector<BPolygonPtr>::const_iterator seg_it;
-typedef boost::iterator_range< seg_it > seg_range;
+typedef boost::iterator_range<seg_it> seg_range;
 
 
 /*
@@ -125,21 +125,21 @@ typedef std::tuple<stype, std::string, stype, stype> ObjectInfo;
 
 namespace ndata
 {
-  enum ndata
-  {
+enum ndata
+{
     NEURON,
     NEURITE,
     NODE,
     SEGMENT
-  };
+};
 }
 
 
 // R-tree value
 typedef std::pair<BBox, ObjectInfo> RtreeValue;
 
-typedef std::unordered_map< ObjectInfo, BPolygonPtr,
-                            boost::hash<ObjectInfo> > space_tree_map;
+typedef std::unordered_map<ObjectInfo, BPolygonPtr, boost::hash<ObjectInfo>>
+    space_tree_map;
 
 typedef std::tuple<ObjectInfo, BBox, bool> box_tree_tuple;
 
@@ -148,11 +148,11 @@ typedef std::tuple<ObjectInfo, BBox, bool> box_tree_tuple;
  * Synapses
  */
 
-typedef std::vector< std::pair<stype, stype> > synapse_vec;
-typedef std::vector< std::tuple<std::string, stype, stype> > synapse_ref;
+typedef std::vector<std::pair<stype, stype>> synapse_vec;
+typedef std::vector<std::tuple<std::string, stype, stype>> synapse_ref;
 
-typedef boost::range::joined_range<
-    std::vector<BPoint>, std::vector<BPoint> > point_range;
+typedef boost::range::joined_range<std::vector<BPoint>, std::vector<BPoint>>
+    point_range;
 
 } // namespace growth
 

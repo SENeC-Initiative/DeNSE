@@ -63,10 +63,11 @@ class ModelManager
     std::vector<std::string> get_steering_methods();
     std::vector<std::string> get_direction_selection_methods();
 
-    void get_models(std::unordered_map<std::string, std::string> &models, bool abbrev);
-    GCPtr get_model(const std::string& name);
+    void get_models(std::unordered_map<std::string, std::string> &models,
+                    bool abbrev);
+    GCPtr get_model(const std::string &name);
     GCPtr get_default_model();
 };
 
-}
+} // namespace growth
 #endif /* MODELS_MANAGER_H */

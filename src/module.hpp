@@ -61,12 +61,12 @@ void reset_kernel_();
 /* Creation and deletion */
 
 stype create_objects_(const std::string &object_name,
-                       const std::vector<statusMap> &obj_params);
+                      const std::vector<statusMap> &obj_params);
 
 
 stype create_neurons_(const std::vector<statusMap> &neuron_params,
-                       const std::vector<statusMap> &axon_params,
-                       const std::vector<statusMap> &dendrites_params);
+                      const std::vector<statusMap> &axon_params,
+                      const std::vector<statusMap> &dendrites_params);
 
 
 void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
@@ -85,7 +85,8 @@ void delete_neurites_(const std::vector<stype> &gids,
 
 /* Setters */
 
-void set_kernel_status_(const statusMap &status_dict, std::string simulation_ID);
+void set_kernel_status_(const statusMap &status_dict,
+                        std::string simulation_ID);
 
 
 void set_environment_(
@@ -95,7 +96,7 @@ void set_environment_(
 
 
 void set_status_(stype gid, statusMap status, statusMap axon_status,
-                statusMap dendrites_status);
+                 statusMap dendrites_status);
 
 
 void set_neurite_status_(stype neuron, std::string neurite, statusMap status);
@@ -112,7 +113,7 @@ void test_random_generator_(Random_vecs &values, stype size);
 /* Getters functions */
 
 void get_environment_(
-    GEOSGeometry * &environment, std::vector<GEOSGeometry *> &areas,
+    GEOSGeometry *&environment, std::vector<GEOSGeometry *> &areas,
     std::vector<double> &heights, std::vector<std::string> &names,
     std::vector<std::unordered_map<std::string, double>> &properties);
 
@@ -125,7 +126,7 @@ std::string get_simulation_id_();
 
 void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
                    SkelNeurite &nodes, SkelNeurite &growth_cones,
-                   SkelSomas &somas,  std::vector<stype> gids,
+                   SkelSomas &somas, std::vector<stype> gids,
                    unsigned int resolution);
 
 
@@ -145,8 +146,8 @@ stype get_num_objects_();
 stype get_num_created_objects_();
 
 
-double get_state_(stype gid, const std::string& level,
-                  const std::string& variable);
+double get_state_(stype gid, const std::string &level,
+                  const std::string &variable);
 
 
 statusMap get_status_(stype gid);
@@ -158,7 +159,7 @@ statusMap get_neurite_status_(stype gid, const std::string &neurite_type,
 
 bool is_neuron_(stype gid);
 
-bool is_neurite_(stype gid, const std::string& neurite);
+bool is_neurite_(stype gid, const std::string &neurite);
 
 
 // neuron- and structure-related
@@ -180,22 +181,23 @@ void get_branches_data_(stype neuron, const std::string &neurite,
 
 
 void get_geom_skeleton_(std::vector<stype> gids,
-                        std::vector<GEOSGeometry*>& axons,
-                        std::vector<GEOSGeometry*>& dendrites,
-                        std::vector<stype>& dendrite_gids,
-                        std::vector< std::vector<double> >& somas);
+                        std::vector<GEOSGeometry *> &axons,
+                        std::vector<GEOSGeometry *> &dendrites,
+                        std::vector<stype> &dendrite_gids,
+                        std::vector<std::vector<double>> &somas);
 
 
 void generate_synapses_(
-  bool crossings_only, double density, bool only_new_syn, bool autapse_allowed,
-  const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
-  std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
-  std::vector<std::string> &presyn_neurites,
-  std::vector<std::string> &postsyn_neurites,
-  std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
-  std::vector<stype> &presyn_segments, std::vector<stype> &postsyn_segments,
-  std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
-  std::vector<double> &post_syn_x, std::vector<double> &post_syn_y);
+    bool crossings_only, double density, bool only_new_syn,
+    bool autapse_allowed, const std::set<stype> &presyn_pop,
+    const std::set<stype> &postsyn_pop, std::vector<stype> &presyn_neurons,
+    std::vector<stype> &postsyn_neurons,
+    std::vector<std::string> &presyn_neurites,
+    std::vector<std::string> &postsyn_neurites,
+    std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
+    std::vector<stype> &presyn_segments, std::vector<stype> &postsyn_segments,
+    std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
+    std::vector<double> &post_syn_x, std::vector<double> &post_syn_y);
 
 
 void get_distances_(stype gid, const std::string &neurite_name, stype node,
@@ -246,7 +248,7 @@ void _fill_skel(const SkelNeurite &source_container,
                 SkelNeurite &target_container, bool add_nan);
 
 
-bool walk_neurite_tree_(stype neuron, std::string neurite, NodeProp& np);
+bool walk_neurite_tree_(stype neuron, std::string neurite, NodeProp &np);
 
 
 void is_valid_timestep_(double timestep);

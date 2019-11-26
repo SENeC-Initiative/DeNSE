@@ -34,9 +34,13 @@ def test_branching():
     do_plot = int(os.environ.get("DO_PLOT", True))
     num_omp = 4
     res = 10.
-    seeds = np.random.choice(np.arange(0,1000), size = num_omp, replace = False)
+
+    # seed
+    np.random.seed(0)
+    seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
+                             replace=False)
     num_neurons = 10
-    # ~ gc_model = 'run-and-tumble'
+
     gc_model = 'gf_po_nm'
     btype = 'flpl'
     branching_rate = btype + '_branching_rate'
@@ -93,7 +97,8 @@ def test_branching():
         pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                                 num_neurites=1)
         
-        rec = ds.create_recorders(pop, 'num_growth_cones', levels = 'neuron')
+        rec = ds.create_recorders(pop, 'num_growth_cones',
+                                  levels='neuron')
 
         ds.simulate(sim_time)
 
@@ -105,7 +110,7 @@ def test_branching():
 
         mean.append(np.mean(Dt))
 
-        #interval de confiance à 99% sur distribution de Poisson donne 2.576
+        # 99% confidence interval for a Poisson distribution gives 2.576
         er.append(2.576*mean[-1]/np.sqrt(len(Dt)))
         Nb.append(len(Dt))
 

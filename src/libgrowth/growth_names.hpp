@@ -124,7 +124,7 @@ extern const std::string points_per_circle;
 #define FILOPODIA_FINGER_LENGTH 12.
 #define FILOPODIA_SUBSTRATE_AFINITY 0.1
 #define FILOPODIA_WALL_AFFINITY 2.
-#define MAX_SENSING_ANGLE 1.5707963267948966 // 180 degrees max for 1 s resol
+#define MAX_SENSING_ANGLE 1.57 // 180 degrees max for 1 s resol
 #define ONE_DEGREE 0.017453292519943295
 #define PROBA_RETRACTION 0.001
 #define PROBA_DOWN_MOVE 0.008

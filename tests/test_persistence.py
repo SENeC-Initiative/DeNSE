@@ -102,9 +102,10 @@ def correlation(points, distances):
         min_length = np.min(rho)
 
         if np.max(distances) > tot_length:
-            raise RuntimeError("Max distance greater than total neurite "
-                               "length: {} vs {}.".format(np.max(distances),
-                               tot_length))
+            raise RuntimeError(
+                "Max distance greater than total neurite "
+                "length: {} vs {}.".format(np.max(distances),
+                                           tot_length))
 
         x0    = vectors[:, 0]
         norm0 = np.linalg.norm(x0)
@@ -124,8 +125,7 @@ def correlation(points, distances):
 Simulations with DeNSE
 '''
 
-show_neurons = False
-# ~ show_neurons = True
+show_neurons = True*do_plot
 
 gc_pos     = []
 data_times = {}
@@ -173,10 +173,9 @@ for k, resol in enumerate(resolutions):
         "taper_rate": 0.,
     }
 
-    params["max_sensing_angle"] = 1.6 * rad
-    # ~ params["max_sensing_angle"] = sensing_angle*rad
-
     gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
+
+    rec = ds.create_recorders(gids, "length")
 
     ds.simulate(simtime*minute)
     # ~ print(ds.morphology.NeuronStructure())
@@ -186,7 +185,7 @@ for k, resol in enumerate(resolutions):
     population = ds.elements.Population.from_gids(gids)
 
     axons     = [neuron.axon.xy.transpose() for neuron in population]
-    # ~ print(axons)
+
     sequence  = []
     for i, points in enumerate(axons):
         sequence.append(correlation(points, distances))
@@ -202,7 +201,7 @@ for k, resol in enumerate(resolutions):
         ax.plot(distances, exp_decay(distances, lp[0]))
 
     if show_neurons:
-        ds.plot_neurons(show=True, title=str(resol))
+        ds.plot.plot_neurons(show=True, title=str(resol))
 
 
 '''

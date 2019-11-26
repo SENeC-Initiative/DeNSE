@@ -22,15 +22,13 @@
 
 """ Testing network generation """
 
-# import matplotlib
-# matplotlib.use("Qt5Agg")
-
 import numpy as np
-
-np.random.seed(0)
 
 import dense as ds
 from dense.units import *
+
+
+np.random.seed(0)
 
 
 def test_2neuron_network(plot=False):

@@ -377,10 +377,10 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
                         make_move(directions_weights, new_pos_area,
                                   local_substep, rnd_engine, omp_id);
                     }
-                    catch (const std::exception &except)
+                    catch (...)
                     {
                         std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::make_move`."));
+                            "Passed from `GrowthCone::grow`."));
                     }
 
                     // assess stopped state (computed in make_move)
@@ -578,20 +578,28 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             //~ std::cout << "newp " << bg::wkt(new_p) << std::endl;
 
             //~ std::cout << "previous seg " <<
-            //bg::wkt(*(biology_.branch->get_last_segment().get())) <<
-            //std::endl;
+            // bg::wkt(*(biology_.branch->get_last_segment().get())) <<
+            // std::endl;
 
             biology_.branch->retract();
 
             // we remove the previous object and add the new, shorter one
             if (poly != nullptr)
             {
-                kernel().space_manager.remove_object(box, info, omp_id);
+                try
+                {
+                    kernel().space_manager.remove_object(box, info, omp_id);
 
-                kernel().space_manager.add_object(
-                    p1, new_p, get_diameter(), remaining,
-                    biology_.own_neurite->get_taper_rate(), info,
-                    biology_.branch, omp_id);
+                    kernel().space_manager.add_object(
+                        p1, new_p, get_diameter(), remaining,
+                        biology_.own_neurite->get_taper_rate(), info,
+                        biology_.branch, omp_id);
+                }
+                catch (...)
+                {
+                    std::throw_with_nested(std::runtime_error(
+                        "Passed from `GrowthCone::retract`."));
+                }
             }
 
             distance = 0.;
@@ -748,12 +756,13 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             kernel().space_manager.line_from_points(geometry_.position, p);
 
         // check that delta_angle is less than PI/2
-        if (last_segment != nullptr and
-            (bg::crosses(line, *(last_segment.get())) or
-             bg::covered_by(line, *(last_segment.get()))))
+        if (std::abs(new_angle - move_.angle) > 0.5*M_PI)
         {
             // check without covered by why the angle of move_.angle seem to
             // be shifted by Pi on 3chambers
+            //~ printf("crosses %i - covered %i\n", bg::crosses(line, *(last_segment.get())), bg::covered_by(line, *(last_segment.get())));
+            //~ std::cout << bg::wkt(line) << std::endl;
+            //~ std::cout << bg::wkt(*(last_segment.get())) << std::endl;
             stopped_ = true;
         }
         else
@@ -1053,7 +1062,13 @@ void GrowthCone::set_status(const statusMap &status)
             "either increase the latter, or reduce `sensing_angle`.");
     }
 
-    max_sensing_angle_ = std::min(msa, 2 * M_PI);
+    if (msa > M_PI)
+    {
+        throw std::invalid_argument(
+            "`max_sensing_angle` must be less than 180°.");
+    }
+
+    max_sensing_angle_ = msa;
 
     // set affinities
     if (biology_.own_neurite->get_type() == "axon")
@@ -1222,8 +1237,9 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
     {
         current_area_ = area_name;
         // speed and sensing angle may vary
-        move_.sigma_angle =
-            sensing_angle_ * area->get_property(names::sensing_angle);
+        move_.sigma_angle = std::min(
+            sensing_angle_ * area->get_property(names::sensing_angle),
+            max_sensing_angle_);
         local_avg_speed_ =
             avg_speed_ * area->get_property(names::speed_growth_cone);
         local_speed_variance_ =
@@ -1284,8 +1300,9 @@ void GrowthCone::change_sensing_angle(double angle)
     }
     else
     {
-        move_.sigma_angle =
-            std::max(move_.sigma_angle + angle, sensing_angle_ * area_modifier);
+        move_.sigma_angle = std::min(
+            std::max(move_.sigma_angle + angle, sensing_angle_ * area_modifier),
+            max_sensing_angle_);
     }
 
     // change filopodia normal weights if necessary

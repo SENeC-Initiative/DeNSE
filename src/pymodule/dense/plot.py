@@ -445,10 +445,11 @@ def plot_recording(recorder, time_units="hours", display="overlay", cmap=None,
         level       = rec_status["level"]
         ev_type     = rec_status["event_type"]
         data        = _pg.get_recording(rec)
+        neurons     = list(data[rec_type]["data"].keys())
 
         k = 0
 
-        for c, neuron in zip(colors, range(num_neurons)):
+        for c, neuron in zip(colors, neurons):
             ax = axes[rec][neuron] if display == "separate" else axes[rec][0]
 
             ax.set_ylabel(rec_type)

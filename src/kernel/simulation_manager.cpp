@@ -351,6 +351,8 @@ void SimulationManager::simulate(const Time &t)
     // the OpenMP parallel region.
     std::exception_ptr captured_exception;
 
+    std::vector<std::exception> exceptions;
+
 #pragma omp parallel
     {
         int omp_id = kernel().parallelism_manager.get_thread_local_id();
@@ -365,164 +367,183 @@ void SimulationManager::simulate(const Time &t)
         gidNeuronMap local_neurons =
             kernel().neuron_manager.get_local_neurons(omp_id);
 
-        try
+        // then run the simulation
+        while ((step_[omp_id] < final_step_ or
+                (step_[omp_id] == final_step_ and
+                 substep_[omp_id] < final_substep_))
+               and not terminate_)
         {
-            // then run the simulation
-            while (step_[omp_id] < final_step_ or
-                   (step_[omp_id] == final_step_ and
-                    substep_[omp_id] < final_substep_))
-            {
-                current_step     = step_[omp_id];
-                previous_substep = substep_[omp_id];
+            current_step     = step_[omp_id];
+            previous_substep = substep_[omp_id];
 
 #pragma omp barrier
 
 #pragma omp single
+            {
+                if (!branching_ev_tmp_.empty())
                 {
-                    if (!branching_ev_tmp_.empty())
-                    {
-                        branching_ev_.insert(branching_ev_.end(),
-                                             branching_ev_tmp_.begin(),
-                                             branching_ev_tmp_.end());
+                    branching_ev_.insert(branching_ev_.end(),
+                                         branching_ev_tmp_.begin(),
+                                         branching_ev_tmp_.end());
 
-                        branching_ev_tmp_.clear();
+                    branching_ev_tmp_.clear();
 
-                        std::sort(branching_ev_.begin(), branching_ev_.end(),
-                                  ev_greater);
-                    }
+                    std::sort(branching_ev_.begin(), branching_ev_.end(),
+                              ev_greater);
                 }
+            }
 
 #pragma omp barrier
 
-                // -------------- //
-                // EVENT HANDLING //
-                // -------------- //
+            // -------------- //
+            // EVENT HANDLING //
+            // -------------- //
 
-                // check when the next event will occur and set step/substep
-                if (branching_ev_.empty())
+            // check when the next event will occur and set step/substep
+            if (branching_ev_.empty())
+            {
+                new_step  = true;
+                branching = false;
+
+                if (current_step + 1 == final_step_)
                 {
-                    new_step  = true;
-                    branching = false;
-
-                    if (current_step + 1 == final_step_)
-                    {
-                        substep_[omp_id] = final_substep_;
-                    }
-                    else
-                    {
-                        substep_[omp_id] = Time::RESOLUTION;
-                    }
+                    substep_[omp_id] = final_substep_;
                 }
                 else
                 {
-                    Time next_time = initial_time_;
-                    next_time.update(current_step + 1, 0);
+                    substep_[omp_id] = Time::RESOLUTION;
+                }
+            }
+            else
+            {
+                Time next_time = initial_time_;
+                next_time.update(current_step + 1, 0);
 
-                    time_next_ev = std::get<edata::TIME>(branching_ev_.back());
-                    branching    = false;
-                    new_step     = false;
+                time_next_ev = std::get<edata::TIME>(branching_ev_.back());
+                branching    = false;
+                new_step     = false;
 
-                    if (time_next_ev < next_time)
-                    {
-                        substep_[omp_id] = Time::RESOLUTION -
-                                           (next_time.get_total_minutes() -
-                                            time_next_ev.get_total_minutes());
+                if (time_next_ev < next_time)
+                {
+                    substep_[omp_id] = Time::RESOLUTION -
+                                       (next_time.get_total_minutes() -
+                                        time_next_ev.get_total_minutes());
 
-                        if (current_step == final_step_ and
-                            substep_[omp_id] > final_substep_)
-                        {
-                            substep_[omp_id] = final_substep_;
-                        }
-                        else
-                        {
-                            new_step  = (substep_[omp_id] == Time::RESOLUTION);
-                            branching = true;
-                        }
-                    }
-                    else if (current_step == final_step_)
+                    if (current_step == final_step_ and
+                        substep_[omp_id] > final_substep_)
                     {
                         substep_[omp_id] = final_substep_;
                     }
                     else
                     {
-                        substep_[omp_id] = Time::RESOLUTION;
-                        new_step         = true;
+                        new_step  = (substep_[omp_id] == Time::RESOLUTION);
+                        branching = true;
                     }
                 }
-
-                assert(substep_[omp_id] >= 0.);
-
-                // update neurons
-                for (auto &neuron : local_neurons)
+                else if (current_step == final_step_)
                 {
-                    neuron.second->grow(rnd_engine, current_step,
-                                        substep_[omp_id] - previous_substep);
+                    substep_[omp_id] = final_substep_;
                 }
-
-                if (branching)
+                else
                 {
-                    // someone has to branch
-                    Event &ev           = branching_ev_.back();
-                    stype gid_branching = std::get<edata::NEURON>(ev);
-                    auto it             = local_neurons.find(gid_branching);
+                    substep_[omp_id] = Time::RESOLUTION;
+                    new_step         = true;
+                }
+            }
 
-                    if (it != local_neurons.end())
+            assert(substep_[omp_id] >= 0.);
+
+            // update neurons
+            for (auto &neuron : local_neurons)
+            {
+                try
+                {
+                    //~ printf("growing neuron %lu\n", neuron.first);
+                    neuron.second->grow(
+                        rnd_engine, current_step,
+                        substep_[omp_id] - previous_substep);
+                    //~ printf("neuron %lu grown\n", neuron.first);
+                }
+                catch (const std::exception &e)
+                {
+                    printf("except in grow\n");
+                    exceptions.push_back(e);
+                }
+            }
+
+            if (branching)
+            {
+                // someone has to branch
+                Event &ev           = branching_ev_.back();
+                stype gid_branching = std::get<edata::NEURON>(ev);
+                auto it             = local_neurons.find(gid_branching);
+
+                if (it != local_neurons.end())
+                {
+                    bool branched = false;
+                    try
                     {
-                        bool branched = local_neurons[gid_branching]->branch(
+                        branched = local_neurons[gid_branching]->branch(
                             rnd_engine, ev);
-
-                        // tell recorder manager
-                        if (branched)
-                        {
-                            kernel().record_manager.new_branching_event(ev);
-                        }
+                    }
+                    catch (const std::exception &e)
+                    {
+                        printf("except in branch\n");
+                        exceptions.push_back(e);
                     }
 
-                    // wait for everyone to check, then remove event
+                    // tell recorder manager
+                    if (branched)
+                    {
+                        kernel().record_manager.new_branching_event(ev);
+                    }
+                }
+
+                // wait for everyone to check, then remove event
 #pragma omp barrier
 #pragma omp single
-                    {
-                        branching_ev_.pop_back();
-                    }
-                }
-
-#pragma omp barrier
-                // update the R-tree
-                kernel().space_manager.update_rtree();
-                // wait for the update
-#pragma omp barrier
-
-                if (new_step)
                 {
-                    // full step is completed, record
-                    // reset substep_, increment step_
-                    kernel().record_manager.record(omp_id);
-                    substep_[omp_id] = 0.;
-                    step_[omp_id]++;
+                    branching_ev_.pop_back();
                 }
+            }
+
+#pragma omp barrier
+            // update the R-tree
+            kernel().space_manager.update_rtree();
+            // wait for the update
+#pragma omp barrier
+
+            if (new_step)
+            {
+                // full step is completed, record
+                // reset substep_, increment step_
+                kernel().record_manager.record(omp_id);
+                substep_[omp_id] = 0.;
+                step_[omp_id]++;
+            }
 
 #ifndef NDEBUG
-                if (omp_id == 0 and step_[0] % 50 == 0)
-                {
-                    printf("##simulation step is %lu \n", step_[omp_id]);
-                    printf("##simulated minutes: %f \n", get_current_minutes());
-                }
-#endif /* NDEBUG */
+            if (omp_id == 0 and step_[0] % 50 == 0)
+            {
+                printf("##simulation step is %lu \n", step_[omp_id]);
+                printf("##simulated minutes: %f \n", get_current_minutes());
             }
-        }
-        catch (const std::exception &except)
-        {
-            std::call_once(exception_capture_flag, [&captured_exception]() {
-                captured_exception = std::current_exception();
-            });
+#endif /* NDEBUG */
+
+#pragma omp barrier
+            if (not exceptions.empty())
+            {
+                printf("got exception\n");
+                terminate_ = true;
+            }
         }
     }
 
     // check if an exception was thrown there
-    if (captured_exception != nullptr)
+    if (not exceptions.empty())
     {
-        // rethrowing nullptr is illegal
-        std::rethrow_exception(captured_exception);
+        // rethrow first exception which occured
+        std::rethrow_if_nested(exceptions.at(0));
     }
 
     finalize_simulation_();

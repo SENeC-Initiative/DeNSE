@@ -118,9 +118,17 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     // send the soma to the space_manager
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
-    kernel().space_manager.add_object(
-        get_position(), get_position(), 2 * details.soma_radius, 0., 0.,
-        std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+    try
+    {
+        kernel().space_manager.add_object(
+            get_position(), get_position(), 2 * details.soma_radius, 0., 0.,
+            std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+            std::runtime_error("Passed from `Neuron::init_status`."));
+    }
 
     // prepare the neurites
     std::unordered_map<std::string, double> nas;
@@ -299,7 +307,15 @@ void Neuron::grow(mtPtr rnd_engine, stype current_step, double substep)
     {
         if (neurite.second->active_)
         {
-            neurite.second->grow(rnd_engine, current_step, substep);
+            try
+            {
+                neurite.second->grow(rnd_engine, current_step, substep);
+            }
+            catch (...)
+            {
+                std::throw_with_nested(std::runtime_error(
+                    "Passed from `Neuron::grow`."));
+            }
         }
     }
 }

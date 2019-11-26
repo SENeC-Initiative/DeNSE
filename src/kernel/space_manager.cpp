@@ -318,10 +318,29 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                     {
                         outer.clear();
                         outer.push_back(old_lp1);
-                        outer.push_back(lp_1);
                         outer.push_back(lp_2);
+                        outer.push_back(lp_1);
                         outer.push_back(old_lp2);
                         outer.push_back(old_lp1);
+
+                        checked_order = true;
+
+                        if (not bg::is_valid(*(poly.get()), failure))
+                        {
+                            if (failure == bg::failure_self_intersections)
+                            {
+                                // this was not the reason, restore order
+                                outer.clear();
+                                outer.push_back(old_lp1);
+                                outer.push_back(lp_1);
+                                outer.push_back(lp_2);
+                                outer.push_back(old_lp2);
+                                outer.push_back(old_lp1);
+                            }
+                        }
+                    }
+                    else if (bg::covered_by(stop, *(last_segment.get())))
+                    {
                         std::cout
                             << std::get<0>(info) << " " << std::get<1>(info)
                             << " " << std::get<2>(info) << " "
@@ -420,18 +439,15 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                 count++;
             }
 
-#ifndef NDEBUG
             if (not bg::is_valid(*(poly.get()), message))
             {
-                printf("difference is empty; invalid poly %s\n",
-                       message.c_str());
-                std::cout << "last points: " << bg::wkt(old_lp1) << " "
-                          << bg::wkt(old_lp2) << std::endl;
+                std::cout << "last points: " << bg::wkt(old_lp1)
+                            << " " << bg::wkt(old_lp2)
+                            << std::endl;
                 std::cout << bg::wkt(*(poly.get())) << std::endl;
                 std::cout << bg::wkt(*(last_segment.get())) << std::endl;
-                success = false;
+                throw std::runtime_error("Invalid polygon: " + message);
             }
-#endif
 
             if (success)
             {
@@ -659,6 +675,13 @@ void SpaceManager::update_rtree()
         }
     }
 }
+
+
+//~ bool SpaceManager::crosses(const BLineString &line,
+                                  //~ const BPolygon &polygon) const
+//~ {
+    //~ double 
+//~ }
 
 
 /*

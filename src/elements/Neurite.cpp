@@ -241,7 +241,15 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
         // compute and check growth cones' diameters for stop
         if (diameter > min_diameter_)
         {
-            gc.second->grow(rnd_engine, gc.first, substep);
+            try
+            {
+                gc.second->grow(rnd_engine, gc.first, substep);
+            }
+            catch (...)
+            {
+                std::throw_with_nested(std::runtime_error(
+                    "Passed from `Neurite::grow`."));
+            }
 
             if (gc.second->stopped_ or gc.second->stuck_)
             {
@@ -718,8 +726,17 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     // Branching::branching_event after the call to this function.
     if (not split)
     {
-        kernel().space_manager.add_object(xy, p, new_diameter, dist_to_parent,
-                                          taper_rate_, info, b, omp_id);
+        try
+        {
+            kernel().space_manager.add_object(xy, p, new_diameter,
+                                              dist_to_parent, taper_rate_, info,
+                                              b, omp_id);
+        }
+        catch (const std::exception &except)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Neurite::create_branching_cone`."));
+        }
 
         // this calls the TopologicalNode set_position
         sibling->set_position(p, parent_to_soma + dist_to_parent, b);

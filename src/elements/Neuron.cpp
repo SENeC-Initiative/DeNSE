@@ -313,8 +313,8 @@ void Neuron::grow(mtPtr rnd_engine, stype current_step, double substep)
             }
             catch (...)
             {
-                std::throw_with_nested(std::runtime_error(
-                    "Passed from `Neuron::grow`."));
+                std::throw_with_nested(
+                    std::runtime_error("Passed from `Neuron::grow`."));
             }
         }
     }
@@ -332,7 +332,15 @@ bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
     std::string name_neurite = std::get<edata::NEURITE>(ev);
     NeuritePtr neurite       = neurites_[name_neurite];
 
-    return neurite->branching_model_->branching_event(rnd_engine, ev);
+    try
+    {
+        return neurite->branching_model_->branching_event(rnd_engine, ev);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+            std::runtime_error("Passed from `Neuron::branch`."));
+    }
 }
 
 

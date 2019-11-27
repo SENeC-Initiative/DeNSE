@@ -351,7 +351,7 @@ void SimulationManager::simulate(const Time &t)
     // the OpenMP parallel region.
     std::exception_ptr captured_exception;
 
-    std::vector<std::exception> exceptions;
+    std::vector<std::exception_ptr> exceptions;
 
 #pragma omp parallel
     {
@@ -370,8 +370,8 @@ void SimulationManager::simulate(const Time &t)
         // then run the simulation
         while ((step_[omp_id] < final_step_ or
                 (step_[omp_id] == final_step_ and
-                 substep_[omp_id] < final_substep_))
-               and not terminate_)
+                 substep_[omp_id] < final_substep_)) and
+               not terminate_)
         {
             current_step     = step_[omp_id];
             previous_substep = substep_[omp_id];
@@ -425,9 +425,9 @@ void SimulationManager::simulate(const Time &t)
 
                 if (time_next_ev < next_time)
                 {
-                    substep_[omp_id] = Time::RESOLUTION -
-                                       (next_time.get_total_minutes() -
-                                        time_next_ev.get_total_minutes());
+                    substep_[omp_id] =
+                        Time::RESOLUTION - (next_time.get_total_minutes() -
+                                            time_next_ev.get_total_minutes());
 
                     if (current_step == final_step_ and
                         substep_[omp_id] > final_substep_)
@@ -459,15 +459,17 @@ void SimulationManager::simulate(const Time &t)
                 try
                 {
                     //~ printf("growing neuron %lu\n", neuron.first);
-                    neuron.second->grow(
-                        rnd_engine, current_step,
-                        substep_[omp_id] - previous_substep);
+                    neuron.second->grow(rnd_engine, current_step,
+                                        substep_[omp_id] - previous_substep);
                     //~ printf("neuron %lu grown\n", neuron.first);
                 }
-                catch (const std::exception &e)
+                catch (...)
                 {
-                    printf("except in grow\n");
-                    exceptions.push_back(e);
+                    std::call_once(
+                        exception_capture_flag, [&captured_exception]() {
+                            captured_exception = std::current_exception();
+                        });
+                    exceptions.push_back(captured_exception);
                 }
             }
 
@@ -486,10 +488,13 @@ void SimulationManager::simulate(const Time &t)
                         branched = local_neurons[gid_branching]->branch(
                             rnd_engine, ev);
                     }
-                    catch (const std::exception &e)
+                    catch (...)
                     {
-                        printf("except in branch\n");
-                        exceptions.push_back(e);
+                        std::call_once(
+                            exception_capture_flag, [&captured_exception]() {
+                                captured_exception = std::current_exception();
+                            });
+                        exceptions.push_back(captured_exception);
                     }
 
                     // tell recorder manager
@@ -522,28 +527,29 @@ void SimulationManager::simulate(const Time &t)
                 step_[omp_id]++;
             }
 
-#ifndef NDEBUG
-            if (omp_id == 0 and step_[0] % 50 == 0)
-            {
-                printf("##simulation step is %lu \n", step_[omp_id]);
-                printf("##simulated minutes: %f \n", get_current_minutes());
-            }
-#endif /* NDEBUG */
-
 #pragma omp barrier
             if (not exceptions.empty())
             {
-                printf("got exception\n");
                 terminate_ = true;
             }
         }
     }
 
     // check if an exception was thrown there
-    if (not exceptions.empty())
+    if (terminate_)
     {
+        if (exceptions.empty())
+        {
+            throw std::runtime_error(
+                "Internal error: terminate was set to true, probably "
+                "after an error was encountered, but the error was not "
+                "propagated. Please report this bug together with any "
+                "visible message above and also include the code you "
+                "were running.");
+        }
+
         // rethrow first exception which occured
-        std::rethrow_if_nested(exceptions.at(0));
+        std::rethrow_exception(exceptions.at(0));
     }
 
     finalize_simulation_();

@@ -441,11 +441,15 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
 
             if (not bg::is_valid(*(poly.get()), message))
             {
-                std::cout << "last points: " << bg::wkt(old_lp1)
-                            << " " << bg::wkt(old_lp2)
-                            << std::endl;
-                std::cout << bg::wkt(*(poly.get())) << std::endl;
-                std::cout << bg::wkt(*(last_segment.get())) << std::endl;
+                std::cout << "last points: " << bg::wkt(old_lp1) << " "
+                          << bg::wkt(old_lp2) << std::endl
+                          << bg::wkt(*(poly.get())) << std::endl;
+
+                if (last_segment != nullptr)
+                {
+                    std::cout << bg::wkt(*(last_segment.get())) << std::endl;
+                }
+
                 throw std::runtime_error("Invalid polygon: " + message);
             }
 
@@ -675,13 +679,6 @@ void SpaceManager::update_rtree()
         }
     }
 }
-
-
-//~ bool SpaceManager::crosses(const BLineString &line,
-                                  //~ const BPolygon &polygon) const
-//~ {
-    //~ double 
-//~ }
 
 
 /*

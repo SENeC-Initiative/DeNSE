@@ -756,13 +756,15 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             kernel().space_manager.line_from_points(geometry_.position, p);
 
         // check that delta_angle is less than PI/2
-        if (std::abs(new_angle - move_.angle) > 0.5*M_PI)
+        if (std::abs(new_angle - move_.angle) > 0.5 * M_PI)
         {
             // check without covered by why the angle of move_.angle seem to
             // be shifted by Pi on 3chambers
-            //~ printf("crosses %i - covered %i\n", bg::crosses(line, *(last_segment.get())), bg::covered_by(line, *(last_segment.get())));
-            //~ std::cout << bg::wkt(line) << std::endl;
-            //~ std::cout << bg::wkt(*(last_segment.get())) << std::endl;
+            //~ printf("crosses %i - covered %i\n", bg::crosses(line,
+            //*(last_segment.get())), bg::covered_by(line,
+            //*(last_segment.get()))); ~ std::cout << bg::wkt(line) <<
+            //std::endl; ~ std::cout << bg::wkt(*(last_segment.get())) <<
+            //std::endl;
             stopped_ = true;
         }
         else
@@ -1237,9 +1239,9 @@ void GrowthCone::update_growth_properties(const std::string &area_name)
     {
         current_area_ = area_name;
         // speed and sensing angle may vary
-        move_.sigma_angle = std::min(
-            sensing_angle_ * area->get_property(names::sensing_angle),
-            max_sensing_angle_);
+        move_.sigma_angle =
+            std::min(sensing_angle_ * area->get_property(names::sensing_angle),
+                     max_sensing_angle_);
         local_avg_speed_ =
             avg_speed_ * area->get_property(names::speed_growth_cone);
         local_speed_variance_ =

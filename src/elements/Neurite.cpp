@@ -247,8 +247,8 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
             }
             catch (...)
             {
-                std::throw_with_nested(std::runtime_error(
-                    "Passed from `Neurite::grow`."));
+                std::throw_with_nested(
+                    std::runtime_error("Passed from `Neurite::grow`."));
             }
 
             if (gc.second->stopped_ or gc.second->stuck_)
@@ -732,7 +732,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                                               dist_to_parent, taper_rate_, info,
                                               b, omp_id);
         }
-        catch (const std::exception &except)
+        catch (...)
         {
             std::throw_with_nested(std::runtime_error(
                 "Passed from `Neurite::create_branching_cone`."));

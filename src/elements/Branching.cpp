@@ -62,7 +62,7 @@ Branching::Branching(NeuritePtr neurite)
     , use_uniform_branching_(false)
     , uniform_branching_rate_(UNIFORM_BRANCHING_RATE)
     , next_uniform_event_(invalid_ev)
-    , latbranch_dist_(20.) // todo: make user-defined param
+    , latbranch_dist_(20.)
     // parameters for front lateral branching
     , use_flpl_branching_(false)
     , flpl_branching_rate_(UNIFORM_BRANCHING_RATE)
@@ -182,32 +182,79 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
     // check resource-based split
     if (res_occurence)
     {
-        success = res_new_branch(branching_node, new_node, branching_point,
-                                 rnd_engine, second_cone, ev);
+        try
+        {
+            success = res_new_branch(branching_node, new_node, branching_point,
+                                     rnd_engine, second_cone, ev);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "resource-based split."));
+        }
     }
     // check uniform event
     else if (use_uniform_branching_ and uniform_occurence)
     {
-        success = uniform_new_branch(branching_node, new_node, branching_point,
-                                     rnd_engine);
+        try
+        {
+            success = uniform_new_branch(branching_node, new_node,
+                                         branching_point, rnd_engine);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "uniform lateral branching."));
+        }
     }
     // check flpl event
     else if (use_flpl_branching_ and flpl_occurence)
     {
-        success = flpl_new_branch(branching_node, new_node, branching_point,
-                                  rnd_engine);
+        try
+        {
+            success = flpl_new_branch(branching_node, new_node, branching_point,
+                                      rnd_engine);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "FLPL branching."));
+        }
     }
     // check usplit event
     else if (use_uniform_split_ and usplit_occurence)
     {
-        success = usplit_new_branch(branching_node, new_node, branching_point,
-                                    rnd_engine, second_cone);
+        try
+        {
+            success =
+                usplit_new_branch(branching_node, new_node, branching_point,
+                                  rnd_engine, second_cone);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "uniform split."));
+        }
     }
     // verify vanpelt event
     else if (use_van_pelt_ and van_pelt_occurence)
     {
-        success = vanpelt_new_branch(branching_node, new_node, branching_point,
-                                     rnd_engine, second_cone);
+        try
+        {
+            success =
+                vanpelt_new_branch(branching_node, new_node, branching_point,
+                                   rnd_engine, second_cone);
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "van Pelt split."));
+        }
     }
 
     if (success)
@@ -426,14 +473,14 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch_size() > 2 * latbranch_dist_)
+                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 total_length += cone.second->get_branch()->get_length();
             }
         }
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->size() > 2 * latbranch_dist_)
+            if (node.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 total_length += node.second->get_branch()->get_length();
             }
@@ -451,7 +498,7 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch_size() > 2 * latbranch_dist_)
+                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 current_length += cone.second->get_branch()->get_length();
 
@@ -463,7 +510,6 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                     break;
                 }
             }
-
         }
 
         if (branching_node == nullptr)
@@ -471,7 +517,8 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             for (auto &node : neurite_->nodes_)
             {
                 if (not node.second->is_dead() and
-                    node.second->get_branch_size() > 2 * latbranch_dist_)
+                    node.second->get_branch()->get_length() >
+                        2 * latbranch_dist_)
                 {
                     current_length += node.second->get_branch()->get_length();
 
@@ -577,7 +624,7 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch_size() > 2 * latbranch_dist_)
+                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 total_length += cone.second->get_branch()->get_length();
             }
@@ -585,7 +632,7 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->size() > 2 * latbranch_dist_)
+            if (node.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 total_length += node.second->get_branch()->get_length();
             }
@@ -601,7 +648,7 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch_size() > 2 * latbranch_dist_)
+                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
             {
                 current_length += cone.second->get_branch()->get_length();
 
@@ -620,7 +667,8 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             for (auto &node : neurite_->nodes_)
             {
                 if (not node.second->is_dead() and
-                    node.second->get_branch_size() > 2 * latbranch_dist_)
+                    node.second->get_branch()->get_length() >
+                        2 * latbranch_dist_)
                 {
                     current_length += node.second->get_branch()->get_length();
 
@@ -655,9 +703,23 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
             branching_point = get_closest_point(branching_node, branching_dist);
 
-            // lateral branching on the elected node through the NEURITE.
-            success = neurite_->lateral_branching(
-                branching_node, branching_point, new_node, rnd_engine);
+            // lateral branching on the elected node through the NEURITE
+            try
+            {
+                success = neurite_->lateral_branching(
+                    branching_node, branching_point, new_node, rnd_engine);
+            }
+            catch (...)
+            {
+                printf("branching node has size %lu vs bpoint %lu\n",
+                       branching_node->get_branch()->size(), branching_point);
+                printf(
+                    "branching node has length %f vs dist %f vs min dist %f\n",
+                    branching_node->get_branch()->get_length(), branching_dist,
+                    latbranch_dist_);
+                std::throw_with_nested(std::runtime_error(
+                    "Passed from `Branching::flpl_new_branch`."));
+            }
 
             next_flpl_event_ = invalid_ev;
         }
@@ -952,18 +1014,52 @@ void Branching::set_status(const statusMap &status)
     get_param(status, names::B, B_);
     get_param(status, names::E, E_);
     get_param(status, names::S, S_);
-    get_param(status, names::T, T_);
+
+    double t = T_;
+    get_param(status, names::T, t);
+
+    if (t <= 0.)
+    {
+        throw InvalidArg("`T` must be strictly positive.", __FUNCTION__,
+                         __FILE__, __LINE__);
+    }
+
+    T_ = t;
 
     if (not use_van_pelt_)
     {
         next_vanpelt_event_ = invalid_ev;
     }
 
-    //                 Uniform_branching Params
+    //           Generic lateral branching params
+    //###################################################
+    double mbd = latbranch_dist_;
+    get_param(status, names::min_branching_distance, mbd);
+
+    if (mbd <= 0.)
+    {
+        throw InvalidArg("`min_branching_distance` must be strictly "
+                         "positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    latbranch_dist_ = mbd;
+
+    //               Uniform_branching Params
     //###################################################
     get_param(status, names::use_uniform_branching, use_uniform_branching_);
 
-    get_param(status, names::uniform_branching_rate, uniform_branching_rate_);
+    double ubr = uniform_branching_rate_;
+    get_param(status, names::uniform_branching_rate, ubr);
+
+    if (ubr <= 0.)
+    {
+        throw InvalidArg("`uniform_branching_rate` must be strictly "
+                         "positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    uniform_branching_rate_ = ubr;
 
     exponential_uniform_ =
         std::exponential_distribution<double>(uniform_branching_rate_);
@@ -978,7 +1074,17 @@ void Branching::set_status(const statusMap &status)
 
     get_param(status, names::use_flpl_branching, use_flpl_branching_);
 
-    get_param(status, names::flpl_branching_rate, flpl_branching_rate_);
+    double fbr = uniform_branching_rate_;
+    get_param(status, names::flpl_branching_rate, fbr);
+
+    if (fbr <= 0.)
+    {
+        throw InvalidArg("`flpl_branching_rate` must be strictly "
+                         "positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    flpl_branching_rate_ = fbr;
 
     exponential_flpl_ =
         std::exponential_distribution<double>(flpl_branching_rate_);
@@ -988,7 +1094,17 @@ void Branching::set_status(const statusMap &status)
 
     get_param(status, names::use_uniform_split, use_uniform_split_);
 
-    get_param(status, names::uniform_split_rate, uniform_split_rate_);
+    double usr = uniform_split_rate_;
+    get_param(status, names::uniform_split_rate, usr);
+
+    if (usr <= 0.)
+    {
+        throw InvalidArg("`uniform_split_rate` must be strictly "
+                         "positive.",
+                         __FUNCTION__, __FILE__, __LINE__);
+    }
+
+    uniform_split_rate_ = usr;
 
     exponential_usplit_ =
         std::exponential_distribution<double>(uniform_split_rate_);
@@ -1010,6 +1126,9 @@ void Branching::get_status(statusMap &status) const
         set_param(status, names::S, S_, "");
         set_param(status, names::T, T_, "minute");
     }
+
+    set_param(status, names::min_branching_distance, latbranch_dist_,
+              "micrometer");
 
     set_param(status, names::use_uniform_branching, use_uniform_branching_, "");
     if (use_uniform_branching_)

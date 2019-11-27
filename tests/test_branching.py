@@ -60,6 +60,7 @@ def test_branching():
 
         "lateral_branching_angle_mean": 25.*deg,
         "lateral_branching_angle_std": 0.*deg,
+        "min_branching_distance": 5.*um,
         "taper_rate": 0.,
         "diameter_fraction_lb": 1.,
 

@@ -24,15 +24,11 @@
 
 import numpy as np
 
-# import matplotlib as mpl
-# mpl.use("Qt5Agg")
-
 import dense as ds
 from dense.units import *
 
 
 # parameters
-
 np.random.seed(0)
 
 num_omp     = 1
@@ -59,9 +55,9 @@ axon_params = {
     "growth_cone_model": gc_model,
 
     # Steering parameters
-    "sensing_angle": 90.*deg,
-    # "self_avoidance_factor": 0.,
-    # "self_avoidance_scale": 20.*um,
+    "sensing_angle": 80.*deg,
+    "self_avoidance_factor": 0.5,
+    "self_avoidance_scale": 20.*um,
     "somatropic_scale": 70.*um,
     "somatropic_mode": "window",
 
@@ -85,14 +81,14 @@ axon_params = {
 dend_params = {
     "growth_cone_model": gc_model,
     # Steering parameters
-    "sensing_angle": 90.*deg,
+    "sensing_angle": 80.*deg,
 
-    "somatropic_mode": "window",
-    # "somatropic_factor": 100.,
-    # "somatropic_scale": 100.*um,
+    "somatropic_mode": "sine",
+    "somatropic_factor": 0.02,
+    "somatropic_scale": 50.*um,
     # "rigidity_factor": 0.,
-    # "self_avoidance_factor": 0.,
-    # "self_avoidance_scale": 1.*um,
+    "self_avoidance_factor": 0.5,
+    "self_avoidance_scale": 5.*um,
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,
@@ -149,7 +145,7 @@ ds.plot.plot_neurons(mode="mixed", show=True)
 
 lb_axon = {
     # extension parameters
-    "speed_growth_cone": 0.02*um/minute,
+    "speed_growth_cone": 0.025*um/minute,
 
     # branching choice and parameters
     "use_van_pelt": False,
@@ -165,7 +161,7 @@ dend_params = {
     # branching choice and parameters
     "use_van_pelt": False,
     "use_flpl_branching": True,
-    "flpl_branching_rate": 0.01*cph,
+    "flpl_branching_rate": 0.2*cpd,
     "persistence_length": 100.*um,
     "lateral_branching_angle_mean": 40.*deg,
 }
@@ -178,10 +174,10 @@ ds.simulate(7*day)
 ds.plot.plot_neurons(mode="mixed", show=True)
 
 # Now a third step in development
-# no branching of axons, growth cone splitting of neurites
+# reduced branching of axon, growth cone splitting of neurites
 
 vp_axon = {
-    "use_flpl_branching": False,
+    "flpl_branching_rate": 0.01*cph,
 }
 
 dend_params = {
@@ -194,5 +190,7 @@ dend_params = {
 
 ds.set_object_properties(n, dendrites_params=dend_params, axon_params=vp_axon)
 ds.simulate(20*day)
+
+ds.io.save_to_swc("pyramidal-cell.swc", gid=n)
 
 ds.plot.plot_neurons(scale_text=False)

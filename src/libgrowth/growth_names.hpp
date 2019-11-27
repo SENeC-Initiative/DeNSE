@@ -257,6 +257,7 @@ extern const std::string diameter_fraction_lb;
 extern const std::string flpl_branching_rate;
 extern const std::string lateral_branching_angle_mean;
 extern const std::string lateral_branching_angle_std;
+extern const std::string min_branching_distance;
 extern const std::string use_flpl_branching;
 extern const std::string use_uniform_branching;
 extern const std::string uniform_branching_rate;

@@ -24,9 +24,6 @@
 
 import os
 
-import matplotlib
-matplotlib.use('Qt5Agg')
-
 import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit

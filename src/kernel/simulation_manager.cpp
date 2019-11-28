@@ -538,6 +538,9 @@ void SimulationManager::simulate(const Time &t)
     // check if an exception was thrown there
     if (terminate_)
     {
+        // set terminate back to false
+        terminate_ = false;
+
         if (exceptions.empty())
         {
             throw std::runtime_error(

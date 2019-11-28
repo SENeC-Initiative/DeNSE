@@ -421,21 +421,19 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         }
                     }
                 }
-                else if (failure == bg::failure_wrong_orientation)
+
+                if (failure == bg::failure_wrong_orientation)
                 {
                     bg::correct(*(poly.get()));
                 }
-                else
+
+                success = bg::is_valid(*(poly.get()), message);
+
+                if (success or count > 5)
                 {
-                    success = false;
                     break;
                 }
 
-                if (count > 5)
-                {
-                    success = false;
-                    break;
-                }
                 count++;
             }
 

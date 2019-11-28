@@ -36,7 +36,7 @@ def test_branching():
     res = 10.
 
     # seed
-    np.random.seed(0)
+    initial_state = np.random.get_state()
     seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
                              replace=False)
     num_neurons = 10
@@ -127,7 +127,8 @@ def test_branching():
         plt.fill_between(rates, mean_merr, mean_perr, alpha=0.5)
         plt.show()
     
-    assert test1.all() and test2.all()
+    assert test1.all() and test2.all(), \
+        "Failed test with state " + str(initial_state)
 
 
 if __name__ == '__main__':

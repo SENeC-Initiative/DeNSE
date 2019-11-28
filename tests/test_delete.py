@@ -37,10 +37,16 @@ def test_delete_neurons():
     num_neurons = 50
     simtime     = 2.*minute
 
+    initial_state = np.random.get_state()
+
     ds.set_kernel_status("environment_required", False)
 
     # create and delete
-    neurons = ds.create_neurons(num_neurons, params={"position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um, "growth_cone_model": "res_po_rt"},
+    nparams = {
+        "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
+        "growth_cone_model": "res_po_rt"
+    }
+    neurons = ds.create_neurons(num_neurons, params=nparams,
                                 num_neurites=2)
 
     ds.delete_neurons(3)
@@ -51,9 +57,12 @@ def test_delete_neurons():
     n_to_ints   = [int(n) for n in neurons_got]
     n_to_ints  += ds.get_neurons(True)
 
-    assert len(n_to_ints) == 2*(num_neurons - 2)
-    assert 3 not in n_to_ints
-    assert 8 not in n_to_ints
+    assert len(n_to_ints) == 2*(num_neurons - 2), \
+        "Failed with state " + str(initial_state)
+    assert 3 not in n_to_ints, \
+        "Failed with state " + str(initial_state)
+    assert 8 not in n_to_ints, \
+        "Failed with state " + str(initial_state)
 
     # simulate then delete
     ds.simulate(simtime)
@@ -61,25 +70,33 @@ def test_delete_neurons():
     ds.delete_neurons(neurons[40:45])
 
     # recreate neurons and resimulate
-    _ = ds.create_neurons(num_neurons, params={"position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um, "growth_cone_model": "res_po_rt"}, 
-                                 num_neurites=2)
+    nparams = {
+        "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
+        "growth_cone_model": "res_po_rt"
+    }
+    _ = ds.create_neurons(num_neurons, params=nparams, num_neurites=2)
     ds.simulate(simtime)
 
     neurons_got = ds.get_neurons()
     n_to_ints   = [int(n) for n in neurons_got]
     n_to_ints  += ds.get_neurons(True)
 
-    assert len(n_to_ints) == 2*(2*num_neurons - 4 - len(neurons[40:45]))
-    assert 5 not in n_to_ints
-    assert 7 not in n_to_ints
+    assert len(n_to_ints) == 2*(2*num_neurons - 4 - len(neurons[40:45])), \
+        "Failed with state " + str(initial_state)
+    assert 5 not in n_to_ints, \
+        "Failed with state " + str(initial_state)
+    assert 7 not in n_to_ints, \
+        "Failed with state " + str(initial_state)
     for n in neurons[40:45]:
-        assert int(n) not in n_to_ints
+        assert int(n) not in n_to_ints, \
+            "Failed with state " + str(initial_state)
 
     # delete all neurons
     ds.delete_neurons()
 
     # check no neurons are left
-    assert not ds.get_neurons()
+    assert not ds.get_neurons(), \
+        "Failed with state " + str(initial_state)
 
 
 def test_delete_neurites():
@@ -87,6 +104,8 @@ def test_delete_neurites():
     Neurons deletion
     '''
     ds.reset_kernel()
+
+    initial_state = np.random.get_state()
 
     num_neurons = 50
     simtime     = 2.*minute
@@ -101,30 +120,40 @@ def test_delete_neurites():
     ds.delete_neurites("axon")
 
     for n in neurons:
-        assert not n.has_axon
-        assert "axon" not in n.neurites
-        assert len(n.neurites) == 1
+        assert not n.has_axon, \
+            "Failed with state " + str(initial_state)
+        assert "axon" not in n.neurites, \
+            "Failed with state " + str(initial_state)
+        assert len(n.neurites) == 1, \
+            "Failed with state " + str(initial_state)
 
     ds.create_neurites(neurons[0], neurite_types="axon")
 
-    assert neurons[0].has_axon
-    assert len(neurons[0].neurites) == 2
+    assert neurons[0].has_axon, \
+        "Failed with state " + str(initial_state)
+    assert len(neurons[0].neurites) == 2, \
+        "Failed with state " + str(initial_state)
 
     ds.delete_neurites("dendrite_1", neurons[1])
 
     for n in neurons:
         if n == neurons[1]:
-            assert "dendrite_1" not in n.neurites
-            assert not n.neurites
+            assert "dendrite_1" not in n.neurites, \
+                "Failed with state " + str(initial_state)
+            assert not n.neurites, \
+                "Failed with state " + str(initial_state)
         elif n == neurons[0]:
-            assert len(n.neurites) == 2
+            assert len(n.neurites) == 2, \
+                "Failed with state " + str(initial_state)
         else:
-            assert len(n.neurites) == 1
+            assert len(n.neurites) == 1, \
+                "Failed with state " + str(initial_state)
 
     ds.delete_neurites()
 
     for n in neurons:
-        assert not n.neurites
+        assert not n.neurites, \
+            "Failed with state " + str(initial_state)
 
 
 if __name__ == "__main__":

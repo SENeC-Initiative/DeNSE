@@ -770,7 +770,8 @@ class Tree(dict):
             from ete3 import TreeStyle, NodeStyle
         except ImportError:
             raise RuntimeError("This function requires ete3 to work. "
-                "Please install it through e.g. `pip install --user ete3`.")
+                               "Please install it through e.g. "
+                               "`pip install --user ete3`.")
 
         # make the tree from the root
         t      = Ete3Tree(dist=0, name=int(self._root))

@@ -858,7 +858,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
 
                 if (update)
                 {
-                    if (move_.module < 1e-6)
+                    if (move_.module < 1e-2)
                     {
                         stopped_ = true;
                     }

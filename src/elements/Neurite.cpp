@@ -286,6 +286,8 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
             }
 
             gc.second->set_diameter(diameter);
+
+            assert(diameter > 0);
         }
 
         if (diameter <= min_diameter_ or
@@ -296,7 +298,7 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
         }
     }
 
-    // move gc that are too thin to inactive
+    // move gc that are too thin to inactive (could not do this while looping)
     if (not growth_cones_inactive_tmp_.empty())
     {
         for (auto &gc : growth_cones_inactive_tmp_)
@@ -679,6 +681,8 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     new_diameter -= dist_to_parent*taper_rate_;
     sibling->set_diameter(new_diameter);
 
+    assert(new_diameter > 0);
+
     // update branch and assign it to the new growth cone
     // this is only done for lateral branching; for splitting, the procedure
     // is more complex and has to be performed after the R-tree update, so
@@ -907,6 +911,8 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
             branching_cone->set_diameter(old_diameter);
             branching_cone->topological_advance();
 
+            assert(old_diameter > 0);
+
             // copy the existing node branch to new_node
             new_node->branch_ = std::make_shared<Branch>(
                 *(branching_cone->branch_.get()));
@@ -1098,8 +1104,7 @@ bool Neurite::walk_tree(NodeProp &np) const
 
         if (n_it->first != 0)
         {
-            diam -=
-                0.5 * taper_rate_ * n_it->second->get_branch()->get_length();
+            diam += 0.5 * taper_rate_ * n_it->second->get_branch()->get_length();
             // get parent id
             pid = n_it->second->get_parent().lock()->get_node_id();
         }
@@ -1112,11 +1117,7 @@ bool Neurite::walk_tree(NodeProp &np) const
         // get distance to parent
         dtp = n_it->second->get_distance_parent();
 
-        if (dtp != n_it->second->get_branch_length())
-        {
-            printf("node %lu dtp %f != branch length %f\n", n_it->first, dtp, n_it->second->get_branch_length());
-            std::cout << bg::wkt(n_it->second->get_position()) << std::endl;
-        }
+        assert(dtp == n_it->second->get_branch_length());
 
         // get position (root of the branch)
         BPoint p = n_it->second->get_position();
@@ -1145,13 +1146,13 @@ bool Neurite::walk_tree(NodeProp &np) const
         }
 
         // get distance to parent
-        dtp = gc_it->second->get_branch_length();
+        dtp = gc_it->second->get_distance_parent();
 
-        if (dtp != gc_it->second->get_branch_length())
-            printf("gc dtp %f != branch length %f\n", dtp, gc_it->second->get_distance_parent());
+        assert(dtp == gc_it->second->get_distance_parent());
 
         // get diameter (average between root and tip)
         diam = gc_it->second->get_diameter() + 0.5*dtp*taper_rate_;
+
         // get position
         BPoint p = gc_it->second->get_position();
         std::vector<double> coords({p.x(), p.y()});

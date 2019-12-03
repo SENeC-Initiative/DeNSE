@@ -299,13 +299,6 @@ void SimulationManager::finalize_simulation_()
     // finalize recorder times
     kernel().record_manager.finalize_simulation(final_step_);
 
-    //! IMPORTANT: THIS UPDATE MUST COME LAST!
-#ifndef NDEBUG
-    initial_time_.update(final_step_, final_substep_);
-    assert(std::abs(initial_time_.get_total_seconds() -
-                    final_time_.get_total_seconds()) < 1e-4);
-#endif
-
     initial_time_ = final_time_;
 
     // do not reset final_substep_ to zero!
@@ -627,11 +620,9 @@ Time SimulationManager::get_time() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     Time t0    = Time(initial_time_);
-    //~ printf("initial time: %lu days %i hours %i minutes %f seconds\n",
-    //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
+
     t0.update(step_[omp_id], substep_[omp_id]);
-    //~ printf("final time: %lu days %i hours %i minutes %f seconds\n",
-    //~ t0.get_day(), t0.get_hour(), t0.get_min(), t0.get_sec());
+
     return t0;
 }
 

@@ -44,6 +44,7 @@ void growth::RNGManager::seed(const std::vector<long> &seeds)
 
     rng_.resize(seeds.size());
     rng_seeds_.resize(seeds.size());
+
     for (stype i = 0; i < seeds.size(); i++)
     {
 #ifndef NDEBUG
@@ -62,6 +63,10 @@ void growth::RNGManager::get_status(statusMap &status) const
 
 void growth::RNGManager::create_rngs_()
 {
+#ifndef NDEBUG
+    printf("creating the random generators\n");
+#endif
+
     if (!rng_.empty())
     {
         rng_.clear();
@@ -70,6 +75,7 @@ void growth::RNGManager::create_rngs_()
     // initialize
     stype mpi_rank = kernel().parallelism_manager.get_mpi_rank();
     stype num_omp  = kernel().parallelism_manager.get_num_local_threads();
+
     rng_seeds_.resize(num_omp);
 
     for (stype i = 0; i < num_omp; i++)

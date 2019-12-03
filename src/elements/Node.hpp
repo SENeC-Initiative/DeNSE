@@ -65,7 +65,7 @@ class BaseNode
 
     //! getters function
     virtual int get_centrifugal_order() const;
-    virtual BPoint get_position() const;
+    BPoint get_position() const;
     virtual double get_distance_to_soma() const;
     virtual double get_distance_parent() const;
     virtual stype get_node_id() const;
@@ -104,7 +104,6 @@ class TopologicalNode : public BaseNode
     void update_branch_and_parent(BaseNodePtr parent, BranchPtr b);
 
     // geometry getter functions
-    inline BPoint get_position() const override { return position_; }
     inline double get_distance_to_soma() const override
     {
         return dist_to_soma_;
@@ -147,6 +146,8 @@ class Node : public TopologicalNode
   public:
     Node(BaseWeakNodePtr parent, double distanceToParent,
          const BPoint &pos, double diameter, NeuritePtr neurite);
+
+    virtual void set_position(const BPoint &) override final;
 
     TNodePtr get_child(int) const;
 

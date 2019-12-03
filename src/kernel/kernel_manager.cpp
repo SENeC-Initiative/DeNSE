@@ -108,15 +108,19 @@ void KernelManager::initialize()
 {
     // parralelism comes first
     parallelism_manager.initialize();
+
     // then RNG
     rng_manager.initialize();
+
     // then the rest
     simulation_manager.initialize();
     space_manager.initialize();
     record_manager.initialize();
+
     // models_manager init_models() must come before neuron_manager
     model_manager.init_models();
     neuron_manager.initialize();
+
     num_objects_         = 0;
     num_created_objects_ = 0;
     initialized_         = true;

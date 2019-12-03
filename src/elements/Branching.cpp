@@ -309,14 +309,13 @@ void Branching::update_splitting_cones(TNodePtr branching_cone,
         std::swap(pos1, pos2);
     }
 
-    // delete last segment from parent branch and make the two cones
-    // start from the previous positions and end on lp1/lp2
-
+    // make the two cones start from the parent position and end on lp1/lp2
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
     // remove last point (previous position) from old branch
     BPolygonPtr last_seg = branch->get_last_segment();
     branch->retract();
+    new_node->set_position(branch->get_last_xy());
 
     if (last_seg != nullptr)
     {
@@ -433,9 +432,6 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
 bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                                    stype &branching_point, mtPtr rnd_engine)
 {
-#ifndef NDEBUG
-    printf("@@@@@@@ Lateral branching @@@@@@@@\n");
-#endif
     branching_node = nullptr;
     new_node       = nullptr;
     GCPtr branching_cone;
@@ -533,10 +529,6 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             success = false;
         }
-        else
-        {
-            success = false;
-        }
 
         compute_uniform_event(rnd_engine);
 
@@ -591,9 +583,6 @@ void Branching::compute_flpl_event(mtPtr rnd_engine)
 bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                                 stype &branching_point, mtPtr rnd_engine)
 {
-#ifndef NDEBUG
-    printf("@@@@@@@ Lateral branching (FLPL) @@@@@@@@\n");
-#endif
     branching_node = nullptr;
     new_node       = nullptr;
     GCPtr branching_cone;

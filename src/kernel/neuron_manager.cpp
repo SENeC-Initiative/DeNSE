@@ -69,6 +69,7 @@ void NeuronManager::initialize()
     // create default neuron
     model_neuron_ = std::make_shared<Neuron>(0);
     model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
+
     // remove information about angles
     model_neuron_->neurite_angles_.clear();
 }

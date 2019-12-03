@@ -189,9 +189,14 @@ ds.set_object_properties(n, dendrites_params=dend_params, axon_params=vp_axon)
 ds.simulate(20*day)
 
 <<<<<<< HEAD
+ds.plot.plot_dendrogram(n.axon, show=False)
+
+=======
+<<<<<<< HEAD
 ds.io.save_to_swc("pyramidal-cell.swc", gid=n)
 
 =======
 ds.plot.plot_dendrogram(n.axon, show_node_id=True, show=False)
 >>>>>>> f69bf80b4fea71906fa4cf92f89bf48f9f4585e9
+>>>>>>> e66f8c508718e05e976064b08c9cbcf9d188f8e1
 ds.plot.plot_neurons(scale_text=False)

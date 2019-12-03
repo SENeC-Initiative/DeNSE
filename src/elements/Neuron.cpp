@@ -568,10 +568,8 @@ std::string Neuron::new_neurite(const std::string &name,
     neurites_[name]->add_cone(first_gc);
 
     // set initial and current diameter
-    first_gc->TopologicalNode::set_diameter(
-        neurites_[name]->get_first_node()->biology_.diameter);
     first_gc->set_diameter(
-        neurites_[name]->get_first_node()->biology_.diameter);
+        neurites_[name]->get_first_node()->diameter_);
 
     // then reset the branch with the right initial position
     first_gc->set_first_point(cone_start_point, details.soma_radius);

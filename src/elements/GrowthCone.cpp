@@ -119,8 +119,7 @@ GrowthCone::GrowthCone(const std::string &model)
     update_kernel_variables();
 
     // initialize speed (sensing is initialized by filopodia)
-    move_.speed       = local_avg_speed_;
-    current_diameter_ = get_diameter();
+    move_.speed = local_avg_speed_;
 
     // only 'initial models' are directly created, other are cloned, so
     // we don't need to get the area.
@@ -167,7 +166,6 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , max_sensing_angle_(copy.max_sensing_angle_)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
-    , current_diameter_(copy.current_diameter_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -175,7 +173,10 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
 }
 
 
-GrowthCone::~GrowthCone() { assert(biology_.branch.use_count() == 1); }
+GrowthCone::~GrowthCone()
+{
+    assert(branch_.use_count() == 1);
+}
 
 
 /**
@@ -184,18 +185,23 @@ GrowthCone::~GrowthCone() { assert(biology_.branch.use_count() == 1); }
  * This is called to update a GrowthCone after it has been cloned from
  * when branching occurs.
  */
-void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
-                                 float distance_to_parent,
+void GrowthCone::update_topology(BaseWeakNodePtr parent,
+                                 NeuritePtr own_neurite,
+                                 double distance_to_parent,
                                  const BPoint &position, double angle)
 {
-    topology_ = NodeTopology(parent, parent.lock()->get_centrifugal_order() + 1,
-                             false, 0);
-    geometry_ = NodeGeometry(
-        position, parent.lock()->get_distance_to_soma() + distance_to_parent,
-        distance_to_parent);
-    biology_ = NodeBiology(
-        false, std::make_shared<Branch>(position, geometry_.dis_to_soma),
-        own_neurite, 0);
+    parent_ = parent;
+    centrifugal_order_ = parent.lock()->get_centrifugal_order() + 1;
+
+    position_ = position;
+
+    dist_to_soma_   = parent.lock()->get_distance_to_soma()
+                      + distance_to_parent;
+    dist_to_parent_ = distance_to_parent;
+
+    has_child_ = false;
+    branch_ = std::make_shared<Branch>(position, dist_to_soma_);
+    own_neurite_ = own_neurite;
 
     neuron_id_    = own_neurite->get_parent_neuron().lock()->get_gid();
     neurite_name_ = own_neurite->get_name();
@@ -259,10 +265,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         loop_index++;
         if (loop_index > 1000)
         {
-            printf("long loop for gc of neuron %lu on %i - substep %f - ctime "
-                   "%f - next %f\n",
-                   biology_.own_neurite->get_parent_neuron().lock()->get_gid(),
-                   omp_id, substep, current_time, local_substep);
+            printf("long loop for gc of neuron %lu on %i - substep %f - ctime %f - next %f\n", own_neurite_->get_parent_neuron().lock()->get_gid(), omp_id, substep, current_time, local_substep);
             throw std::runtime_error("Neuron stuck in an infinite loop");
         }
 
@@ -428,7 +431,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 
             // compute the angle widening necessary to unstuck
             unstuck_angle = kernel().space_manager.unstuck_angle(
-                geometry_.position, move_.angle, filopodia_.finger_length,
+                position_, move_.angle, filopodia_.finger_length,
                 current_area_, omp_id);
 
             // compute the time necessary to reach that angle
@@ -524,10 +527,10 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // remove the points
     double distance_done;
 
-    while (distance > 0 and biology_.branch->size() > 1)
+    while (distance > 0 and branch_->size() > 1)
     {
-        distance_done    = biology_.branch->get_last_segment_length();
-        BPolygonPtr poly = biology_.branch->get_last_segment();
+        distance_done    = branch_->get_last_segment_length();
+        BPolygonPtr poly = branch_->get_last_segment();
         BBox box;
         ObjectInfo info;
 
@@ -536,7 +539,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             box = bg::return_envelope<BBox>(*(poly.get()));
             // there is one less segment than point, so size - 2 for segment
             info = std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
-                                   biology_.branch->size() - 2);
+                                   branch_->size() - 2);
         }
 
         double remaining = distance_done - distance;
@@ -544,7 +547,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
         if (remaining < 1e-6) // distance is greater than what we just did
         {
             distance -= distance_done;
-            biology_.branch->retract();
+            branch_->retract();
 
             // we also remove the tree box
             if (poly != nullptr)
@@ -554,8 +557,17 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
         }
         else
         {
-            BPoint p1 = biology_.branch->xy_at(biology_.branch->size() - 2);
-            BPoint p2 = biology_.branch->get_last_xy();
+            BPoint p1 = branch_->xy_at(branch_->size() - 2);
+            BPoint p2 = branch_->get_last_xy();
+
+            //~ std::cout << "p1 " << bg::wkt(p1) << std::endl;
+            //~ std::cout << "p2 " << bg::wkt(p2) << std::endl;
+
+            //~ if (branch_->size() > 2)
+            //~ {
+            //~ BPoint p0 = branch_->xy_at(branch_->size() - 3);
+            //~ std::cout << "p0 " << bg::wkt(p0) << std::endl;
+            //~ }
 
             //~ std::cout << "p1 " << bg::wkt(p1) << std::endl;
             //~ std::cout << "p2 " << bg::wkt(p2) << std::endl;
@@ -575,13 +587,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
 
             BPoint new_p = BPoint(new_x, new_y);
 
-            //~ std::cout << "newp " << bg::wkt(new_p) << std::endl;
-
-            //~ std::cout << "previous seg " <<
-            // bg::wkt(*(biology_.branch->get_last_segment().get())) <<
-            // std::endl;
-
-            biology_.branch->retract();
+            branch_->retract();
 
             // we remove the previous object and add the new, shorter one
             if (poly != nullptr)
@@ -589,16 +595,26 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
                 try
                 {
                     kernel().space_manager.remove_object(box, info, omp_id);
-
-                    kernel().space_manager.add_object(
-                        p1, new_p, get_diameter(), remaining,
-                        biology_.own_neurite->get_taper_rate(), info,
-                        biology_.branch, omp_id);
                 }
                 catch (...)
                 {
                     std::throw_with_nested(std::runtime_error(
-                        "Passed from `GrowthCone::retract`."));
+                        "Passed from `GrowthCone::retract`, coming from "
+                        "space_manager::remove_object."));
+                }
+
+                try
+                {
+                    kernel().space_manager.add_object(
+                        p1, new_p, get_diameter(), remaining,
+                        own_neurite_->get_taper_rate(), info, branch_,
+                        omp_id);
+                }
+                catch (...)
+                {
+                    std::throw_with_nested(std::runtime_error(
+                        "Passed from `GrowthCone::retract` coming from "
+                        "space_manager::add_object."));
                 }
             }
 
@@ -607,19 +623,19 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     }
 
     // set the new growth cone angle
-    stype last = biology_.branch->size();
+    stype last = branch_->size();
     double x0, y0, x1, y1;
     BPoint p;
 
     if (last > 0)
     {
-        p  = biology_.branch->xy_at(last - 1);
+        p  = branch_->xy_at(last - 1);
         x1 = p.x();
         y1 = p.y();
 
         if (last > 1)
         {
-            p  = biology_.branch->xy_at(last - 2);
+            p  = branch_->xy_at(last - 2);
             x0 = p.x();
             y0 = p.y();
         }
@@ -633,10 +649,10 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
         move_.angle = atan2(y1 - y0, x1 - x0);
     }
 
-    geometry_.position = biology_.branch->get_last_xy();
+    set_position(branch_->get_last_xy());
 
     // prune growth cone if necessary
-    if (biology_.branch->size() == 1)
+    if (branch_->size() == 1)
     {
         prune(cone_n);
     }
@@ -644,8 +660,8 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // check if we changed area
     if (using_environment_)
     {
-        current_area_ =
-            kernel().space_manager.get_containing_area(geometry_.position);
+        current_area_ = kernel().space_manager.get_containing_area(
+            position_);
         update_growth_properties(current_area_);
         // reset move_.sigma_angle to its default value
         AreaPtr area = kernel().space_manager.get_area(current_area_);
@@ -677,7 +693,7 @@ void GrowthCone::prune(stype cone_n)
            total_proba_);
     printf("prop: retraction %f, %i\n", retraction_time_, just_retracted());
 #endif
-    biology_.own_neurite->delete_cone(cone_n);
+    own_neurite_->delete_cone(cone_n);
 }
 
 
@@ -702,7 +718,7 @@ bool GrowthCone::sense_surroundings(std::vector<double> &directions_weights,
         double up_move = scale_up_move_ == 0 ? std::nan("") : scale_up_move_;
 
         return kernel().space_manager.sense(
-            directions_weights, wall_presence, filopodia_, geometry_.position,
+            directions_weights, wall_presence, filopodia_, position_,
             move_, current_area_, proba_down_move_, up_move, aff_, substep,
             0.5 * get_diameter(), shared_from_this(), current_neighbors_);
     }
@@ -749,11 +765,11 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
         double default_angle =
             filopodia_.directions[default_direction] + move_.angle;
 
-        BPoint p(geometry_.position.x() + cos(new_angle) * move_.module,
-                 geometry_.position.y() + sin(new_angle) * move_.module);
+        BPoint p(position_.x() + cos(new_angle) * move_.module,
+                 position_.y() + sin(new_angle) * move_.module);
 
         BLineString line =
-            kernel().space_manager.line_from_points(geometry_.position, p);
+            kernel().space_manager.line_from_points(position_, p);
 
         // check that delta_angle is less than PI/2
         if (std::abs(new_angle - move_.angle) > 0.5 * M_PI)
@@ -784,8 +800,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     new_angle = 0.5 * (new_angle + default_angle);
 
                     p = BPoint(
-                        geometry_.position.x() + cos(new_angle) * move_.module,
-                        geometry_.position.y() + sin(new_angle) * move_.module);
+                        position_.x() + cos(new_angle) * move_.module,
+                        position_.y() + sin(new_angle) * move_.module);
                 }
             }
 
@@ -864,10 +880,10 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     }
                     else
                     {
-                        p = BPoint(geometry_.position.x() +
-                                       cos(new_angle) * move_.module,
-                                   geometry_.position.y() +
-                                       sin(new_angle) * move_.module);
+                        p = BPoint(
+                            position_.x() + cos(new_angle) * move_.module,
+                            position_.y() + sin(new_angle) * move_.module
+                        );
                     }
                 }
 
@@ -883,12 +899,11 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     try
                     {
                         kernel().space_manager.add_object(
-                            geometry_.position, p, get_diameter(), move_.module,
-                            biology_.own_neurite->get_taper_rate(),
+                            position_, p, get_diameter(), move_.module,
+                            own_neurite_->get_taper_rate(),
                             std::make_tuple(neuron_id_, neurite_name_,
-                                            get_node_id(),
-                                            biology_.branch->size() - 1),
-                            biology_.branch, omp_id);
+                                            get_node_id(), branch_->size() - 1),
+                            branch_, omp_id);
                     }
                     catch (...)
                     {
@@ -899,13 +914,12 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
 
                         std::cout << "p " << bg::wkt(p) << std::endl;
 
-                        BPoint p2 = biology_.branch->get_last_xy();
+                        BPoint p2 = branch_->get_last_xy();
                         std::cout << "p2 " << bg::wkt(p2) << std::endl;
 
-                        if (biology_.branch->size() > 1)
+                        if (branch_->size() > 1)
                         {
-                            BPoint p1 = biology_.branch->xy_at(
-                                biology_.branch->size() - 2);
+                            BPoint p1 = branch_->xy_at(branch_->size() - 2);
                             std::cout << "p1 " << bg::wkt(p1) << std::endl;
 
                             double old_angle =
@@ -918,7 +932,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     }
 
                     // store new position
-                    geometry_.position = p;
+                    set_position(p);
 
                     // check if we switched to a new area
                     std::string new_area =
@@ -933,6 +947,18 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             }
         }
     }
+}
+
+
+/**
+ * Set GrowthCone position and update distances to parent and soma
+ */
+void GrowthCone::set_position(const BPoint &pos)
+{
+    position_ = pos;
+
+    dist_to_parent_ = branch_->get_length();
+    dist_to_soma_   = branch_->final_distance_to_soma();
 }
 
 
@@ -986,9 +1012,6 @@ double GrowthCone::get_module() const { return move_.module; }
 
 
 void GrowthCone::set_angle(double angle) { move_.angle = angle; }
-
-
-void GrowthCone::set_diameter(double diameter) { current_diameter_ = diameter; }
 
 
 // ###########################################################
@@ -1073,7 +1096,7 @@ void GrowthCone::set_status(const statusMap &status)
     max_sensing_angle_ = msa;
 
     // set affinities
-    if (biology_.own_neurite->get_type() == "axon")
+    if (own_neurite_->get_type() == "axon")
     {
         get_param(status, names::affinity_axon_self, aff_.affinity_self);
         get_param(status, names::affinity_axon_axon_other_neuron,
@@ -1139,9 +1162,9 @@ void GrowthCone::get_status(statusMap &status) const
               "minute");
 
     // set affinities
-    if (biology_.own_neurite != nullptr)
+    if (own_neurite_ != nullptr)
     {
-        if (biology_.own_neurite->get_type() == "axon")
+        if (own_neurite_->get_type() == "axon")
         {
             set_param(status, names::affinity_axon_self, aff_.affinity_self,
                       "");
@@ -1186,7 +1209,7 @@ double GrowthCone::get_state(const std::string &observable) const
 
     if (observable == "length")
     {
-        value = biology_.branch->get_length();
+        value = branch_->get_length();
     }
     else if (observable == "speed")
     {
@@ -1206,7 +1229,7 @@ double GrowthCone::get_state(const std::string &observable) const
     }
     else if (observable == "diameter")
     {
-        value = current_diameter_;
+        value = get_diameter();
     }
     else if (observable == "stepping_probability")
     {
@@ -1217,10 +1240,10 @@ double GrowthCone::get_state(const std::string &observable) const
 }
 
 
-double GrowthCone::get_diameter() const { return current_diameter_; }
-
-
-double GrowthCone::get_self_affinity() const { return aff_.affinity_self; }
+double GrowthCone::get_self_affinity() const
+{
+    return aff_.affinity_self;
+}
 
 
 bool GrowthCone::just_retracted() const { return just_retracted_; }
@@ -1343,7 +1366,7 @@ const std::string &GrowthCone::get_model_name() const { return model_; }
 
 const BPolygonPtr GrowthCone::get_last_segment() const
 {
-    return biology_.branch->get_last_segment();
+    return branch_->get_last_segment();
 }
 
 } // namespace growth

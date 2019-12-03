@@ -46,7 +46,7 @@ Branch::Branch(const Branch &copy)
 {
     points_[0].insert(points_[0].end(), copy.points_[0].begin(),
                       copy.points_[0].end());
-    points_[1].insert(points_[1].end(), copy.points_[0].begin(),
+    points_[1].insert(points_[1].end(), copy.points_[1].begin(),
                       copy.points_[1].end());
     points_[2].insert(points_[2].end(), copy.points_[2].begin(),
                       copy.points_[2].end());
@@ -106,7 +106,7 @@ double Branch::module_from_points(const BPoint &p)
 }
 
 
-void Branch::set_first_point(const BPoint &p, double length)
+void Branch::set_first_point(const BPoint &p, double dist_to_soma)
 {
     initial_point_ = p;
 
@@ -114,13 +114,13 @@ void Branch::set_first_point(const BPoint &p, double length)
     {
         points_[0].push_back(p.x());
         points_[1].push_back(p.y());
-        points_[2].push_back(length);
+        points_[2].push_back(dist_to_soma);
     }
     else
     {
         points_[0][0] = p.x();
         points_[1][0] = p.y();
-        points_[2][0] = length;
+        points_[2][0] = dist_to_soma;
     }
 }
 
@@ -212,6 +212,7 @@ void Branch::resize_tail(stype new_size)
 BranchPtr Branch::resize_head(stype id_x) const
 {
     assert(size() > id_x);
+
     BranchPtr new_branch = std::make_shared<Branch>();
 
     new_branch->points_[0].insert(new_branch->points_[0].end(),

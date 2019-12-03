@@ -36,6 +36,7 @@
 #include "GrowthCone.hpp"
 #include "Neurite.hpp"
 #include "Neuron.hpp"
+#include "Node.hpp"
 #include "Skeleton.hpp"
 #include "Swc.hpp"
 

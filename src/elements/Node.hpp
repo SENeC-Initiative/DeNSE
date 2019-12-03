@@ -35,90 +35,20 @@ class Neurite;
 class Neuron;
 
 
-typedef struct NodeTopology
-{
-    BaseWeakNodePtr parent;
-    int centrifugal_order;
-    bool has_child;
-    stype nodeID;
-
-    NodeTopology()
-        : parent(std::make_shared<BaseNode>())
-        , centrifugal_order(-1)
-        , has_child(false)
-        , nodeID(0)
-    {
-    }
-    NodeTopology(BaseWeakNodePtr parent, int centrifugal_order, bool has_child,
-                 int nodeID)
-        : parent(parent)
-        , centrifugal_order(centrifugal_order)
-        , has_child(has_child)
-        , nodeID(nodeID)
-    {
-    }
-} NodeTopology;
-
-
-typedef struct NodeGeometry
-{
-    BPoint position;
-    double dis_to_soma;
-    double dis_to_parent;
-    NodeGeometry()
-        : position(BPoint())
-        , dis_to_soma(-1)
-        , dis_to_parent(-1)
-    {
-    }
-    NodeGeometry(const BPoint &position, double dis_to_soma,
-                 double dis_to_parent)
-        : position(position)
-        , dis_to_soma(dis_to_soma)
-        , dis_to_parent(dis_to_parent)
-    {
-    }
-} NodeGeometry;
-
-
-typedef struct NodeBiology
-{
-    bool dead;
-    BranchPtr branch;
-    NeuritePtr own_neurite;
-    double diameter;
-
-    NodeBiology()
-        : dead(false)
-        , branch(std::make_shared<Branch>())
-        , own_neurite(nullptr)
-        , diameter(0)
-    {
-    }
-
-    NodeBiology(bool dead, BranchPtr branch, NeuritePtr own_neurite,
-                double diameter)
-        : dead(dead)
-        , branch(branch)
-        , own_neurite(own_neurite)
-        , diameter(diameter)
-    {
-    }
-} NodeBiology;
-
-
 /**
  * @brief BaseNode is the root of neurite topological tree
  *
  * This class is needed to initialize the neurite tree.
- * Soma is an istance of BaseNode
+ * Soma is an instance of BaseNode
  */
 class BaseNode
 {
     friend class Neuron;
 
   protected:
-    NodeGeometry geometry_;
+    BPoint position_;
+    double dist_to_soma_;
+    double dist_to_parent_;
 
   public:
     BaseNode();
@@ -147,52 +77,60 @@ class TopologicalNode : public BaseNode
     friend class Neurite;
 
   protected:
-    NodeTopology topology_;
-    NodeBiology biology_;
+    BaseWeakNodePtr parent_;
+    int centrifugal_order_;
+    bool has_child_;
+    stype node_id_;
+
+    bool dead_;
+    BranchPtr branch_;
+    NeuritePtr own_neurite_;
+    double diameter_;
 
   public:
     TopologicalNode();
     TopologicalNode(const TopologicalNode &tnode);
-    TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
-                    const BPoint &position);
+    TopologicalNode(BaseWeakNodePtr parent, double distance_to_parent,
+                    const BPoint &position, double diameter,
+                    NeuritePtr neurite);
 
     /**
      * @brief Update the centrifugal order
      */
     void topological_advance();
     void set_first_point(const BPoint &p, double length);
-    virtual void set_diameter(double diameter);
-    void set_position(const BPoint &) override;
-    void set_position(const BPoint &pos, double dist_to_soma, BranchPtr b);
+    void set_diameter(double diameter);
+    virtual void set_position(const BPoint &) override;
+    void update_branch_and_parent(BaseNodePtr parent, BranchPtr b);
 
     // geometry getter functions
-    inline BPoint get_position() const override { return geometry_.position; }
+    inline BPoint get_position() const override { return position_; }
     inline double get_distance_to_soma() const override
     {
-        return geometry_.dis_to_soma;
+        return dist_to_soma_;
     }
     inline double get_distance_parent() const override
     {
-        return geometry_.dis_to_parent;
+        return dist_to_parent_;
     }
 
     // topology getter functions
-    inline BaseWeakNodePtr get_parent() const { return topology_.parent; }
+    inline BaseWeakNodePtr get_parent() const { return parent_; }
     inline int get_centrifugal_order() const override
     {
-        return topology_.centrifugal_order;
+        return centrifugal_order_;
     }
-    inline bool has_child() const { return topology_.has_child; }
-    inline stype get_node_id() const override { return topology_.nodeID; }
+    inline bool has_child() const { return has_child_; }
+    inline stype get_node_id() const override { return node_id_; }
 
     seg_range segment_range() const;
 
     // biology getter functions
-    inline bool is_dead() const { return biology_.dead; }
-    inline BranchPtr get_branch() const { return biology_.branch; }
+    inline bool is_dead() const { return dead_; }
+    inline BranchPtr get_branch() const { return branch_; }
     stype get_branch_size() const;
     double get_branch_length() const;
-    inline virtual double get_diameter() const { return biology_.diameter; }
+    inline virtual double get_diameter() const { return diameter_; }
 
     bool support_AW() const;
 };
@@ -205,14 +143,10 @@ class Node : public TopologicalNode
 
   protected:
     std::vector<TNodePtr> children_;
-    double diameter_; // diameter at the node's position
 
   public:
-    Node(BaseWeakNodePtr parent, float distanceToParent, const BPoint &pos);
-
-    Node(const Node &copy);
-
-    Node(const TopologicalNode &copy);
+    Node(BaseWeakNodePtr parent, double distanceToParent,
+         const BPoint &pos, double diameter, NeuritePtr neurite);
 
     TNodePtr get_child(int) const;
 

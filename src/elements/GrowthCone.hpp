@@ -39,8 +39,8 @@ namespace growth
 {
 
 /*
- * Growth Cone is an abstract Class
- * It is a base model which s overloaded by more detailed models.
+ * Growth Cone is an abstract class
+ * It is a base model which is overloaded by more detailed models.
  *
  * Growthcone is a (biological) relevant class, it computes the forces acting on
  * the growth cone from environment or intrinsic phenomena; them it actualizes
@@ -106,8 +106,6 @@ class GrowthCone : public TopologicalNode,
     stype min_filopodia_; // minimal number of filopodia
     stype num_filopodia_; // minimal number of filopodia
 
-    double current_diameter_;
-
     Filopodia filopodia_;
     Move move_;
 
@@ -128,8 +126,8 @@ class GrowthCone : public TopologicalNode,
                         double angle) = 0;
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
-                         float distanceToParent, const BPoint &position,
-                         double angle);
+                         double distanc_to_parent,
+                         const BPoint &position, double angle);
 
     // growth
     void grow(mtPtr rnd_engine, stype cone_n, double substep);
@@ -166,11 +164,12 @@ class GrowthCone : public TopologicalNode,
     virtual void prepare_for_split() = 0;
     virtual void after_split()       = 0;
 
+    virtual void set_position(const BPoint &pos) override final;
+
     // get functions
     double get_module() const;
     virtual double get_state(const std::string &observable) const;
     virtual double get_growth_cone_speed() const;
-    virtual double get_diameter() const override;
     bool just_retracted() const;
     stype get_neuron_id() const;
     const std::string &get_neurite_name() const;
@@ -180,7 +179,6 @@ class GrowthCone : public TopologicalNode,
     double get_self_affinity() const;
 
     // status and kernel-related functions
-    virtual void set_diameter(double diameter) override;
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();

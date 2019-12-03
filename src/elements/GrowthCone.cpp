@@ -173,10 +173,7 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
 }
 
 
-GrowthCone::~GrowthCone()
-{
-    assert(branch_.use_count() == 1);
-}
+GrowthCone::~GrowthCone() { assert(branch_.use_count() == 1); }
 
 
 /**
@@ -185,22 +182,20 @@ GrowthCone::~GrowthCone()
  * This is called to update a GrowthCone after it has been cloned from
  * when branching occurs.
  */
-void GrowthCone::update_topology(BaseWeakNodePtr parent,
-                                 NeuritePtr own_neurite,
+void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
                                  double distance_to_parent,
                                  const BPoint &position, double angle)
 {
-    parent_ = parent;
+    parent_            = parent;
     centrifugal_order_ = parent.lock()->get_centrifugal_order() + 1;
 
     position_ = position;
 
-    dist_to_soma_   = parent.lock()->get_distance_to_soma()
-                      + distance_to_parent;
+    dist_to_soma_ = parent.lock()->get_distance_to_soma() + distance_to_parent;
     dist_to_parent_ = distance_to_parent;
 
-    has_child_ = false;
-    branch_ = std::make_shared<Branch>(position, dist_to_soma_);
+    has_child_   = false;
+    branch_      = std::make_shared<Branch>(position, dist_to_soma_);
     own_neurite_ = own_neurite;
 
     neuron_id_    = own_neurite->get_parent_neuron().lock()->get_gid();
@@ -265,7 +260,10 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         loop_index++;
         if (loop_index > 1000)
         {
-            printf("long loop for gc of neuron %lu on %i - substep %f - ctime %f - next %f\n", own_neurite_->get_parent_neuron().lock()->get_gid(), omp_id, substep, current_time, local_substep);
+            printf("long loop for gc of neuron %lu on %i - substep %f - ctime "
+                   "%f - next %f\n",
+                   own_neurite_->get_parent_neuron().lock()->get_gid(), omp_id,
+                   substep, current_time, local_substep);
             throw std::runtime_error("Neuron stuck in an infinite loop");
         }
 
@@ -431,8 +429,8 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 
             // compute the angle widening necessary to unstuck
             unstuck_angle = kernel().space_manager.unstuck_angle(
-                position_, move_.angle, filopodia_.finger_length,
-                current_area_, omp_id);
+                position_, move_.angle, filopodia_.finger_length, current_area_,
+                omp_id);
 
             // compute the time necessary to reach that angle
             local_substep = std::min(
@@ -607,8 +605,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
                 {
                     kernel().space_manager.add_object(
                         p1, new_p, get_diameter(), remaining,
-                        own_neurite_->get_taper_rate(), info, branch_,
-                        omp_id);
+                        own_neurite_->get_taper_rate(), info, branch_, omp_id);
                 }
                 catch (...)
                 {
@@ -660,8 +657,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // check if we changed area
     if (using_environment_)
     {
-        current_area_ = kernel().space_manager.get_containing_area(
-            position_);
+        current_area_ = kernel().space_manager.get_containing_area(position_);
         update_growth_properties(current_area_);
         // reset move_.sigma_angle to its default value
         AreaPtr area = kernel().space_manager.get_area(current_area_);
@@ -718,8 +714,8 @@ bool GrowthCone::sense_surroundings(std::vector<double> &directions_weights,
         double up_move = scale_up_move_ == 0 ? std::nan("") : scale_up_move_;
 
         return kernel().space_manager.sense(
-            directions_weights, wall_presence, filopodia_, position_,
-            move_, current_area_, proba_down_move_, up_move, aff_, substep,
+            directions_weights, wall_presence, filopodia_, position_, move_,
+            current_area_, proba_down_move_, up_move, aff_, substep,
             0.5 * get_diameter(), shared_from_this(), current_neighbors_);
     }
 
@@ -779,8 +775,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             //~ printf("crosses %i - covered %i\n", bg::crosses(line,
             //*(last_segment.get())), bg::covered_by(line,
             //*(last_segment.get()))); ~ std::cout << bg::wkt(line) <<
-            //std::endl; ~ std::cout << bg::wkt(*(last_segment.get())) <<
-            //std::endl;
+            // std::endl; ~ std::cout << bg::wkt(*(last_segment.get())) <<
+            // std::endl;
             stopped_ = true;
         }
         else
@@ -799,9 +795,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                 {
                     new_angle = 0.5 * (new_angle + default_angle);
 
-                    p = BPoint(
-                        position_.x() + cos(new_angle) * move_.module,
-                        position_.y() + sin(new_angle) * move_.module);
+                    p = BPoint(position_.x() + cos(new_angle) * move_.module,
+                               position_.y() + sin(new_angle) * move_.module);
                 }
             }
 
@@ -882,8 +877,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     {
                         p = BPoint(
                             position_.x() + cos(new_angle) * move_.module,
-                            position_.y() + sin(new_angle) * move_.module
-                        );
+                            position_.y() + sin(new_angle) * move_.module);
                     }
                 }
 
@@ -1240,10 +1234,7 @@ double GrowthCone::get_state(const std::string &observable) const
 }
 
 
-double GrowthCone::get_self_affinity() const
-{
-    return aff_.affinity_self;
-}
+double GrowthCone::get_self_affinity() const { return aff_.affinity_self; }
 
 
 bool GrowthCone::just_retracted() const { return just_retracted_; }

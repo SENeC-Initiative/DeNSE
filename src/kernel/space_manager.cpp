@@ -160,16 +160,16 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
     // compute the intersection between the previous side (old_p2, lp2) and the
     // new front line going through lp_1 and stop.
     // Both segments are made `2*diameter`-long to be sure they intersect.
-    lp_2 = BPoint(old_p2.x() + cos(side_angle) * 2*diam,
-                  old_p2.y() + sin(side_angle) * 2*diam);
+    lp_2 = BPoint(old_p2.x() + cos(side_angle) * 2 * diam,
+                  old_p2.y() + sin(side_angle) * 2 * diam);
 
     BLineString side({old_p2, lp_2});
 
     // compute angle direction of new front
     double front_angle = atan2(stop.y() - lp_1.y(), stop.x() - lp_1.x());
 
-    lp_2 = BPoint(lp_1.x() + cos(front_angle) * 2*diam,
-                  lp_1.y() + sin(front_angle) * 2*diam);
+    lp_2 = BPoint(lp_1.x() + cos(front_angle) * 2 * diam,
+                  lp_1.y() + sin(front_angle) * 2 * diam);
 
     BLineString front({lp_1, lp_2});
 
@@ -388,9 +388,9 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                                 }
                             }
 
-                            double dist = std::max(
-                                bg::distance(old_lp2, old_lp1),
-                                bg::distance(lp_2, lp_1));
+                            double dist =
+                                std::max(bg::distance(old_lp2, old_lp1),
+                                         bg::distance(lp_2, lp_1));
 
                             correct_polygon(l_vec, r_vec, stop, lp_1, lp_2,
                                             old_lp1, old_lp2, outer,

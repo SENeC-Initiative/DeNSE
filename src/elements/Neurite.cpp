@@ -822,7 +822,7 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
         auto sibling = create_branching_cone(
             branching_node, new_node, dist_to_bp, new_cone_diam, xy,
             branch_direction + angle, false);
-        
+
         // check if sibling could indeed be created
         if (sibling != nullptr)
         {
@@ -897,7 +897,7 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
     {
 
 #ifndef NDEBUG
-        std::cout << "\n\n\nSPLITTING\n" << "new_angle " << new_angle << 
+        std::cout << "\n\n\nSPLITTING\n" << "new_angle " << new_angle <<
         "new length " << new_length << "\n\n\n";
 #endif
 
@@ -919,7 +919,7 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
         sibling = create_branching_cone(
             branching_cone, new_node, new_length, new_diameter,
             branching_cone->get_position(), direction + new_angle, true);
-        
+
         if (sibling != nullptr)
         {
             update_parent_nodes(new_node, branching_cone);
@@ -1096,9 +1096,19 @@ void Neurite::add_node(NodePtr node)
 
 bool Neurite::walk_tree(NodeProp& np) const
 {
+    static bool reset   = false;
     static auto gcrange = gc_range();
     static auto gc_it   = gcrange.begin();
     static auto n_it    = nodes_.cbegin();
+
+    if (reset)
+    {
+        gcrange = gc_range();
+        gc_it   = gc_range().begin();
+        n_it    = nodes_.cbegin();
+
+        reset = false;
+    }
 
     stype nid, pid;
     double diam, dtp;
@@ -1162,8 +1172,8 @@ bool Neurite::walk_tree(NodeProp& np) const
         return true;
     }
 
-    gc_it      = gc_range().begin();
-    n_it       = nodes_.cbegin();
+    // reset iterators
+    reset = true;
 
     return false;
 }

@@ -446,16 +446,18 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
+                cone.second->get_branch_size() > 2 and
+                cone.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                total_length += cone.second->get_branch()->get_length();
+                total_length += cone.second->get_branch_length();
             }
         }
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->get_length() > 2 * latbranch_dist_)
+            if (node.second->get_branch_size() > 2 and
+                node.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                total_length += node.second->get_branch()->get_length();
+                total_length += node.second->get_branch_length();
             }
         }
         //###################################################################
@@ -471,9 +473,10 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
+                cone.second->get_branch_size() > 2 and
+                cone.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                current_length += cone.second->get_branch()->get_length();
+                current_length += cone.second->get_branch_length();
 
                 if (current_length >= random_length)
                 {
@@ -489,11 +492,10 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             for (auto &node : neurite_->nodes_)
             {
-                if (not node.second->is_dead() and
-                    node.second->get_branch()->get_length() >
-                        2 * latbranch_dist_)
+                if (node.second->get_branch_size() > 2 and
+                    node.second->get_branch_length() > 2 * latbranch_dist_)
                 {
-                    current_length += node.second->get_branch()->get_length();
+                    current_length += node.second->get_branch_length();
 
                     if (current_length >= random_length)
                     {
@@ -512,9 +514,10 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             // choose the point uniformly on the branch, except for first 2 and
             // last 2 points.
-            branching_point = uniform_(*(rnd_engine).get()) *
-                                  (branching_node->get_branch()->size() - 4) +
-                              2;
+            branching_point =
+                uniform_(*(rnd_engine).get()) *
+                    (branching_node->get_branch_length() - latbranch_dist_) +
+                latbranch_dist_;
 
             // actuate lateral branching on the elected node through the
             // NEURITE.
@@ -597,17 +600,19 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
+                cone.second->get_branch_size() > 2 and
+                cone.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                total_length += cone.second->get_branch()->get_length();
+                total_length += cone.second->get_branch_length();
             }
         }
 
         for (auto &node : neurite_->nodes_)
         {
-            if (node.second->get_branch()->get_length() > 2 * latbranch_dist_)
+            if (node.second->get_branch_size() > 2 and
+                node.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                total_length += node.second->get_branch()->get_length();
+                total_length += node.second->get_branch_length();
             }
         }
 
@@ -621,9 +626,10 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         for (auto &cone : neurite_->gc_range())
         {
             if (not cone.second->is_dead() and
-                cone.second->get_branch()->get_length() > 2 * latbranch_dist_)
+                cone.second->get_branch_size() > 2 and
+                cone.second->get_branch_length() > 2 * latbranch_dist_)
             {
-                current_length += cone.second->get_branch()->get_length();
+                current_length += cone.second->get_branch_length();
 
                 if (current_length >= random_length)
                 {
@@ -639,11 +645,10 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         {
             for (auto &node : neurite_->nodes_)
             {
-                if (not node.second->is_dead() and
-                    node.second->get_branch()->get_length() >
-                        2 * latbranch_dist_)
+                if (node.second->get_branch_size() > 2 and
+                    node.second->get_branch_length() > 2 * latbranch_dist_)
                 {
-                    current_length += node.second->get_branch()->get_length();
+                    current_length += node.second->get_branch_length();
 
                     if (current_length >= random_length)
                     {
@@ -666,8 +671,7 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             // power-law distributed variate.
             double y = uniform_(*(rnd_engine).get());
             int x_0  = latbranch_dist_;
-            int x_1 =
-                branching_node->get_branch()->get_length() - latbranch_dist_;
+            int x_1  = branching_node->get_branch_length() - latbranch_dist_;
             // TODO check if we should not make n user-defined.
             int n    = 2;
             double a = (powf(x_1, (n + 1)) - powf(x_0, (n + 1))) * y +

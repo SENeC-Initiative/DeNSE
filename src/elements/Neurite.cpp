@@ -149,11 +149,11 @@ void Neurite::init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
                               const std::string &name, double soma_radius,
                               double neurite_diameter)
 {
-    auto firstNode = std::make_shared<Node>(
-        soma, 0., pos, neurite_diameter, shared_from_this());
+    auto firstNode = std::make_shared<Node>(soma, 0., pos, neurite_diameter,
+                                            shared_from_this());
 
-    firstNode->centrifugal_order_  = 0;
-    firstNode->dist_to_soma_       = soma_radius;
+    firstNode->centrifugal_order_ = 0;
+    firstNode->dist_to_soma_      = soma_radius;
 
     add_node(firstNode);
 
@@ -264,23 +264,32 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
             b_length = gc.second->get_branch()->get_length();
             total_b_length += b_length;
 
-            diameter -= taper_rate_*gc.second->get_module();
+            diameter -= taper_rate_ * gc.second->get_module();
 
             // negative diameter can be reach at the end of the growth if step
             // was too long
             if (diameter < 0)
             {
-                BranchPtr bp = gc.second->get_branch();
-                double old_length = bp->get_segment_length_at(bp->size() - 2) - bp->initial_distance_to_soma();
-                printf("grew %f, to length %f, new diam %f; Delta diam %f - old length %f - computed old diam %f\n", gc.second->move_.module, b_length, diameter, taper_rate_*gc.second->move_.module, old_length, gc.second->get_diameter() + taper_rate_*(b_length - old_length));
-                printf("gc speed was %f (avg %f) and substep %f\n", gc.second->move_.speed, gc.second->local_avg_speed_, substep);
+                BranchPtr bp      = gc.second->get_branch();
+                double old_length = bp->get_segment_length_at(bp->size() - 2) -
+                                    bp->initial_distance_to_soma();
+                printf("grew %f, to length %f, new diam %f; Delta diam %f - "
+                       "old length %f - computed old diam %f\n",
+                       gc.second->move_.module, b_length, diameter,
+                       taper_rate_ * gc.second->move_.module, old_length,
+                       gc.second->get_diameter() +
+                           taper_rate_ * (b_length - old_length));
+                printf("gc speed was %f (avg %f) and substep %f\n",
+                       gc.second->move_.speed, gc.second->local_avg_speed_,
+                       substep);
 
                 // compute where min_diameter was reached and retract up to
                 // that position
                 double retract = (min_diameter_ - diameter) / taper_rate_;
-                printf("%s: length %f, retract %f\n", get_name().c_str(), b_length, retract);
+                printf("%s: length %f, retract %f\n", get_name().c_str(),
+                       b_length, retract);
 
-                int omp_id     = kernel().parallelism_manager.get_thread_local_id();
+                int omp_id = kernel().parallelism_manager.get_thread_local_id();
                 gc.second->retraction(retract, gc.first, omp_id);
                 diameter = min_diameter_;
             }
@@ -447,9 +456,9 @@ double Neurite::get_available_cr() const
  */
 void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
 {
-    auto child             = parent->children_[living_child_id];
-    stype grand_parent_ID  = parent->get_parent().lock()->get_node_id();
-    NodePtr grand_parent   = nodes_[grand_parent_ID];
+    auto child            = parent->children_[living_child_id];
+    stype grand_parent_ID = parent->get_parent().lock()->get_node_id();
+    NodePtr grand_parent  = nodes_[grand_parent_ID];
 
     // reconcile the branch (remove parent length from fixed length)
     fixed_arbor_len_ -= parent->get_branch()->get_length();
@@ -461,8 +470,7 @@ void Neurite::delete_parent_node(NodePtr parent, int living_child_id)
         if (grand_parent->get_child(i)->get_node_id() == parent->get_node_id())
         {
             grand_parent->children_[i] = child;
-            child->update_branch_and_parent(grand_parent,
-                                            parent->branch_);
+            child->update_branch_and_parent(grand_parent, parent->branch_);
         }
     }
 
@@ -484,7 +492,7 @@ void Neurite::delete_cone(stype cone_n)
     // check if not already dead (can call this function several times in a
     // single timestep)
     GCPtr dead_cone = growth_cones_[cone_n];
-    bool alive = not dead_cone->dead_;
+    bool alive      = not dead_cone->dead_;
 
     // delete only if not last growth cone (neurites cannot die)
     if (growth_cones_.size() - dead_cones_.size() > 1 and alive)
@@ -678,7 +686,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                                       num_created_nodes_, 0);
 
     // update diameter properties
-    new_diameter -= dist_to_parent*taper_rate_;
+    new_diameter -= dist_to_parent * taper_rate_;
     sibling->set_diameter(new_diameter);
 
     assert(new_diameter > 0);
@@ -764,13 +772,13 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
             distance_to_soma - branch->initial_distance_to_soma();
 
         // compute the local diameter on the branch
-        double new_diam = branching_node->get_diameter()
-                          + taper_rate_*distance_from_branching;
+        double new_diam = branching_node->get_diameter() +
+                          taper_rate_ * distance_from_branching;
 
         // create the new node at position xy
-        new_node = std::make_shared<Node>(
-            branching_node->parent_, distance_to_parent, xy, new_diam,
-            shared_from_this());
+        new_node =
+            std::make_shared<Node>(branching_node->parent_, distance_to_parent,
+                                   xy, new_diam, shared_from_this());
 
         // create the new growth cone just outside the local diameter
         // to do so, first get the polygons around the branching point
@@ -838,8 +846,8 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
             update_parent_nodes(new_node, branching_node);
 
             // update the existing node
-            new_node->branch_ = std::make_shared<Branch>(
-                *(branching_node->branch_.get()));
+            new_node->branch_ =
+                std::make_shared<Branch>(*(branching_node->branch_.get()));
 
             branching_node->branch_ =
                 new_node->branch_->resize_head(branch_point);
@@ -890,10 +898,8 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 
         // create new node as branching point
         new_node = std::make_shared<Node>(
-            branching_cone->parent_,
-            branching_cone->get_branch_length(),
-            branching_cone->get_position(),
-            branching_cone->get_diameter(),
+            branching_cone->parent_, branching_cone->get_branch_length(),
+            branching_cone->get_position(), branching_cone->get_diameter(),
             shared_from_this());
 
         // create the sibling
@@ -914,8 +920,8 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
             assert(old_diameter > 0);
 
             // copy the existing node branch to new_node
-            new_node->branch_ = std::make_shared<Branch>(
-                *(branching_cone->branch_.get()));
+            new_node->branch_ =
+                std::make_shared<Branch>(*(branching_cone->branch_.get()));
 
             // make a new empty branch for the existing branching_cone
             branching_cone->branch_ = std::make_shared<Branch>(
@@ -1104,7 +1110,8 @@ bool Neurite::walk_tree(NodeProp &np) const
 
         if (n_it->first != 0)
         {
-            diam += 0.5 * taper_rate_ * n_it->second->get_branch()->get_length();
+            diam +=
+                0.5 * taper_rate_ * n_it->second->get_branch()->get_length();
             // get parent id
             pid = n_it->second->get_parent().lock()->get_node_id();
         }
@@ -1151,7 +1158,7 @@ bool Neurite::walk_tree(NodeProp &np) const
         assert(dtp == gc_it->second->get_distance_parent());
 
         // get diameter (average between root and tip)
-        diam = gc_it->second->get_diameter() + 0.5*dtp*taper_rate_;
+        diam = gc_it->second->get_diameter() + 0.5 * dtp * taper_rate_;
 
         // get position
         BPoint p = gc_it->second->get_position();

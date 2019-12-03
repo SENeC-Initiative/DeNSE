@@ -144,8 +144,8 @@ class Node : public TopologicalNode
     std::vector<TNodePtr> children_;
 
   public:
-    Node(BaseWeakNodePtr parent, double distanceToParent,
-         const BPoint &pos, double diameter, NeuritePtr neurite);
+    Node(BaseWeakNodePtr parent, double distanceToParent, const BPoint &pos,
+         double diameter, NeuritePtr neurite);
 
     virtual void set_position(const BPoint &) override final;
 

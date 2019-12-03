@@ -195,14 +195,14 @@ For more complex shapes, pre-constructed images in SVG or DXF formats using the
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 28-53
+    :lines: 33-58
 
 Once the environment is created, we can seed randomly the neurons inside it.
 
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 56-57
+    :lines: 61-62
 
 .. warning::
     Setting the soma radius correctly is critical, otherwise the soma might "protrude" out of
@@ -213,14 +213,14 @@ We can then create the neurons:
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 59-85
+    :lines: 63-90
 
 And simulate:
 
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 95-99
+    :lines: 100-104
 
 Which leads to the following structure:
 

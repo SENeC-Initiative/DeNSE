@@ -67,7 +67,8 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
   public:
     ResourceBasedExtensionModel(GCPtr gc, NeuritePtr neurite);
     ResourceBasedExtensionModel(const ResourceBasedExtensionModel &) = delete;
-    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite);
+    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy,
+                                GCPtr gc, NeuritePtr neurite);
 
     void initialize_CR();
     void prepare_for_split() override;
@@ -90,7 +91,7 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
     // status
     void set_status(const statusMap &) override;
     void get_status(statusMap &) const override;
-    virtual double get_state(const std::string& observable) const override;
+    virtual double get_state(const std::string &observable) const override;
 };
 
 } // namespace growth

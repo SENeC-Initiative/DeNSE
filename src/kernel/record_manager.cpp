@@ -55,7 +55,7 @@ RecordManager::RecordManager()
 void RecordManager::initialize()
 {
     stype num_omp = kernel().parallelism_manager.get_num_local_threads();
-    num_threads_   = num_omp;
+    num_threads_  = num_omp;
 
     for (stype i = 0; i < num_omp; i++)
     {
@@ -348,7 +348,7 @@ void RecordManager::new_branching_event(const Event &ev)
     if (!d_recorders_.empty())
     {
         stype neuron_gid = std::get<edata::NEURON>(ev);
-        auto it           = neuron_to_d_recorder_.find(neuron_gid);
+        auto it          = neuron_to_d_recorder_.find(neuron_gid);
 
         if (it != neuron_to_d_recorder_.end())
         {
@@ -362,7 +362,7 @@ void RecordManager::new_branching_event(const Event &ev)
     if (!c_recorders_.empty())
     {
         stype neuron_gid = std::get<edata::NEURON>(ev);
-        auto it           = neuron_to_c_recorder_.find(neuron_gid);
+        auto it          = neuron_to_c_recorder_.find(neuron_gid);
 
         if (it != neuron_to_c_recorder_.end())
         {
@@ -404,9 +404,9 @@ void RecordManager::neurons_deleted(const std::vector<stype> &gids)
 }
 
 
-void RecordManager::new_neurite(stype neuron, const std::string& neurite)
+void RecordManager::new_neurite(stype neuron, const std::string &neurite)
 {
-   auto v_crec = neuron_to_c_recorder_.find(neuron);
+    auto v_crec = neuron_to_c_recorder_.find(neuron);
 
     if (v_crec != neuron_to_c_recorder_.end())
     {
@@ -428,14 +428,14 @@ void RecordManager::new_neurite(stype neuron, const std::string& neurite)
 }
 
 
-void RecordManager::gc_died(stype neuron, const std::string& neurite,
+void RecordManager::gc_died(stype neuron, const std::string &neurite,
                             stype gc_id)
 {
     // this information is only relevant for continuous recorders to know what
     // is the last time for the gc records.
     // for discrete recorders there is no issue since no new event will arrive.
     auto v_crec = neuron_to_c_recorder_.find(neuron);
-    
+
     if (v_crec != neuron_to_c_recorder_.end())
     {
         for (stype rec_id : v_crec->second)

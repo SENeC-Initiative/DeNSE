@@ -82,6 +82,7 @@ nL = ureg.nL
 cps = ureg.count / ureg.second
 cpm = ureg.count / ureg.minute
 cph = ureg.count / ureg.hour
+cpd = ureg.count / ureg.day
 
 
 # concentration

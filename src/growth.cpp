@@ -19,8 +19,8 @@
  * along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "module.hpp"
 #include "config.hpp"
+#include "module.hpp"
 #include <iostream>
 #include <string>
 
@@ -51,7 +51,8 @@ int main(int argc, char **argv)
     mainMap.insert({"S", growth::Property(2., "")});
     mainMap.insert({"T", growth::Property(0.1, "minute")});
     mainMap.insert({"num_neurites", growth::Property(2, "")});
-    mainMap.insert({"speed_growth_cone", growth::Property(20., "micrometer / minute")});
+    mainMap.insert(
+        {"speed_growth_cone", growth::Property(20., "micrometer / minute")});
 
     vector<growth::statusMap> emptyMap = vector<growth::statusMap>(num_neurons);
     vector<growth::statusMap> mainVec =

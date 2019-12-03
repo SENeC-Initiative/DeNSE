@@ -25,6 +25,7 @@
 #include <cmath>
 
 #include "Branch.hpp"
+#include "Node.hpp"
 
 namespace growth
 {
@@ -57,13 +58,63 @@ void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
     /*angle = get_angle(rnd_engine, direction);*/
 }
 
+
+/**
+ * Get point closest to a given distance along the branch
+ */
+stype get_closest_point(TNodePtr branching_node, double branching_dist)
+{
+    BranchPtr branch = branching_node->get_branch();
+
+    // remove distance to soma
+    double initial_distance = branch->initial_distance_to_soma();
+
+    stype left  = 0;
+    stype right = branching_node->get_branch_size() - 1;
+    stype mid   = 0.5 * right;
+
+    PointArray ppl, ppr, ppm;
+    double distl, distr, distm;
+
+    while (left != right - 1)
+    {
+        ppm   = branch->at(mid);
+        distm = ppm[2] - initial_distance - branching_dist;
+
+        if (distm < 0)
+        {
+            left = mid;
+            mid  = 0.5 * (left + right);
+        }
+        else
+        {
+            right = mid;
+            mid   = 0.5 * (left + right);
+        }
+    }
+
+    ppl = branch->at(left);
+    ppr = branch->at(right);
+
+    distl = std::abs(ppl[2] - initial_distance - branching_dist);
+    distr = std::abs(ppr[2] - initial_distance - branching_dist);
+
+    if (distl < distr)
+    {
+        return left;
+    }
+
+    return right;
+}
+
+
 void locate_from_idx(BPoint &xy, double &angle, double &distance,
                      const BranchPtr branch, stype id_x)
 {
     xy       = branch->xy_at(id_x);
     distance = branch->at(id_x)[2];
 
-    BPoint xy_1;      // second point to get the local direction of the branch
+    BPoint xy_1;     // second point to get the local direction of the branch
     double sign = 0; // correct the direction if xy_1 before xy
 
     // all branches must always be of size at least 2 (branching events occur

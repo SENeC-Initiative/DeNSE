@@ -43,7 +43,6 @@ num_omp       = 4
 resolutions   = (1., 10., 20., 30.)
 
 gc_model      = "run-and-tumble"
-# ~ gc_model      = "simple-random-walk"
 sensing_angle = 70.*deg
 
 cmap    = None
@@ -53,7 +52,7 @@ if do_plot:
     import matplotlib.pyplot as plt
     cmap = plt.get_cmap('plasma')
 
-colors        = np.linspace(0.2, 0.8, len(resolutions))
+colors = np.linspace(0.2, 0.8, len(resolutions))
 
 
 
@@ -102,9 +101,10 @@ def correlation(points, distances):
         min_length = np.min(rho)
 
         if np.max(distances) > tot_length:
-            raise RuntimeError("Max distance greater than total neurite "
-                               "length: {} vs {}.".format(np.max(distances),
-                               tot_length))
+            raise RuntimeError(
+                "Max distance greater than total neurite "
+                "length: {} vs {}.".format(np.max(distances),
+                                           tot_length))
 
         x0    = vectors[:, 0]
         norm0 = np.linalg.norm(x0)
@@ -125,7 +125,6 @@ Simulations with DeNSE
 '''
 
 show_neurons = False
-# ~ show_neurons = True
 
 gc_pos     = []
 data_times = {}
@@ -142,78 +141,92 @@ sensing_angles = np.linspace(0.1, 3., 10)
 
 speed     = 0.2
 l_p       = 500.
-# ~ dist_max  = speed*(simtime-100)
 dist_max  = speed*simtime
 dist_step = 50.
 distances = np.arange(dist_step, dist_max, dist_step)
 
 
-for k, resol in enumerate(resolutions):
-    np.random.seed(1)
-    ds.reset_kernel()
-    ds.set_kernel_status({
-        "resolution": resol * minute,
-        "num_local_threads": num_omp,
-        "seeds": [2*i for i in range(num_omp)],
-        "environment_required": False,
-        "adaptive_timestep": -1.,
-        "interactions": False,
-    })
+def test_persistence():
+    persistences = []
 
-    params = {
-        "growth_cone_model": gc_model,
-        "speed_growth_cone" : speed * um / minute,
-        "filopodia_wall_affinity": 2.5,
-        "filopodia_min_number": 100,
-        "proba_down_move": 0.05,
-        "scale_up_move": 5. * um,
-        "persistence_length": l_p * um,
-        "sensing_angle" : sensing_angle,
-        "position": [(0., 0.) for _ in range(num_neurons)] * um,
-        "taper_rate": 0.,
-    }
+    for k, resol in enumerate(resolutions):
+        np.random.seed(1)
+        ds.reset_kernel()
+        ds.set_kernel_status({
+            "resolution": resol * minute,
+            "num_local_threads": num_omp,
+            "seeds": [2*i for i in range(num_omp)],
+            "environment_required": False,
+            "adaptive_timestep": -1.,
+            "interactions": False,
+        })
 
-    params["max_sensing_angle"] = 1.6 * rad
-    # ~ params["max_sensing_angle"] = sensing_angle*rad
+        params = {
+            "growth_cone_model": gc_model,
+            "speed_growth_cone" : speed * um / minute,
+            "filopodia_wall_affinity": 2.5,
+            "filopodia_min_number": 100,
+            "proba_down_move": 0.05,
+            "scale_up_move": 5. * um,
+            "persistence_length": l_p * um,
+            "sensing_angle" : sensing_angle,
+            "position": [(0., 0.) for _ in range(num_neurons)] * um,
+            "taper_rate": 0.,
+        }
 
-    gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
+        gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
 
-    ds.simulate(simtime*minute)
-    # ~ print(ds.morphology.NeuronStructure())
-    
-    ''' Analyze the resulting neurons '''
+        rec = ds.create_recorders(gids, "length")
 
-    population = ds.elements.Population.from_gids(gids)
+        ds.simulate(simtime*minute)
+        
+        ''' Analyze the resulting neurons '''
 
-    axons     = [neuron.axon.xy.transpose() for neuron in population]
-    # ~ print(axons)
-    sequence  = []
-    for i, points in enumerate(axons):
-        sequence.append(correlation(points, distances))
+        population = ds.elements.Population.from_gids(gids)
 
-    avg_corr = np.average(sequence, axis=0)
-    lp, _    = curve_fit(exp_decay, distances, avg_corr, p0=l_p)
+        axons     = [neuron.axon.xy.transpose() for neuron in population]
+
+        sequence  = []
+        for i, points in enumerate(axons):
+            sequence.append(correlation(points, distances))
+
+        avg_corr = np.average(sequence, axis=0)
+        lp, _    = curve_fit(exp_decay, distances, avg_corr, p0=l_p)
+
+        persistences.append(lp)
+
+        if do_plot:
+            ax2.scatter(resol, lp[0])
+
+            ax.plot(distances, avg_corr, color=cmap(colors[k]), alpha=1,
+                    label="resol: {}".format(resol))
+            ax.plot(distances, exp_decay(distances, lp[0]))
+
+        if show_neurons:
+            ds.plot.plot_neurons(show=False, title=str(resol))
 
     if do_plot:
-        ax2.scatter(resol, lp[0])
+        ax.plot(distances, np.exp(-distances/l_p), ls="--", c="k")
 
-        ax.plot(distances, avg_corr, color=cmap(colors[k]), alpha=1,
-                label="resol: {}".format(resol))
-        ax.plot(distances, exp_decay(distances, lp[0]))
+        ax.legend(loc=1, fancybox=True, frameon=True)
 
-    if show_neurons:
-        ds.plot_neurons(show=True, title=str(resol))
+        ax.set_ylabel("Correlation")
+        ax.set_ylabel(r"Distance ($\mu$m)")
+
+        ax2.set_ylabel(r"Persistence length ($\mu$m)")
+        ax2.set_xlabel("Resolution (minutes)")
+
+        ax2.axhline(l_p)
+
+        fig.patch.set_alpha(0.)
+        fig2.patch.set_alpha(0.)
+
+        # just check that no ridiculous number is encountered
+        for lp in persistences:
+            assert lp > 0. and np.abs((lp - l_p)/l_p) < 0.5
+
+        plt.show()
 
 
-'''
-Make, save and show the figure
-'''
-
-if do_plot:
-    ax.plot(distances, np.exp(-distances/l_p), ls="--", c="k")
-
-    ax.legend(loc=2, fancybox=True, frameon=True)
-    fig.patch.set_alpha(0.)
-
-    plt.show()
-
+if __name__ == "__main__":
+    test_persistence()

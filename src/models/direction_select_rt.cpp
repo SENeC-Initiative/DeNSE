@@ -30,13 +30,13 @@ namespace growth
 {
 
 RTDirectionSelector::RTDirectionSelector(GCPtr gc, NeuritePtr neurite)
-  : DirectionSelectModel(gc, neurite)
-  , persistence_length_(PERSISTENCE_LENGTH)
-  , critical_pull_(2*FILOPODIA_WALL_AFFINITY)
-  , sensing_angle_(SENSING_ANGLE)
-  , p_tumble_on_stop_(0.2)
-  , tumbling_(false)
-  , num_tumbles_(0)
+    : DirectionSelectModel(gc, neurite)
+    , persistence_length_(PERSISTENCE_LENGTH)
+    , critical_pull_(2 * FILOPODIA_WALL_AFFINITY)
+    , sensing_angle_(SENSING_ANGLE)
+    , p_tumble_on_stop_(0.2)
+    , tumbling_(false)
+    , num_tumbles_(0)
 {
     observables_.push_back("num_tumbles");
 
@@ -46,15 +46,15 @@ RTDirectionSelector::RTDirectionSelector(GCPtr gc, NeuritePtr neurite)
 }
 
 
-RTDirectionSelector::RTDirectionSelector(const RTDirectionSelector& copy,
+RTDirectionSelector::RTDirectionSelector(const RTDirectionSelector &copy,
                                          GCPtr gc, NeuritePtr neurite)
-  : DirectionSelectModel(copy, gc, neurite)
-  , persistence_length_(copy.persistence_length_)
-  , critical_pull_(copy.critical_pull_)
-  , sensing_angle_(copy.sensing_angle_)
-  , p_tumble_on_stop_(copy.p_tumble_on_stop_)
-  , tumbling_(false)
-  , num_tumbles_(0)
+    : DirectionSelectModel(copy, gc, neurite)
+    , persistence_length_(copy.persistence_length_)
+    , critical_pull_(copy.critical_pull_)
+    , sensing_angle_(copy.sensing_angle_)
+    , p_tumble_on_stop_(copy.p_tumble_on_stop_)
+    , tumbling_(false)
+    , num_tumbles_(0)
 {
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
 
@@ -78,10 +78,10 @@ void RTDirectionSelector::initialize_rt()
 
 
 void RTDirectionSelector::select_direction(
-  const std::vector<double> &directions_weights, const Filopodia &filo,
-  mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
-  double &substep, double &step_length, double &new_angle, bool &stopped,
-  stype &default_direction)
+    const std::vector<double> &directions_weights, const Filopodia &filo,
+    mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
+    double &substep, double &step_length, double &new_angle, bool &stopped,
+    stype &default_direction)
 {
     new_angle = old_angle;
 
@@ -94,43 +94,44 @@ void RTDirectionSelector::select_direction(
     {
         // increased probability of tumbling
         // get max pul direction
-        auto it_max = std::max_element(
-            directions_weights.begin(), directions_weights.end());
+        auto it_max = std::max_element(directions_weights.begin(),
+                                       directions_weights.end());
         // get its index and the associated angle
-        stype n_max     = std::distance(directions_weights.begin(), it_max);
+        stype n_max      = std::distance(directions_weights.begin(), it_max);
         double max_angle = filo.directions[n_max];
 
         // compute influence
-        double influence = directions_weights[n_max]*abs(sin(new_angle - max_angle)) / critical_pull_;
+        double influence = directions_weights[n_max] *
+                           abs(sin(new_angle - max_angle)) / critical_pull_;
 
         // test if enough to trigger tumble
         double x = uniform_(*(rnd_engine.get()));
 
-        if (x < influence*substep)
+        if (x < influence * substep)
         {
-            tumbling_    = true;
+            tumbling_ = true;
         }
     }
 
     // if not currently tumbling, check whether we're running into a wall
     if (not tumbling_)
     {
-        stype middle = 0.5*directions_weights.size();
+        stype middle  = 0.5 * directions_weights.size();
         double weight = directions_weights[middle];
 
         bool wall = std::isnan(weight) or weight == 0.;
 
         // if even number of filopodia, check also the other one
-        if (not (directions_weights.size() % 2))
+        if (not(directions_weights.size() % 2))
         {
-            weight = directions_weights[middle+1];
-            wall  *= (std::isnan(weight) or weight == 0.);
+            weight = directions_weights[middle + 1];
+            wall *= (std::isnan(weight) or weight == 0.);
         }
 
         if (wall)
         {
             double x = uniform_(*(rnd_engine.get()));
-            if (x < p_tumble_on_stop_*substep)
+            if (x < p_tumble_on_stop_ * substep)
             {
                 tumbling_ = true;
             }
@@ -145,7 +146,7 @@ void RTDirectionSelector::select_direction(
         num_tumbles_++;
         // compute next tumble and reset tumbling
         next_tumble_ = exponential_rt_(*(rnd_engine).get());
-        tumbling_ = false;
+        tumbling_    = false;
 
         // weighted random choice for the new angle
         //~ new_angle += sensing_angle_*(uniform_(*(rnd_engine.get())) - 0.5);
@@ -171,7 +172,7 @@ void RTDirectionSelector::select_direction(
         // default angle is closest to new_angle
         double dist, min_dist(std::numeric_limits<double>::max());
 
-        for (stype n=0; n < directions_weights.size(); n++)
+        for (stype n = 0; n < directions_weights.size(); n++)
         {
             if (not std::isnan(directions_weights[n]))
             {
@@ -189,7 +190,7 @@ void RTDirectionSelector::select_direction(
         // keep straight: default angle is closest to zero
         double dist, min_dist(std::numeric_limits<double>::max());
 
-        for (stype n=0; n < directions_weights.size(); n++)
+        for (stype n = 0; n < directions_weights.size(); n++)
         {
             if (not std::isnan(directions_weights[n]))
             {
@@ -225,7 +226,7 @@ void RTDirectionSelector::select_direction(
 }
 
 
-double RTDirectionSelector::get_state(const std::string& observable) const
+double RTDirectionSelector::get_state(const std::string &observable) const
 {
     double value = 0.;
 
@@ -252,8 +253,8 @@ void RTDirectionSelector::set_status(const statusMap &status)
     {
         if (pl < 0)
         {
-            throw std::invalid_argument(
-                "`" + names::persistence_length + "` must be positive.");
+            throw std::invalid_argument("`" + names::persistence_length +
+                                        "` must be positive.");
         }
 
         persistence_length_ = pl;
@@ -265,8 +266,8 @@ void RTDirectionSelector::set_status(const statusMap &status)
     {
         if (cp < 0)
         {
-            throw std::invalid_argument(
-                "`" + names::critical_pull + "` must be positive.");
+            throw std::invalid_argument("`" + names::critical_pull +
+                                        "` must be positive.");
         }
 
         critical_pull_ = cp;
@@ -278,7 +279,8 @@ void RTDirectionSelector::set_status(const statusMap &status)
 
 void RTDirectionSelector::get_status(statusMap &status) const
 {
-    set_param(status, names::persistence_length, persistence_length_, "micrometer");
+    set_param(status, names::persistence_length, persistence_length_,
+              "micrometer");
     set_param(status, names::critical_pull, critical_pull_, "");
 }
 

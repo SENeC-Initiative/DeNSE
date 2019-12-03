@@ -79,7 +79,7 @@ class Branch
      *
      * @param id_x the length of the new branch container
      */
-    void restypeail(stype new_size);
+    void resize_tail(stype new_size);
 
     /**
      * @brief Create a new branch from tail of this Branch: tail invariate.
@@ -113,9 +113,9 @@ class Branch
     double get_segment_length_at(stype idx) const;
     double get_last_segment_length() const;
     double get_length() const;
-    const std::pair<BPoint, BPoint>& get_last_points() const;
-    const std::vector<double>& get_xlist() const;
-    const std::vector<double>& get_ylist() const;
+    const std::pair<BPoint, BPoint> &get_last_points() const;
+    const std::vector<double> &get_xlist() const;
+    const std::vector<double> &get_ylist() const;
     PointArray get_last_point() const;
     const BPolygonPtr get_last_segment() const;
     const BPolygonPtr get_segment_at(stype idx) const;

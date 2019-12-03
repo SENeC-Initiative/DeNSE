@@ -49,7 +49,7 @@ class Area
     std::string get_name() const;
     void
     get_properties(std::unordered_map<std::string, double> &properties) const;
-    const BMultiLineString& get_boundary() const;
+    const BMultiLineString &get_boundary() const;
 
   private:
     BMultiPolygonPtr shape_;

@@ -30,20 +30,20 @@ namespace growth
 {
 
 NWADirectionSelector::NWADirectionSelector(GCPtr gc, NeuritePtr neurite)
-  : DirectionSelectModel(gc, neurite)
-  , persistence_length_(PERSISTENCE_LENGTH)
+    : DirectionSelectModel(gc, neurite)
+    , persistence_length_(PERSISTENCE_LENGTH)
 {
-    noise_amplitude_ = sqrt(2*SPEED_GROWTH_CONE / persistence_length_);
+    noise_amplitude_ = sqrt(2 * SPEED_GROWTH_CONE / persistence_length_);
     normal_          = std::normal_distribution<double>(0, 1);
     uniform_         = std::uniform_real_distribution<double>(0., 1.);
 }
 
 
-NWADirectionSelector::NWADirectionSelector(const NWADirectionSelector& copy,
+NWADirectionSelector::NWADirectionSelector(const NWADirectionSelector &copy,
                                            GCPtr gc, NeuritePtr neurite)
-  : DirectionSelectModel(copy, gc, neurite)
-  , persistence_length_(copy.persistence_length_)
-  , noise_amplitude_(copy.noise_amplitude_)
+    : DirectionSelectModel(copy, gc, neurite)
+    , persistence_length_(copy.persistence_length_)
+    , noise_amplitude_(copy.noise_amplitude_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -51,24 +51,24 @@ NWADirectionSelector::NWADirectionSelector(const NWADirectionSelector& copy,
 
 
 void NWADirectionSelector::select_direction(
-  const std::vector<double> &directions_weights, const Filopodia &filo,
-  mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
-  double &substep, double &step_length, double &new_angle, bool &stopped,
-  stype &default_direction)
+    const std::vector<double> &directions_weights, const Filopodia &filo,
+    mtPtr rnd_engine, double total_proba, bool interacting, double old_angle,
+    double &substep, double &step_length, double &new_angle, bool &stopped,
+    stype &default_direction)
 {
     double weight, norm(0.);
 
     new_angle = 0.;
 
     // get weighted values
-    for (stype n=0; n < directions_weights.size(); n++)
+    for (stype n = 0; n < directions_weights.size(); n++)
     {
         weight = directions_weights[n];
 
         if (not std::isnan(weight))
         {
-            new_angle += weight*filo.directions[n];
-            norm      += weight;
+            new_angle += weight * filo.directions[n];
+            norm += weight;
         }
     }
 
@@ -78,7 +78,7 @@ void NWADirectionSelector::select_direction(
     // default angle is closest to new_angle
     double dist, min_dist(std::numeric_limits<double>::max());
 
-    for (stype n=0; n < directions_weights.size(); n++)
+    for (stype n = 0; n < directions_weights.size(); n++)
     {
         if (not std::isnan(directions_weights[n]))
         {
@@ -92,8 +92,8 @@ void NWADirectionSelector::select_direction(
     }
 
     // add previous angle plus random rotation
-    new_angle += old_angle +
-                 noise_amplitude_*sqrt(substep)*normal_(*(rnd_engine.get()));
+    new_angle += old_angle + noise_amplitude_ * sqrt(substep) *
+                                 normal_(*(rnd_engine.get()));
 }
 
 
@@ -112,8 +112,8 @@ void NWADirectionSelector::set_status(const statusMap &status)
     {
         if (pl < 0)
         {
-            throw std::invalid_argument(
-                "`" + names::persistence_length + "` must be positive.");
+            throw std::invalid_argument("`" + names::persistence_length +
+                                        "` must be positive.");
         }
 
         persistence_length_ = pl;
@@ -123,22 +123,23 @@ void NWADirectionSelector::set_status(const statusMap &status)
     {
         if (na < 0)
         {
-            throw std::invalid_argument(
-                "`" + names::noise_amplitude + "` must be positive.");
+            throw std::invalid_argument("`" + names::noise_amplitude +
+                                        "` must be positive.");
         }
 
         noise_amplitude_ = na;
     }
     else
     {
-        noise_amplitude_ = sqrt(2*gc_speed / persistence_length_);
+        noise_amplitude_ = sqrt(2 * gc_speed / persistence_length_);
     }
 }
 
 
 void NWADirectionSelector::get_status(statusMap &status) const
 {
-    set_param(status, names::persistence_length, persistence_length_, "micrometer");
+    set_param(status, names::persistence_length, persistence_length_,
+              "micrometer");
     set_param(status, names::noise_amplitude, noise_amplitude_, "radian");
 }
 

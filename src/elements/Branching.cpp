@@ -609,7 +609,7 @@ bool Branching::flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
 
         for (auto &node : neurite_->nodes_)
         {
-            if (cone.second->get_branch_size() > 2 and
+            if (node.second->get_branch_size() > 2 and
                 node.second->get_branch_length() > 2 * latbranch_dist_)
             {
                 total_length += node.second->get_branch_length();

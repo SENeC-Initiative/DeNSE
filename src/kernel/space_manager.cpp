@@ -1128,11 +1128,6 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
         // answer: move to compute_accessibility! (noob)
     }
 
-#ifndef NDEBUG
-    if (check)
-        ;
-#endif
-
     return interacting;
 }
 

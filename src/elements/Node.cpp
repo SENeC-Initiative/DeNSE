@@ -129,9 +129,6 @@ void TopologicalNode::topological_advance()
 }
 
 
-void TopologicalNode::topological_advance() { topology_.centrifugal_order++; }
-
-
 /**
  * @brief Overwrite the first element of the owned branch
  * This function update the dist_to_parent of the TNode and
@@ -202,20 +199,29 @@ bool TopologicalNode::support_AW() const { return false; }
 //##########################################################
 //                   Node functions
 //##########################################################
+
 /**
-This parameters
-Growth cone constructor:
-\param parent_ is the parent node in the dendritic tree.
-\param distance_to_parent is the distance in micrometers from the parent node.
-\param position is the real space point of the node
-\param BranchParentID is the relative name respect to the parent,
-necessary for build the Id
-*/
+ * Creating a new node:
+ * \param parent is the parent node in the dendritic tree.
+ * \param distance_to_parent is the distance in micrometers from the parent node.
+ * \param position is the real space point of the node
+ * \param BranchParentID is the relative name respect to the parent,
+ * necessary for build the Id
+ */
 Node::Node(BaseWeakNodePtr parent, double distance_to_parent,
            const BPoint &pos, double diameter, NeuritePtr neurite)
   : TopologicalNode(parent, distance_to_parent, pos, diameter, neurite)
 {
     has_child_ = true;
+}
+
+
+void Node::set_position(const BPoint &pos)
+{
+    position_ = pos;
+
+    dist_to_parent_ = branch_->get_length();
+    dist_to_soma_   = branch_->final_distance_to_soma();
 }
 
 

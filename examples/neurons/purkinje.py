@@ -101,8 +101,7 @@ if __name__ == '__main__':
     rec = ds.create_recorders(neuron, "num_growth_cones", levels="neuron")
 
     ds.simulate(2*hour)
-    # ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"], show=False)
-    # ds.plot.plot_neurons()
+    ds.plot.plot_neurons()
 
     neuron.dendrites["dendrite_1"].set_properties({
         "B": 6.*cpm, "T": 5.*hour,
@@ -122,7 +121,8 @@ if __name__ == '__main__':
 
     ds.simulate(6*day)
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
-                            ignore_diameter=True, aspect_ratio=0.2, show=False)
+                            ignore_diameter=True, aspect_ratio=0.2,
+                            show_node_id=True, show=False)
     ds.plot.plot_neurons()
 
     neuron.set_properties(dendrites_params={
@@ -133,6 +133,7 @@ if __name__ == '__main__':
     })
 
     ds.simulate(20.*day)
-    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"], show=False)
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
+                            ignore_diameter=True, aspect_ratio=0.2, show=False)
     ds.plot.plot_neurons()
     ds.plot.plot_recording(rec)

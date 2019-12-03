@@ -649,15 +649,6 @@ void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
         somas[1].push_back(neuron_skel.soma_position.y());
         somas[2].push_back(neuron_skel.soma_radius);
     }
-#ifndef NDEBUG
-    printf(" %lu neurons has been imported for visualization \n"
-           " the size of neurites vector is: %lu \n"
-           " the size of axon vector is :    %lu \n"
-           " the size of soma vector is :    %lu \n"
-           " the size of growth_cones is:    %lu \n",
-           neurons_vector.size(), dendrites.first.size(), axon.first.size(),
-           somas[0].size(), growth_cones.first.size());
-#endif
 }
 
 

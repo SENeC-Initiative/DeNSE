@@ -72,12 +72,15 @@ def norm_angle_from_vectors(vectors):
 
 
 def correlation(points, distances):
-    '''
+    r'''
     Compute the correlation coefficient
 
-    $\rho = \langle \mathbf{x}_0 \cdot \mathbf{x}_n \rangle$
+    .. math::
 
-    with $\mathbf{x}_0$ and $\mathbf{x}_n$ separated by a distance $d$.
+        \rho = \langle \mathbf{x}_0 \cdot \mathbf{x}_n \rangle
+
+    with :math:`\mathbf{x}_0` and :math:`\mathbf{x}_n` separated by a distance
+    :math:`d`.
 
     Parameters:
     -------
@@ -94,11 +97,9 @@ def correlation(points, distances):
     vectors = np.diff(points[:, ~np.isnan(points[0])], axis=1)
 
     if np.shape(vectors)[0] > 0:
-        N          = len(vectors[0])
         _, rho     = norm_angle_from_vectors(vectors)
         tot_length = np.sum(rho)
         list_len   = np.cumsum(rho)
-        min_length = np.min(rho)
 
         if np.max(distances) > tot_length:
             raise RuntimeError(
@@ -179,7 +180,7 @@ def test_persistence():
         rec = ds.create_recorders(gids, "length")
 
         ds.simulate(simtime*minute)
-        
+
         ''' Analyze the resulting neurons '''
 
         population = ds.elements.Population.from_gids(gids)

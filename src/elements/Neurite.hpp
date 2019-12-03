@@ -28,8 +28,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/range/join.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/range/join.hpp>
 
 // elements includes
 #include "Branch.hpp"
@@ -45,7 +45,7 @@ namespace growth
 {
 
 typedef std::unordered_map<stype, GCPtr> gc_map;
-typedef boost::iterator_range< gc_map::const_iterator > simple_gc_range;
+typedef boost::iterator_range<gc_map::const_iterator> simple_gc_range;
 typedef boost::range::joined_range<const gc_map, const gc_map> joined_gc_range;
 
 
@@ -115,7 +115,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     bool growth_cone_split(GCPtr branching_cone, double new_length,
                            double new_angle, double old_angle,
                            double new_diameter, double old_diameter,
-                           NodePtr &new_node, GCPtr& sibling);
+                           NodePtr &new_node, GCPtr &sibling);
     GCPtr create_branching_cone(const TNodePtr branching_node, NodePtr new_node,
                                 double new_length, double new_diameter,
                                 const BPoint &xy, double new_cone_angle,
@@ -140,14 +140,14 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     // Get/set functions
     // void init_status(const statusMap &status);
-    const std::string & get_type() const;
+    const std::string &get_type() const;
     void set_status(const statusMap &);
     void get_status(statusMap &, const std::string &level) const;
-    double get_state(const std::string& observable) const;
+    double get_state(const std::string &observable) const;
     unsigned int num_growth_cones() const;
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;
-    const std::string& get_name() const;
+    const std::string &get_name() const;
     double get_taper_rate() const;
     double get_max_resol() const;
 
@@ -155,7 +155,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_cone(GCPtr);
     void add_node(NodePtr);
 
-    bool walk_tree(NodeProp& np) const;
+    bool walk_tree(NodeProp &np) const;
     simple_gc_range active_gc_range() const;
     joined_gc_range gc_range() const;
     std::unordered_map<stype, NodePtr>::const_iterator nodes_cbegin() const;
@@ -196,7 +196,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     //! declare the type of neurite (dendrite or axon)
     std::string neurite_type_;
-    double taper_rate_;     // diameter thinning with distance
+    double taper_rate_; // diameter thinning with distance
     double min_diameter_;
 
     // competition

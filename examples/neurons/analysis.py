@@ -43,9 +43,9 @@ sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)}, font_scale=1.5)
 
 
 # ~ filename = "starbust-amacrine-cell.swc"
-# ~ filename = "pyramidal-cell.swc"
+filename = "pyramidal-cell.swc"
 # ~ filename = "granule-cell.swc"
-filename = "chandelier-cell.swc"
+# ~ filename = "chandelier-cell.swc"
 
 nrn = nm.load_neuron(filename)
 

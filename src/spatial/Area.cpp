@@ -27,19 +27,19 @@ namespace growth
 
 Area::Area(BMultiPolygonPtr area, double height, const std::string &name,
            std::unordered_map<std::string, double> properties)
-  : height_(height)
-  , name_(name)
-  , properties_(properties)
-  , shape_(area)
+    : height_(height)
+    , name_(name)
+    , properties_(properties)
+    , shape_(area)
 {
-    for (const auto& polygon : *(area.get()))
+    for (const auto &polygon : *(area.get()))
     {
         boundary_.push_back(BLineString());
 
         auto &ls = boundary_.back();
         ls.insert(ls.end(), polygon.outer().begin(), polygon.outer().end());
 
-        for (const auto& inner : polygon.inners())
+        for (const auto &inner : polygon.inners())
         {
             boundary_.push_back(BLineString());
 
@@ -85,15 +85,9 @@ void Area::get_properties(
 }
 
 
-const BMultiPolygonPtr Area::get_area() const
-{
-    return shape_;
-}
+const BMultiPolygonPtr Area::get_area() const { return shape_; }
 
 
-const BMultiLineString& Area::get_boundary() const
-{
-    return boundary_;
-}
+const BMultiLineString &Area::get_boundary() const { return boundary_; }
 
 } // namespace growth

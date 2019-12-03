@@ -734,8 +734,52 @@ class Tree(dict):
         --------
         Plotting arguments are the same as :func:`dense.plot.plot_dendrogram`.
         '''
+<<<<<<< HEAD
+        try:
+            from ete3 import Tree as Ete3Tree
+            from ete3 import TreeStyle, NodeStyle
+        except ImportError:
+            raise RuntimeError("This function requires ete3 to work. "
+                               "Please install it through e.g. "
+                               "`pip install --user ete3`.")
+
+        # make the tree from the root
+        t      = Ete3Tree(dist=0, name=int(self._root))
+        ns = NodeStyle()
+        ns["hz_line_width"] = self._root.diameter
+        ns["size"]          = 0
+        t.set_style(ns)
+
+        queue  = _deque(self._root.children)
+        edict  = {int(self._root): t}
+
+        while queue:
+            node   = queue.popleft()
+            parent = edict[node.parent]
+            enode  = parent.add_child(name=int(node), dist=node.dist_to_parent)
+
+            ns = NodeStyle()
+            # ~ ns["vt_line_width"] = node.diameter
+            ns["hz_line_width"] = node.diameter
+            ns["size"]          = 0
+            enode.set_style(ns)
+
+            edict[node] = enode
+            queue.extend(node.children)
+
+        # set style
+        ts = TreeStyle()
+        ts.show_leaf_name = False
+        ts.branch_vertical_margin = self._root.diameter
+
+        # show
+        t.show(tree_style=ts)
+
+        return t, ts
+=======
         from .plot import plot_dendrogram
         plot_dendrogram(self, **kwargs)
+>>>>>>> f69bf80b4fea71906fa4cf92f89bf48f9f4585e9
 
     def _cleanup(self):
         '''

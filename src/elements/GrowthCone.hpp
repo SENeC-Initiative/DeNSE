@@ -148,10 +148,10 @@ class GrowthCone : public TopologicalNode,
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
-    virtual void
-    select_direction(const std::vector<double> &directions_weights,
-                     mtPtr rnd_engine, double &substep, double &new_angle,
-                     stype &default_direction) = 0;
+    virtual void select_direction(const std::vector<double> &directions_weights,
+                                  mtPtr rnd_engine, double &substep,
+                                  double &new_angle,
+                                  stype &default_direction) = 0;
 
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
@@ -164,17 +164,17 @@ class GrowthCone : public TopologicalNode,
 
     void set_angle(double angle);
     virtual void prepare_for_split() = 0;
-    virtual void after_split() = 0;
+    virtual void after_split()       = 0;
 
     // get functions
     double get_module() const;
-    virtual double get_state(const std::string& observable) const;
+    virtual double get_state(const std::string &observable) const;
     virtual double get_growth_cone_speed() const;
     virtual double get_diameter() const override;
     bool just_retracted() const;
     stype get_neuron_id() const;
-    const std::string& get_neurite_name() const;
-    const std::string& get_model_name() const;
+    const std::string &get_neurite_name() const;
+    const std::string &get_model_name() const;
     const BPolygonPtr get_last_segment() const;
     bool is_active() const;
     double get_self_affinity() const;

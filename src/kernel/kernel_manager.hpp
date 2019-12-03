@@ -31,11 +31,11 @@
 
 #include "models_manager.hpp"
 
+#include "models_manager.hpp"
 #include "neuron_manager.hpp"
 #include "parallelism_manager.hpp"
 #include "record_manager.hpp"
 #include "rng_manager.hpp"
-#include "models_manager.hpp"
 #include "simulation_manager.hpp"
 #include "space_manager.hpp"
 
@@ -117,13 +117,13 @@ class KernelManager
     NeuronManager neuron_manager;
 
   private:
-    statusMap config_;       //!< configuration properties
-    bool env_required_;      //!< true if a spatial environment is required
+    statusMap config_;  //!< configuration properties
+    bool env_required_; //!< true if a spatial environment is required
     bool record_enabled_;
     //!< to create neurons
-    bool initialized_;   //!< true if all sub-managers initialized
+    bool initialized_;          //!< true if all sub-managers initialized
     stype num_created_objects_; //!< number of objects created
-    stype num_objects_; //!< current number of objects
+    stype num_objects_;         //!< current number of objects
     std::string version_;
     double adaptive_timestep_; //! if > 1, step divider when interacting
 };

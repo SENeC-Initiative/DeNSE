@@ -36,6 +36,8 @@
 namespace growth
 {
 
+stype get_closest_point(TNodePtr branching_node, double branching_dist);
+
 void locate_from_distance(BPoint &xy, double &angle, const BranchPtr branch,
                           double distanceToNode);
 void locate_from_idx(BPoint &xy, double &angle, double &distance,

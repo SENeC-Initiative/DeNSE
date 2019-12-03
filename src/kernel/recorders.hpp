@@ -61,11 +61,11 @@ typedef std::unordered_map<stype,
     gcContinuousTimes;
 typedef std::unordered_map<
     stype, std::unordered_map<std::string,
-                               std::unordered_map<stype, std::vector<Time>>>>
+                              std::unordered_map<stype, std::vector<Time>>>>
     gcDiscreteTimes;
 typedef std::unordered_map<
     stype, std::unordered_map<std::string, std::unordered_set<stype>>>
-      setDeadCones;
+    setDeadCones;
 typedef std::unordered_map<
     stype, std::unordered_map<std::string, std::unordered_map<stype, stype>>>
     gcNumTimes;
@@ -95,9 +95,9 @@ class BaseRecorder
     virtual void final_timestep(stype step);
 
     void neuron_deleted(stype gid);
-    virtual void new_neurite(stype neuron, const std::string& neurite) {};
-    virtual void gc_died(stype neuron, const std::string& neurite,
-                         stype gc_id) {};
+    virtual void new_neurite(stype neuron, const std::string &neurite){};
+    virtual void gc_died(stype neuron, const std::string &neurite,
+                         stype gc_id){};
 
     void get_status(statusMap &status) const;
     virtual void set_status(const statusMap &status);
@@ -176,8 +176,7 @@ class NeuriteContinuousRecorder : public BaseRecorder
 
     virtual void record() override;
     virtual void final_timestep(stype step) override;
-    virtual void new_neurite(stype neuron,
-                             const std::string& neurite) override;
+    virtual void new_neurite(stype neuron, const std::string &neurite) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -204,8 +203,7 @@ class NeuriteDiscreteRecorder : public BaseRecorder
     NeuriteDiscreteRecorder();
 
     virtual void record(const Event &ev) override;
-    virtual void new_neurite(stype neuron,
-                             const std::string& neurite) override;
+    virtual void new_neurite(stype neuron, const std::string &neurite) override;
 
     virtual unsigned int get_event_type() const override;
     virtual unsigned int get_level() const override;
@@ -237,9 +235,8 @@ class GrowthConeContinuousRecorder : public BaseRecorder
     virtual void record(const Event &ev) override;
     virtual void final_timestep(stype step) override;
 
-    virtual void new_neurite(stype neuron,
-                             const std::string& neurite) override;
-    virtual void gc_died(stype neuron, const std::string& neurite,
+    virtual void new_neurite(stype neuron, const std::string &neurite) override;
+    virtual void gc_died(stype neuron, const std::string &neurite,
                          stype gc_id) override;
 
     virtual unsigned int get_event_type() const override;

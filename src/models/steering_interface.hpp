@@ -24,8 +24,8 @@
 
 #define _USE_MATH_DEFINES
 
-#include <vector>
 #include <string>
+#include <vector>
 
 // lib includes
 #include "elements_types.hpp"
@@ -76,18 +76,21 @@ class SteeringModel
     std::vector<std::string> observables_;
 
   public:
-    SteeringModel() = delete;
-    SteeringModel(const SteeringModel& copy) = delete;
+    SteeringModel()                          = delete;
+    SteeringModel(const SteeringModel &copy) = delete;
 
     SteeringModel(GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(GCPtr(gc)), neurite_ptr_(neurite) {};
+        : gc_weakptr_(GCPtr(gc))
+        , neurite_ptr_(neurite){};
 
-    SteeringModel(const SteeringModel& copy, GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
+    SteeringModel(const SteeringModel &copy, GCPtr gc, NeuritePtr neurite)
+        : gc_weakptr_(gc)
+        , neurite_ptr_(neurite)
+        , observables_(copy.observables_){};
 
     virtual void
     compute_direction_probabilities(std::vector<double> &directions_weights,
-                                    const Filopodia& filo, double substep,
+                                    const Filopodia &filo, double substep,
                                     double &total_proba, bool &stuck) = 0;
 
     void get_observables(std::vector<std::string> &obs) const
@@ -96,9 +99,12 @@ class SteeringModel
     }
 
     // Standard methods for growth cone, should not they
-    virtual void prepare_for_split() {};
-    virtual void after_split() {};
-    virtual double get_state(const std::string& observable) const { return std::nan(""); };
+    virtual void prepare_for_split(){};
+    virtual void after_split(){};
+    virtual double get_state(const std::string &observable) const
+    {
+        return std::nan("");
+    };
     virtual void set_status(const statusMap &status) = 0;
     virtual void get_status(statusMap &status) const = 0;
 };

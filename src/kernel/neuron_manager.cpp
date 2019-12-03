@@ -46,15 +46,14 @@ void NeuronManager::initialize()
     num_created_neurons_ = 0;
     statusMap empty_params;
     statusMap params({{names::num_neurites, Property(2, "")},
-                      {names::growth_cone_model, Property(
-                          "resource-based_pull-only_run-and-tumble", "")},
+                      {names::growth_cone_model,
+                       Property("resource-based_pull-only_run-and-tumble", "")},
                       {"x", Property(0., "micrometer")},
                       {"y", Property(0., "micrometer")}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
-    std::vector<std::string> options({"use_van_pelt",
-                                      "use_uniform_split",
+    std::vector<std::string> options({"use_van_pelt", "use_uniform_split",
                                       "use_uniform_branching",
                                       "use_flpl_branching"});
 
@@ -89,17 +88,17 @@ void NeuronManager::finalize()
  *
  * @return Number of objects created.
  */
-stype
-NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
-                              const std::vector<statusMap> &axon_params,
-                              const std::vector<statusMap> &dendrites_params)
+stype NeuronManager::create_neurons(
+    const std::vector<statusMap> &neuron_params,
+    const std::vector<statusMap> &axon_params,
+    const std::vector<statusMap> &dendrites_params)
 {
     stype first_id             = kernel().get_num_created_objects();
     stype previous_num_neurons = neurons_.size();
 
     // put the neurons on the thread list they belong to
     stype num_omp = kernel().parallelism_manager.get_num_local_threads();
-    int omp_id     = kernel().parallelism_manager.get_thread_local_id();
+    int omp_id    = kernel().parallelism_manager.get_thread_local_id();
     std::vector<std::vector<stype>> thread_neurons(num_omp);
 
     for (stype i = 0; i < neuron_params.size(); i++)
@@ -119,7 +118,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
         }
 
         // @TODO change temporary round-robin for neuron assignement
-        int omp_id = (first_id + i) % num_omp;
+        int omp_id      = (first_id + i) % num_omp;
         stype neuron_id = first_id + i;
         thread_neurons[omp_id].push_back(neuron_id);
         thread_of_neuron_[neuron_id] = omp_id;
@@ -146,7 +145,7 @@ NeuronManager::create_neurons(const std::vector<statusMap> &neuron_params,
 
         for (stype gid : gids)
         {
-            stype idx       = gid - first_id;
+            stype idx        = gid - first_id;
             NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
             try
@@ -201,7 +200,7 @@ void NeuronManager::delete_neurons(const std::vector<stype> &gids)
         {
             for (auto v : neurons_on_thread_)
             {
-                for (stype i=0; i < v.size(); i++)
+                for (stype i = 0; i < v.size(); i++)
                 {
                     if (v[i] == n)
                     {
@@ -297,8 +296,7 @@ void NeuronManager::get_all_neurons(std::vector<NeuronPtr> &neuron_ptr_vec)
 }
 
 
-void NeuronManager::get_defaults(statusMap &status,
-                                 const std::string &object,
+void NeuronManager::get_defaults(statusMap &status, const std::string &object,
                                  bool detailed) const
 {
     if (object == "neuron")

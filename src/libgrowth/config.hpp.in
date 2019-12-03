@@ -20,9 +20,9 @@ namespace growth
 #cmakedefine MSVC
 
 #ifdef MSVC
-    typedef unsigned long stype;
+typedef unsigned long stype;
 #else
-    typedef size_t stype;
+typedef size_t stype;
 #endif
 
 typedef enum
@@ -43,17 +43,17 @@ class Property
 {
   public:
     Property();
-    Property(int i_, const std::string& dim);
-    Property(stype ul_, const std::string& dim);
-    Property(bool b_, const std::string& dim);
-    Property(char const arr[], const std::string& dim);
-    Property(double d_, const std::string& dim);
-    Property(const std::vector<long> &v, const std::string& dim);
-    Property(const std::vector<stype> &v, const std::string& dim);
-    Property(std::string s_, const std::string& dim);
-    Property(const std::vector<std::string> &v, const std::string& dim);
+    Property(int i_, const std::string &dim);
+    Property(stype ul_, const std::string &dim);
+    Property(bool b_, const std::string &dim);
+    Property(char const arr[], const std::string &dim);
+    Property(double d_, const std::string &dim);
+    Property(const std::vector<long> &v, const std::string &dim);
+    Property(const std::vector<stype> &v, const std::string &dim);
+    Property(std::string s_, const std::string &dim);
+    Property(const std::vector<std::string> &v, const std::string &dim);
     Property(const std::unordered_map<std::string, double> &v,
-             const std::string& dim);
+             const std::string &dim);
 
     Property(const Property &prop);
 
@@ -102,26 +102,26 @@ inline bool get_param(const statusMap &map, const std::string &key,
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::unordered_map<std::string, double> &result);
 
+inline void set_param(statusMap &map, const std::string &key, const bool &value,
+                      const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const bool &value, const std::string& dim);
-inline void set_param(statusMap &map, const std::string &key,
-                      const double &value, const std::string& dim);
+                      const double &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key, const int &value,
-                      const std::string& dim);
+                      const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const stype &value, const std::string& dim);
+                      const stype &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::vector<stype> &value, const std::string& dim);
+                      const std::vector<stype> &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::vector<long> &value, const std::string& dim);
+                      const std::vector<long> &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
-                      const std::string &value, const std::string& dim);
+                      const std::string &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::vector<std::string> &value,
-                      const std::string& dim);
+                      const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::unordered_map<std::string, double> &value,
-                      const std::string& dim);
+                      const std::string &dim);
 } // namespace growth
 
 

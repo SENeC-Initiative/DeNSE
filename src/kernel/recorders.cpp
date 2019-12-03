@@ -593,7 +593,7 @@ void NeuriteContinuousRecorder::final_timestep(stype step)
 
 
 void NeuriteContinuousRecorder::new_neurite(stype neuron,
-                                            const std::string& neurite)
+                                            const std::string &neurite)
 {
     // initialize the recording container
     recording_[neuron].insert({neurite, std::vector<double>()});
@@ -713,7 +713,7 @@ NeuriteDiscreteRecorder::NeuriteDiscreteRecorder() {}
 void NeuriteDiscreteRecorder::record(const Event &ev)
 {
     Time event_time     = std::get<edata::TIME>(ev);
-    stype neuron       = std::get<edata::NEURON>(ev);
+    stype neuron        = std::get<edata::NEURON>(ev);
     std::string neurite = std::get<edata::NEURITE>(ev);
     signed char ev_type = std::get<edata::EV_TYPE>(ev);
 
@@ -795,7 +795,7 @@ void NeuriteDiscreteRecorder::set_status(const statusMap &status)
 
 
 void NeuriteDiscreteRecorder::new_neurite(stype neuron,
-                                          const std::string& neurite)
+                                          const std::string &neurite)
 {
     // initialize the recording container
     if (observable_ == names::num_growth_cones)
@@ -931,7 +931,8 @@ bool NeuriteDiscreteRecorder::get_next_time(std::vector<Property> &ids,
             }
             else
             {
-                throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+                throw std::runtime_error("Unknown time unit '" + time_units +
+                                         "'.");
             }
 
             // increment iterator
@@ -1016,7 +1017,7 @@ void GrowthConeContinuousRecorder::record(const Event &ev)
 {
     // branching event occured on a neuron
     Time event_time     = std::get<edata::TIME>(ev);
-    stype neuron       = std::get<edata::NEURON>(ev);
+    stype neuron        = std::get<edata::NEURON>(ev);
     std::string neurite = std::get<edata::NEURITE>(ev);
 
     std::unordered_map<stype, std::vector<double>> &gc_values =
@@ -1070,7 +1071,7 @@ void GrowthConeContinuousRecorder::final_timestep(stype step)
 
 
 void GrowthConeContinuousRecorder::new_neurite(stype neuron,
-                                               const std::string& neurite)
+                                               const std::string &neurite)
 {
     times_[neuron].insert({neurite, mapNumArrayTime()});
     recording_[neuron].insert({neurite, mapNumVecDouble()});
@@ -1078,7 +1079,7 @@ void GrowthConeContinuousRecorder::new_neurite(stype neuron,
 
 
 void GrowthConeContinuousRecorder::gc_died(stype neuron,
-                                           const std::string& neurite,
+                                           const std::string &neurite,
                                            stype gc_id)
 {
     // add cone to dead cones
@@ -1133,14 +1134,14 @@ void GrowthConeContinuousRecorder::set_status(const statusMap &status)
                 std::unordered_map<std::string,
                                    std::unordered_map<stype, stype>>();
             dead_cones_[gid] =
-                std::unordered_map< std::string, std::unordered_set<stype> >();
+                std::unordered_map<std::string, std::unordered_set<stype>>();
 
             for (const auto &neurite : n->neurites_)
             {
                 recording_[gid][neurite.first]  = mapNumVecDouble();
                 times_[gid][neurite.first]      = mapNumArrayTime();
                 dead_cones_[gid][neurite.first] = std::unordered_set<stype>();
-                num_times_[gid][neurite.first]  =
+                num_times_[gid][neurite.first] =
                     std::unordered_map<stype, stype>();
             }
         }
@@ -1306,7 +1307,8 @@ bool GrowthConeContinuousRecorder::get_next_time(std::vector<Property> &ids,
                 }
                 else
                 {
-                    throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+                    throw std::runtime_error("Unknown time unit '" +
+                                             time_units + "'.");
                 }
                 // increment gc
                 t_gc_pos_++;
@@ -1591,7 +1593,8 @@ bool GrowthConeDiscreteRecorder::get_next_time(std::vector<Property> &ids,
                 }
                 else
                 {
-                    throw std::runtime_error("Unknown time unit '" + time_units + "'.");
+                    throw std::runtime_error("Unknown time unit '" +
+                                             time_units + "'.");
                 }
 
                 // increment gc

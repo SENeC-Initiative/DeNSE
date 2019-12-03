@@ -23,8 +23,8 @@
 
 #define _USE_MATH_DEFINES
 
-#include <cmath>
 #include <cassert>
+#include <cmath>
 #include <iostream>
 
 
@@ -45,11 +45,11 @@ Branch::Branch(const Branch &copy)
     , segments_(copy.segments_)
 {
     points_[0].insert(points_[0].end(), copy.points_[0].begin(),
-                     copy.points_[0].end());
+                      copy.points_[0].end());
     points_[1].insert(points_[1].end(), copy.points_[0].begin(),
-                     copy.points_[1].end());
+                      copy.points_[1].end());
     points_[2].insert(points_[2].end(), copy.points_[2].begin(),
-                     copy.points_[2].end());
+                      copy.points_[2].end());
 }
 
 
@@ -93,7 +93,7 @@ void Branch::add_point(const BPoint &p, double length, BPolygonPtr poly,
 }
 
 
-const std::pair<BPoint, BPoint>& Branch::get_last_points() const
+const std::pair<BPoint, BPoint> &Branch::get_last_points() const
 {
     return last_points_;
 }
@@ -145,7 +145,7 @@ void Branch::retract()
         {
             BPolygonPtr new_last_poly = segments_.back();
 
-            for (stype i=0; i < ring.size() - 1; i++)
+            for (stype i = 0; i < ring.size() - 1; i++)
             {
                 if (bg::covered_by(ring[i], *(new_last_poly.get())))
                 {
@@ -162,7 +162,7 @@ void Branch::retract()
 }
 
 
-void Branch::restypeail(stype new_size)
+void Branch::resize_tail(stype new_size)
 {
     assert(new_size <= size());
 
@@ -178,12 +178,12 @@ void Branch::restypeail(stype new_size)
     {
         std::vector<BPoint> new_lp;
 
-        BPolygonPtr end_poly = segments_[size_seg];
+        BPolygonPtr end_poly  = segments_[size_seg];
         BPolygonPtr last_poly = segments_[size_seg - 1];
 
         auto ring = end_poly->outer();
 
-        for (stype i=0; i < ring.size() - 1; i++)
+        for (stype i = 0; i < ring.size() - 1; i++)
         {
             if (bg::covered_by(ring[i], *(last_poly.get())))
             {
@@ -214,26 +214,25 @@ BranchPtr Branch::resize_head(stype id_x) const
     assert(size() > id_x);
     BranchPtr new_branch = std::make_shared<Branch>();
 
-    new_branch->points_[0].insert(
-        new_branch->points_[0].end(), points_[0].cbegin() + id_x,
-        points_[0].cend());
+    new_branch->points_[0].insert(new_branch->points_[0].end(),
+                                  points_[0].cbegin() + id_x,
+                                  points_[0].cend());
 
-    new_branch->points_[1].insert(
-        new_branch->points_[1].end(), points_[1].cbegin() + id_x,
-        points_[1].cend());
+    new_branch->points_[1].insert(new_branch->points_[1].end(),
+                                  points_[1].cbegin() + id_x,
+                                  points_[1].cend());
 
-    new_branch->points_[2].insert(
-        new_branch->points_[2].end(), points_[2].cbegin() + id_x,
-        points_[2].cend());
+    new_branch->points_[2].insert(new_branch->points_[2].end(),
+                                  points_[2].cbegin() + id_x,
+                                  points_[2].cend());
 
     // resize segments
-    new_branch->segments_.insert(
-        new_branch->segments_.end(), segments_.cbegin() + id_x,
-        segments_.cend());
+    new_branch->segments_.insert(new_branch->segments_.end(),
+                                 segments_.cbegin() + id_x, segments_.cend());
 
     // set points
-    new_branch->initial_point_ = BPoint(new_branch->points_[0][0],
-                                        new_branch->points_[0][1]);
+    new_branch->initial_point_ =
+        BPoint(new_branch->points_[0][0], new_branch->points_[0][1]);
 
     new_branch->last_points_ = last_points_;
 
@@ -272,8 +271,7 @@ void Branch::append_branch(BranchPtr appended_branch)
                       appended_branch->points_[2].cbegin() + dsize,
                       appended_branch->points_[2].cend());
 
-    segments_.insert(segments_.end(),
-                     appended_branch->segments_.cbegin(),
+    segments_.insert(segments_.end(), appended_branch->segments_.cbegin(),
                      appended_branch->segments_.cend());
 
     assert(points_[2].size() == total_size);
@@ -282,7 +280,7 @@ void Branch::append_branch(BranchPtr appended_branch)
 
 // double Branch::get_normal_direction() const
 // {
-//     // normal direction to the 
+//     // normal direction to the
 //     double x1, x2, y1, y2;
 
 //     x1 = new_branch->last_points_.first.x();
@@ -339,7 +337,7 @@ double Branch::get_segment_length_at(stype idx) const
         return 0;
     }
 
-    return points_.at(2).at(idx) - points_.at(2).at(idx-1);
+    return points_.at(2).at(idx) - points_.at(2).at(idx - 1);
 }
 
 
@@ -347,13 +345,13 @@ double Branch::get_last_segment_length() const
 {
     if (points_[2].size() >= 2)
     {
-        return points_.at(2).back() - points_.at(2).at(size()-2);
+        return points_.at(2).back() - points_.at(2).at(size() - 2);
     }
     else if (points_[2].size() == 1)
     {
         double dx = points_[0].back() - initial_point_.x();
         double dy = points_[1].back() - initial_point_.y();
-        return sqrt(dx*dx + dy*dy);
+        return sqrt(dx * dx + dy * dy);
     }
 
     return 0.;
@@ -383,16 +381,10 @@ seg_range Branch::segment_range() const
 }
 
 
-const std::vector<double>& Branch::get_xlist() const
-{
-    return points_.at(0);
-}
+const std::vector<double> &Branch::get_xlist() const { return points_.at(0); }
 
 
-const std::vector<double>& Branch::get_ylist() const
-{
-    return points_.at(1);
-}
+const std::vector<double> &Branch::get_ylist() const { return points_.at(1); }
 
 
 PointArray Branch::at(stype idx) const
@@ -407,9 +399,6 @@ BPoint Branch::xy_at(stype idx) const
 }
 
 
-stype Branch::size() const
-{
-    return points_[0].size();
-}
+stype Branch::size() const { return points_[0].size(); }
 
 } // namespace growth

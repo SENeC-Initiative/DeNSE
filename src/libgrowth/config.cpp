@@ -33,7 +33,7 @@ Property::Property()
 }
 
 
-Property::Property(int i_, const std::string& dim)
+Property::Property(int i_, const std::string &dim)
     : data_type(INT)
     , dimension(dim)
     , i(i_)
@@ -41,7 +41,7 @@ Property::Property(int i_, const std::string& dim)
 }
 
 
-Property::Property(stype ul_, const std::string& dim)
+Property::Property(stype ul_, const std::string &dim)
     : data_type(SIZE)
     , dimension(dim)
     , ul(ul_)
@@ -49,7 +49,7 @@ Property::Property(stype ul_, const std::string& dim)
 }
 
 
-Property::Property(bool b_, const std::string& dim)
+Property::Property(bool b_, const std::string &dim)
     : data_type(BOOL)
     , dimension(dim)
     , b(b_)
@@ -57,13 +57,13 @@ Property::Property(bool b_, const std::string& dim)
 }
 
 
-Property::Property(char const *arr, const std::string& dim)
+Property::Property(char const *arr, const std::string &dim)
     : Property(std::string(arr), dim)
 {
 }
 
 
-Property::Property(double d_, const std::string& dim)
+Property::Property(double d_, const std::string &dim)
     : data_type(DOUBLE)
     , dimension(dim)
     , d(d_)
@@ -71,7 +71,7 @@ Property::Property(double d_, const std::string& dim)
 }
 
 
-Property::Property(const std::vector<long> &v, const std::string& dim)
+Property::Property(const std::vector<long> &v, const std::string &dim)
     : data_type(VEC_LONG)
     , dimension(dim)
     , ll(v)
@@ -79,7 +79,7 @@ Property::Property(const std::vector<long> &v, const std::string& dim)
 }
 
 
-Property::Property(const std::vector<stype> &v, const std::string& dim)
+Property::Property(const std::vector<stype> &v, const std::string &dim)
     : data_type(VEC_SIZE)
     , dimension(dim)
     , uu(v)
@@ -87,7 +87,7 @@ Property::Property(const std::vector<stype> &v, const std::string& dim)
 }
 
 
-Property::Property(std::string s_, const std::string& dim)
+Property::Property(std::string s_, const std::string &dim)
     : data_type(STRING)
     , dimension(dim)
     , s(s_)
@@ -95,7 +95,7 @@ Property::Property(std::string s_, const std::string& dim)
 }
 
 
-Property::Property(const std::vector<std::string> &v, const std::string& dim)
+Property::Property(const std::vector<std::string> &v, const std::string &dim)
     : data_type(VEC_STRING)
     , dimension(dim)
     , ss(v)
@@ -104,7 +104,7 @@ Property::Property(const std::vector<std::string> &v, const std::string& dim)
 
 
 Property::Property(const std::unordered_map<std::string, double> &v,
-                   const std::string& dim)
+                   const std::string &dim)
     : data_type(MAP_DOUBLE)
     , dimension(dim)
     , md(v)
@@ -223,7 +223,7 @@ Property::~Property()
         ll.~vector<long>();
         break;
     case MAP_DOUBLE:
-        md.~unordered_map<std::string,double>();
+        md.~unordered_map<std::string, double>();
         break;
     case VEC_STRING:
         ss.~vector<std::string>();

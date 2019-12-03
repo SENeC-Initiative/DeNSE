@@ -32,17 +32,21 @@
 namespace growth
 {
 
-BaseNode::BaseNode() : geometry_{}
-{}
+BaseNode::BaseNode()
+    : geometry_{}
+{
+}
 
 BaseNode::BaseNode(const BPoint &position, double distance_to_parent,
-         double distance_to_soma)
-  : geometry_{position, distance_to_soma, distance_to_parent}
-{}
+                   double distance_to_soma)
+    : geometry_{position, distance_to_soma, distance_to_parent}
+{
+}
 
 BaseNode::BaseNode(const BaseNode &copy)
-  : geometry_(copy.geometry_)
-{}
+    : geometry_(copy.geometry_)
+{
+}
 
 // BaseNode functions
 
@@ -74,7 +78,8 @@ TopologicalNode::TopologicalNode()
     : BaseNode()
     , topology_{}
     , biology_{}
-{}
+{
+}
 
 
 TopologicalNode::TopologicalNode(const TopologicalNode &tnode)
@@ -92,13 +97,11 @@ TopologicalNode::TopologicalNode(BaseWeakNodePtr parent, float distanceToParent,
                distanceToParent + parent.lock()->get_distance_to_soma())
     , topology_{parent, parent.lock()->get_centrifugal_order() + 1, false, 0}
     , biology_{false, std::make_shared<Branch>(), nullptr, 1}
-{}
-
-
-void TopologicalNode::topological_advance()
 {
-    topology_.centrifugal_order++;
 }
+
+
+void TopologicalNode::topological_advance() { topology_.centrifugal_order++; }
 
 
 /**
@@ -173,7 +176,7 @@ Growth cone constructor:
 necessary for build the Id
 */
 Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &pos)
-  : TopologicalNode(parent, distance, pos)
+    : TopologicalNode(parent, distance, pos)
 {
     topology_.has_child = true;
 }
@@ -185,13 +188,13 @@ Node::Node(BaseWeakNodePtr parent, float distance, const BPoint &pos)
  * event.
  */
 Node::Node(const TopologicalNode &copyTopoNode)
-  : TopologicalNode(copyTopoNode)
+    : TopologicalNode(copyTopoNode)
 {
 }
 
 
 Node::Node(const Node &copyNode)
-  : TopologicalNode(copyNode)
+    : TopologicalNode(copyNode)
 {
     topology_.has_child = true;
 }

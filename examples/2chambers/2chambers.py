@@ -25,15 +25,12 @@ import shutil
 import time
 
 import numpy as np
-# import matplotlib
-# matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
 import random, shutil
 import os
 
 import nngt
 nngt.set_config("palette", "Spectral")
-#~ nngt.set_config("palette", "viridis")
 
 import dense as ds
 from dense.units import *

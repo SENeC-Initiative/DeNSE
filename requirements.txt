@@ -6,4 +6,4 @@ pint
 scipy
 setuptools
 shapely
-svg.path
+svg.path >= 4

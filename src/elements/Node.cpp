@@ -168,10 +168,16 @@ void TopologicalNode::update_branch_and_parent(BaseNodePtr parent, BranchPtr b)
 }
 
 
-void TopologicalNode::set_diameter(double diameter) { diameter_ = diameter; }
+void TopologicalNode::set_diameter(double diameter)
+{
+    diameter_ = diameter;
+}
 
 
-stype TopologicalNode::get_branch_size() const { return branch_->size(); }
+stype TopologicalNode::get_branch_size() const
+{
+    return branch_->size();
+}
 
 
 double TopologicalNode::get_branch_length() const

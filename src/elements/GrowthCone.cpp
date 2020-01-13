@@ -241,7 +241,6 @@ void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
  */
 void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 {
-    double total_distance = 0.;
     // useful values
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
     double current_time(0.), local_substep(substep), tmp, old_substep;
@@ -251,6 +250,9 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
     std::vector<double> directions_weights;
     std::vector<std::string> new_pos_area;
     std::vector<bool> wall_presence;
+
+    // remember distance done
+    double final_distance_done = 0.;
 
     // we make local substeps until current time is equal to substep
     unsigned int loop_index = 0;
@@ -303,8 +305,11 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
             compute_speed(rnd_engine, local_substep);
             compute_module(local_substep);
 
-            // retract
-            retraction(std::abs(move_.module), cone_n, omp_id);
+            // retraction => module has to be negative
+            move_.module = -std::abs(move_.module);
+
+            // retract (expects positive distance)
+            retraction(-move_.module, cone_n, omp_id);
         }
         else
         {
@@ -448,6 +453,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         {
             // reset retraction_time_
             retraction_time_ = -1.;
+            final_distance_done += move_.module;
         }
 
         if (total_proba_ < 1. and not stuck_)
@@ -466,9 +472,6 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 
         // update current time
         current_time += local_substep;
-        //~ local_substep = substep - current_time;
-
-        total_distance += move_.module;
 
         // update retraction time if necessary
         if (retraction_time_ > 0.)
@@ -486,6 +489,9 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
             break;
         }
     }
+
+    // set the value of move_.module to the distance the GC did
+    move_.module = final_distance_done;
 }
 
 
@@ -557,24 +563,6 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
         {
             BPoint p1 = branch_->xy_at(branch_->size() - 2);
             BPoint p2 = branch_->get_last_xy();
-
-            //~ std::cout << "p1 " << bg::wkt(p1) << std::endl;
-            //~ std::cout << "p2 " << bg::wkt(p2) << std::endl;
-
-            //~ if (branch_->size() > 2)
-            //~ {
-            //~ BPoint p0 = branch_->xy_at(branch_->size() - 3);
-            //~ std::cout << "p0 " << bg::wkt(p0) << std::endl;
-            //~ }
-
-            //~ std::cout << "p1 " << bg::wkt(p1) << std::endl;
-            //~ std::cout << "p2 " << bg::wkt(p2) << std::endl;
-
-            //~ if (biology_.branch->size() > 2)
-            //~ {
-            //~ BPoint p0 = biology_.branch->xy_at(biology_.branch->size() - 3);
-            //~ std::cout << "p0 " << bg::wkt(p0) << std::endl;
-            //~ }
 
             double new_x =
                 (p2.x() * remaining + p1.x() * (distance_done - remaining)) /

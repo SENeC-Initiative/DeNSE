@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# test_create.py
+# test_diameter.py
 #
 # This file is part of DeNSE.
 #
@@ -20,30 +20,31 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Testing create functions """
+""" Testing diameter evolution for growth cones """
 
 import dense as ds
 from dense.units import *
 
 
-def test_create():
+def test_initial_diam():
     '''
-    Create neurons and neurites
+    Create neuron with one neurite and check initial diameter
     '''
     ds.reset_kernel()
 
+    diam = 2.*um
+
     # create one neuron
-    neuron = ds.create_neurons(num_neurites=1)
+    neuron = ds.create_neurons(num_neurites=1,
+                               params={"axon_diameter": diam})
 
-    # create a new neurite
-    neuron.create_neurites(names="new_dendrite")
+    assert neuron.axon.branches[0].diameter == diam
 
-    assert len(neuron.neurites) == 2
-    assert "new_dendrite" in neuron.neurites
 
-    neuron = ds.create_neurons()
-    assert not neuron.neurites
+def test_final_diam():
+    # @todo
 
 
 if __name__ == "__main__":
-    test_create()
+    test_initial_diam()
+    test_final_diam()

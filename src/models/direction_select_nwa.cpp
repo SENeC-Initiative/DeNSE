@@ -83,6 +83,7 @@ void NWADirectionSelector::select_direction(
         if (not std::isnan(directions_weights[n]))
         {
             dist = std::abs(new_angle - filo.directions[n]);
+
             if (dist < min_dist)
             {
                 default_direction = n;

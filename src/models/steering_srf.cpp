@@ -131,7 +131,6 @@ void SrfSteeringModel::compute_direction_probabilities(
 
         if (not std::isnan(weight))
         {
-            stuck = false;
             angle = filo.directions[n];
 
             // compute the rigidity effect (multiplication by Gaussian factor)
@@ -215,7 +214,12 @@ void SrfSteeringModel::compute_direction_probabilities(
             }
 
             directions_weights[n] = weight;
-            total_proba += weight;
+
+            if (not std::isnan(weight))
+            {
+                stuck = false;
+                total_proba += weight;
+            }
         }
     }
 }

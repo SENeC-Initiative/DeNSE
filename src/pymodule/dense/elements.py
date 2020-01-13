@@ -44,6 +44,8 @@ class Neuron(object):
         self._dendrites  = {}
         self.__gid       = gid
 
+    # GID (integer) functions
+
     def __int__(self):
         return self.__gid
 
@@ -59,6 +61,8 @@ class Neuron(object):
     def __ge__(self, other):
         return int(self) >= int(other)
 
+    # representation functions
+
     def __str__(self):
         return str(self.__gid)
 
@@ -67,6 +71,8 @@ class Neuron(object):
 
     def _repr_pretty_(self, p, cycle):
         p.text("Neuron({})".format(self.__gid))
+
+    # attributes
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
@@ -561,7 +567,8 @@ class Neurite(object):
         :func:`~dense.elements.Neuron.set_properties`,
         :func:`~dense.elements.Neurite.get_properties`.
         '''
-        return _pg.set_neurite_properties(self._parent, self, params=params)
+        return _pg.set_neurite_properties(
+            self._parent, self, params=params)
 
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
@@ -572,7 +579,8 @@ class Neurite(object):
 
         for p, d, parent, n in zip(points, diameters, parents, nodes):
             data = (_np.array(p).T, None, None, d)
-            self._branches.append(Branch(data, parent=parent, node_id=n))
+            self._branches.append(
+                Branch(data, parent=parent, node_id=n))
 
         self._has_branches = True
         self._update_time  = _pg.get_kernel_status("time")
@@ -586,10 +594,10 @@ class Branch(object):
     '''
 
     def __init__(self, neurite_path, parent=None, node_id=None):
-        self.xy       = neurite_path[0]
-        self._r       = neurite_path[1]
-        self._theta   = neurite_path[2]
-        self.diameter = 2*neurite_path[3]
+        self.xy       = neurite_path[0] * um
+        self._r       = neurite_path[1] * um
+        self._theta   = neurite_path[2] * radian
+        self.diameter = neurite_path[3] * um
         self.parent   = parent
         self.node_id  = node_id
 
@@ -600,7 +608,8 @@ class Branch(object):
         '''
         if self._r is None:
             assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            theta, r = _norm_angle_from_vectors(self.xy)
+            self._theta, self._r = theta*radian, r*um
             return self._r
         else:
             assert (isinstance(self._r, _np.ndarray)), \
@@ -614,7 +623,8 @@ class Branch(object):
         '''
         if self._r is None:
             assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            theta, r = _norm_angle_from_vectors(self.xy)
+            self._theta, self._r = theta*radian, r*um
             return self._theta
         else:
             assert (isinstance(self._theta, _np.ndarray)), \

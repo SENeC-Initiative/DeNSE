@@ -150,6 +150,10 @@ double get_state_(stype gid, const std::string &level,
                   const std::string &variable);
 
 
+double get_state_(stype gid, const std::string &level,
+                  const std::string &variable, std::string &unit);
+
+
 statusMap get_status_(stype gid);
 
 

@@ -47,6 +47,9 @@ class Neuron(object):
     def __int__(self):
         return self.__gid
 
+    def __eq__(self, other):
+        return int(self) == int(other)
+
     def __lt__(self, other):
         return int(self) < int(other)
 
@@ -182,7 +185,28 @@ class Neuron(object):
             return self.axon
         return self.dendrites[neurite]
 
-    def get_properties(self, property_name=None, level=None, neurite=None):
+    def get_state(self, observable=None):
+        '''
+        Return the values of all or one state observable of the neuron.
+
+        Parameters
+        ----------
+        observable : str, optional (default: all observables)
+            Observable to query.
+
+        Returns
+        -------
+        state : dict or scalar value
+
+        See also
+        --------
+        :func:`~dense.get_state`
+        :func:`~dense.elements.Neuron.get_properties`
+        '''
+        return _pg.get_object_state(self, observable)
+
+    def get_properties(self, property_name=None, level=None,
+                       neurite=None):
         '''
         Get the neuron's properties.
 
@@ -431,6 +455,27 @@ class Neurite(object):
             else:
                 super(Neurite, self).__setattr__(attribute, value)
 
+    def get_state(self, observable=None):
+        '''
+        Return the values of all or one state observable of the neurite.
+
+        Parameters
+        ----------
+        observable : str, optional (default: all observables)
+            Observable to query.
+
+        Returns
+        -------
+        state : dict or scalar value
+
+        See also
+        --------
+        :func:`~dense.get_object_state`
+        :func:`~dense.elements.Neuron.get_state`
+        :func:`~dense.elements.Neurite.get_properties`
+        '''
+        return _pg.get_object_state(self, observable)
+
     def get_tree(self):
         return _pg._get_tree(self._parent, str(self))
 
@@ -438,6 +483,11 @@ class Neurite(object):
     def name(self):
         ''' Name of the neurite '''
         return self.__name
+
+    @property
+    def neuron(self):
+        ''' Name of the parent neuron '''
+        return self._parent
 
     @property
     def branches(self):
@@ -508,7 +558,8 @@ class Neurite(object):
     @property
     def total_length(self):
         ''' Total length of the neurite '''
-        return _pg.get_object_state(self._parent, level=str(self), variable="length")
+        return _pg.get_object_state(self._parent, level=str(self),
+                                    variable="length")
 
     @property
     def taper_rate(self):
@@ -816,7 +867,8 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_properties(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_properties(gids, "position",
+                                         return_iterable=True)
         pos  = [pos[n] for n in gids]
         rad  = _pg.get_object_properties(gids, "soma_radius",
                                          return_iterable=True)

@@ -433,6 +433,25 @@ double get_state_(stype gid, const std::string &level,
 }
 
 
+double get_state_(stype gid, const std::string &level,
+                  const std::string &variable, std::string &unit)
+{
+    if (level == "neuron")
+    {
+        return kernel().neuron_manager.get_neuron(gid)->get_state(
+            variable, unit);
+    }
+    else
+    {
+        return kernel()
+            .neuron_manager.get_neuron(gid)
+            ->get_neurite(level)
+            .lock()
+            ->get_state(variable, unit);
+    }
+}
+
+
 stype get_num_objects_() { return kernel().get_num_objects(); }
 
 

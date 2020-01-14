@@ -144,6 +144,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void set_status(const statusMap &);
     void get_status(statusMap &, const std::string &level) const;
     double get_state(const std::string &observable) const;
+    double get_state(const std::string &observable,
+                     std::string &unit) const;
     unsigned int num_growth_cones() const;
     NodePtr get_first_node() const;
     NeuronWeakPtr get_parent_neuron() const;

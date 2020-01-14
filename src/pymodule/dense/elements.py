@@ -867,7 +867,8 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_properties(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_properties(gids, "position",
+                                         return_iterable=True)
         pos  = [pos[n] for n in gids]
         rad  = _pg.get_object_properties(gids, "soma_radius",
                                          return_iterable=True)

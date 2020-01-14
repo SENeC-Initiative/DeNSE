@@ -797,20 +797,20 @@ def get_object_properties(obj, property_name=None, level=None,
         obj       = [obj]
         level     = "neurite" if level is None else level
     elif nonstring_container(obj):
-        if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
-            gids = [int(n) for n in obj]
-        elif isinstance(obj[0], Neurite):
-            gids  = [neurite.neuron for neurite in obj]
-            level = "neurite" if level is None else level
-        else:
-            raise ValueError("If `obj` is a list, it must contain "
-                             "either int, Neuron, or Neurite objects "
-                             "of the same type.")
+        if obj:
+            if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
+                gids = [int(n) for n in obj]
+            elif isinstance(obj[0], Neurite):
+                gids  = [neurite.neuron for neurite in obj]
+                level = "neurite" if level is None else level
+            else:
+                raise ValueError("If `obj` is a list, it must contain "
+                                 "either int, Neuron, or Neurite "
+                                 "objects of the same type.")
     else:
         assert nonstring_container(obj) and is_integer(obj[0]), \
             "Only Neurons/gids or Neurite/list of Neurites are valid " \
             "parameters for `obj`."
-        
 
     for gid in gids:
         if get_object_type(gid) == "neuron":
@@ -943,15 +943,16 @@ def get_object_state(obj, observable=None, level=None,
         gids      = vector[stype](1, obj.neuron)
         obj       = [obj]
     elif nonstring_container(obj):
-        if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
-            gids = [int(n) for n in obj]
-        elif isinstance(obj[0], Neurite):
-            is_neuron = False
-            gids      = [neurite.neuron for neurite in obj]
-        else:
-            raise ValueError("If `obj` is a list, it must contain "
-                             "either int, Neuron, or Neurite objects "
-                             "of the same type.")
+        if obj:
+            if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
+                gids = [int(n) for n in obj]
+            elif isinstance(obj[0], Neurite):
+                is_neuron = False
+                gids      = [neurite.neuron for neurite in obj]
+            else:
+                raise ValueError("If `obj` is a list, it must contain "
+                                 "either int, Neuron, or Neurite "
+                                 "objects of the same type.")
     else:
         assert nonstring_container(obj) and is_integer(obj[0]), \
             "Only Neurons/gids or Neurite/list of Neurites are valid " \

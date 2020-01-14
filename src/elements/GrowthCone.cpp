@@ -1222,6 +1222,54 @@ double GrowthCone::get_state(const std::string &observable) const
 }
 
 
+/**
+ * @brief Get the current value of one of the observables
+ */
+double GrowthCone::get_state(const std::string &observable,
+                             std::string &unit) const
+{
+    double value = std::nan("");
+
+    if (observable == "length")
+    {
+        value = branch_->get_length();
+        unit  = "micrometer";
+    }
+    else if (observable == "speed")
+    {
+        value = move_.speed;
+        unit  = "um/minute";
+    }
+    else if (observable == "angle")
+    {
+        value = move_.angle;
+        unit  = "radian";
+    }
+    else if (observable == "status")
+    {
+        value = 2 * stuck_ + stopped_; // 0: moving, 1: stopped, 2: stuck
+        unit  = "";
+    }
+    else if (observable == "retraction_time")
+    {
+        value = retraction_time_;
+        unit  = "minute";
+    }
+    else if (observable == "diameter")
+    {
+        value = get_diameter();
+        unit  = "micrometer";
+    }
+    else if (observable == "stepping_probability")
+    {
+        value = total_proba_;
+        unit  = "";
+    }
+
+    return value;
+}
+
+
 double GrowthCone::get_self_affinity() const { return aff_.affinity_self; }
 
 

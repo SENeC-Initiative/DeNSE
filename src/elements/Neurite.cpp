@@ -1436,12 +1436,51 @@ double Neurite::get_state(const std::string &observable) const
     {
         value = cr_neurite_.available;
     }
+    else if (observable == "num_growth_cones")
+    {
+        value = growth_cones_.size() + growth_cones_inactive_.size();
+    }
     else
     {
         // default case, just sum up
         for (const auto &gc : growth_cones_)
         {
             value += gc.second->get_state(observable);
+        }
+        for (const auto &gc : growth_cones_inactive_)
+        {
+            value += gc.second->get_state(observable);
+        }
+    }
+
+    return value;
+}
+
+
+/**
+ * @brief Get the current value of one of the observables
+ */
+double Neurite::get_state(const std::string &observable,
+                          std::string &unit) const
+{
+    double value = 0.;
+
+    if (observable == "A")
+    {
+        value = cr_neurite_.available;
+        unit  = "umol/L";
+    }
+    else if (observable == "num_growth_cones")
+    {
+        value = growth_cones_.size() + growth_cones_inactive_.size();
+        unit  = "";
+    }
+    else
+    {
+        // default case, just sum up
+        for (const auto &gc : growth_cones_)
+        {
+            value += gc.second->get_state(observable, unit);
         }
         for (const auto &gc : growth_cones_inactive_)
         {

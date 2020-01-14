@@ -215,6 +215,10 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef double get_state_(stype gid, const string& level,
                            const string& variable) except +
 
+    cdef double get_state_(stype gid, const string& level,
+                           const string& variable,
+                           string& unit) except +
+
     cdef vector[string] get_elongation_types_() except +
 
     cdef vector[string] get_steering_methods_() except +

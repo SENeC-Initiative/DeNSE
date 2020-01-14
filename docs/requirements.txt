@@ -7,3 +7,4 @@ svg.path
 matplotlib
 sphinx_bootstrap_theme
 breathe
+pyneuroml

@@ -331,8 +331,9 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 # Plot dendrogram #
 # --------------- #
 
-def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
-                    ignore_diameter=False, show=True, **kwargs):
+def plot_dendrogram(neurite, axis=None, show_node_id=False,
+                     aspect_ratio=None, vertical_diam_frac=0.2,
+                     ignore_diameter=False, show=True, **kwargs):
     '''
     Plot the dendrogram of a neurite.
 
@@ -349,6 +350,8 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
     aspect_ratio : float, optional (default: variable)
         Whether to use a fixed aspect ratio. Automatically set to 1 if
         `show_node_id` is True.
+    vertical_diam_frac : float, optional (default: 0.2)
+        Fraction of the vertical spacing taken by the branch diameter.
     ignore_diameter : bool, optional (default: False)
         Plot all the branches with the same width.
     **kwargs : arguments for :class:`matplotlib.patches.Rectangle`
@@ -376,7 +379,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
     # this should be 5 times the diameter of the first section and there
     # are num_tips + 1 spacing in total.
     init_diam  = tree.root.children[0].diameter
-    vspace     = 5*init_diam
+    vspace     = init_diam / vertical_diam_frac
     tot_height = (num_tips + 0.5) * vspace
 
     # compute the total length which is 1.1 times the longest distance
@@ -393,7 +396,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
     root = tree.root
     tips = set(tree.tips)
 
-    # diameter is ignored, set all values to default_diam
+    # if diameter is ignored, set all values to default_diam
     default_diam = 0.2*vspace
 
     if ignore_diameter:
@@ -437,12 +440,13 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
             # check up/down_children and replace node by child
             for key, val in up_children.items():
                 if node in val:
-                    up_children[key] = set([n for n in val if n is not node])
+                    up_children[key] = {n for n in val if n is not node}
                     up_children[key].add(child)
 
             for key, val in down_children.items():
                 if node in val:
-                    down_children[key] = set([n for n in val if n is not node])
+                    down_children[key] = {
+                        n for n in val if n is not node}
                     down_children[key].add(child)
         else:
             if len(node.children) == 2:
@@ -482,7 +486,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False, aspect_ratio=None,
     elif aspect_ratio is not None:
         axis.set_aspect(aspect_ratio)
         hv_ratio = aspect_ratio
-        vbar_diam_ratio = 0.5 / aspect_ratio
+        vbar_diam_ratio /= aspect_ratio
 
     # making horizontal branches
     x0 = 0.01*max_dts

@@ -358,8 +358,8 @@ class Neuron(object):
                         diameter = (diameter for _ in range(len(branch.xy)))
 
                     # subsample positions and diameters
-                    subnodes = branch.xy[::resolution]
-                    subdiam  = diameter[::resolution]
+                    subnodes = branch.xy[::resolution].m
+                    subdiam  = diameter[::resolution].m
 
                     for pos, diam in zip(subnodes, subdiam):
                         p = neuroml.Point3DWithDiam(
@@ -665,12 +665,12 @@ class Branch(object):
         Norm of each segment in the Branch.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            theta, r = _norm_angle_from_vectors(self.xy)
-            self._theta, self._r = theta*radian, r*um
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._r
         else:
-            assert (isinstance(self._r, _np.ndarray)), \
+            assert (isinstance(self._r.m, _np.ndarray)), \
                 "branch's norm is not an array, there is a mistake"
             return self._r
 
@@ -680,12 +680,12 @@ class Branch(object):
         Angle direction of each segment.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            theta, r = _norm_angle_from_vectors(self.xy)
-            self._theta, self._r = theta*radian, r*um
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._theta
         else:
-            assert (isinstance(self._theta, _np.ndarray)), \
+            assert (isinstance(self._theta.m, _np.ndarray)), \
                 "branch's angles is not an array, there is a mistake"
             return self._theta
 

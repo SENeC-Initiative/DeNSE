@@ -26,8 +26,10 @@ from logging import warnings as _warn
 from collections import deque as _deque
 
 import numpy as _np
+
 from . import _pygrowth as _pg
 from ._helpers import nonstring_container as _nsc
+from .units import *
 
 
 __all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
@@ -137,7 +139,7 @@ class Neuron(object):
     @property
     def total_length(self):
         ''' Total arbor length of the neuron '''
-        return _pg.get_object_state(self, variable="length")
+        return _pg.get_object_state(self, observable="length")
 
     def create_neurites(self, num_neurites=1, params=None, angles=None,
                         neurite_types=None, names=None):
@@ -498,10 +500,13 @@ class Neurite(object):
     @property
     def branches(self):
         ''' Return the branches composing the neurite '''
-        update = (self._update_time != _pg.get_kernel_status("time"))
-        if not self._has_branches or update:
-            self._update_branches()
-        return self._branches
+        try:
+            update = (self._update_time != _pg.get_kernel_status("time"))
+            if not self._has_branches or update:
+                self._update_branches()
+            return self._branches
+        except Exception as e:
+            raise RuntimeError(str(e))
 
     @property
     def empty(self):
@@ -565,7 +570,7 @@ class Neurite(object):
     def total_length(self):
         ''' Total length of the neurite '''
         return _pg.get_object_state(self._parent, level=str(self),
-                                    variable="length")
+                                    observable="length")
 
     @property
     def taper_rate(self):
@@ -646,9 +651,11 @@ class Branch(object):
 
     def __init__(self, neurite_path, parent=None, node_id=None):
         self.xy       = neurite_path[0] * um
-        self._r       = neurite_path[1] * um
-        self._theta   = neurite_path[2] * radian
-        self.diameter = neurite_path[3] * um
+        self._r       = (neurite_path[1] if neurite_path[1] is None
+                         else neurite_path[1]*um)
+        self._theta   = (neurite_path[2] if neurite_path[2] is None
+                         else neurite_path[2]*radian)
+        self.diameter = neurite_path[3]*um
         self.parent   = parent
         self.node_id  = node_id
 

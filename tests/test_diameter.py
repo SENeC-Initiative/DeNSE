@@ -22,6 +22,8 @@
 
 """ Testing diameter evolution for growth cones """
 
+import numpy as np
+
 import dense as ds
 from dense.units import *
 
@@ -42,7 +44,31 @@ def test_initial_diam():
 
 
 def test_final_diam():
-    # @todo
+    ds.reset_kernel()
+
+    diam_axon = 2.*um
+    diam_dend = 3.*um
+
+    taper = 0.005
+
+    # create one neuron
+    neuron = ds.create_neurons(num_neurites=2,
+                               params={"axon_diameter": diam_axon,
+                                       "dendrite_diameter": diam_dend,
+                                       "taper_rate": taper})
+
+    ds.simulate(100.*minute)
+
+    len_axon = neuron.axon.total_length
+    len_dend = neuron.dendrites["dendrite_1"].total_length
+
+    daxon_th = diam_axon - len_axon*taper
+    ddend_th = diam_dend - len_dend*taper
+
+    assert np.isclose(neuron.axon.branches[0].diameter.m, daxon_th.m)
+    assert np.isclose(
+        neuron.dendrites["dendrite_1"].branches[0].diameter.m,
+        ddend_th.m)
 
 
 if __name__ == "__main__":

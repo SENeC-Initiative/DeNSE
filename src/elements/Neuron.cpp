@@ -822,6 +822,23 @@ double Neuron::get_state(const std::string &observable) const
 }
 
 
+/**
+ * @brief Get the current value of one of the observables
+ */
+double Neuron::get_state(const std::string &observable,
+                         std::string &unit) const
+{
+    double value = 0.;
+
+    for (const auto &neurite : neurites_)
+    {
+        value += neurite.second->get_state(observable, unit);
+    }
+
+    return value;
+}
+
+
 void Neuron::get_status(statusMap &status) const
 {
     set_param(status, names::soma_radius, details.soma_radius, "micrometer");

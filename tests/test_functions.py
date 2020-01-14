@@ -40,10 +40,15 @@ def test_functions():
     ms = ds.get_models()
 
     pp = {"growth_cone_model": m, "position": (0., 0.)*um}
-    gn = ds.create_neurons(params=pp)
+    gn = ds.create_neurons(params=pp, num_neurites=2)
 
     n  = ds.get_neurons()
     ns = ds.get_object_properties(n)
+    ns = ds.get_object_properties(n, level="neurite")
+    ns = ds.get_object_properties(n, level="growth_cone")
+    ns = ds.get_object_state(n)
+    assert ds.get_object_state(n, "num_growth_cones") == 2
+    ns = ds.get_object_state(n, level="dendrite_1")
     si = ds.get_simulation_id()
 
     ds.simulate(20*hour)
@@ -51,5 +56,37 @@ def test_functions():
     ni = ds.get_neurons()
 
 
+def test_elements():
+    '''
+    Test members and methods of neuronal elements
+    '''
+    ds.reset_kernel()
+
+    neuron = ds.create_neurons(num_neurites=2)
+
+    # test neuron
+    neuron.get_properties()
+    neuron.get_state()
+
+    for obs in neuron.get_properties("observables"):
+        neuron.get_state(obs)
+
+    neuron.create_neurites()
+    neuron.delete_neurites("dendrite_1")
+
+    # test neurite
+    neuron.axon.get_properties()
+    neuron.axon.set_properties({"taper_rate": 0.1})
+    neuron.axon.get_state()
+    neuron.axon.get_state("angle")
+    neuron.dendrites["dendrite_2"].get_state()
+
+    assert neuron.axon.name == "axon"
+    assert str(neuron.axon) == "axon"
+    assert neuron.dendrites["dendrite_2"].name == "dendrite_2"
+    assert neuron == neuron.axon.neuron
+
+
 if __name__ == '__main__':
     test_functions()
+    test_elements()

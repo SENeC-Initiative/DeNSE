@@ -140,7 +140,7 @@ if do_plot:
 
 sensing_angles = np.linspace(0.1, 3., 10)
 
-speed     = 0.2
+speed     = 0.2 
 l_p       = 500.
 dist_max  = speed*simtime
 dist_step = 50.
@@ -185,7 +185,7 @@ def test_persistence():
 
         population = ds.elements.Population.from_gids(gids)
 
-        axons     = [neuron.axon.xy.transpose() for neuron in population]
+        axons = [neuron.axon.xy.m.transpose() for neuron in population]
 
         sequence  = []
         for i, points in enumerate(axons):

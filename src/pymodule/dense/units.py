@@ -20,10 +20,20 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import warnings
+
+
 import pint
-from pint import UnitRegistry, set_application_registry
+from pint import Quantity, UnitRegistry, set_application_registry
 
 import dense
+
+
+# hide warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    Quantity([])
 
 
 # check for the registry

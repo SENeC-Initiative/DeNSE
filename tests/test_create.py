@@ -20,7 +20,7 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Testing delete functions """
+""" Testing create functions """
 
 import dense as ds
 from dense.units import *

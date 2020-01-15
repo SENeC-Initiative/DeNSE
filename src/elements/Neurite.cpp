@@ -266,8 +266,8 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
 
             diameter -= taper_rate_ * gc.second->get_module();
 
-            // negative diameter can be reach at the end of the growth if step
-            // was too long
+            // negative diameter can be reach at the end of the growth
+            // if step was too long
             if (diameter < 0)
             {
                 BranchPtr bp      = gc.second->get_branch();
@@ -283,8 +283,8 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
                        gc.second->move_.speed, gc.second->local_avg_speed_,
                        substep);
 
-                // compute where min_diameter was reached and retract up to
-                // that position
+                // compute where min_diameter was reached and retract up
+                // to that position
                 double retract = (min_diameter_ - diameter) / taper_rate_;
                 printf("%s: length %f, retract %f\n", get_name().c_str(),
                        b_length, retract);

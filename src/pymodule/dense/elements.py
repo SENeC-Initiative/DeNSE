@@ -26,8 +26,10 @@ from logging import warnings as _warn
 from collections import deque as _deque
 
 import numpy as _np
+
 from . import _pygrowth as _pg
 from ._helpers import nonstring_container as _nsc
+from .units import *
 
 
 __all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
@@ -43,6 +45,8 @@ class Neuron(object):
         self._axon       = None
         self._dendrites  = {}
         self.__gid       = gid
+
+    # GID (integer) functions
 
     def __int__(self):
         return self.__gid
@@ -62,6 +66,8 @@ class Neuron(object):
     def __ge__(self, other):
         return int(self) >= int(other)
 
+    # representation functions
+
     def __str__(self):
         return str(self.__gid)
 
@@ -70,6 +76,8 @@ class Neuron(object):
 
     def _repr_pretty_(self, p, cycle):
         p.text("Neuron({})".format(self.__gid))
+
+    # attributes
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
@@ -131,7 +139,7 @@ class Neuron(object):
     @property
     def total_length(self):
         ''' Total arbor length of the neuron '''
-        return _pg.get_object_state(self, variable="length")
+        return _pg.get_object_state(self, observable="length")
 
     def create_neurites(self, num_neurites=1, params=None, angles=None,
                         neurite_types=None, names=None):
@@ -350,8 +358,8 @@ class Neuron(object):
                         diameter = (diameter for _ in range(len(branch.xy)))
 
                     # subsample positions and diameters
-                    subnodes = branch.xy[::resolution]
-                    subdiam  = diameter[::resolution]
+                    subnodes = branch.xy[::resolution].m
+                    subdiam  = diameter[::resolution].m
 
                     for pos, diam in zip(subnodes, subdiam):
                         p = neuroml.Point3DWithDiam(
@@ -492,10 +500,13 @@ class Neurite(object):
     @property
     def branches(self):
         ''' Return the branches composing the neurite '''
-        update = (self._update_time != _pg.get_kernel_status("time"))
-        if not self._has_branches or update:
-            self._update_branches()
-        return self._branches
+        try:
+            update = (self._update_time != _pg.get_kernel_status("time"))
+            if not self._has_branches or update:
+                self._update_branches()
+            return self._branches
+        except Exception as e:
+            raise RuntimeError(str(e))
 
     @property
     def empty(self):
@@ -514,11 +525,13 @@ class Neurite(object):
     def xy(self):
         ''' Points constituting the different segments along the neurite '''
         try:
-            return _np.concatenate([branch.xy for branch in self.branches])
+            arr = _np.concatenate(
+                [branch.xy.m for branch in self.branches])*um
+            return arr
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([[]])*um
 
     @property
     def theta(self):
@@ -559,7 +572,7 @@ class Neurite(object):
     def total_length(self):
         ''' Total length of the neurite '''
         return _pg.get_object_state(self._parent, level=str(self),
-                                    variable="length")
+                                    observable="length")
 
     @property
     def taper_rate(self):
@@ -612,7 +625,8 @@ class Neurite(object):
         :func:`~dense.elements.Neuron.set_properties`,
         :func:`~dense.elements.Neurite.get_properties`.
         '''
-        return _pg.set_neurite_properties(self._parent, self, params=params)
+        return _pg.set_neurite_properties(
+            self._parent, self, params=params)
 
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
@@ -623,7 +637,8 @@ class Neurite(object):
 
         for p, d, parent, n in zip(points, diameters, parents, nodes):
             data = (_np.array(p).T, None, None, d)
-            self._branches.append(Branch(data, parent=parent, node_id=n))
+            self._branches.append(
+                Branch(data, parent=parent, node_id=n))
 
         self._has_branches = True
         self._update_time  = _pg.get_kernel_status("time")
@@ -637,10 +652,12 @@ class Branch(object):
     '''
 
     def __init__(self, neurite_path, parent=None, node_id=None):
-        self.xy       = neurite_path[0]
-        self._r       = neurite_path[1]
-        self._theta   = neurite_path[2]
-        self.diameter = 2*neurite_path[3]
+        self.xy       = neurite_path[0] * um
+        self._r       = (neurite_path[1] if neurite_path[1] is None
+                         else neurite_path[1]*um)
+        self._theta   = (neurite_path[2] if neurite_path[2] is None
+                         else neurite_path[2]*radian)
+        self.diameter = neurite_path[3]*um
         self.parent   = parent
         self.node_id  = node_id
 
@@ -650,11 +667,12 @@ class Branch(object):
         Norm of each segment in the Branch.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._r
         else:
-            assert (isinstance(self._r, _np.ndarray)), \
+            assert (isinstance(self._r.m, _np.ndarray)), \
                 "branch's norm is not an array, there is a mistake"
             return self._r
 
@@ -664,11 +682,12 @@ class Branch(object):
         Angle direction of each segment.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._theta
         else:
-            assert (isinstance(self._theta, _np.ndarray)), \
+            assert (isinstance(self._theta.m, _np.ndarray)), \
                 "branch's angles is not an array, there is a mistake"
             return self._theta
 

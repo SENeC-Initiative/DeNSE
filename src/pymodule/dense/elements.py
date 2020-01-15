@@ -525,11 +525,13 @@ class Neurite(object):
     def xy(self):
         ''' Points constituting the different segments along the neurite '''
         try:
-            return _np.concatenate([branch.xy for branch in self.branches])
+            arr = _np.concatenate(
+                [branch.xy.m for branch in self.branches])*um
+            return arr
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([[]])*um
 
     @property
     def theta(self):

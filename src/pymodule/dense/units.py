@@ -24,16 +24,9 @@ import warnings
 
 
 import pint
-from pint import Quantity, UnitRegistry, set_application_registry
+from pint import UnitRegistry, set_application_registry
 
 import dense
-
-
-# hide warnings
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    Quantity([])
 
 
 # check for the registry
@@ -61,6 +54,14 @@ class FormattedQuantity(ureg.Quantity):
 
 ureg.Quantity = FormattedQuantity
 Q_   = ureg.Quantity
+
+
+# hide warnings (use ureg.Quantity for Py2 compatibility)
+# when sunsetting Py2, switch to pint.Quantity
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    Q_([])
 
 
 # length

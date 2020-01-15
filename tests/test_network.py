@@ -22,15 +22,13 @@
 
 """ Testing network generation """
 
-# import matplotlib
-# matplotlib.use("Qt5Agg")
-
 import numpy as np
-
-np.random.seed(0)
 
 import dense as ds
 from dense.units import *
+
+
+np.random.seed(0)
 
 
 def test_2neuron_network(plot=False):
@@ -74,6 +72,8 @@ def test_network(plot=False):
         "resolution": 10.*minute, "num_local_threads": 6,
     })
 
+    initial_state = np.random.get_state()
+
     num_neurons = 100
     positions   = np.random.uniform(-200, 200, (num_neurons, 2))*um
     params      = {
@@ -90,7 +90,9 @@ def test_network(plot=False):
     if plot:
         ds.plot.plot_neurons(neurons, show_neuron_id=True)
 
-    assert net.node_nb() == num_neurons, "Incorrect node number in the network"
+    assert net.node_nb() == num_neurons, \
+        "Incorrect node number in the network; failed with state " + \
+        str(initial_state)
 
 
 if __name__ == "__main__":

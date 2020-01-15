@@ -25,12 +25,8 @@
 import hashlib
 import json
 
-from .. import _pygrowth as _pg
-from ..elements import Neuron as _Neuron
-from . import dataIO_swc as _dataIO_swc
-from .dataIO_swc import *
-from .dataIO import (save_json_info, NeuronsFromSimulation,
-                     SimulationsFromFolder, load_swc, save_to_neuroml)
+from .data_swc import load_swc, save_to_swc
+from .dataIO import (save_json_info, save_to_neuroml)
 
 __all__ = [
     "generate_hash_id",
@@ -38,11 +34,7 @@ __all__ = [
     "save_json_info",
     "save_to_neuroml",
     "save_to_swc",
-    # "NeuronsFromSimulation",
-    # "SimulationsFromFolder",
 ]
-
-__all__.extend(_dataIO_swc.__all__)
 
 
 # ---------- #
@@ -64,22 +56,3 @@ def _hash_dict(_dict):
     sha.update(str(json.dumps(_dict, sort_keys =True)).encode('utf-8'))
     hash_name = sha.hexdigest()
     return hash_name[:16]
-
-
-def save_to_swc(filename, gid=None, resolution=10):
-    '''
-    Save neurons to SWC file.
-
-    Parameters
-    ----------
-    filename : str
-        Name of the SWC to write.
-    gid : int or list of ints
-        Neurons to save.
-    resolution : int, optional (default: 10)
-        Coarse-graining factor of the structure: only one point every
-        `resolution` will be kept.
-    '''
-    if isinstance(gid, (int, _Neuron)):
-        gid = [gid]
-    _pg._neuron_to_swc(filename=filename, gid=gid, resolution=resolution)

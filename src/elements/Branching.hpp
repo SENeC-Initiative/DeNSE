@@ -68,6 +68,7 @@ class Branching
     bool use_uniform_branching_;
     Event next_uniform_event_;
     double uniform_branching_rate_;
+    double latbranch_dist_;
 
     // variables for non-uniform lateral branching
     bool use_flpl_branching_;
@@ -85,11 +86,10 @@ class Branching
     Branching(const Branching &cpy);
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
-    void set_branching_event(Event &ev, signed char ev_type,
-                             double duration);
+    void set_branching_event(Event &ev, signed char ev_type, double duration);
     bool branching_event(mtPtr rnd_engine, const Event &ev);
-    void update_splitting_cones(TNodePtr branching_cone,
-                                GCPtr second_cone, NodePtr new_node);
+    void update_splitting_cones(TNodePtr branching_cone, GCPtr second_cone,
+                                NodePtr new_node);
 
     // van Pelt branching functions
     bool vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
@@ -99,8 +99,8 @@ class Branching
 
     // uniform split functions
     bool usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
-                          stype &branching_point, mtPtr rnd_engine,
-                          GCPtr &second_cone);
+                           stype &branching_point, mtPtr rnd_engine,
+                           GCPtr &second_cone);
     void compute_usplit_event(mtPtr rnd_engine);
 
     // uniform branching functions
@@ -116,7 +116,7 @@ class Branching
     // critical_resource functions
     bool res_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                         stype &branching_point, mtPtr rnd_engine,
-                        GCPtr& second_cone, const Event &ev);
+                        GCPtr &second_cone, const Event &ev);
 
     void initialize_next_event(mtPtr rnd_engine);
 

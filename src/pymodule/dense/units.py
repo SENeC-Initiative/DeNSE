@@ -20,6 +20,9 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import warnings
+
+
 import pint
 from pint import UnitRegistry, set_application_registry
 
@@ -53,6 +56,14 @@ ureg.Quantity = FormattedQuantity
 Q_   = ureg.Quantity
 
 
+# hide warnings (use ureg.Quantity for Py2 compatibility)
+# when sunsetting Py2, switch to pint.Quantity
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    Q_([])
+
+
 # length
 
 m   = ureg.meter
@@ -82,6 +93,7 @@ nL = ureg.nL
 cps = ureg.count / ureg.second
 cpm = ureg.count / ureg.minute
 cph = ureg.count / ureg.hour
+cpd = ureg.count / ureg.day
 
 
 # concentration

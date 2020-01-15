@@ -22,8 +22,8 @@
 #ifndef DIRSELMODEL_H
 #define DIRSELMODEL_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 // lib includes
 #include "elements_types.hpp"
@@ -74,31 +74,38 @@ class DirectionSelectModel
     std::vector<std::string> observables_;
 
   public:
-    DirectionSelectModel() = delete;
-    DirectionSelectModel(const DirectionSelectModel& copy) = delete;
+    DirectionSelectModel()                                 = delete;
+    DirectionSelectModel(const DirectionSelectModel &copy) = delete;
 
     DirectionSelectModel(GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(GCPtr(gc)), neurite_ptr_(neurite) {};
+        : gc_weakptr_(GCPtr(gc))
+        , neurite_ptr_(neurite){};
 
-    DirectionSelectModel(const DirectionSelectModel& copy, GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
+    DirectionSelectModel(const DirectionSelectModel &copy, GCPtr gc,
+                         NeuritePtr neurite)
+        : gc_weakptr_(gc)
+        , neurite_ptr_(neurite)
+        , observables_(copy.observables_){};
 
-    virtual void
-    select_direction(
-        const std::vector<double> &directions_weights, const Filopodia &filo,
-        mtPtr rnd_engine, double total_proba, bool interacting,
-        double old_angle, double &substep, double &step_length,
-        double &new_angle, bool &stopped, stype &default_direction) = 0;
+    virtual void select_direction(const std::vector<double> &directions_weights,
+                                  const Filopodia &filo, mtPtr rnd_engine,
+                                  double total_proba, bool interacting,
+                                  double old_angle, double &substep,
+                                  double &step_length, double &new_angle,
+                                  bool &stopped, stype &default_direction) = 0;
 
     void get_observables(std::vector<std::string> &obs) const
     {
         obs.insert(obs.end(), observables_.begin(), observables_.end());
     }
 
-    virtual void prepare_for_split() {};
-    virtual void after_split() {};
-    virtual void kernel_updated() {};
-    virtual double get_state(const std::string& observable) const { return std::nan(""); };
+    virtual void prepare_for_split(){};
+    virtual void after_split(){};
+    virtual void kernel_updated(){};
+    virtual double get_state(const std::string &observable) const
+    {
+        return std::nan("");
+    };
     virtual void set_status(const statusMap &status) = 0;
     virtual void get_status(statusMap &status) const = 0;
 };

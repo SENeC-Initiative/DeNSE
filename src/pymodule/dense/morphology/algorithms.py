@@ -216,7 +216,12 @@ def tree_asymmetry(neurite, neuron=None):
         GID of the neuron if the neurite was passed as a str and not as an
         object.
     '''
-    import neurom as nm
+    try:
+        import neurom as nm
+    except ImportError:
+        raise ImportError("This function requires the `neurom` package "
+                          "to work, please install it through, e.g. "
+                          "`pip install --user neurom`.")
 
     try:
         tree = neurite.get_tree().neurom_tree()

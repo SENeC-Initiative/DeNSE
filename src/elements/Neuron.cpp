@@ -75,7 +75,7 @@ Neuron::Neuron(stype gid)
     , normal_(0., 1.)
 {
     // initialize the soma
-    soma_          = std::make_shared<BaseNode>();
+    soma_ = std::make_shared<BaseNode>();
 }
 
 
@@ -111,15 +111,24 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     get_param(status, names::num_neurites, num_neurites);
     get_param(status, names::growth_cone_model, growth_cone_model_);
     get_param(status, names::polarization_strength, polarization_strength_);
-    get_param(status, names::axon_polarization_weight, axon_polarization_weight_);
+    get_param(status, names::axon_polarization_weight,
+              axon_polarization_weight_);
     get_param(status, names::has_axon, has_axon_);
 
     // send the soma to the space_manager
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
 
-    kernel().space_manager.add_object(
-        get_position(), get_position(), 2*details.soma_radius, 0., 0.,
-        std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+    try
+    {
+        kernel().space_manager.add_object(
+            get_position(), get_position(), 2 * details.soma_radius, 0., 0.,
+            std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+            std::runtime_error("Passed from `Neuron::init_status`."));
+    }
 
     // prepare the neurites
     std::unordered_map<std::string, double> nas;
@@ -129,13 +138,14 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
         if (nas.size() != num_neurites)
         {
             throw InvalidParameter("`neurite_angles` must contain one entry "
-                                   "per neurite.",  __FUNCTION__, __FILE__, __LINE__);
+                                   "per neurite.",
+                                   __FUNCTION__, __FILE__, __LINE__);
         }
         if (has_axon_ and nas.find("axon") == nas.end())
         {
             throw InvalidParameter("`neurite_angles` does not contain an entry "
-                                   "for 'axon'.",  __FUNCTION__, __FILE__,
-                                   __LINE__);
+                                   "for 'axon'.",
+                                   __FUNCTION__, __FILE__, __LINE__);
         }
 
         neurite_angles_ = nas;
@@ -207,9 +217,9 @@ void Neuron::init_status(const statusMap &status, const statusMap &astatus,
     {
         int subtract = has_axon_ ? 1 : 0;
 
-        for (int i=0; i < num_neurites - subtract; i++)
+        for (int i = 0; i < num_neurites - subtract; i++)
         {
-            neurite_names.push_back("dendrite_" + std::to_string(i+1));
+            neurite_names.push_back("dendrite_" + std::to_string(i + 1));
         }
     }
     else
@@ -297,7 +307,15 @@ void Neuron::grow(mtPtr rnd_engine, stype current_step, double substep)
     {
         if (neurite.second->active_)
         {
-            neurite.second->grow(rnd_engine, current_step, substep);
+            try
+            {
+                neurite.second->grow(rnd_engine, current_step, substep);
+            }
+            catch (...)
+            {
+                std::throw_with_nested(
+                    std::runtime_error("Passed from `Neuron::grow`."));
+            }
         }
     }
 }
@@ -314,7 +332,15 @@ bool Neuron::branch(mtPtr rnd_engine, const Event &ev)
     std::string name_neurite = std::get<edata::NEURITE>(ev);
     NeuritePtr neurite       = neurites_[name_neurite];
 
-    return neurite->branching_model_->branching_event(rnd_engine, ev);
+    try
+    {
+        return neurite->branching_model_->branching_event(rnd_engine, ev);
+    }
+    catch (...)
+    {
+        std::throw_with_nested(
+            std::runtime_error("Passed from `Neuron::branch`."));
+    }
 }
 
 
@@ -357,36 +383,36 @@ std::string Neuron::new_neurite(const std::string &name,
     {
         if (neurite_angles_.find(name) != neurite_angles_.end())
         {
-            angle = neurite_angles_[name] + rnd_angle_;
+            angle           = neurite_angles_[name] + rnd_angle_;
             BPoint position = get_position();
             cone_start_point =
                 BPoint(position.x() + details.soma_radius * cos(angle),
-                      position.y() + details.soma_radius * sin(angle));
+                       position.y() + details.soma_radius * sin(angle));
 
-            contained =
-                kernel().space_manager.env_contains(cone_start_point);
-            
+            contained = kernel().space_manager.env_contains(cone_start_point);
+
             int num_test = 0;
 
             while (not contained and num_test < 1000)
             {
-                angle         += sgn(uniform_(*(rnd_engine).get()) - 0.5)*0.1;
-                axon_angle_    = angle;
+                angle += sgn(uniform_(*(rnd_engine).get()) - 0.5) * 0.1;
+                axon_angle_             = angle;
                 neurite_angles_["axon"] = axon_angle_;
                 cone_start_point =
                     BPoint(position.x() + details.soma_radius * cos(angle),
-                          position.y() + details.soma_radius * sin(angle));
+                           position.y() + details.soma_radius * sin(angle));
                 contained =
                     kernel().space_manager.env_contains(cone_start_point);
-                
+
                 num_test++;
             }
 
             if (num_test == 1000)
             {
-                throw std::runtime_error("Could not initialize neurite, please "
-                                         "that your neuron does not lay outside "
-                                         "of the environment.");
+                throw std::runtime_error(
+                    "Could not initialize neurite, please "
+                    "that your neuron does not lay outside "
+                    "of the environment.");
             }
         }
         else
@@ -401,19 +427,20 @@ std::string Neuron::new_neurite(const std::string &name,
                 {
                     angle = uniform_(*(rnd_engine).get()) * 2 * M_PI;
                 }
-                axon_angle_    = angle;
+                axon_angle_             = angle;
                 neurite_angles_["axon"] = axon_angle_;
-                BPoint position = get_position();
+                BPoint position         = get_position();
                 cone_start_point =
                     BPoint(position.x() + details.soma_radius * cos(angle),
-                          position.y() + details.soma_radius * sin(angle));
+                           position.y() + details.soma_radius * sin(angle));
                 contained =
                     kernel().space_manager.env_contains(cone_start_point);
                 if (axon_angle_set_ and not contained)
                 {
-                    throw InvalidParameter("Invalid axon angle for neuron: growth "
-                                           "cone is outside the environment.",
-                                           __FUNCTION__, __FILE__, __LINE__);
+                    throw InvalidParameter(
+                        "Invalid axon angle for neuron: growth "
+                        "cone is outside the environment.",
+                        __FUNCTION__, __FILE__, __LINE__);
                 }
             } while (not contained);
         }
@@ -426,24 +453,23 @@ std::string Neuron::new_neurite(const std::string &name,
     {
         if (neurite_angles_.find(name) != neurite_angles_.end())
         {
-            angle = neurite_angles_[name] + rnd_angle_;
+            angle           = neurite_angles_[name] + rnd_angle_;
             BPoint position = get_position();
             cone_start_point =
                 BPoint(position.x() + details.soma_radius * cos(angle),
-                      position.y() + details.soma_radius * sin(angle));
+                       position.y() + details.soma_radius * sin(angle));
 
-            contained =
-                kernel().space_manager.env_contains(cone_start_point);
+            contained = kernel().space_manager.env_contains(cone_start_point);
 
             char sgn = uniform_(*(rnd_engine).get()) > 0.5 ? 1 : -1;
 
             while (not contained)
             {
-                angle                   += sgn*0.1;
-                neurite_angles_[name]    = angle;
+                angle += sgn * 0.1;
+                neurite_angles_[name] = angle;
                 cone_start_point =
                     BPoint(position.x() + details.soma_radius * cos(angle),
-                          position.y() + details.soma_radius * sin(angle));
+                           position.y() + details.soma_radius * sin(angle));
                 contained =
                     kernel().space_manager.env_contains(cone_start_point);
             }
@@ -468,31 +494,33 @@ std::string Neuron::new_neurite(const std::string &name,
                 if (angles.size() == 1)
                 {
                     polarization_angle = angles[0];
-                    largest_dtheta     = 2*M_PI;
+                    largest_dtheta     = 2 * M_PI;
                 }
                 else
                 {
-                    for (unsigned int i=0; i < angles.size(); i++)
+                    for (unsigned int i = 0; i < angles.size(); i++)
                     {
                         if (i != angles.size() - 1)
                         {
-                            other_angle = angles[i+1];
+                            other_angle = angles[i + 1];
                         }
                         else
                         {
-                            other_angle = angles[0] + 2*M_PI;
+                            other_angle = angles[0] + 2 * M_PI;
                         }
 
                         dtheta = std::abs(other_angle - angles[i]);
-                        // Be more explicit in this function: the axon has different direction of resting neurites,
-                        // which is the weigth scale of axon polarization weigtV
-                        if (has_axon_ and (
-                                std::abs(other_angle - neurite_angles_["axon"])
-                                < 0.0001 or std::abs(angles[i] -
-                                neurite_angles_["axon"]) < 0.0001))
+                        // Be more explicit in this function: the axon has
+                        // different direction of resting neurites, which is the
+                        // weigth scale of axon polarization weigtV
+                        if (has_axon_ and
+                            (std::abs(other_angle - neurite_angles_["axon"]) <
+                                 0.0001 or
+                             std::abs(angles[i] - neurite_angles_["axon"]) <
+                                 0.0001))
                         {
-                            if (dtheta /(1 + axon_polarization_weight_)
-                                > largest_dtheta)
+                            if (dtheta / (1 + axon_polarization_weight_) >
+                                largest_dtheta)
                             {
                                 polarization_angle = angles[i];
                                 largest_dtheta     = dtheta;
@@ -506,21 +534,21 @@ std::string Neuron::new_neurite(const std::string &name,
                     }
                 }
 
-                angle = fmod(polarization_angle +
-                             largest_dtheta*
-                                (0.5 + (uniform_(*(rnd_engine).get()) - 0.5)
-                                 / polarization_strength_),
-                             2*M_PI);
+                angle =
+                    fmod(polarization_angle +
+                             largest_dtheta *
+                                 (0.5 + (uniform_(*(rnd_engine).get()) - 0.5) /
+                                            polarization_strength_),
+                         2 * M_PI);
 
                 neurite_angles_[name] = angle;
 
                 BPoint position = get_position();
                 cone_start_point =
                     BPoint(position.x() + details.soma_radius * cos(angle),
-                          position.y() + details.soma_radius * sin(angle));
+                           position.y() + details.soma_radius * sin(angle));
 
-            } while (
-                not kernel().space_manager.env_contains(cone_start_point));
+            } while (not kernel().space_manager.env_contains(cone_start_point));
         }
 
         neurites_[name]->init_first_node(soma_, get_position(), name,
@@ -533,17 +561,14 @@ std::string Neuron::new_neurite(const std::string &name,
 
     // eventually create the growth cone, cloning the default model.
     neurites_[name]->growth_cone_model_ = gc_model->get_model_name();
-    GCPtr first_gc = gc_model->clone(neurites_[name]->get_first_node(),
-                                     neurites_[name], details.soma_radius,
-                                     cone_start_point, angle);
+    GCPtr first_gc =
+        gc_model->clone(neurites_[name]->get_first_node(), neurites_[name],
+                        details.soma_radius, cone_start_point, angle);
 
     neurites_[name]->add_cone(first_gc);
 
     // set initial and current diameter
-    first_gc->TopologicalNode::set_diameter(
-        neurites_[name]->get_first_node()->biology_.diameter);
-    first_gc->set_diameter(
-        neurites_[name]->get_first_node()->biology_.diameter);
+    first_gc->set_diameter(neurites_[name]->get_first_node()->diameter_);
 
     // then reset the branch with the right initial position
     first_gc->set_first_point(cone_start_point, details.soma_radius);
@@ -595,7 +620,8 @@ void Neuron::delete_neurites(const std::vector<std::string> &names)
             }
             else
             {
-                throw std::runtime_error("Neurite '" + neurite_name + "' does "
+                throw std::runtime_error("Neurite '" + neurite_name +
+                                         "' does "
                                          "not exist.");
             }
         }
@@ -628,8 +654,8 @@ void Neuron::set_status(const statusMap &status)
         if (has_neurites)
         {
             throw InvalidArg("Cannot change the soma size for neuron " +
-                             std::to_string(gid_) +
-                             " after neurites have been created.",
+                                 std::to_string(gid_) +
+                                 " after neurites have been created.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -644,8 +670,8 @@ void Neuron::set_status(const statusMap &status)
         if (sim_started)
         {
             throw InvalidArg("Cannot change the axon diameter for neuron " +
-                             std::to_string(gid_) +
-                             " after simulation start.",
+                                 std::to_string(gid_) +
+                                 " after simulation start.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -660,8 +686,8 @@ void Neuron::set_status(const statusMap &status)
         if (sim_started)
         {
             throw InvalidArg("Cannot change the axon diameter for neuron " +
-                             std::to_string(gid_) +
-                             " after simulation start.",
+                                 std::to_string(gid_) +
+                                 " after simulation start.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -678,8 +704,8 @@ void Neuron::set_status(const statusMap &status)
         if (has_neurites)
         {
             throw InvalidArg("Cannot change the growth cone model for neuron " +
-                             std::to_string(gid_) +
-                             " after neurites have been created.",
+                                 std::to_string(gid_) +
+                                 " after neurites have been created.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -690,18 +716,19 @@ void Neuron::set_status(const statusMap &status)
 
     get_param(status, names::random_rotation_angles, random_rotation_angles_);
     get_param(status, names::polarization_strength, polarization_strength_);
-    get_param(status, names::axon_polarization_weight, axon_polarization_weight_);
+    get_param(status, names::axon_polarization_weight,
+              axon_polarization_weight_);
 
     auto nit = neurites_.find("axon");
     baa      = get_param(status, names::axon_angle, aa);
-    baa     *= (aa != axon_angle_);
+    baa *= (aa != axon_angle_);
     if (baa)
     {
-        if (nit !=neurites_.end())
+        if (nit != neurites_.end())
         {
             throw InvalidArg("Cannot change the axon angle for neuron " +
-                             std::to_string(gid_) +
-                             " after axon has been created.",
+                                 std::to_string(gid_) +
+                                 " after axon has been created.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -720,11 +747,12 @@ void Neuron::set_status(const statusMap &status)
 
         BPoint p = BPoint(x, y);
 
-        if (has_neurites and not kernel().space_manager.is_close(p, get_position()))
+        if (has_neurites and
+            not kernel().space_manager.is_close(p, get_position()))
         {
             throw InvalidArg("Cannot change the position of neuron " +
-                             std::to_string(gid_) +
-                             " after neurites have been created.",
+                                 std::to_string(gid_) +
+                                 " after neurites have been created.",
                              __FUNCTION__, __FILE__, __LINE__);
         }
         else
@@ -781,7 +809,7 @@ void Neuron::set_neurite_status(const std::string &neurite,
 /**
  * @brief Get the current value of one of the observables
  */
-double Neuron::get_state(const std::string& observable) const
+double Neuron::get_state(const std::string &observable) const
 {
     double value = 0.;
 
@@ -794,19 +822,40 @@ double Neuron::get_state(const std::string& observable) const
 }
 
 
+/**
+ * @brief Get the current value of one of the observables
+ */
+double Neuron::get_state(const std::string &observable,
+                         std::string &unit) const
+{
+    double value = 0.;
+
+    for (const auto &neurite : neurites_)
+    {
+        value += neurite.second->get_state(observable, unit);
+    }
+
+    return value;
+}
+
+
 void Neuron::get_status(statusMap &status) const
 {
     set_param(status, names::soma_radius, details.soma_radius, "micrometer");
-    set_param(status, names::axon_diameter, details.axon_diameter, "micrometer");
-    set_param(status, names::dendrite_diameter, details.dendrite_diameter, "micrometer");
+    set_param(status, names::axon_diameter, details.axon_diameter,
+              "micrometer");
+    set_param(status, names::dendrite_diameter, details.dendrite_diameter,
+              "micrometer");
     set_param(status, names::observables, observables_, "");
     set_param(status, names::axon_angle, axon_angle_, "rad");
     set_param(status, names::description, description_, "");
     set_param(status, names::has_axon, has_axon_, "");
     set_param(status, names::polarization_strength, polarization_strength_, "");
-    set_param(status, names::axon_polarization_weight, axon_polarization_weight_, "");
+    set_param(status, names::axon_polarization_weight,
+              axon_polarization_weight_, "");
     set_param(status, names::neurite_angles, neurite_angles_, "rad");
-    set_param(status, names::random_rotation_angles, random_rotation_angles_, "");
+    set_param(status, names::random_rotation_angles, random_rotation_angles_,
+              "");
     set_param(status, names::growth_cone_model, growth_cone_model_, "");
 
     // set position
@@ -847,8 +896,8 @@ void Neuron::get_neurite_status(statusMap &status, std::string neurite,
         }
         else
         {
-            throw InvalidArg("Unknown neurite `" + neurite + "`.",
-                             __FUNCTION__, __FILE__, __LINE__);
+            throw InvalidArg("Unknown neurite `" + neurite + "`.", __FUNCTION__,
+                             __FILE__, __LINE__);
         }
     }
     else
@@ -888,7 +937,7 @@ stype Neuron::get_gid() const { return gid_; }
 bool Neuron::has_axon() const { return has_axon_; };
 
 
-bool Neuron::is_neurite(const std::string& neurite)
+bool Neuron::is_neurite(const std::string &neurite)
 {
     return neurites_.find(neurite) != neurites_.end();
 }

@@ -125,7 +125,7 @@ void ActinWave::initialize_AW_distributions()
 
 void ActinWave::get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const
 {
-    stype id_x     = targetNode_->get_branch()->size();
+    stype id_x      = targetNode_->get_branch()->size();
     double distance = targetNode_->get_branch()->at(id_x)[2];
     while (distance <= distanceToTarget_)
     {
@@ -133,9 +133,9 @@ void ActinWave::get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const
         distance = targetNode_->get_branch()->at(id_x)[2];
     }
     BPoint xy_0 = BPoint(targetNode_->get_branch()->at(id_x)[0],
-                       targetNode_->get_branch()->at(id_x)[1]);
+                         targetNode_->get_branch()->at(id_x)[1]);
     BPoint xy_1 = BPoint(targetNode_->get_branch()->at(id_x + 1)[0],
-                       targetNode_->get_branch()->at(id_x + 1)[1]);
+                         targetNode_->get_branch()->at(id_x + 1)[1]);
     double direction;
     if (xy_1.y() - xy_0.y())
     {
@@ -146,7 +146,7 @@ void ActinWave::get_geometry(BPoint &xy, double &angle, mtPtr rnd_engine) const
         direction = M_PI / 2.;
     }
     xy    = BPoint(targetNode_->get_branch()->at(id_x)[0],
-               targetNode_->get_branch()->at(id_x)[1]);
+                targetNode_->get_branch()->at(id_x)[1]);
     angle = get_angle(rnd_engine, direction);
 }
 

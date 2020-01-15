@@ -40,7 +40,8 @@ class GFluctExtensionModel : public virtual ExtensionModel
   public:
     GFluctExtensionModel(GCPtr gc, NeuritePtr neurite);
     GFluctExtensionModel(const GFluctExtensionModel &copy) = delete;
-    GFluctExtensionModel(const GFluctExtensionModel &copy, GCPtr gc, NeuritePtr neurite);
+    GFluctExtensionModel(const GFluctExtensionModel &copy, GCPtr gc,
+                         NeuritePtr neurite);
 
     double compute_speed(mtPtr rnd_engine, double substep) override final;
 

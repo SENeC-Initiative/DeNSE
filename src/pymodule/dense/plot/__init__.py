@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# test_create.py
+# __init__.py
 #
 # This file is part of DeNSE.
 #
@@ -19,31 +19,18 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Plotting module
+===============
+"""
 
-""" Testing create functions """
-
-import dense as ds
-from dense.units import *
-
-
-def test_create():
-    '''
-    Create neurons and neurites
-    '''
-    ds.reset_kernel()
-
-    # create one neuron
-    neuron = ds.create_neurons(num_neurites=1)
-
-    # create a new neurite
-    neuron.create_neurites(names="new_dendrite")
-
-    assert len(neuron.neurites) == 2
-    assert "new_dendrite" in neuron.neurites
-
-    neuron = ds.create_neurons()
-    assert not neuron.neurites
+from .plot_recording import plot_recording
+from .plot_structures import plot_neurons, plot_environment, plot_dendrogram
 
 
-if __name__ == "__main__":
-    test_create()
+__all__ = [
+    "plot_dendrogram",
+    "plot_environment",
+    "plot_neurons",
+    "plot_recording",
+]

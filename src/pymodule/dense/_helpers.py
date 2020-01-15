@@ -240,9 +240,9 @@ def get_area(area_info, culture):
     return area
 
 
-# --------- #
-# Container #
-# --------- #
+# ------------ #
+# Type testing #
+# ------------ #
 
 def nonstring_container(obj):
     '''
@@ -250,16 +250,25 @@ def nonstring_container(obj):
     '''
     if not isinstance(obj, _container):
         return False
+
     try:
         if isinstance(obj, unicode):
             return False
     except NameError:
         pass
+    
     if isinstance(obj, bytes):
         return False
+
     if isinstance(obj, str):
         return False
+
     return True
+
+
+def is_integer(obj):
+    ''' Return whether the object is an integer '''
+    return isinstance(obj, (int, np.integer))
 
 
 # ----- #

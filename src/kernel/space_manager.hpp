@@ -63,21 +63,21 @@ class SpaceManager : public ManagerInterface
     void set_status(const statusMap &config);
     void get_status(statusMap &status) const;
 
-    void add_object(BMultiPolygonPtr geom, const ObjectInfo& info, int omp_id);
+    void add_object(BMultiPolygonPtr geom, const ObjectInfo &info, int omp_id);
     void add_object(const BPoint &start, const BPoint &stop, double diam,
-                    double length, double taper, const ObjectInfo& info,
+                    double length, double taper, const ObjectInfo &info,
                     BranchPtr b, int omp_id);
     void update_objects_branching(TNodePtr old_node, NodePtr new_node,
                                   stype branching_point, stype neuron,
                                   const std::string &neurite, int omp_id);
-    void remove_object(const BBox &box, const ObjectInfo& info, int omp_id);
+    void remove_object(const BBox &box, const ObjectInfo &info, int omp_id);
     void get_objects_in_range(const BPoint &p, double radius,
-                              std::vector<ObjectInfo>& v) const;
+                              std::vector<ObjectInfo> &v) const;
     void get_intersected_objects(const BPoint &start, const BPoint &stop,
-                                 std::vector<ObjectInfo>& v) const;
+                                 std::vector<ObjectInfo> &v) const;
     void get_intersected_objects(const BPoint &start, const BPoint &stop,
-                                 std::vector<ObjectInfo>& vi,
-                                 std::vector<BPolygonPtr>& vn) const;
+                                 std::vector<ObjectInfo> &vi,
+                                 std::vector<BPolygonPtr> &vn) const;
     void update_rtree();
 
     inline BLineString line_from_points(const BPoint &pointA,
@@ -87,14 +87,14 @@ class SpaceManager : public ManagerInterface
                    const std::string &neurite, double radius,
                    BPolygon &polygon) const;
 
-    inline bool is_close(const BPoint &p1, const BPoint& p2) const;
+    inline bool is_close(const BPoint &p1, const BPoint &p2) const;
 
     double get_wall_distance(const BPoint &position, int omp_id) const;
 
-    bool intersects(const std::string &object_name, const BLineString& line) const;
-    bool intersects(const BPolygon& object, const BLineString& line) const;
-    void get_intersections(const BLineString &line,
-                           const BPolygon &geometry,
+    bool intersects(const std::string &object_name,
+                    const BLineString &line) const;
+    bool intersects(const BPolygon &object, const BLineString &line) const;
+    void get_intersections(const BLineString &line, const BPolygon &geometry,
                            BMultiPoint &p) const;
     void get_intersections(const BLineString &line,
                            const BMultiLineString &geometry,
@@ -110,45 +110,43 @@ class SpaceManager : public ManagerInterface
     double unstuck_angle(const BPoint &position, double current_angle,
                          double radius, const std::string &area, int omp_id);
 
-    bool sense(
-        std::vector<double> &directions_weights,
-        std::vector<bool> &wall_presence,
-        const Filopodia &filopodia, const BPoint &position, const Move &move,
-        const std::string &area, double proba_down_move,
-        double max_height_up_move, Affinities aff_values, double substep,
-        double radius, GCPtr gc_ptr, space_tree_map &neighbors);
+    bool sense(std::vector<double> &directions_weights,
+               std::vector<bool> &wall_presence, const Filopodia &filopodia,
+               const BPoint &position, const Move &move,
+               const std::string &area, double proba_down_move,
+               double max_height_up_move, Affinities aff_values, double substep,
+               double radius, GCPtr gc_ptr, space_tree_map &neighbors);
 
     void check_accessibility(std::vector<double> &directions_weights,
                              const Filopodia &filopodia, const BPoint &position,
                              const Move &move, const BPolygonPtr last_segment);
 
-    void check_synaptic_site(
-        const BPoint &position, double distance, stype neuron_id,
-        const std::string &neurite_name, stype other_neuron,
-        const std::string &other_neurite, BPolygonPtr poly);
+    void check_synaptic_site(const BPoint &position, double distance,
+                             stype neuron_id, const std::string &neurite_name,
+                             stype other_neuron,
+                             const std::string &other_neurite,
+                             BPolygonPtr poly);
     void generate_synapses_crossings(
         double synapse_density, bool only_new_syn, bool autapse_allowed,
         const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
-        std::vector<stype> &presyn_neurons,
-        std::vector<stype> &postsyn_neurons,
+        std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
         std::vector<std::string> &presyn_neurites,
         std::vector<std::string> &postsyn_neurites,
         std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
         std::vector<stype> &presyn_segments,
-        std::vector<stype> &postsyn_segments,
-        std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y);
+        std::vector<stype> &postsyn_segments, std::vector<double> &pre_syn_x,
+        std::vector<double> &pre_syn_y);
     void generate_synapses_all(
         double spine_density, bool only_new_syn, bool autapse_allowed,
         const std::set<stype> &presyn_pop, const std::set<stype> &postsyn_pop,
-        std::vector<stype> &presyn_neurons,
-        std::vector<stype> &postsyn_neurons,
+        std::vector<stype> &presyn_neurons, std::vector<stype> &postsyn_neurons,
         std::vector<std::string> &presyn_neurites,
         std::vector<std::string> &postsyn_neurites,
         std::vector<stype> &presyn_nodes, std::vector<stype> &postsyn_nodes,
         std::vector<stype> &presyn_segments,
-        std::vector<stype> &postsyn_segments,
-        std::vector<double> &pre_syn_x, std::vector<double> &pre_syn_y,
-        std::vector<double> &post_syn_x, std::vector<double> &post_syn_y);
+        std::vector<stype> &postsyn_segments, std::vector<double> &pre_syn_x,
+        std::vector<double> &pre_syn_y, std::vector<double> &post_syn_x,
+        std::vector<double> &post_syn_y);
 
     void set_environment(
         GEOSGeom environment, const std::vector<GEOSGeom> &areas,
@@ -159,7 +157,7 @@ class SpaceManager : public ManagerInterface
         GEOSGeom &environment, std::vector<GEOSGeom> &areas,
         std::vector<double> &heights, std::vector<std::string> &names,
         std::vector<std::unordered_map<std::string, double>> &properties) const;
-    const BRing& get_env_border(int omp_id) const;
+    const BRing &get_env_border(int omp_id) const;
     GEOSContextHandle_t get_context_handler() const;
     void destroy_geom(GEOSGeom geom) const;
     void copy_polygon(BMultiPolygonPtr copy, const BPolygon &p);
@@ -194,10 +192,10 @@ class SpaceManager : public ManagerInterface
     GEOSContextHandle_t context_handler_;
     std::unique_ptr<Environment> environment_manager_;
     std::unordered_map<std::string, AreaPtr> areas_;
-    bgi::rtree< RtreeValue, bgi::quadratic<16> > rtree_;
+    bgi::rtree<RtreeValue, bgi::quadratic<16>> rtree_;
     space_tree_map map_geom_;
     std::vector<space_tree_map> geom_add_buffer_;
-    std::vector< std::vector<box_tree_tuple> > box_buffer_;
+    std::vector<std::vector<box_tree_tuple>> box_buffer_;
     // potential synaptic sites
     double max_syn_distance_;
     BMultiPolygon known_synaptic_sites_;
@@ -210,19 +208,16 @@ class SpaceManager : public ManagerInterface
 
 
 inline BLineString SpaceManager::line_from_points(const BPoint &pointA,
-                                           const BPoint &pointB) const
+                                                  const BPoint &pointB) const
 {
     return BLineString({pointA, pointB});
 }
 
 
-inline bool SpaceManager::is_close(const BPoint &p1, const BPoint& p2) const
+inline bool SpaceManager::is_close(const BPoint &p1, const BPoint &p2) const
 {
-    return (
-        std::abs(p1.x() - p2.x()) < 1e-6
-        and
-        std::abs(p1.y() - p2.y()) < 1e-6
-    );
+    return (std::abs(p1.x() - p2.x()) < 1e-6 and
+            std::abs(p1.y() - p2.y()) < 1e-6);
 }
 
 } // namespace growth

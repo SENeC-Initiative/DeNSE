@@ -22,8 +22,8 @@
 #ifndef ELMODEL_H
 #define ELMODEL_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 // lib includes
 #include "elements_types.hpp"
@@ -73,14 +73,17 @@ class ExtensionModel
     std::vector<std::string> observables_;
 
   public:
-    ExtensionModel() = delete;
-    ExtensionModel(const ExtensionModel& copy) = delete;
+    ExtensionModel()                           = delete;
+    ExtensionModel(const ExtensionModel &copy) = delete;
 
     ExtensionModel(GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(GCPtr(gc)), neurite_ptr_(neurite) {};
+        : gc_weakptr_(GCPtr(gc))
+        , neurite_ptr_(neurite){};
 
-    ExtensionModel(const ExtensionModel& copy, GCPtr gc, NeuritePtr neurite)
-      : gc_weakptr_(gc), neurite_ptr_(neurite), observables_(copy.observables_) {};
+    ExtensionModel(const ExtensionModel &copy, GCPtr gc, NeuritePtr neurite)
+        : gc_weakptr_(gc)
+        , neurite_ptr_(neurite)
+        , observables_(copy.observables_){};
 
     virtual double compute_speed(mtPtr rnd_engine, double substep) = 0;
 
@@ -89,9 +92,10 @@ class ExtensionModel
         obs.insert(obs.end(), observables_.begin(), observables_.end());
     }
 
-    virtual void prepare_for_split() {};
-    virtual void after_split() {};
-    virtual double get_state(const std::string& observable) const {
+    virtual void prepare_for_split(){};
+    virtual void after_split(){};
+    virtual double get_state(const std::string &observable) const
+    {
         return std::nan("");
     };
     virtual void set_status(const statusMap &status) = 0;

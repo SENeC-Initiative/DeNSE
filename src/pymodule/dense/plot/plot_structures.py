@@ -397,7 +397,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
     tips = set(tree.tips)
 
     # if diameter is ignored, set all values to default_diam
-    default_diam = 0.2*vspace
+    default_diam = vertical_diam_frac*vspace
 
     if ignore_diameter:
         tree.root.diameter = default_diam

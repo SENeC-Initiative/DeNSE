@@ -123,8 +123,8 @@ if __name__ == '__main__':
 
     ds.simulate(6*day)
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
-                            ignore_diameter=True, aspect_ratio=0.2,
-                            show=False)
+                            ignore_diameter=True, aspect_ratio=0.5,
+                            vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
 
     neuron.set_properties(dendrites_params={
@@ -137,6 +137,6 @@ if __name__ == '__main__':
     ds.simulate(20.*day)
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
                             ignore_diameter=True, aspect_ratio=0.2,
-                            show=False)
+                            vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
     ds.plot.plot_recording(rec)

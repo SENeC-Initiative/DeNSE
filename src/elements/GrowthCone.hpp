@@ -99,6 +99,7 @@ class GrowthCone : public TopologicalNode,
     double proba_down_move_; // proba of going down if bottom out of reach
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
+    double old_angle_;
 
     space_tree_map current_neighbors_;
 

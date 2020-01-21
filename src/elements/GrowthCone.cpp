@@ -110,6 +110,7 @@ GrowthCone::GrowthCone(const std::string &model)
     , proba_down_move_(PROBA_DOWN_MOVE)
     , max_sensing_angle_(MAX_SENSING_ANGLE)
     , scale_up_move_(SCALE_UP_MOVE)
+    , old_angle_(0.)
 {
     // random distributions
     normal_      = std::normal_distribution<double>(0, 1);
@@ -166,6 +167,7 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , max_sensing_angle_(copy.max_sensing_angle_)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
+    , old_angle_(copy.old_angle_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -202,6 +204,7 @@ void GrowthCone::update_topology(BaseWeakNodePtr parent, NeuritePtr own_neurite,
     neurite_name_ = own_neurite->get_name();
 
     move_.angle = angle;
+    old_angle_  = angle;
 }
 
 
@@ -632,6 +635,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
         }
 
         move_.angle = atan2(y1 - y0, x1 - x0);
+        old_angle_  = move_.angle;
     }
 
     set_position(branch_->get_last_xy());
@@ -756,15 +760,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
             kernel().space_manager.line_from_points(position_, p);
 
         // check that delta_angle is less than PI/2
-        if (std::abs(new_angle - move_.angle) > 0.5 * M_PI)
+        if (std::abs(new_angle - old_angle_) > 0.5 * M_PI)
         {
-            // check without covered by why the angle of move_.angle seem to
-            // be shifted by Pi on 3chambers
-            //~ printf("crosses %i - covered %i\n", bg::crosses(line,
-            //*(last_segment.get())), bg::covered_by(line,
-            //*(last_segment.get()))); ~ std::cout << bg::wkt(line) <<
-            // std::endl; ~ std::cout << bg::wkt(*(last_segment.get())) <<
-            // std::endl;
             stopped_ = true;
         }
         else
@@ -890,9 +887,9 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     catch (...)
                     {
                         printf("module %f - delta angle: %f - old angle %f - "
-                               "new angle %f\n",
-                               move_.module, delta_angle_, move_.angle,
-                               new_angle);
+                               "new angle %f on OMP %i\n",
+                               move_.module, delta_angle_, old_angle_,
+                               new_angle, omp_id);
 
                         std::cout << "p " << bg::wkt(p) << std::endl;
 
@@ -906,15 +903,17 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
 
                             double old_angle =
                                 std::atan2(p2.y() - p1.y(), p2.x() - p1.x());
-                            printf("old angle 2: %f\n", old_angle);
+                            printf("old angle 2: %f on OMP %i\n", old_angle, omp_id);
                         }
 
                         std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::make_move`."));
+                            "Passed from `GrowthCone::make_move` on "
+                            "OMP " + std::to_string(omp_id) + "."));
                     }
 
-                    // store new position
+                    // store new position and angle
                     set_position(p);
+                    old_angle_ = move_.angle;
 
                     // check if we switched to a new area
                     std::string new_area =
@@ -1343,8 +1342,10 @@ void GrowthCone::change_sensing_angle(double angle)
         move_.sigma_angle =
             std::min(move_.sigma_angle + angle, max_sensing_angle_);
 
+        double dangle = std::abs(move_.angle - old_angle_);
+
         // when not moving, start turning
-        if (turning_ != 0 and std::abs(turned_) < 0.39269908169872414)
+        if (turning_ != 0 and dangle < 0.39269908169872414)
         {
             move_.angle += turning_ * angle;
             turned_ += turning_ * angle;

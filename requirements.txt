@@ -7,3 +7,4 @@ scipy
 setuptools
 shapely
 svg.path >= 4
+neurom

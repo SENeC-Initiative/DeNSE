@@ -36,33 +36,52 @@ class CstExtensionModel : public virtual ExtensionModel
 {
   protected:
     double speed_growth_cone_;
+    double local_avg_speed_;
 
   public:
     CstExtensionModel(GCPtr gc, NeuritePtr neurite)
         : ExtensionModel(gc, neurite)
-        , speed_growth_cone_(SPEED_GROWTH_CONE){};
+        , speed_growth_cone_(SPEED_GROWTH_CONE)
+        , local_avg_speed_(SPEED_GROWTH_CONE){};
 
     CstExtensionModel(const CstExtensionModel &copy) = delete;
 
     CstExtensionModel(const CstExtensionModel &copy, GCPtr gc,
                       NeuritePtr neurite)
         : ExtensionModel(copy, gc, neurite)
-        , speed_growth_cone_(copy.speed_growth_cone_){};
+        , speed_growth_cone_(copy.speed_growth_cone_)
+        , local_avg_speed_(copy.local_avg_speed_){};
 
     double compute_speed(mtPtr rnd_engine, double substep) override final
     {
-        return speed_growth_cone_;
+        return local_avg_speed_;
     };
 
-    virtual void set_status(const statusMap &status) override final
+    bool set_status(const statusMap &status) override final
     {
-        get_param(status, names::speed_growth_cone, speed_growth_cone_);
+        return get_param(status, names::speed_growth_cone,
+                         speed_growth_cone_);
     };
 
-    virtual void get_status(statusMap &status) const override final
+    void get_status(statusMap &status) const override final
     {
         set_param(status, names::speed_growth_cone, speed_growth_cone_,
                   "micrometer / minute");
+    };
+
+    void update_speed(double speed_factor) override final
+    {
+        speed_growth_cone_ *= speed_factor;
+    };
+
+    void update_local_speed(double area_factor) override final
+    {
+        local_avg_speed_ = speed_growth_cone_ * area_factor;
+    };
+
+    double get_max_speed() const override final
+    {
+        return local_avg_speed_;
     };
 };
 

@@ -96,10 +96,6 @@ GrowthCone::GrowthCone(const std::string &model)
     , num_filopodia_(FILOPODIA_MIN_NUM)
     , min_filopodia_(FILOPODIA_MIN_NUM)
     , move_()
-    , avg_speed_(SPEED_GROWTH_CONE)
-    , local_avg_speed_(SPEED_GROWTH_CONE)
-    , speed_variance_(0)
-    , local_speed_variance_(0)
     , sensing_angle_(SENSING_ANGLE)
     , current_area_("")
     , duration_retraction_(DURATION_RETRACTION)
@@ -118,13 +114,6 @@ GrowthCone::GrowthCone(const std::string &model)
     exponential_ = std::exponential_distribution<double>(proba_retraction_);
 
     update_kernel_variables();
-
-    // initialize speed (sensing is initialized by filopodia)
-    move_.speed = local_avg_speed_;
-
-    // only 'initial models' are directly created, other are cloned, so
-    // we don't need to get the area.
-    update_growth_properties(current_area_);
 
     init_filopodia();
 }
@@ -152,10 +141,6 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , aff_(copy.aff_)
     , filopodia_(copy.filopodia_)
     , move_(copy.move_)
-    , avg_speed_(copy.avg_speed_)
-    , local_avg_speed_(copy.local_avg_speed_)
-    , speed_variance_(copy.speed_variance_)
-    , local_speed_variance_(copy.local_speed_variance_)
     , sensing_angle_(copy.sensing_angle_)
     , scale_up_move_(copy.scale_up_move_)
     , duration_retraction_(copy.duration_retraction_)
@@ -972,20 +957,6 @@ void GrowthCone::init_filopodia()
 //              Interface functions
 // ###########################################################
 
-void GrowthCone::compute_speed(mtPtr rnd_engine, double substep)
-{
-    if (speed_variance_ > 0)
-    {
-        move_.speed = local_avg_speed_ + local_speed_variance_ * sqrt(substep) *
-                                             normal_(*(rnd_engine).get());
-    }
-    else
-    {
-        move_.speed = local_avg_speed_;
-    }
-}
-
-
 double GrowthCone::get_growth_cone_speed() const { return move_.speed; }
 
 
@@ -1024,15 +995,6 @@ void GrowthCone::set_status(const statusMap &status)
         throw std::invalid_argument(
             "`filopodia_min_number` should be at least 10 to ensure physically "
             "relevant behaviors.");
-    }
-
-    // other models can set the average speed
-    bool speed = get_param(status, names::speed_growth_cone, avg_speed_);
-
-    speed += get_param(status, names::speed_variance, speed_variance_);
-    if (speed_variance_ < 0)
-    {
-        throw std::invalid_argument("`speed_variance` must be positive.");
     }
 
     get_param(status, names::proba_retraction, proba_retraction_);
@@ -1108,12 +1070,6 @@ void GrowthCone::set_status(const statusMap &status)
                   aff_.affinity_soma_other_neuron);
     }
 
-    // set growth properties
-    if (b_sa or speed)
-    {
-        update_growth_properties(current_area_);
-    }
-
     // reset filopodia parameters
     init_filopodia();
 }
@@ -1126,8 +1082,6 @@ void GrowthCone::get_status(statusMap &status) const
     set_param(status, names::filopodia_finger_length, filopodia_.finger_length,
               "micrometer");
     set_param(status, names::filopodia_min_number, min_filopodia_, "");
-    set_param(status, names::speed_growth_cone, avg_speed_,
-              "micrometer / minute");
 
     // @todo change behavior of sensing_angle and max_sensing angle:
     // sensing angle set the min/max of the filopodia angle and is limited by
@@ -1276,37 +1230,6 @@ bool GrowthCone::just_retracted() const { return just_retracted_; }
 
 
 bool GrowthCone::is_active() const { return active_; }
-
-
-void GrowthCone::update_growth_properties(const std::string &area_name)
-{
-    // update the growth properties depending on the area
-    AreaPtr area = kernel().space_manager.get_area(area_name);
-
-    // test because first "model" growth cones are not in any Area
-    if (area != nullptr)
-    {
-        current_area_ = area_name;
-        // speed and sensing angle may vary
-        move_.sigma_angle =
-            std::min(sensing_angle_ * area->get_property(names::sensing_angle),
-                     max_sensing_angle_);
-        local_avg_speed_ =
-            avg_speed_ * area->get_property(names::speed_growth_cone);
-        local_speed_variance_ =
-            speed_variance_ * area->get_property(names::speed_growth_cone);
-
-        // substrate affinity depends on the area
-        filopodia_.substrate_affinity =
-            area->get_property(names::substrate_affinity);
-    }
-    else
-    {
-        move_.sigma_angle     = sensing_angle_;
-        local_avg_speed_      = avg_speed_;
-        local_speed_variance_ = speed_variance_;
-    }
-}
 
 
 void GrowthCone::update_kernel_variables()

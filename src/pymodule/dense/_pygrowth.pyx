@@ -1079,8 +1079,8 @@ def get_default_properties(obj, property_name=None, settables_only=True,
         ctype = _to_bytes("recorder")
     else:
         raise RuntimeError("Unknown object : '" + obj + "'. "
-                           "Candidates are 'recorder' and all entries in "
-                           "get_models.")
+                           "Candidates are 'recorder', 'neuron', "
+                           "'neurite', and all entries in get_models.")
 
     get_defaults_(cname, ctype, b"default", detailed, default_params)
     status = _statusMap_to_dict(default_params)

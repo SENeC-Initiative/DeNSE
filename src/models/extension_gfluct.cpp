@@ -30,7 +30,9 @@ namespace growth
 GFluctExtensionModel::GFluctExtensionModel(GCPtr gc, NeuritePtr neurite)
     : ExtensionModel(gc, neurite)
     , speed_gc_avg_(SPEED_GROWTH_CONE)
+    , local_speed_(SPEED_GROWTH_CONE)
     , speed_gc_std_(SPEED_GROWTH_CONE) // std = mean
+    , local_std_(SPEED_GROWTH_CONE)
 {
     normal_ = std::normal_distribution<double>(0, 1);
 }
@@ -40,7 +42,9 @@ GFluctExtensionModel::GFluctExtensionModel(const GFluctExtensionModel &copy,
                                            GCPtr gc, NeuritePtr neurite)
     : ExtensionModel(copy, gc, neurite)
     , speed_gc_avg_(copy.speed_gc_avg_)
+    , local_speed_(copy.local_speed_)
     , speed_gc_std_(copy.speed_gc_std_)
+    , local_std_(copy.local_std_)
 {
     normal_ = std::normal_distribution<double>(0, 1);
 }
@@ -48,20 +52,50 @@ GFluctExtensionModel::GFluctExtensionModel(const GFluctExtensionModel &copy,
 
 double GFluctExtensionModel::compute_speed(mtPtr rnd_engine, double substep)
 {
-    return speed_gc_avg_ +
-           speed_gc_std_ * sqrt(substep) * normal_(*(rnd_engine).get());
+    return local_speed_ +
+           local_std_ * sqrt(substep) * normal_(*(rnd_engine).get());
 }
 
 
-void GFluctExtensionModel::set_status(const statusMap &status)
+/**
+ * @brief Update growth cone average speed.
+ * This function updates the average speed, e.g. because the number
+ * of growth cones sustained by the neurite changed.
+ * Since the average speed changed, the local speed must also be
+ * updated.
+ */
+void GFluctExtensionModel::update_speed(double speed_factor)
+{
+    double area_factor = local_speed_ / speed_gc_avg_;
+
+    speed_gc_avg_ *= speed_factor;
+    local_speed_   = speed_gc_avg_ * area_factor;
+}
+
+
+void GFluctExtensionModel::update_local_speed(double area_factor)
+{
+    local_speed_ = speed_gc_avg_ * area_factor;
+    local_std_   = speed_gc_std_ / area_factor;
+}
+
+
+double GFluctExtensionModel::get_max_speed() const
+{
+    return local_speed_ + 5. * local_std_;
+}
+
+
+bool GFluctExtensionModel::set_status(const statusMap &status)
 {
     double std;
-    bool b;
+    bool bspeed, bstd;
 
-    get_param(status, names::speed_growth_cone, speed_gc_avg_);
+    bspeed = get_param(status, names::speed_growth_cone, speed_gc_avg_);
 
-    b = get_param(status, names::speed_variance, std);
-    if (b)
+    bstd = get_param(status, names::speed_variance, std);
+
+    if (bstd)
     {
         if (std < 0)
         {
@@ -71,6 +105,8 @@ void GFluctExtensionModel::set_status(const statusMap &status)
 
         speed_gc_std_ = std;
     }
+
+    return bspeed + bstd;
 }
 
 

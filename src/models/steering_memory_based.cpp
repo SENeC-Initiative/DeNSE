@@ -35,7 +35,7 @@ MemBasedSteeringModel::MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite)
     : SteeringModel(gc, neurite)
     , memory_angle_(fmod(gc->get_state("angle"), 2 * M_PI))
     , rigidity_factor_(1.)
-    , decay_factor_(0.9)
+    , memory_decay_factor_(0.9)
 {
     if (memory_angle_ < -M_PI)
     {
@@ -53,7 +53,7 @@ MemBasedSteeringModel::MemBasedSteeringModel(const MemBasedSteeringModel &copy,
     : SteeringModel(copy, gc, neurite)
     , memory_angle_(fmod(gc->get_state("angle"), 2 * M_PI))
     , rigidity_factor_(copy.rigidity_factor_)
-    , decay_factor_(copy.decay_factor_)
+    , memory_decay_factor_(copy.memory_decay_factor_)
 {
     if (memory_angle_ < -M_PI)
     {
@@ -88,7 +88,7 @@ void MemBasedSteeringModel::compute_direction_probabilities(
     // - third, compute segment volume
     double volume = M_PI * radius * radius * rodlen;
     // - then update through volume-weighted algorithm
-    double decay = pow(decay_factor_, rodlen);
+    double decay = pow(memory_decay_factor_, rodlen);
     memory_angle_ =
         (volume * current_angle + decay * memory_angle_) / (volume + decay);
 
@@ -172,16 +172,16 @@ void MemBasedSteeringModel::set_status(const statusMap &status)
         rigidity_factor_ = rf;
     }
 
-    b = get_param(status, names::decay_factor, md);
+    b = get_param(status, names::memory_decay_factor, md);
     if (b)
     {
         if (md < 0)
         {
-            throw std::invalid_argument("`" + names::decay_factor +
+            throw std::invalid_argument("`" + names::memory_decay_factor +
                                         "` must be positive.");
         }
 
-        decay_factor_ = md;
+        memory_decay_factor_ = md;
     }
 }
 
@@ -189,7 +189,7 @@ void MemBasedSteeringModel::set_status(const statusMap &status)
 void MemBasedSteeringModel::get_status(statusMap &status) const
 {
     set_param(status, names::rigidity_factor, rigidity_factor_, "");
-    set_param(status, names::decay_factor, decay_factor_, "");
+    set_param(status, names::memory_decay_factor, memory_decay_factor_, "");
 }
 
 } // namespace growth

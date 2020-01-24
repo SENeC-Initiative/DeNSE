@@ -65,7 +65,7 @@ const std::string branching_proba_default("branching_proba_default");
 
 const std::string critical_pull("critical_pull");
 
-const std::string decay_factor("decay_factor");
+const std::string memory_decay_factor("memory_decay_factor");
 const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
@@ -149,6 +149,7 @@ const std::string soma_radius("soma_radius");
 const std::string somatropic_factor("somatropic_factor");
 const std::string somatropic_mode("somatropic_mode");
 const std::string somatropic_scale("somatropic_scale");
+const std::string speed_decay_factor("speed_decay_factor");
 const std::string speed_growth_cone("speed_growth_cone");
 const std::string speed_ratio_retraction("speed_ratio_retraction");
 const std::string speed_variance("speed_variance");

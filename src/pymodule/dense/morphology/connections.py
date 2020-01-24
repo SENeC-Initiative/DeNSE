@@ -165,8 +165,8 @@ def generate_network(source_neurons=None, target_neurons=None,
         raise RuntimeError('Cannot create a network without any neurons '
                            'or environment.')
 
-    network = NetClass(population=population, shape=shape, positions=positions,
-                       multigraph=multigraph)
+    network = NetClass(population=population, shape=shape,
+                       positions=positions, multigraph=multigraph)
 
     num_synapses = len(edges)
 
@@ -180,9 +180,8 @@ def generate_network(source_neurons=None, target_neurons=None,
     if distances is not None:
         data["distance"] = np.array(distances)
 
-    data["weight"] = np.repeat(default_synaptic_strength, num_synapses)
-
-    network.new_edges(edges, attributes=data)
+    network.new_edges(edges, attributes=data,
+                      unit_strength=default_synaptic_strength)
 
     return network
 

@@ -85,6 +85,8 @@ Neurite::Neurite(const std::string &name, const std::string &neurite_type,
     , diameter_ratio_std_(DIAM_RATIO_STD)
     , diameter_ratio_avg_(DIAMETER_RATIO_AVG)
     , diam_frac_lb_(DIAM_FRAC_LB)
+    // gc speed
+    , gc_speed_decay_(0.)
     // parameters for critical_resource-driven growth
     , cr_neurite_{CRITICAL_GENERATED,
                   CRITICAL_GENERATED,
@@ -273,23 +275,13 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
                 BranchPtr bp      = gc.second->get_branch();
                 double old_length = bp->get_segment_length_at(bp->size() - 2) -
                                     bp->initial_distance_to_soma();
-                printf("grew %f, to length %f, new diam %f; Delta diam %f - "
-                       "old length %f - computed old diam %f\n",
-                       gc.second->move_.module, b_length, diameter,
-                       taper_rate_ * gc.second->move_.module, old_length,
-                       gc.second->get_diameter() +
-                           taper_rate_ * (b_length - old_length));
-                printf("gc speed was %f (avg %f) and substep %f\n",
-                       gc.second->move_.speed, gc.second->local_avg_speed_,
-                       substep);
 
                 // compute where min_diameter was reached and retract up
                 // to that position
                 double retract = (min_diameter_ - diameter) / taper_rate_;
-                printf("%s: length %f, retract %f\n", get_name().c_str(),
-                       b_length, retract);
 
                 int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
                 gc.second->retraction(retract, gc.first, omp_id);
                 diameter = min_diameter_;
             }
@@ -510,6 +502,9 @@ void Neurite::delete_cone(stype cone_n)
         stype parent_ID  = dead_cone->get_parent().lock()->get_node_id();
         auto parent_node = nodes_[parent_ID];
         dead_cones_.push_back(cone_n);
+
+        // update growth cone speed
+        update_gc_speed();
 
         // @todo: error in delete_parent_node (incorrect distances or diameters)
 
@@ -1041,6 +1036,9 @@ void Neurite::add_cone(GCPtr cone)
                             factor * std::tanh(ratio);
     }
 
+    // update the speed of the growth cones
+    update_gc_speed();
+
     // check if we do not reach the growth cone number limit
     if (growth_cones_.size() >= max_gc_num_)
     {
@@ -1255,6 +1253,8 @@ void Neurite::set_status(const statusMap &status)
     get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
     get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
 
+    get_param(status, names::speed_decay_factor, gc_speed_decay_);    
+
     double tr;
     bool tr_set = get_param(status, names::taper_rate, tr);
 
@@ -1359,6 +1359,8 @@ void Neurite::set_status(const statusMap &status)
     {
         gc.second->set_status(status);
     }
+
+    update_gc_speed();
 }
 
 
@@ -1388,6 +1390,9 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
         set_param(status, names::max_arbor_length, max_arbor_len_,
                   "micrometer");
         set_param(status, names::active, active_, "");
+
+        // speed
+        set_param(status, names::speed_decay_factor, gc_speed_decay_, "");
 
         // branching properties
         branching_model_->get_status(status);
@@ -1500,14 +1505,43 @@ double Neurite::get_max_resol() const
     // check speed limit
     if (not growth_cones_.empty())
     {
-        double max_speed = growth_cones_.begin()->second->avg_speed_ +
-                           5 * growth_cones_.begin()->second->speed_variance_;
+        double max_speed = growth_cones_.begin()->second->get_max_speed();
         double length = growth_cones_.begin()->second->filopodia_.finger_length;
 
         return length / max_speed;
     }
 
     return std::numeric_limits<double>::infinity();
+}
+
+
+void Neurite::update_gc_speed()
+{
+    stype old_count = growth_cones_.size();
+
+    stype new_count = old_count + growth_cones_tmp_.size()
+                      - dead_cones_.size();
+
+    // if the speed decay factor is not zero, update speed
+    if (std::abs(gc_speed_decay_) > 1e-6)
+    {
+        // use a speed factor because exact speed is area dependent
+        // so recomputing everything would be very costly (would need
+        // to find where the growth cone is, etc)
+        double r = new_count / static_cast<double>(old_count);
+
+        double new_speed_factor = std::pow(r, -gc_speed_decay_);
+
+        for (auto gc : growth_cones_)
+        {
+            gc.second->update_speed(new_speed_factor);
+        }
+
+        for (auto gc : growth_cones_tmp_)
+        {
+            gc.second->update_speed(new_speed_factor);
+        }
+    }
 }
 
 } // namespace growth

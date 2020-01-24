@@ -153,7 +153,7 @@ class SpatialMultiNetwork(object):
 
         self._nodes.update(np.ravel(edge_list))
 
-        enum = self.edge_nb
+        enum = self._edge_nb
 
         for i, e in enumerate(edge_list):
             connection = tuple(e)
@@ -487,7 +487,8 @@ class SpatialNetwork(_BaseNetwork):
 
         return edge
 
-    def new_edges(self, edge_list, attributes=None, unit_strength=1., **kwargs):
+    def new_edges(self, edge_list, attributes=None, unit_strength=1.,
+                  **kwargs):
         '''
         Add a list of edges to the network.
 

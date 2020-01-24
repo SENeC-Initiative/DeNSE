@@ -163,15 +163,18 @@ Lateral branching models can be turned on or off using the
 neurite parameters. 
 @TODO : Why two parameters and what is the difference ?
 
+
 Growth cones
 ============
+
+.. _gc-models:
 
 Generic properties
 ------------------
 
 The parameters of the growth cones can also be set through :func:`~dense.set_object_properties`, either through the ``params`` argument, to
 set the properties of all growth cones in the neuron, or separately through
-the ``axon_params`` or ``dendrite_params` arguments.
+the ``axon_params`` or ``dendrite_params`` arguments.
 
 The main properties are:
 
@@ -192,8 +195,45 @@ The main properties are:
 * ``speed_growth_cone``, the average extension speed of the growth cone (this
   value can be modified by specific properties of extension models, see below).
 
-.. _gc-models:
 
+.. _speed-decay:
+
+Influence of the neurite
+------------------------
+
+Growth cone are not isolated units but interact through the common
+architecture of their neurite.
+This can be seen for instance through changes in the speed of individual
+growth cones as their number increases.
+
+A typical way of accounting for this fact is through an ad hoc change
+of the speed of the growth cones according to the following equation:
+
+.. math::
+
+    v(t) = v_0 n(t)^{-s_d}
+
+where:
+
+* :math:`v(t)` is the speed of a growth cone at time :math:`t`
+* :math:`v_0` is the original speed when a single growth cone is present
+* :math:`n(t)` is the number of growth cone supported by the neurite at
+  time :math:`t`
+* :math:`s_d` is the "speed decay" factor (available through the
+  ``speed_decay``)
+
+This feature is available for all extension components except the
+``resource-based`` (see :ref:`extension-component`).
+
+The resource-based model, on the other hand, does not require this ad
+hoc feature since the speed of the growth cones directly depend on the
+amount of resource available to each cone, and that they are
+intrinsically competing for this resource.
+Thus, the resource-based model provides a mechanistic approach to the
+same phenomenon.
+
+
+.. _elongation-models:
 
 Elongation models
 -----------------

@@ -29,6 +29,12 @@ simply elongates with a constant speed ``speed_growth_cone`` for all timesteps.
 
 For the detailed implementation, see :cpp:class:`growth::CstExtensionModel`.
 
+.. note::
+
+    The constant speed of this elongation model can still be changed
+    if the "speed decay" feature is used at the neurite level.
+    See :ref:`speed-decay` and the ``speed_decay`` parameter.
+
 
 Gaussian fluctuations
 =====================
@@ -43,6 +49,12 @@ In the model, the fluctuations occur randomly, with zero correlation and a
 standard deviation ``speed_variance`` (@todo change the name).
 
 For the detailed implementation, see :cpp:class:`growth::GFluctExtensionModel`.
+
+.. note::
+
+    The average speed of this elongation model can be changed
+    if the "speed decay" feature is used at the neurite level.
+    See :ref:`speed-decay` and the ``speed_decay`` parameter.
 
 
 Resource-based elongation
@@ -132,6 +144,16 @@ with:
 
 For the detailed implementation, see
 :cpp:class:`growth::ResourceBasedExtensionModel`.
+
+.. note::
+
+    Because it intrisically accounts for the number of growth cones
+    in the neurite, this model is not compatible (or at least it is not
+    affected) by the "speed decay" feature: changes in the number of
+    growth cones will only change based on the parameters discussed
+    above and do not depend on the ``speed_decay`` parameter.
+    See :ref:`speed-decay` for more information about this feature
+    and how it can be used with the other elongation models.
 
 
 References

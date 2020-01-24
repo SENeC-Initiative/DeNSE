@@ -1039,9 +1039,10 @@ def get_default_properties(obj, property_name=None, settables_only=True,
     Parameters
     ----------
     obj : :obj:`str` or :class:`Model`.
-        Name of the object, among "recorder", "neuron", "neurite", or
-        "growth_cone", or a model, either as a string (e.g. "cst_rw_wrc") or
-        as a :class:`Model` object returned by :func:`generate_model`.
+        Name of the object, among "recorder", "neuron", "neurite",
+        "axon", or "growth_cone", or a model, either as a string
+        (e.g. "cst_rw_wrc") or as a :class:`Model` object returned by
+        :func:`generate_model`.
     property_name : str, optional (default: None)
         Name of the property that should be queried. By default, the full
         dictionary is returned.
@@ -1071,6 +1072,8 @@ def get_default_properties(obj, property_name=None, settables_only=True,
 
     if obj in gc_models:
         ctype = _to_bytes("growth_cone")
+    elif obj == "growth_cone":
+        ctype = _to_bytes("growth_cone")
     elif obj == "neuron":
         ctype = _to_bytes("neuron")
     elif obj in ["axon", "dendrite", "neurite"]:
@@ -1079,7 +1082,8 @@ def get_default_properties(obj, property_name=None, settables_only=True,
         ctype = _to_bytes("recorder")
     else:
         raise RuntimeError("Unknown object : '" + obj + "'. "
-                           "Candidates are 'recorder' and all entries in "
+                           "Candidates are 'recorder', 'neuron', "
+                           "'neurite', 'axon', and all entries in "
                            "get_models.")
 
     get_defaults_(cname, ctype, b"default", detailed, default_params)

@@ -157,6 +157,8 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_cone(GCPtr);
     void add_node(NodePtr);
 
+    void update_gc_speed();
+
     bool walk_tree(NodeProp &np) const;
     simple_gc_range active_gc_range() const;
     joined_gc_range gc_range() const;
@@ -200,6 +202,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::string neurite_type_;
     double taper_rate_; // diameter thinning with distance
     double min_diameter_;
+    double gc_speed_decay_;
 
     // competition
     bool use_critical_resource_;

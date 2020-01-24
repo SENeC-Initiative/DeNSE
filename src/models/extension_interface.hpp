@@ -87,6 +87,10 @@ class ExtensionModel
 
     virtual double compute_speed(mtPtr rnd_engine, double substep) = 0;
 
+    virtual void update_speed(double speed_factor) = 0;
+    virtual void update_local_speed(double area_factor) = 0;
+    virtual double get_max_speed() const = 0;
+
     void get_observables(std::vector<std::string> &obs) const
     {
         obs.insert(obs.end(), observables_.begin(), observables_.end());
@@ -94,11 +98,12 @@ class ExtensionModel
 
     virtual void prepare_for_split(){};
     virtual void after_split(){};
+
     virtual double get_state(const std::string &observable) const
     {
         return std::nan("");
     };
-    virtual void set_status(const statusMap &status) = 0;
+    virtual bool set_status(const statusMap &status) = 0;
     virtual void get_status(statusMap &status) const = 0;
 };
 

@@ -88,10 +88,6 @@ class GrowthCone : public TopologicalNode,
     double delta_angle_;
     double sensing_angle_;
     bool sensing_angle_set_;
-    double avg_speed_;
-    double local_avg_speed_;
-    double speed_variance_;
-    double local_speed_variance_;
     double duration_retraction_; // duration of a retraction period (seconds)
     double proba_retraction_;    // proba of retracting when stuck
     double retracting_todo_;     // duration left to retract
@@ -158,6 +154,8 @@ class GrowthCone : public TopologicalNode,
     // extension
     void compute_module(double substep);
     virtual void compute_speed(mtPtr rnd_engine, double substep) = 0;
+    virtual void update_speed(double update_factor) = 0;
+    virtual double get_max_speed() = 0;
 
     void init_filopodia();
 
@@ -185,7 +183,7 @@ class GrowthCone : public TopologicalNode,
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();
-    void update_growth_properties(const std::string &area_name);
+    virtual void update_growth_properties(const std::string &area_name) = 0;
     void update_filopodia();
 };
 

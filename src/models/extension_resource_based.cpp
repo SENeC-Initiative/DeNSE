@@ -53,6 +53,8 @@ ResourceBasedExtensionModel::ResourceBasedExtensionModel(GCPtr gc,
     , branching_proba_(CRITICAL_BRANCHING_PROBA)
     , weight_diameter_(CRITICAL_WEIGHT_DIAMETER)
     , weight_centrifugal_(CRITICAL_WEIGHT_CENTRIFUGAL)
+    , area_factor_(1.)
+    , inv_area_factor_(1.)
 {
     observables_.push_back("resource");
     consumption_rate_ = use_ratio_ + 1. / leakage_;
@@ -83,6 +85,8 @@ ResourceBasedExtensionModel::ResourceBasedExtensionModel(
     , branching_proba_(copy.branching_proba_)
     , weight_diameter_(copy.weight_diameter_)
     , weight_centrifugal_(copy.weight_centrifugal_)
+    , area_factor_(copy.area_factor_)
+    , inv_area_factor_(copy.inv_area_factor_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -170,16 +174,42 @@ double ResourceBasedExtensionModel::compute_speed(mtPtr rnd_engine,
     // if it's over the elongation threshold the neurite will extend
     if (stored_ < retraction_th_)
     {
-        speed =
-            retraction_factor_ * (stored_ - retraction_th_) / retraction_th_;
+        speed = inv_area_factor_ * retraction_factor_ *
+                (stored_ - retraction_th_) / retraction_th_;
     }
     else if (stored_ >= elongation_th_)
     {
-        speed = elongation_factor_ * (stored_ - elongation_th_) /
-                (stored_ + elongation_th_);
+        speed = area_factor_ * elongation_factor_ *
+                (stored_ - elongation_th_) / (stored_ + elongation_th_);
     }
 
     return speed;
+}
+
+
+/**
+ * @brief Update growth cone average speed.
+ * This function updates the average speed, e.g. because the number
+ * of growth cones sustained by the neurite changed.
+ * Since the area factor is stored in this model, we do not need to
+ * update the local speed (there is no such value).
+ */
+void ResourceBasedExtensionModel::update_speed(double speed_factor)
+{
+    elongation_factor_ *= speed_factor;
+}
+
+
+void ResourceBasedExtensionModel::update_local_speed(double area_factor)
+{
+    area_factor_     = area_factor;
+    inv_area_factor_ = 1. / area_factor;
+}
+
+
+double ResourceBasedExtensionModel::get_max_speed() const
+{
+    return area_factor_ * elongation_factor_;
 }
 
 
@@ -276,13 +306,33 @@ void ResourceBasedExtensionModel::printinfo() const
 }
 
 
-void ResourceBasedExtensionModel::set_status(const statusMap &status)
+bool ResourceBasedExtensionModel::set_status(const statusMap &status)
 {
     // state parameters
     get_param(status, names::resource, stored_);
 
     // speed-related stuff
-    get_param(status, names::res_elongation_factor, elongation_factor_);
+    double speed;
+    bool bs, be;
+
+    bs = get_param(status, names::speed_growth_cone, speed);
+
+    be = get_param(status, names::res_elongation_factor, elongation_factor_);
+
+    if (bs and be)
+    {
+        throw std::runtime_error("In the resource-based model, please "
+                                 "use `elongation_factor` and "
+                                 "`retraction_factor` instead of "
+                                 "`speed_growth_cone`.");
+    }
+    else if (bs)
+    {
+        printf("In the resource-based model, please use "
+               "`elongation_factor` and `retraction_factor` instead of "
+               "`speed_growth_cone`.");
+    }
+
     get_param(status, names::res_retraction_factor, retraction_factor_);
     get_param(status, names::res_elongation_threshold, elongation_th_);
     get_param(status, names::res_retraction_threshold, retraction_th_);
@@ -305,6 +355,8 @@ void ResourceBasedExtensionModel::set_status(const statusMap &status)
 #ifndef NDEBUG
     printinfo();
 #endif
+
+    return false;
 }
 
 

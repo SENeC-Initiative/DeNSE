@@ -112,7 +112,7 @@ def test_branching():
         mean.append(np.mean(Dt))
 
         # 99% confidence interval for a Poisson distribution gives 2.576
-        er.append(2.576*mean[-1]/np.sqrt(len(Dt)))
+        er.append(2.576/rate/np.sqrt(len(Dt)))
         Nb.append(len(Dt))
 
     mean_merr = np.subtract(mean, er)

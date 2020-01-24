@@ -57,9 +57,19 @@ double GFluctExtensionModel::compute_speed(mtPtr rnd_engine, double substep)
 }
 
 
+/**
+ * @brief Update growth cone average speed.
+ * This function updates the average speed, e.g. because the number
+ * of growth cones sustained by the neurite changed.
+ * Since the average speed changed, the local speed must also be
+ * updated.
+ */
 void GFluctExtensionModel::update_speed(double speed_factor)
 {
+    double area_factor = local_speed_ / speed_gc_avg_;
+
     speed_gc_avg_ *= speed_factor;
+    local_speed_   = speed_gc_avg_ * area_factor;
 }
 
 

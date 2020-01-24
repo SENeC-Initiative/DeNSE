@@ -187,6 +187,13 @@ double ResourceBasedExtensionModel::compute_speed(mtPtr rnd_engine,
 }
 
 
+/**
+ * @brief Update growth cone average speed.
+ * This function updates the average speed, e.g. because the number
+ * of growth cones sustained by the neurite changed.
+ * Since the area factor is stored in this model, we do not need to
+ * update the local speed (there is no such value).
+ */
 void ResourceBasedExtensionModel::update_speed(double speed_factor)
 {
     elongation_factor_ *= speed_factor;

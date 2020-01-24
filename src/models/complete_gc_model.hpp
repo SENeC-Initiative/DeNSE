@@ -155,6 +155,8 @@ GrowthConeModel<ElType, SteerMethod, DirSelMethod>::create_gc_model(
 
     gc->dir_selector_ = std::make_shared<DirSelMethod>(gc, nullptr);
 
+    gc->update_growth_properties(gc->current_area_);
+
     return gc;
 }
 

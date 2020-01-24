@@ -71,7 +71,10 @@ class CstExtensionModel : public virtual ExtensionModel
 
     void update_speed(double speed_factor) override final
     {
+        double area_factor  = local_avg_speed_ / speed_growth_cone_;
+
         speed_growth_cone_ *= speed_factor;
+        local_avg_speed_    = speed_growth_cone_ * area_factor;
     };
 
     void update_local_speed(double area_factor) override final

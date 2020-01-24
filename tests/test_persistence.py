@@ -175,7 +175,8 @@ def test_persistence():
             "taper_rate": 0.,
         }
 
-        gids = ds.create_neurons(n=num_neurons, num_neurites=1, params=params)
+        gids = ds.create_neurons(n=num_neurons, num_neurites=1,
+                                 params=params)
 
         rec = ds.create_recorders(gids, "length")
 
@@ -222,11 +223,11 @@ def test_persistence():
         fig.patch.set_alpha(0.)
         fig2.patch.set_alpha(0.)
 
-        # just check that no ridiculous number is encountered
-        for lp in persistences:
-            assert lp > 0. and np.abs((lp - l_p)/l_p) < 0.5
-
         plt.show()
+
+    # just check that no ridiculous number is encountered
+    for lp in persistences:
+        assert lp > 0. and np.abs((lp - l_p)/l_p) < 0.5
 
 
 if __name__ == "__main__":

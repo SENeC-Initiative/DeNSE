@@ -153,9 +153,10 @@ GrowthConeModel<ElType, SteerMethod, DirSelMethod>::create_gc_model(
 
     gc->steerer_ = std::make_shared<SteerMethod>(gc, nullptr);
 
-    gc->dir_selector_ = std::make_shared<DirSelMethod>(gc, nullptr);
-
+    // update growth properties before direction selector
     gc->update_growth_properties(gc->current_area_);
+
+    gc->dir_selector_ = std::make_shared<DirSelMethod>(gc, nullptr);
 
     return gc;
 }
@@ -402,6 +403,8 @@ void GrowthConeModel<ElType, SteerMethod,
     {
         // just update local speed
         elongator_->update_local_speed(1.);
+        // and set default sensing angle
+        move_.sigma_angle = sensing_angle_;
     }
 }
 

@@ -91,8 +91,7 @@ void NeuronManager::finalize()
  */
 stype NeuronManager::create_neurons(
     const std::vector<statusMap> &neuron_params,
-    const std::vector<statusMap> &axon_params,
-    const std::vector<statusMap> &dendrites_params)
+    const std::vector<std::unordered_map<std::string, statusMap>> &neurite_params)
 {
     stype first_id             = kernel().get_num_created_objects();
     stype previous_num_neurons = neurons_.size();
@@ -151,8 +150,8 @@ stype NeuronManager::create_neurons(
 
             try
             {
-                neuron->init_status(neuron_params[idx], axon_params[idx],
-                                    dendrites_params[idx], rnd_engine);
+                neuron->init_status(neuron_params[idx], neurite_params[idx],
+                                    rnd_engine);
             }
             catch (const std::exception &except)
             {

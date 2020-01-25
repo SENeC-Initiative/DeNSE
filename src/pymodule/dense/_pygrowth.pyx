@@ -132,8 +132,8 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         Specific parameters for the dendritic growth. Entries of the dict can
         be lists to give different parameters for the dendrites of each neuron.
         Note that for a given neuron, all dendrites have the same parameters.
-    num_neurites : int or list, optional (default: 0)
-        Number of neurites for each neuron.
+    num_neurites : int, optional (default: 0)
+        Number of neurites (same for all neurons).
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
@@ -1670,8 +1670,8 @@ def _get_branches_data(gid, neurite, start_point=0):
 # Subfunctions #
 # ------------ #
 
-cdef _create_neurons(dict params, dict ax_params, dict dend_params,
-                     dict optional_args, stype n, bool return_ints) except +:
+cdef _create_neurons(dict params, dict neurite_params, dict optional_args,
+                     stype n, bool return_ints) except +:
     '''
     Create several neurons, return their GIDs.
     @todo: check for unused parameters.
@@ -1679,7 +1679,8 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     cdef:
         stype i, len_val, num_objects
         int num_neurites
-        statusMap base_neuron_status, base_axon_status, base_dendrites_status
+        statusMap base_neuron_status
+        unordered_map[string, statusMap] base_neurite_statuses
         string description
 
     num_objects = get_num_created_objects_()
@@ -1687,40 +1688,39 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     # the same for all neurons)
     base_neuron_status = _get_scalar_status(params, n)
     # same for neurite parameters
-    base_axon_status = _get_scalar_status(ax_params, n)
-    base_dendrites_status = _get_scalar_status(dend_params, n)
+    for key, value in neurite_params.items():
+        base_neurite_statuses[_to_bytes(key)] = _get_scalar_status(value, n)
+
     # same for neurite number
     neurites = optional_args.get("num_neurites", 0)
+
     if is_scalar(neurites):
         if not isinstance(neurites, (int, np.integer)) or neurites < 0:
             raise ValueError("`num_neurites` must be a non-negative integer.")
         base_neuron_status[b"num_neurites"] = _to_property(
             "num_neurites", neurites)
+    else:
+        raise ValueError("`num_neurites` must be a non-negative integer.")
+
     # fill neuron_params with default statusMap (base_param)
     cdef:
         vector[statusMap] neuron_params = \
             vector[statusMap](n, base_neuron_status)
-        vector[statusMap] axon_params = vector[statusMap](n, base_axon_status)
-        vector[statusMap] dendrites_params = \
-            vector[statusMap](n, base_dendrites_status)
+        unordered_map[string, vector[statusMap]] neurite_statuses
+
+    for neurite in neurite_params:
+        bneurite = _to_bytes(neurite)
+        neurite_statuses[bneurite] = \
+            vector[statusMap](n, base_neurite_statuses[bneurite])
+
     # set the specific properties for each neurons
     _set_vector_status(neuron_params, params)
-    # specific neurite parameters
-    _set_vector_status(axon_params, ax_params)
-    _set_vector_status(dendrites_params, dend_params)
-
-    # if neurites was a list
-    if not is_scalar(neurites):
-        len_val = len(neurites)
-        assert len_val == n, "`num_neurites` vector must be of size " + n + "."
-        assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
-            "be composed only of non-negative integers."
-        for i, num_neurites in enumerate(neurites):
-            neuron_params[i][b"num_neurites"] = \
-                _to_property("num_neurites", num_neurites)
+    # specific neurite parameters    
+    for neurite, dic_params in neurite_params.items():
+        _set_vector_status(neurite_statuses[_to_bytes(neurite)], dic_params)
 
     # create neurons
-    i = create_neurons_(neuron_params, axon_params, dendrites_params)
+    i = create_neurons_(neuron_params, neurite_statuses)
 
     assert i == n, "Internal error: please file a bug report including a " \
                    "minimal working example leading to the bug and the full " \
@@ -2031,6 +2031,7 @@ cdef Property _to_property(key, value) except *:
         vector[long] c_lvec
         vector[stype] c_ulvec
         vector[string] c_svec
+        unordered_set[string] c_set
         unordered_map[string, double] c_map
         # vector[int] c_int
 
@@ -2057,6 +2058,10 @@ cdef Property _to_property(key, value) except *:
         for k, v in value.items():
             c_map[_to_bytes(k)] = v
         cprop = Property(c_map, c_dim)
+    elif isinstance(value, set):
+        for s in value:
+            c_set.insert(_to_bytes(s))
+        cprop = Property(c_set, c_dim)
     elif nonstring_container(value) and isinstance(value[0], (int, np.integer)):
         all_pos = False
         for val in value:
@@ -2110,6 +2115,8 @@ cdef _property_to_val(Property c_property):
     elif c_property.data_type == STRING:
         return _to_string(c_property.s)
     elif c_property.data_type == VEC_STRING:
+        return [_to_string(s) for s in c_property.vs]
+    elif c_property.data_type == SET_STRING:
         return [_to_string(s) for s in c_property.ss]
     elif c_property.data_type == MAP_DOUBLE:
         return {_to_string(v.first): v.second*dim for v in c_property.md}
@@ -2175,6 +2182,9 @@ cdef statusMap _get_scalar_status(dict params, int n) except *:
 
 cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                              dict params) except *:
+    '''
+    Parameter conversion for neuron and neurite parameters
+    '''
     cdef:
         stype n = lst_statuses.size()
         stype len_val, len_v, i

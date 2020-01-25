@@ -89,12 +89,12 @@ stype create_objects_(const std::string &object_name,
  *
  * @return the gid of the neuron created.
  */
-stype create_neurons_(const std::vector<statusMap> &neuron_params,
-                      const std::vector<statusMap> &axon_params,
-                      const std::vector<statusMap> &dendrites_params)
+stype create_neurons_(
+    const std::vector<statusMap> &neuron_params,
+    const std::vector<std::unordered_map<std::string, statusMap>> &neurite_params)
 {
-    stype num_created = kernel().neuron_manager.create_neurons(
-        neuron_params, axon_params, dendrites_params);
+    stype num_created = kernel().neuron_manager.create_neurons(neuron_params,
+                                                               neurite_params);
 
     // update max_resolution
     kernel().simulation_manager.set_max_resolution();

@@ -12,6 +12,7 @@ from libcpp.pair cimport pair
 from libcpp.set cimport set as cset
 from libcpp.string cimport string
 from libcpp.unordered_map cimport unordered_map
+from libcpp.unordered_set cimport unordered_set
 from libcpp.vector cimport vector
 
 
@@ -41,6 +42,7 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
         Property(const vector[long]& v, const string& dim) except +
         Property(const string& s, const string& dim) except +
         Property(const vector[string]& v, const string& dim) except +
+        Property(const unordered_set[string]& v, const string& dim) except +
         Property(const unordered_map[string, double]& v, const string& dim) except +
         dtype data_type
         string dimension
@@ -51,7 +53,8 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
         vector[long] ll
         vector[stype] uu
         string s
-        vector[string] ss
+        vector[string] vs
+        unordered_set[string] ss
         unordered_map[string, double] md
 
 
@@ -97,10 +100,9 @@ cdef extern from "../module.hpp" namespace "growth":
                                 const vector[statusMap]& obj_params
                                 ) except +
 
-    cdef stype create_neurons_(const vector[statusMap]& neuron_params,
-                                const vector[statusMap]& axon_params,
-                                const vector[statusMap]& dendrites_params
-                                ) except +
+    cdef stype create_neurons_(
+        const vector[statusMap]& neuron_params,
+        const vector[unordered_map[string, statusMap]]& neurite_params) except +
 
     cdef void create_neurites_(const vector[stype]& neurons,
                                stype num_neurites,

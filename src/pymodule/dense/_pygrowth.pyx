@@ -114,10 +114,9 @@ def finalize():
 # Main functions #
 # -------------- #
 
-def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
-                   num_neurites=0, neurite_names=None, culture=None,
-                   on_area=None, neurites_on_area=False, return_ints=False,
-                   **kwargs):
+def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
+                   neurite_names=None, culture=None, on_area=None,
+                   neurites_on_area=False, return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -126,20 +125,18 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     n : int, optional (default: 1)
     params : dict, optional (default: None)
         Parameters of the object (or shape object for obstacle).
-    axon_params : dict, optional (default: same as `params`)
-        Specific parameters for the axonal growth. Entries of the dict can
-        be lists to give different parameters for the axon of each neuron.
-    dendrites_params : dict, optional (default: same as `params`)
-        Specific parameters for the dendritic growth. Entries of the dict can
-        be lists to give different parameters for the dendrites of each neuron.
+    neurite_params : dict, optional (default: same as `params`)
+        Specific parameters for neurite growth. Entries of the dict can
+        be lists to give different parameters for the neurites of each neuron.
         To provide different parameters for each neurite, one can provide
-        `dendrites_params` as a dict of dict, with the neurite names as keys.
+        `neurite_params` as a dict of dict, with the neurite names as keys.
     num_neurites : int, optional (default: 0)
         Number of neurites (same for all neurons).
     neurite_names : list, optional (default: None)
-        Names of the neurites. If not provided, defaults to ["axon",
-        "dendrite_1", dendrite_2", ...] (without "axon" if the neurite has
-        "has_axon" set to False).
+        Names of the neurites. If not provided, defaults to keys of
+        `dendrite_params`. If `dendrite_params` is also empty, defaults to
+        ["axon", "dendrite_1", dendrite_2", ...] (without "axon" if the neurite
+        has "has_axon" set to False).
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
@@ -172,20 +169,18 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             "description": "my_special_neuron"
         }
 
-        axon_prop = {
-            "speed_growth_cone": 1.*um/hour,
-            "persistence_length": 300.*um
-        }
-
-        dendrite_prop = {
+        neurite_prop = {
+            "axon": {
+                "speed_growth_cone": 1.*um/hour,
+                "persistence_length": 300.*um
+            },
             "dendrite_1": {"speed_growth_cone": 0.2*um/hour},
             "dendrite_2": {"speed_growth_cone": 0.3*um/hour}
         }
 
         neuron = ds.create_neurons(params=neuron_prop,
                                    num_neurites=3, # axon + 2 dendrites
-                                   axon_params=axon_prop,
-                                   dendrites_params=dendrite_prop)
+                                   neurite_params=neurite_prop)
 
     Note
     ----
@@ -197,11 +192,11 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     assert isinstance(params, dict), "`params` must be a dictionary."
 
     params       = {} if params is None else params.copy()
-    ax_params    = {} if axon_params is None else axon_params.copy()
-    dend_params  = {} if dendrites_params is None else dendrites_params.copy()
+    neur_params  = {} if neurite_params is None else neurite_params.copy()
     env_required = get_kernel_status("environment_required")
     # num_neurites must go in kwargs because it can be a list or an int
-    kwargs['num_neurites'] = num_neurites
+    kwargs['num_neurites']  = num_neurites
+    kwargs['neurite_names'] = neurite_names
     # check kwargs for its values
     authorized = {"num_neurites": None, "rnd_pos": None}
     for k in kwargs:
@@ -274,15 +269,14 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
 
     # check parameters
     _check_params(params, "neuron", gc_model=params["growth_cone_model"])
-    _check_params(ax_params, "axon", gc_model=ax_params["growth_cone_model"])
 
-    if isinstance(next(iter(dend_params.values())), dict):
-        for key, val in dend_params.items():
-            _check_params(val, "dendrite",
+    if isinstance(next(iter(neur_params.values())), dict):
+        for key, val in neur_params.items():
+            _check_params(val, "neurite",
                           gc_model=val.get("growth_cone_model", gc_model))
-        else:
-            gcm = dend_params.get("growth_cone_model", gc_model)
-            _check_params(dend_params, "dendrite", gc_model=gcm)
+    else:
+        gcm = neur_params.get("growth_cone_model", gc_model)
+        _check_params(neur_params, "neurite", gc_model=gcm)
 
     params = neuron_param_parser(
         params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
@@ -314,7 +308,7 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         kwargs["num_neurites"]   = neurites
 
     return _create_neurons(
-        params, ax_params, dend_params, kwargs, n, return_ints)
+        params, ax_params, neur_params, kwargs, n, return_ints)
 
 def create_neurites(neurons, num_neurites=1, params=None, angles=None,
                     neurite_types=None, names=None):
@@ -1352,7 +1346,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
         Used to set a single value.
     simulation_id: str
         Unique identifier of the simulation, generally
-        simulation_id = Hash(kernel_status, axon_params, dend_params)
+        simulation_id = Hash(kernel_status, params)
 
     Note
     ----
@@ -1682,16 +1676,47 @@ cdef _create_neurons(dict params, dict neurite_params, dict optional_args,
     for key, value in neurite_params.items():
         base_neurite_statuses[_to_bytes(key)] = _get_scalar_status(value, n)
 
-    # same for neurite number
+    # check neurite number and names
     neurites = optional_args.get("num_neurites", 0)
+
+    neurite_names = optional_args.get("neurite_names", None)
 
     if is_scalar(neurites):
         if not isinstance(neurites, (int, np.integer)) or neurites < 0:
             raise ValueError("`num_neurites` must be a non-negative integer.")
-        base_neuron_status[b"num_neurites"] = _to_property(
-            "num_neurites", neurites)
-    else:
-        raise ValueError("`num_neurites` must be a non-negative integer.")
+        base_neuron_status[b"num_neurites"] = _to_property("num_neurites",
+                                                           neurites)
+        # names
+        if neurite_names is None:
+            has_axon = params.get("has_axon", True)
+
+            if neurite_params:
+                neurite_names = [_to_bytes(k) for k in neurite_params]
+                
+                if len(neurite_params) > neurites:
+                    raise ValueError("Number of neurites and number of entries "
+                                     "in `neurite_params` do not match.")
+            else:
+                if is_scalar(has_axon):
+                    neurite_names  = ["axon"] if has_axon else []
+                    neurite_names += ["dendrite_{}".format(i)
+                                      for i in range(1, neurites - has_axon)]
+                else:
+                    neurite_names = []
+                    for ha in has_axon:
+                        neurite_names.append(["axon"] if has_axon else [])
+                        neurite_names[-1] += \
+                            ["dendrite_{}".format(i)
+                             for i in range(1, neurites - ha)]
+        base_neuron_status[b"neurite_names"] = _to_property("neurite_names",)
+    else: #@todo
+        len_val = len(neurites)
+        assert len_val == n, "`num_neurites` vector must be of size " + n + "."
+        assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
+            "be composed only of non-negative integers."
+        for i, num_neurites in enumerate(neurites):
+            neuron_params[i][b"num_neurites"] = \
+                _to_property("num_neurites", num_neurites)
 
     # fill neuron_params with default statusMap (base_param)
     cdef:

@@ -421,14 +421,19 @@ def create_recorders(targets, observables, sampling_intervals=None,
     One recorder is created on each thread containing target neurons for every
     observable.
 
-    @todo: LIST OF THE POSSIBLE OBSERVABLES
-
     Note
     ----
     One recorder records only from the neurons located on the same thread. This
     means that, when using multithreading, several recorders might be created
     even for only one observable if the target neurons are handled by several
     different threads.
+
+    Note
+    ----
+    For observables that are available at different levels, the recording at
+    the upper levels is the sum of the values at the lower levels.
+    E.g. for "length", the neurite level give the sum of all branch lengths and
+    the neuron level the sum of all neurite lengths.
 
     Parameters
     ----------
@@ -437,6 +442,7 @@ def create_recorders(targets, observables, sampling_intervals=None,
     observables : string or list of strings
         Names of the properties that will be recorded for each of the target
         neurons. One recorder will be in charge of only one observable.
+        (see below for the list of possible observables)
     sampling_intervals : int or list of ints, optional (default: resolution)
         Interval between two successive recordings for a continuous observable,
         expressed in seconds. Must be a multiple of the resolution for the
@@ -465,6 +471,13 @@ def create_recorders(targets, observables, sampling_intervals=None,
     recorders : tuple
         Gids of the recorders created. `recorders` contains one entry per value
         in `observables` since at least recorder in created for each observable.
+
+    See also
+    --------
+    :func:`~dense.get_default_properties` to find the observables associated
+    to various elements; e.g. use
+    ``ds.get_default_properties("neuron", "observables", False)`` to get the
+    available observables for a neuron.
     '''
     cdef:
         statusMap status

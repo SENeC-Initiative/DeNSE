@@ -207,7 +207,7 @@ Property &Property::operator=(const Property &prop)
         new (&vs) std::vector<std::string>(prop.vs);
         break;
     case SET_STRING:
-        new (&ss) std::vector<std::string>(prop.ss);
+        new (&ss) std::unordered_set<std::string>(prop.ss);
         break;
     case INT:
         i = prop.i;
@@ -247,7 +247,7 @@ Property::~Property()
         vs.~vector<std::string>();
         break;
     case SET_STRING:
-        ss.~vector<std::string>();
+        ss.~unordered_set<std::string>();
         break;
     case STRING:
         s.~basic_string();

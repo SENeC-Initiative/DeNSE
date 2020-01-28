@@ -91,7 +91,7 @@ stype create_objects_(const std::string &object_name,
  */
 stype create_neurons_(
     const std::vector<statusMap> &neuron_params,
-    const std::vector<std::unordered_map<std::string, statusMap>> &neurite_params)
+    const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params)
 {
     stype num_created = kernel().neuron_manager.create_neurons(neuron_params,
                                                                neurite_params);

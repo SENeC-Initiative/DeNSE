@@ -250,20 +250,21 @@ void Neuron::init_status(const statusMap &status,
     {
         if (name != "axon")
         {
-        // get dendrite parameters
-        dstatus = neurite_statuses.at(name);
+            // get dendrite parameters
+            dstatus = neurite_statuses.at(name);
 
-        // get dendrite growth cone model
-        auto it = dstatus.find(names::growth_cone_model);
+            // get dendrite growth cone model
+            auto it = dstatus.find(names::growth_cone_model);
 
-        if (it != dstatus.end())
-        {
-            get_param(dstatus, names::growth_cone_model, model_name);
-            dendrite_gc = kernel().model_manager.get_model(model_name);
+            if (it != dstatus.end())
+            {
+                get_param(dstatus, names::growth_cone_model, model_name);
+                dendrite_gc = kernel().model_manager.get_model(model_name);
+            }
+
+            new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
+            set_neurite_status("dendrite", local_dendrites_params);
         }
-
-        new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
-        set_neurite_status("dendrite", local_dendrites_params);
     }
 }
 
@@ -875,6 +876,16 @@ void Neuron::get_status(statusMap &status) const
     set_param(status, names::random_rotation_angles, random_rotation_angles_,
               "");
     set_param(status, names::growth_cone_model, growth_cone_model_, "");
+
+    // neurite names
+    std::vector<std::string> nnames;
+
+    for (auto it : neurites_)
+    {
+        nnames.push_back(it.first);
+    }
+
+    set_param(status, names::neurite_names, nnames, "");
 
     // set position
     BPoint pos = soma_->get_position();

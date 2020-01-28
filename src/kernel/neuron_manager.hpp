@@ -57,8 +57,8 @@ class NeuronManager : public ManagerInterface
      */
     stype create_neurons(
         const std::vector<statusMap> &neuron_params,
-        const std::vector<std::unordered_map<std::string,
-                                             statusMap>> &neurite_params);
+        const std::unordered_map<std::string,
+                                 std::vector<statusMap>> &neurite_params);
 
     void delete_neurons(const std::vector<stype> &gids);
 

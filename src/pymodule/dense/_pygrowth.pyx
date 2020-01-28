@@ -115,8 +115,9 @@ def finalize():
 # -------------- #
 
 def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
-                   num_neurites=0, culture=None, on_area=None,
-                   neurites_on_area=False, return_ints=False, **kwargs):
+                   num_neurites=0, neurite_names=None, culture=None,
+                   on_area=None, neurites_on_area=False, return_ints=False,
+                   **kwargs):
     '''
     Create `n` neurons with specific parameters.
 
@@ -131,9 +132,14 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     dendrites_params : dict, optional (default: same as `params`)
         Specific parameters for the dendritic growth. Entries of the dict can
         be lists to give different parameters for the dendrites of each neuron.
-        Note that for a given neuron, all dendrites have the same parameters.
+        To provide different parameters for each neurite, one can provide
+        `dendrites_params` as a dict of dict, with the neurite names as keys.
     num_neurites : int, optional (default: 0)
         Number of neurites (same for all neurons).
+    neurite_names : list, optional (default: None)
+        Names of the neurites. If not provided, defaults to ["axon",
+        "dendrite_1", dendrite_2", ...] (without "axon" if the neurite has
+        "has_axon" set to False).
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
@@ -165,14 +171,21 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             "position": (5., 12.)*um,
             "description": "my_special_neuron"
         }
+
         axon_prop = {
             "speed_growth_cone": 1.*um/hour,
             "persistence_length": 300.*um
         }
 
-        neuron = ds.create_neurons(
-            params=neuron_prop, num_neurites=3, # axon + 2 dendrites
-            axon_params=axon_prop)
+        dendrite_prop = {
+            "dendrite_1": {"speed_growth_cone": 0.2*um/hour},
+            "dendrite_2": {"speed_growth_cone": 0.3*um/hour}
+        }
+
+        neuron = ds.create_neurons(params=neuron_prop,
+                                   num_neurites=3, # axon + 2 dendrites
+                                   axon_params=axon_prop,
+                                   dendrites_params=dendrite_prop)
 
     Note
     ----
@@ -204,13 +217,11 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         params["growth_cone_model"] = "default"
     elif isinstance(params["growth_cone_model"], Model):
         params["growth_cone_model"] = str(params["growth_cone_model"])
-    if "growth_cone_model" not in ax_params:
-        ax_params["growth_cone_model"] = \
-            params.get("growth_cone_model", params["growth_cone_model"])
-    if "growth_cone_model" not in dend_params:
-        dend_params["growth_cone_model"] = \
-            params.get("growth_cone_model", params["growth_cone_model"])
 
+    # save default gc model
+    gc_model = params["growth_cone_model"]
+
+    # check environment
     environment = get_environment()
 
     if env_required:
@@ -248,7 +259,10 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             if n == 1:
                 params['position'] = (0., 0.)
             else:
-                raise ArgumentError("'position' entry in `params` required.")
+                raise ArgumentError("'position' entry in `params` required "
+                                    "when a spatial environment is used.")
+    elif not isinstance(params, dict):
+        ValueError("`params` must be a dictionary.")
 
     if neurites_on_area:
         # neurite angles will have to be preseved
@@ -261,70 +275,46 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     # check parameters
     _check_params(params, "neuron", gc_model=params["growth_cone_model"])
     _check_params(ax_params, "axon", gc_model=ax_params["growth_cone_model"])
-    _check_params(dend_params, "dendrite",
-                  gc_model=dend_params["growth_cone_model"])
 
-    if isinstance(params, dict):
-        params = neuron_param_parser(
-            params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
+    if isinstance(next(iter(dend_params.values())), dict):
+        for key, val in dend_params.items():
+            _check_params(val, "dendrite",
+                          gc_model=val.get("growth_cone_model", gc_model))
+        else:
+            gcm = dend_params.get("growth_cone_model", gc_model)
+            _check_params(dend_params, "dendrite", gc_model=gcm)
 
-        # check for specific neurite angles
-        if neurites_on_area:
-            area = get_area(
-                on_area if neurites_on_area is True else neurites_on_area,
-                culture)
+    params = neuron_param_parser(
+        params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
 
-            pos = params["position"]
-
-            ssizes    = params["soma_radius"]
-            nneurites = num_neurites
-            if not is_iterable(params["soma_radius"]):
-                ssizes = (params["soma_radius"] for _ in range(n))
-            if not is_iterable(num_neurites):
-                nneurites = (num_neurites for _ in range(n))
-
-            nangles  = []
-            neurites = []
-
-            for s, max_neurites, p in zip(ssizes, nneurites, pos):
-                angles = get_neurite_angles(p, s, area, max_neurites)
-                nangles.append(angles)
-                neurites.append(len(angles))
-
-            params["neurite_angles"] = nangles
-            kwargs["num_neurites"]   = neurites
-
-        return _create_neurons(
-            params, ax_params, dend_params, kwargs, n, return_ints)
-    else:
-        if len(params) != n:
-            raise RuntimeError("`n` is different from params list size.")
-        gids = []
-
-        # prepare area if neurites_on_area
+    # check for specific neurite angles
+    if neurites_on_area:
         area = get_area(
             on_area if neurites_on_area is True else neurites_on_area,
             culture)
 
-        for param in params:
-            param = neuron_param_parser(
-                param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
+        pos = params["position"]
 
-            # check for specific neurite angles
-            if neurites_on_area:
-                pos          = params["position"]
-                ssize        = params["soma_size"]
-                max_neurites = num_neurites
+        ssizes    = params["soma_radius"]
+        nneurites = num_neurites
+        if not is_iterable(params["soma_radius"]):
+            ssizes = (params["soma_radius"] for _ in range(n))
+        if not is_iterable(num_neurites):
+            nneurites = (num_neurites for _ in range(n))
 
-                param["neurite_angles"] = \
-                    get_neurite_angles(pos, ssize, area, max_neurites)
-                kwargs["num_neurites"]  = len(param["neurite_angles"])
+        nangles  = []
+        neurites = []
 
-            gids.append(
-                _create_neurons(
-                    param, ax_params, dend_params, kwargs, 1, return_ints))
-        return gids
+        for s, max_neurites, p in zip(ssizes, nneurites, pos):
+            angles = get_neurite_angles(p, s, area, max_neurites)
+            nangles.append(angles)
+            neurites.append(len(angles))
 
+        params["neurite_angles"] = nangles
+        kwargs["num_neurites"]   = neurites
+
+    return _create_neurons(
+        params, ax_params, dend_params, kwargs, n, return_ints)
 
 def create_neurites(neurons, num_neurites=1, params=None, angles=None,
                     neurite_types=None, names=None):
@@ -1687,6 +1677,7 @@ cdef _create_neurons(dict params, dict neurite_params, dict optional_args,
     # neuronal parameters (make default statusMap with scalar values which are
     # the same for all neurons)
     base_neuron_status = _get_scalar_status(params, n)
+
     # same for neurite parameters
     for key, value in neurite_params.items():
         base_neurite_statuses[_to_bytes(key)] = _get_scalar_status(value, n)

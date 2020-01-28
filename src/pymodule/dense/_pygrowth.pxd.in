@@ -102,7 +102,7 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef stype create_neurons_(
         const vector[statusMap]& neuron_params,
-        const vector[unordered_map[string, statusMap]]& neurite_params) except +
+        const unordered_map[string, vector[statusMap]]& neurite_params) except +
 
     cdef void create_neurites_(const vector[stype]& neurons,
                                stype num_neurites,

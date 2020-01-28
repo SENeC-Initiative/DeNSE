@@ -91,7 +91,7 @@ void NeuronManager::finalize()
  */
 stype NeuronManager::create_neurons(
     const std::vector<statusMap> &neuron_params,
-    const std::vector<std::unordered_map<std::string, statusMap>> &neurite_params)
+    const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params)
 {
     stype first_id             = kernel().get_num_created_objects();
     stype previous_num_neurons = neurons_.size();
@@ -142,15 +142,21 @@ stype NeuronManager::create_neurons(
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         std::vector<stype> gids(thread_neurons[omp_id]);
+        std::unordered_map<std::string, statusMap> neurite_status;
 
         for (stype gid : gids)
         {
             stype idx        = gid - first_id;
             NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
+            for (auto entry : neurite_params)
+            {
+                neurite_status[entry.first] = entry.second[idx]
+            }
+
             try
             {
-                neuron->init_status(neuron_params[idx], neurite_params[idx],
+                neuron->init_status(neuron_params[idx], neurite_status,
                                     rnd_engine);
             }
             catch (const std::exception &except)

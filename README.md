@@ -1,6 +1,6 @@
 # Development of Neurons in Spatial Environments - DeNSE
 
-<img align="left" style="padding-top: 5px; margin-right: 15px;" src="docs/_static/dense_logo.png" />
+<img align="left" style="padding-top: 5px; margin-right: 15px; width: 20%;" src="docs/_static/dense_logo.png" />
 
 [![Build Status](https://travis-ci.com/SENeC-Initiative/DeNSE.svg?branch=master)](https://travis-ci.com/SENeC-Initiative/DeNSE)
 [![License](http://img.shields.io/:license-GPLv2+-green.svg)](http://www.gnu.org/licenses/gpl-2.0.html)

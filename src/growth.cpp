@@ -55,10 +55,11 @@ int main(int argc, char **argv)
         {"speed_growth_cone", growth::Property(20., "micrometer / minute")});
 
     vector<growth::statusMap> emptyMap = vector<growth::statusMap>(num_neurons);
+    unordered_map<string, vector<growth::statusMap>> mock;
     vector<growth::statusMap> mainVec =
         vector<growth::statusMap>(num_neurons, mainMap);
 
-    growth::create_neurons_(mainVec, emptyMap, emptyMap);
+    growth::create_neurons_(mainVec, mock);
 
     growth::simulate_(growth::Time(200, 0, 0, 0));
 

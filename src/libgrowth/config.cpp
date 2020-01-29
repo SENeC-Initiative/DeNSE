@@ -95,7 +95,8 @@ Property::Property(std::string s_, const std::string &dim)
 }
 
 
-Property::Property(const std::vector<std::string> &v, const std::string &dim)
+Property::Property(const std::vector<std::string> &v,
+                   const std::string &dim)
     : data_type(VEC_STRING)
     , dimension(dim)
     , vs(v)
@@ -105,7 +106,7 @@ Property::Property(const std::vector<std::string> &v, const std::string &dim)
 
 Property::Property(const std::unordered_set<std::string> &v,
                    const std::string &dim)
-    : data_type(VEC_STRING)
+    : data_type(SET_STRING)
     , dimension(dim)
     , ss(v)
 {

@@ -44,12 +44,15 @@ void NeuronManager::initialize()
     // create default neuron with two neurites (axon + dendrite)
     // set growth cone model to resource-based to get these parameters
     num_created_neurons_ = 0;
-    statusMap empty_params;
+    std::unordered_map<std::string, statusMap> mock;
+    std::unordered_set<std::string> names({"axon", "dendrite"});
+
     statusMap params({{names::num_neurites, Property(2, "")},
                       {names::growth_cone_model,
                        Property("resource-based_pull-only_run-and-tumble", "")},
                       {"x", Property(0., "micrometer")},
-                      {"y", Property(0., "micrometer")}});
+                      {"y", Property(0., "micrometer")},
+                      {names::neurite_names, Property(names, "")}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
@@ -68,7 +71,7 @@ void NeuronManager::initialize()
 
     // create default neuron
     model_neuron_ = std::make_shared<Neuron>(0);
-    model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
+    model_neuron_->init_status(params, mock, rnd_ptr);
 
     // remove information about angles
     model_neuron_->neurite_angles_.clear();
@@ -135,6 +138,8 @@ stype NeuronManager::create_neurons(
     // the OpenMP parallel region.
     std::exception_ptr captured_exception;
 
+    printf("got to parallel\n");
+
 // create the neurons on the respective threads
 #pragma omp parallel
     {
@@ -151,7 +156,7 @@ stype NeuronManager::create_neurons(
 
             for (auto entry : neurite_params)
             {
-                neurite_status[entry.first] = entry.second[idx]
+                neurite_status[entry.first] = entry.second[idx];
             }
 
             try

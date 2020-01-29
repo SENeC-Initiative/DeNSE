@@ -41,7 +41,7 @@ class Neuron(object):
     Container allowing direct access to a neuron.
     '''
 
-    def __init__(self, gid, soma_position, soma_radius):
+    def __init__(self, gid):
         self._axon       = None
         self._dendrites  = {}
         self.__gid       = gid

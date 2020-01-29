@@ -31,7 +31,7 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef enum dtype:
-        BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, MAP_DOUBLE
+        BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, SET_STRING, MAP_DOUBLE
 
     cdef cppclass Property:
         Property() except +

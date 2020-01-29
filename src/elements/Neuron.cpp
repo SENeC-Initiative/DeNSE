@@ -103,10 +103,10 @@ Neuron::~Neuron()
 //                  Init functions
 //###################################################
 
-void Neuron::init_status(const statusMap &status,
-                         const std::unordered_map<std::string,
-                                                  statusMap> &neurite_statuses,
-                         mtPtr rnd_engine)
+void Neuron::init_status(
+  const statusMap &status,
+  const std::unordered_map<std::string, statusMap> &neurite_statuses,
+  mtPtr rnd_engine)
 {
     // set growth cone model and actin wave
     set_status(status);
@@ -115,7 +115,8 @@ void Neuron::init_status(const statusMap &status,
 
     get_param(status, names::num_neurites, num_neurites);
     get_param(status, names::growth_cone_model, growth_cone_model_);
-    get_param(status, names::polarization_strength, polarization_strength_);
+    get_param(status, names::polarization_strength,
+              polarization_strength_);
     get_param(status, names::axon_polarization_weight,
               axon_polarization_weight_);
     get_param(status, names::has_axon, has_axon_);
@@ -126,8 +127,9 @@ void Neuron::init_status(const statusMap &status,
     try
     {
         kernel().space_manager.add_object(
-            get_position(), get_position(), 2 * details.soma_radius, 0., 0.,
-            std::make_tuple(gid_, std::string(""), 0UL, 0UL), nullptr, omp_id);
+            get_position(), get_position(), 2 * details.soma_radius, 0.,
+            0., std::make_tuple(gid_, std::string(""), 0UL, 0UL),
+            nullptr, omp_id);
     }
     catch (...)
     {
@@ -138,22 +140,25 @@ void Neuron::init_status(const statusMap &status,
     // prepare the neurites
     std::unordered_set<std::string> neurite_names;
 
-    bool names_set = get_param(status, names::neurite_names, neurite_names);
+    bool names_set = get_param(status, names::neurite_names,
+                               neurite_names);
 
     if (names_set)
     {
         if (neurite_names.size() != num_neurites)
         {
-            throw InvalidParameter("`neurite_names` must contain one entry "
-                                   "per neurite.",
+            throw InvalidParameter("`neurite_names` must contain one "
+                                   "entry per neurite.",
                                    __FUNCTION__, __FILE__, __LINE__);
         }
 
-        if (not has_axon and neurite_names.find("axon") != neurite_names.end())
+        if (not has_axon_ and
+            neurite_names.find("axon") != neurite_names.end())
         {
-            throw InvalidParameter("`neurite_names` contains an 'axon' entry "
-                                   "but 'has_axon' is set to False.",
-                                   __FUNCTION__, __FILE__, __LINE__);
+            throw InvalidParameter("`neurite_names` contains an 'axon' "
+                                   "entry but 'has_axon' is set to "
+                                   "False.", __FUNCTION__, __FILE__,
+                                   __LINE__);
         }
 
         for (auto p : neurite_statuses)
@@ -161,8 +166,9 @@ void Neuron::init_status(const statusMap &status,
             if (neurite_names.find(p.first) == neurite_names.end())
             {
                 throw InvalidParameter(
-                    "`neurite_names` and the parameters contain different "
-                    " neurite names.", __FUNCTION__, __FILE__, __LINE__);
+                    "`neurite_names` and the parameters contain "
+                    "different  neurite names.", __FUNCTION__, __FILE__,
+                    __LINE__);
             }
         }
     }
@@ -174,8 +180,9 @@ void Neuron::init_status(const statusMap &status,
     {
         if (nas.size() != num_neurites)
         {
-            throw InvalidParameter("`neurite_angles` must contain one entry "
-                                   "per neurite.",
+            throw InvalidParameter("`neurite_angles` must contain one "
+                                   "entry per neurite, got " +
+                                   std::to_string(nas.size()) + ".",
                                    __FUNCTION__, __FILE__, __LINE__);
         }
 
@@ -215,55 +222,75 @@ void Neuron::init_status(const statusMap &status,
     }
     else
     {
-        throw InvalidParameter("Position was not set.", __FUNCTION__, __FILE__,
-                               __LINE__);
+        throw InvalidParameter("Position was not set.", __FUNCTION__,
+                               __FILE__, __LINE__);
     }
 
     // prepare random angle and cg models if necessary
+    if (random_rotation_angles_)
+    {
+        rnd_angle_ = 2 * M_PI * uniform_(*(rnd_engine.get()));
+    }
+
     GCPtr axon_gc     = gc_model;
     GCPtr dendrite_gc = gc_model;
 
     std::string model_name;
     statusMap astatus, dstatus;
 
-    // create the neurites and set their parameters
-    if (random_rotation_angles_)
-    {
-        rnd_angle_ = 2 * M_PI * uniform_(*(rnd_engine.get()));
-    }
-
+    // create axon
     if (has_axon_ and num_neurites > 0)
     {
-        astatus = neurite_statuses.at("axon");
+        auto it = neurite_statuses.find("axon");
 
-        auto it = astatus.find(names::growth_cone_model);
-        if (it != astatus.end())
+        if (it != neurite_statuses.end())
+        {
+            astatus = neurite_statuses.at("axon");
+        }
+        else
+        {
+            astatus = status;
+        }
+
+        auto it2 = astatus.find(names::growth_cone_model);
+        if (it2 != astatus.end())
         {
             get_param(astatus, names::growth_cone_model, model_name);
             axon_gc = kernel().model_manager.get_model(model_name);
         }
 
         new_neurite("axon", "axon", axon_gc, rnd_engine);
-        set_neurite_status("axon", local_axon_params);
+        set_neurite_status("axon", astatus);
     }
+
+    // create dendrites
     for (auto name : neurite_names)
     {
         if (name != "axon")
         {
             // get dendrite parameters
-            dstatus = neurite_statuses.at(name);
+            auto it = neurite_statuses.find("axon");
+
+            if (it != neurite_statuses.end())
+            {
+                dstatus = neurite_statuses.at(name);
+            }
+            else
+            {
+                dstatus = status;
+            }
 
             // get dendrite growth cone model
-            auto it = dstatus.find(names::growth_cone_model);
+            auto it2 = dstatus.find(names::growth_cone_model);
 
-            if (it != dstatus.end())
+            if (it2 != dstatus.end())
             {
                 get_param(dstatus, names::growth_cone_model, model_name);
                 dendrite_gc = kernel().model_manager.get_model(model_name);
             }
 
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
-            set_neurite_status("dendrite", local_dendrites_params);
+            set_neurite_status("dendrite", dstatus);
         }
     }
 }
@@ -901,23 +928,13 @@ void Neuron::get_neurite_status(statusMap &status, std::string neurite,
 
     if (it == neurites_.end())
     {
-        if (neurite == "axon" and has_axon_)
-        {
-            for (const auto &neurite : neurites_)
-            {
-                if (neurite.second->neurite_type_ == "axon")
-                {
-                    neurite.second->get_status(status, level);
-                    break;
-                }
-            }
-        }
-        else if (neurite == "dendrite" or neurite == "dendrites")
+        if (neurite == "dendrite" or neurite == "dendrites")
         {
             for (const auto &neurite : neurites_)
             {
                 if (neurite.second->neurite_type_ == "dendrite")
                 {
+                    printf("calling get_status\n");
                     neurite.second->get_status(status, level);
                     break;
                 }
@@ -925,8 +942,8 @@ void Neuron::get_neurite_status(statusMap &status, std::string neurite,
         }
         else
         {
-            throw InvalidArg("Unknown neurite `" + neurite + "`.", __FUNCTION__,
-                             __FILE__, __LINE__);
+            throw InvalidArg("Unknown neurite `" + neurite + "`.",
+                             __FUNCTION__, __FILE__, __LINE__);
         }
     }
     else

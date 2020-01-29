@@ -484,7 +484,9 @@ void get_defaults_(const std::string &object_name,
     }
     else if (object_type == "neuron" || object_type == "neurite")
     {
-        kernel().neuron_manager.get_defaults(status, object_name, detailed);
+        kernel().neuron_manager.get_defaults(status, object_name,
+                                             detailed);
+
         if (detailed)
         {
             std::string model = (gc_model == "") ? "default" : gc_model;

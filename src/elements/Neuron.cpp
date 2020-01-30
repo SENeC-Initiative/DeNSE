@@ -241,15 +241,15 @@ void Neuron::init_status(
     // create axon
     if (has_axon_ and num_neurites > 0)
     {
-        auto it = neurite_statuses.find("axon");
+        astatus = status;
+        auto it_status = neurite_statuses.find("axon");
 
-        if (it != neurite_statuses.end())
+        if (it_status != neurite_statuses.end())
         {
-            astatus = neurite_statuses.at("axon");
-        }
-        else
-        {
-            astatus = status;
+            for (auto entry : it_status->second)
+            {
+                astatus[entry.first] = entry.second;
+            }
         }
 
         auto it2 = astatus.find(names::growth_cone_model);
@@ -266,18 +266,19 @@ void Neuron::init_status(
     // create dendrites
     for (auto name : neurite_names)
     {
+        dstatus = status;
+
         if (name != "axon")
         {
             // get dendrite parameters
-            auto it = neurite_statuses.find(name);
+            auto it_status = neurite_statuses.find(name);
 
-            if (it != neurite_statuses.end())
+            if (it_status != neurite_statuses.end())
             {
-                dstatus = neurite_statuses.at(name);
-            }
-            else
-            {
-                dstatus = status;
+                for (auto entry : it_status->second)
+                {
+                    dstatus[entry.first] = entry.second;
+                }
             }
 
             // get dendrite growth cone model
@@ -290,7 +291,7 @@ void Neuron::init_status(
             }
 
             new_neurite(name, "dendrite", dendrite_gc, rnd_engine);
-            set_neurite_status("dendrite", dstatus);
+            set_neurite_status(name, dstatus);
         }
     }
 }
@@ -934,7 +935,6 @@ void Neuron::get_neurite_status(statusMap &status, std::string neurite,
             {
                 if (neurite.second->neurite_type_ == "dendrite")
                 {
-                    printf("calling get_status\n");
                     neurite.second->get_status(status, level);
                     break;
                 }

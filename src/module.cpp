@@ -103,7 +103,8 @@ stype create_neurons_(
 }
 
 
-void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
+void create_neurites_(const std::vector<stype> &neurons,
+                      stype num_neurites,
                       const std::vector<statusMap> &params,
                       const std::vector<std::string> &neurite_types,
                       const std::vector<double> &angles,

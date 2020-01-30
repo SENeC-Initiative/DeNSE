@@ -2288,8 +2288,8 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
 
     res_obs   = {}    # data for the observable
     res_times = None  # times (only one if "continuous", else dict)
-    neuron    = None     # sto get neuron gid
-    do_next   = True    # loop over the results
+    neuron    = None  # to get neuron gid
+    do_next   = True  # loop over the results
 
     # get the recording
     if level == "neuron":
@@ -2308,7 +2308,11 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron] = times
-                    assert neuron == int(time_ids[0].ul), "Internal error!"
+
+                    assert neuron == int(time_ids[0].ul), \
+                        "Internal error! Neuron id in recorder does " \
+                        "not match expected id: {} vs {}.".format(
+                            neuron, time_ids[0].ul)
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -2336,8 +2340,17 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron][neurite] = times
-                    assert neuron  == int(time_ids[0].ul), "Internal error!"
-                    assert neurite == _to_string(time_ids[1].s), "Internal error!"
+
+                    assert neuron == int(time_ids[0].ul), \
+                        "Internal error! Neuron id in recorder does " \
+                        "not match expected id: {} vs {}.".format(
+                            neuron, time_ids[0].ul)
+
+                    assert neurite == _to_string(time_ids[1].s), \
+                        "Internal error! Neurite name in recorder " \
+                        "does not match expected name: " \
+                        "{} vs {}.".format(
+                            neurite, _to_string(time_ids[1].s))
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -2353,9 +2366,22 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 neurite         = _to_string(data_ids[1].s)
                 gc              = int(data_ids[2].ul)
                 get_next_time_(gid, time_ids, times, _to_bytes(time_units))
-                assert neuron  == int(time_ids[0].ul), "Internal error!"
-                assert neurite == _to_string(time_ids[1].s), "Internal error!"
-                assert gc      == int(time_ids[2].ul), "Internal error!"
+
+                assert neuron == int(time_ids[0].ul), \
+                    "Internal error! Neuron id in recorder does not " \
+                    "match expected id: {} vs {}.".format(
+                        neuron, time_ids[0].ul)
+
+                assert neurite == _to_string(time_ids[1].s), \
+                    "Internal error! Neurite name in recorder does " \
+                    "not match expected name: {} vs {}.".format(
+                        neurite, _to_string(time_ids[1].s))
+
+                assert gc == int(time_ids[2].ul), \
+                    "Internal error! Growth cone id in recorder does " \
+                    "not match expected id: {} vs {}.".format(
+                        gc, time_ids[2].ul)
+
                 # check if neurite initialized
                 if neuron not in res_obs:
                     res_obs[neuron]   = {}

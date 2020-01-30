@@ -138,8 +138,6 @@ stype NeuronManager::create_neurons(
     // the OpenMP parallel region.
     std::exception_ptr captured_exception;
 
-    printf("got to parallel\n");
-
 // create the neurons on the respective threads
 #pragma omp parallel
     {

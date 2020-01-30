@@ -269,7 +269,7 @@ void Neuron::init_status(
         if (name != "axon")
         {
             // get dendrite parameters
-            auto it = neurite_statuses.find("axon");
+            auto it = neurite_statuses.find(name);
 
             if (it != neurite_statuses.end())
             {

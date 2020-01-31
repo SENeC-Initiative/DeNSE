@@ -99,6 +99,11 @@ void set_status_(stype gid, statusMap status, statusMap axon_status,
                  statusMap dendrites_status);
 
 
+void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
+                 std::unordered_map<std::string, std::vector<statusMap>>
+                     neurite_statuses);
+
+
 void set_neurite_status_(stype neuron, std::string neurite, statusMap status);
 
 

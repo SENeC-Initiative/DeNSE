@@ -192,7 +192,8 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
     assert isinstance(params, dict), "`params` must be a dictionary."
 
     params       = {} if params is None else params.copy()
-    neur_params  = {} if neurite_params is None else neurite_params.copy()
+    neur_params  = {} if neurite_params is None \
+                   else neurite_params.copy()
     env_required = get_kernel_status("environment_required")
 
     # num_neurites and neurite names go in kwargs for params check and
@@ -271,12 +272,15 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
                              "`neurite_angles`, choose one or the other.")
 
     # check parameters
-    _check_params(params, "neuron", gc_model=params["growth_cone_model"])
+    _check_params(params, "neuron",
+                  gc_model=params["growth_cone_model"])
 
-    if isinstance(next(iter(neur_params.values())), dict):
-        for key, val in neur_params.items():
-            _check_params(val, "neurite",
-                          gc_model=val.get("growth_cone_model", gc_model))
+    if neur_params:
+        if isinstance(next(iter(neur_params.values())), dict):
+            for key, val in neur_params.items():
+                _check_params(val, "neurite",
+                              gc_model=val.get("growth_cone_model",
+                                               gc_model))
     else:
         gcm = neur_params.get("growth_cone_model", gc_model)
         _check_params(neur_params, "neurite", gc_model=gcm)
@@ -1436,8 +1440,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
     set_kernel_status_(c_status, c_simulation_id)
 
 
-def set_object_properties(objects, params=None, axon_params=None,
-                          dendrites_params=None):
+def set_object_properties(objects, params=None, neurite_params=None):
     '''
     Update the status of the `objects` using the parameters contained in
     `params`.
@@ -1446,100 +1449,76 @@ def set_object_properties(objects, params=None, axon_params=None,
     ----------
     objects : object or int
         Objects to update (either neurons or recorders).
-    params : dict or list of dicts
+    params : dict, optional (default: None)
         New parameters of the objects.
-    axon_params :  dict or list of dicts, optional (default: None)
-        New axon parameters if `objects` are neurons.
-    dendrites_params :  dict or list of dicts, optional (default: None)
-        New dendrites parameters if `objects` are neurons.
+    neurite_params :  dict, optional (default: None)
+        New neurite parameters if `objects` are neurons.
     '''
-    gids             = list(objects) if nonstring_container(objects)\
-                       else [objects]
-    num_objects      = len(gids)
-    params           = {} if params is None else params
-    axon_params      = {} if axon_params is None else axon_params
-    dendrites_params = {} if dendrites_params is None else dendrites_params
+    objects        = objects if nonstring_container(objects) \
+                     else [objects]
+    num_objects    = len(gids)
+    params         = {} if params is None else params.copy()
+    neurite_params = {} if neurite_params is None \
+                       else neurite_params.copy()
 
     cdef:
-        stype i, n = len(gids)
-        statusMap base_neuron_status, base_axon_status, base_dend_status
-
-    it_p, it_a, it_d = params, axon_params, dendrites_params
-    if isinstance(params, dict):
-        it_p = (params for i in range(n))
-        base_neuron_status = _get_scalar_status(params, num_objects)
-    if isinstance(axon_params, dict):
-        it_a = (axon_params for i in range(n))
-        base_axon_status = _get_scalar_status(axon_params, num_objects)
-    if isinstance(dendrites_params, dict):
-        it_d = (dendrites_params for i in range(n))
-        base_dend_status = _get_scalar_status(dendrites_params, num_objects)
+        stype i, n       = len(gids)
+        vector[int] gids = [int(obj) for obj in objects]
+        statusMap base_neuron_status
+        unordered_map[string, statusMap] base_neurite_statuses
 
     # check parameters
-    if it_a and it_d:
-        for gid, p, p_a, p_d in zip(gids, it_p, it_a, it_d):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            _check_params(p, object_name)
+    for i, gid in enumerate(gids):
+        object_name  = get_object_type(gid)
 
-            astat        = get_object_properties(gid, neurite="axon")
-            old_gc_model = astat["growth_cone_model"] if astat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p_a, "neurite", gc_model=gc_model)
+        _check_params(p, object_name)
 
-            dstat        = get_object_properties(gid, neurite="dendrites")
-            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p_d, "neurite", gc_model=gc_model)
-    elif it_a:
-        for gid, p, p_a in zip(gids, it_p, it_a):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            astat        = get_object_properties(gid, neurite="axon")
-            old_gc_model = astat["growth_cone_model"] if astat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p, object_name)
-            _check_params(p_a, "neurite", gc_model=gc_model)
-    elif it_d:
-        for gid, p, p_d in zip(gids, it_p, it_d):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            dstat        = get_object_properties(gid, neurite="dendrites")
-            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p, object_name)
-            _check_params(p_d, "neurite", gc_model=gc_model)
-    else:
-        for gid, p in zip(gids, it_p):
-            object_name = get_object_type(gid)
-            _check_params(p, object_name)
+        base_neuron_status = _get_scalar_status(params, n)
+
+        if object_name == "neuron":
+            def_model = p.get("growth_cone_model", "default")
+
+            if neurite_params:
+                dod = isinstance(next(iter(neurite_params.values())),
+                                 dict)
+                
+                stat = neurite_params
+
+                if not dod:
+                    neurite_names = get_object_properties(
+                        gid, "neurite_names")
+
+                    stat = {
+                        name: neurite_params for name in neurite_names
+                    }
+                    
+                for neurite, status in stat.items():
+                    nstat = get_object_properties(gid, neurite=neurite)
+                    old_gc_model = nstat["growth_cone_model"] \
+                                   if nstat else def_model
+                    gc_model = status.get("growth_cone_model",
+                                          old_gc_model)
+                    _check_params(nstat, "neurite", gc_model=gc_model)
+
+                    base_neurite_statuses[_to_bytes[neurite]] = \
+                        _get_scalar_status(status, n)
 
     cdef:
         vector[statusMap] neuron_statuses = \
             vector[statusMap](num_objects, base_neuron_status)
-        vector[statusMap] axon_statuses = \
-            vector[statusMap](num_objects, base_axon_status)
-        vector[statusMap] dendrites_statuses = \
-            vector[statusMap](num_objects, base_dend_status)
+        unordered_map[string, vector[statusMap]] neurite_statuses
 
-    if isinstance(params, dict):
-        _set_vector_status(neuron_statuses, params)
-    else:
-        for i, p in enumerate(it_p):
-            for k, v in p.items():
-                neuron_statuses[i][_to_bytes(k)] = _to_property(k, v)
-    if isinstance(axon_params, dict):
-        _set_vector_status(axon_statuses, axon_params)
-    else:
-        for i, p in enumerate(it_a):
-            for k, v in p.items():
-                axon_statuses[i][_to_bytes(k)] = _to_property(k, v)
-    if isinstance(dendrites_params, dict):
-        _set_vector_status(dendrites_statuses, dendrites_params)
-    else:
-        for i, p in enumerate(it_d):
-            for k, v in p.items():
-                dendrites_statuses[i][_to_bytes(k)] = _to_property(k, v)
+    for neurite in neurite_params:
+        bneurite = _to_bytes(neurite)
+        neurite_statuses[bneurite] = \
+            vector[statusMap](n, base_neurite_statuses[bneurite])
+
+    # set the specific properties for each neurons
+    _set_vector_status(neuron_params, params)
+    # specific neurite parameters    
+    for neurite, dic_params in neurite_params.items():
+        _set_vector_status(neurite_statuses[_to_bytes(neurite)],
+                           dic_params)
 
     for i, neuron in enumerate(gids):
         set_status_(neuron, neuron_statuses[i], axon_statuses[i],

@@ -347,6 +347,41 @@ void set_status_(stype gid, statusMap neuron_status, statusMap axon_status,
 }
 
 
+void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
+                 std::unordered_map<std::string, std::vector<statusMap>>
+                     neurite_statuses)
+{
+    // get the threads of the neurons
+    std::unordered_map<std::vector<stype>> map_thread_gids;
+    int thread_id;
+
+    for (stype gid : gids)
+    {
+        thread_id = kernel().neuron_manager.
+    }
+
+    auto neuron = kernel().neuron_manager.get_neuron(gid);
+    neuron->set_status(neuron_status);
+
+    auto local_params = neuron_status;
+    for (auto &param : axon_status)
+    {
+        local_params[param.first] = param.second;
+    }
+    neuron->set_neurite_status("axon", local_params);
+
+    local_params = neuron_status;
+    for (auto &param : dendrites_status)
+    {
+        local_params[param.first] = param.second;
+    }
+    neuron->set_neurite_status("dendrite", local_params);
+
+    // update max_resolution for simulation
+    kernel().simulation_manager.set_max_resolution();
+}
+
+
 void set_neurite_status_(stype neuron, std::string neurite, statusMap status)
 {
     NeuronPtr nptr = kernel().neuron_manager.get_neuron(neuron);

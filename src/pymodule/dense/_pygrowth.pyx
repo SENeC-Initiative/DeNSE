@@ -1456,14 +1456,14 @@ def set_object_properties(objects, params=None, neurite_params=None):
     '''
     objects        = objects if nonstring_container(objects) \
                      else [objects]
-    num_objects    = len(gids)
+    num_objects    = len(objects)
     params         = {} if params is None else params.copy()
     neurite_params = {} if neurite_params is None \
                        else neurite_params.copy()
 
     cdef:
-        stype i, n       = len(gids)
-        vector[int] gids = [int(obj) for obj in objects]
+        stype i, n       = len(objects)
+        vector[stype] gids = [int(obj) for obj in objects]
         statusMap base_neuron_status
         unordered_map[string, statusMap] base_neurite_statuses
 
@@ -1471,12 +1471,12 @@ def set_object_properties(objects, params=None, neurite_params=None):
     for i, gid in enumerate(gids):
         object_name  = get_object_type(gid)
 
-        _check_params(p, object_name)
+        _check_params(params, object_name)
 
         base_neuron_status = _get_scalar_status(params, n)
 
         if object_name == "neuron":
-            def_model = p.get("growth_cone_model", "default")
+            def_model = params.get("growth_cone_model", "default")
 
             if neurite_params:
                 dod = isinstance(next(iter(neurite_params.values())),
@@ -1500,7 +1500,7 @@ def set_object_properties(objects, params=None, neurite_params=None):
                                           old_gc_model)
                     _check_params(nstat, "neurite", gc_model=gc_model)
 
-                    base_neurite_statuses[_to_bytes[neurite]] = \
+                    base_neurite_statuses[_to_bytes(neurite)] = \
                         _get_scalar_status(status, n)
 
     cdef:
@@ -1514,15 +1514,13 @@ def set_object_properties(objects, params=None, neurite_params=None):
             vector[statusMap](n, base_neurite_statuses[bneurite])
 
     # set the specific properties for each neurons
-    _set_vector_status(neuron_params, params)
+    _set_vector_status(neuron_statuses, params)
     # specific neurite parameters    
     for neurite, dic_params in neurite_params.items():
         _set_vector_status(neurite_statuses[_to_bytes(neurite)],
                            dic_params)
 
-    for i, neuron in enumerate(gids):
-        set_status_(neuron, neuron_statuses[i], axon_statuses[i],
-                    dendrites_statuses[i])
+    set_status_(gids, neuron_statuses, neurite_statuses)
 
 
 def set_neurite_properties(neuron, neurite, params):

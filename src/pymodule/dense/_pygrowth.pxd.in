@@ -228,8 +228,12 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef vector[string] get_direction_selection_methods_() except +
 
     cdef void set_status_(stype gid, statusMap neuron_status,
-                          statusMap axon_status,
-                          statusMap dendrites_status) except +
+                          unordered_map[string, statusMap]
+                              neurite_statuses) except +
+
+    cdef void set_status_(vector[stype] gids, vector[statusMap] status,
+                          unordered_map[string, vector[statusMap]]
+                              neurite_statuses) except +
 
     cdef void set_neurite_status_(stype neurton, string neurite,
                                   statusMap status) except +

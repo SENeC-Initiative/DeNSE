@@ -166,11 +166,11 @@ fig.text(0.6, 0.45, "B.3")
 ds.plot.plot_dendrogram(n.axon, show=False, vertical_diam_frac=0.45,
                         axis=ax_axon)
 
-ds.plot.plot_dendrogram(n.dendrites["dendrite_1"], show=False,
+ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
                         vertical_diam_frac=0.45, axis=ax_dend)
 
 ds.plot.plot_neurons(scale_text=False, axis=ax_cell)
 
-print("Asymmetry of axon:", ds.morphology.tree_asymmetry(n.axon))
-print("Asymmetry of dendrite 1:",
-      ds.morphology.tree_asymmetry(n.dendrites["dendrite_1"]))
+print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
+print("Asymmetry of the dendrite:",
+      ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))

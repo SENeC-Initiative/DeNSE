@@ -317,13 +317,19 @@ void NeuronManager::get_defaults(statusMap &status, const std::string &object,
         }
         model_neuron_->get_status(status);
     }
-    else if (object == "axon")
+    else
     {
-        model_neuron_->get_neurite_status(status, "axon", "neurite");
-    }
-    else if (object == "dendrite" || object == "neurite")
-    {
-        model_neuron_->get_neurite_status(status, "dendrite", "neurite");
+        if (object == "axon" || object == "neurite")
+        {
+            model_neuron_->get_neurite_status(
+                status, "axon", "neurite");
+        }
+
+        if (object == "dendrite" || object == "neurite")
+        {
+            model_neuron_->get_neurite_status(
+                status, "dendrite", "neurite");
+        }
     }
 }
 

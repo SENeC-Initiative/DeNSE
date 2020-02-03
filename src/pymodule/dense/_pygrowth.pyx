@@ -1494,11 +1494,12 @@ def set_object_properties(objects, params=None, neurite_params=None):
                     
                 for neurite, status in stat.items():
                     nstat = get_object_properties(gid, neurite=neurite)
+                    ntype = "axon" if neurite == "axon" else "neurite"
                     old_gc_model = nstat["growth_cone_model"] \
                                    if nstat else def_model
                     gc_model = status.get("growth_cone_model",
                                           old_gc_model)
-                    _check_params(nstat, "neurite", gc_model=gc_model)
+                    _check_params(nstat, ntype, gc_model=gc_model)
 
                     base_neurite_statuses[_to_bytes(neurite)] = \
                         _get_scalar_status(status, n)
@@ -1537,11 +1538,12 @@ def set_neurite_properties(neuron, neurite, params):
         Parameters of the neurite.
     '''
     neuron   = int(neuron)
+    ntype    = "axon" if str(neurite) == axon else "dendrite"
     neurite  = _to_bytes(str(neurite))
     gc_model = get_object_properties(neuron, "growth_cone_model",
                                      neurite=neurite)
 
-    _check_params(params, "neurite", gc_model=gc_model)
+    _check_params(params, ntype, gc_model=gc_model)
 
     cdef statusMap cparams = _get_scalar_status(params, 1)
 
@@ -2604,14 +2606,14 @@ def _check_params(params, object_name, gc_model=None):
         ctype = _to_bytes("growth_cone")
     elif object_name == "neuron":
         ctype = _to_bytes("neuron")
-    elif object_name in ["axon", "dendrite", "neurite"]:
+    elif object_name in {"axon", "dendrite", "neurite"}:
         ctype = _to_bytes("neurite")
     elif object_name == "recorder":
         ctype = _to_bytes("recorder")
     else:
         raise RuntimeError("Unknown object : '" + object_name + "'. "
-                           "Candidates are 'recorder' and all entries in "
-                           "get_models.")
+                           "Candidates are 'recorder' and all entries "
+                           "in get_models.")
 
     get_defaults_(cname, ctype, cgcmodel, True, default_params)
 

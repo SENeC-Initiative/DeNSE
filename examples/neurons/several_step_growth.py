@@ -125,7 +125,7 @@ if __name__ =='__main__':
     ds.simulate(7 * day)
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
 
-    ds.plot.plot_neurons(mode="mixed", show=True)
+    # ~ ds.plot.plot_neurons(mode="mixed", show=True)
 
 
     '''
@@ -164,7 +164,7 @@ if __name__ =='__main__':
     ds.simulate(7 *day+2*day)
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
-    ds.plot.plot_neurons(mode="mixed", show=True)
+    # ~ ds.plot.plot_neurons(mode="mixed", show=True)
 
     '''
     Change the parameters to include lateral branching
@@ -177,7 +177,7 @@ if __name__ =='__main__':
 
         "use_van_pelt": False,
         "use_uniform_branching": True,
-        "uniform_branching_rate": 0.00005 * cpm,
+        "uniform_branching_rate": 0.005 * cpm,
         "lateral_branching_angle_mean": 45. * deg,
         "lateral_branching_angle_std": 5. * deg,
     }
@@ -186,7 +186,7 @@ if __name__ =='__main__':
     dlat_params.update({
         "speed_growth_cone": 0.003 * um/minute,
 
-        "uniform_branching_rate": 0.0001 * cpm,
+        "uniform_branching_rate": 0.01 * cpm,
     })
 
     # Here as the 'gids' are neurons,  the lat_params assigned to 'params', 

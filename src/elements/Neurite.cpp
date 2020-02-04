@@ -746,8 +746,12 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
         BranchPtr branch = branching_node->get_branch();
         BPoint xy;
 
+        printf("in lateral branching: bp %lu vs bs %lu\n", branch_point, branch->size());
+
         locate_from_idx(xy, branch_direction, distance_to_soma, branch,
                         branch_point);
+
+        printf("index located\n");
 
         char branching_side = 1;
         if (uniform_(*(rnd_engine).get()) < 0.5)
@@ -769,6 +773,9 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
         // compute the local diameter on the branch
         double new_diam = branching_node->get_diameter() +
                           taper_rate_ * distance_from_branching;
+
+
+        printf("making the new node\n");
 
         // create the new node at position xy
         new_node =
@@ -833,6 +840,8 @@ bool Neurite::lateral_branching(TNodePtr branching_node, stype branch_point,
         auto sibling = create_branching_cone(branching_node, new_node,
                                              dist_to_bp, new_cone_diam, xy,
                                              branch_direction + angle, false);
+
+        printf("got there\n");
 
         // check if sibling could indeed be created
         if (sibling != nullptr)

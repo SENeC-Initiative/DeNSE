@@ -292,6 +292,7 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::set_status(
 
     // then set the models
     bool speed = elongator_->set_status(status);
+
     steerer_->set_status(status);
 
     // direction selector may need to access all the properties
@@ -300,7 +301,7 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::set_status(
     elongator_->get_status(base_status);
     steerer_->get_status(base_status);
 
-    // update the status and set dire_selector
+    // update the status and set dir_selector
     base_status.insert(status.begin(), status.end());
     dir_selector_->set_status(base_status);
 

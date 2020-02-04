@@ -1498,6 +1498,9 @@ def set_object_properties(objects, params=None, neurite_params=None):
                     stat = {
                         name: neurite_params for name in neurite_names
                     }
+
+                    # update neurite_params
+                    neurite_params = stat
                     
                 for neurite, status in stat.items():
                     nstat = get_object_properties(gid, neurite=neurite)

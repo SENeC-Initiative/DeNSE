@@ -379,6 +379,10 @@ void ResourceBasedExtensionModel::get_status(statusMap &status) const
               "micromole / liter");
     set_param(status, names::res_branching_proba, branching_proba_, "");
 
+    // set speed_growth_cone for compatibility reasons
+    set_param(status, names::speed_growth_cone, elongation_factor_,
+              "micrometer / minute");
+
     // use and leakage
     set_param(status, names::res_use_ratio, use_ratio_, "1 / minute");
     set_param(status, names::res_leakage, leakage_, "minute");

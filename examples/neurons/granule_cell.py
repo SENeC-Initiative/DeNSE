@@ -22,13 +22,10 @@
 
 """ Generate the morphology of a granule cell """
 
-# import matplotlib
-# matplotlib.use("Qt5Agg")
+import numpy as np
 
 import dense as ds
 from dense.units import *
-import numpy as np
-import os
 
 
 # parameters
@@ -41,7 +38,7 @@ neuron_params = {
     "dendrite_diameter": 2. * um,
     "axon_diameter": 3.5 * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
-    "growth_cone_model": "run-and-tumble"
+    "growth_cone_model": "simple-random-walk"
 }
 
 axon_params = {
@@ -66,6 +63,11 @@ dend_params = {
     "speed_growth_cone": 0.02 * um /minute
 }
 
+neurite_params = {
+    "axon": axon_params,
+    "dendrites": dend_params
+}
+
 kernel = {
     "resolution": 10.*minute,
     "seeds": [17],
@@ -79,8 +81,7 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      axon_params=axon_params, dendrites_params=dend_params,
-                      num_neurites=6)
+                      neurite_params=neurite_params, num_neurites=6)
 
 ds.simulate(2 * day)
 
@@ -95,9 +96,10 @@ lb_axon = {
     "lateral_branching_angle_mean": 45.*deg,
 }
 
-ds.set_object_properties(n, axon_params=lb_axon)
+ds.set_object_properties(n, neurite_params={"axon": lb_axon})
 
 ds.simulate(7 * day)
+
 ds.plot.plot_dendrogram(n.axon, show=False)
 
 ds.io.save_to_swc("granule-cell.swc", gid=n)

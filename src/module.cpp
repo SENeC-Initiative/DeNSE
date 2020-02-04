@@ -339,7 +339,18 @@ void set_status_(stype gid, statusMap neuron_status,
             local_params[param.first] = param.second;
         }
 
-        neuron->set_neurite_status(entry.first, local_params);
+        // check for placeholder "dendrites" entry
+        if (entry.first == "dendrites")
+        {
+            for (auto neurite : get_neurites_(gid))
+            {
+                neuron->set_neurite_status(neurite, local_params);
+            }
+        }
+        else
+        {
+            neuron->set_neurite_status(entry.first, local_params);
+        }
     }
 
     // update max_resolution for simulation
@@ -401,7 +412,20 @@ void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
                         local_params[param.first] = param.second;
                     }
 
-                    neuron->set_neurite_status(entry.first, local_params);
+                    // check for placeholder "dendrites" entry
+                    if (entry.first == "dendrites")
+                    {
+                        for (auto neurite : get_neurites_(gids[i]))
+                        {
+                            neuron->set_neurite_status(neurite,
+                                                       local_params);
+                        }
+                    }
+                    else
+                    {
+                        neuron->set_neurite_status(entry.first,
+                                                   local_params);
+                    }
                 }
             }
         }

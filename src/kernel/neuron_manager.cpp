@@ -116,7 +116,7 @@ stype NeuronManager::create_neurons(
             if (not kernel().space_manager.env_contains(BPoint(x, y)))
             {
                 throw std::runtime_error(
-                    " a Neuron was positioned outside the environment\n");
+                    "A neuron was positioned out of the environment\n");
             }
         }
 

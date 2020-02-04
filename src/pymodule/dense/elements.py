@@ -547,11 +547,11 @@ class Neurite(object):
     def diameter(self):
         ''' Diameter of the different segments along the neurite '''
         try:
-            return _np.concatenate([branch.diameter for branch in self.branches])
+            return _np.array([b.diameter.m for b in self.branches])*um
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([])
 
     @property
     def branching_points(self):

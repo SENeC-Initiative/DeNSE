@@ -161,14 +161,17 @@ void Neuron::init_status(
                                    __LINE__);
         }
 
-        for (auto p : neurite_statuses)
+        if (neurite_statuses.find("dendrites") == neurite_statuses.end())
         {
-            if (neurite_names.find(p.first) == neurite_names.end())
+            for (auto p : neurite_statuses)
             {
-                throw InvalidParameter(
-                    "`neurite_names` and the parameters contain "
-                    "different  neurite names.", __FUNCTION__, __FILE__,
-                    __LINE__);
+                if (neurite_names.find(p.first) == neurite_names.end())
+                {
+                    throw InvalidParameter(
+                        "`neurite_names` and the parameters contain "
+                        "different  neurite names.", __FUNCTION__,
+                        __FILE__, __LINE__);
+                }
             }
         }
     }
@@ -270,7 +273,18 @@ void Neuron::init_status(
 
         if (name != "axon")
         {
-            // get dendrite parameters
+            // check for placeholder params
+            auto it_dendrites = neurite_statuses.find("dendrites");
+
+            if (it_dendrites != neurite_statuses.end())
+            {
+                for (auto p : it_dendrites->second)
+                {
+                    dstatus[p.first] = p.second;
+                }
+            }
+
+            // get for specific dendrite parameters
             auto it_status = neurite_statuses.find(name);
 
             if (it_status != neurite_statuses.end())

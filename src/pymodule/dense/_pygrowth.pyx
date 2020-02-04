@@ -127,38 +127,42 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
         Parameters of the object (or shape object for obstacle).
     neurite_params : dict, optional (default: same as `params`)
         Specific parameters for neurite growth. Entries of the dict can
-        be lists to give different parameters for the neurites of each neuron.
-        To provide different parameters for each neurite, one can provide
-        `neurite_params` as a dict of dict, with the neurite names as keys.
+        be lists to give different parameters for the neurites of each
+        neuron.
+        To provide different parameters for each neurite, one can
+        provide `neurite_params` as a dict of dict, with the neurite
+        names as keys.
     num_neurites : int, optional (default: 0)
         Number of neurites (same for all neurons).
     neurite_names : list, optional (default: None)
         Names of the neurites. If not provided, defaults to keys of
-        `dendrite_params`. If `dendrite_params` is also empty, defaults to
-        ["axon", "dendrite_1", dendrite_2", ...] (without "axon" if the neurite
-        has "has_axon" set to False).
+        `dendrite_params`. If `dendrite_params` is also empty, defaults
+        to ["axon", "dendrite_1", dendrite_2", ...] (without "axon" if
+        the neurite has "has_axon" set to False).
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
         Restrict the space where neurons will be randomly seeded to an
         area or a set of areas.
     neurites_on_area : bool, str, area, or list, optional (default: False)
-        Restrict the points where neurites will extend from the soma. This is
-        typically used to account for the fact that when seeded on patterned
-        surfaces, neurons will extend their neurites only on the patterns.
-        If `True`, then `on_area` must be set and the same area will be used.
-        If `False`, neurite are not constrained.
+        Restrict the points where neurites will extend from the soma.
+        This is typically used to account for the fact that, when seeded
+        on patterned surfaces, neurons will extend their neurites only
+        on the patterns.
+        If `True`, then `on_area` must be set and the same area will be
+        used. If `False`, neurite are not constrained.
     return_ints : bool, optional (default: False)
-        Whether the neurons are returned as :class:`Neuron` objects or simply
-        as integers (the neuron gids).
+        Whether the neurons are returned as :class:`Neuron` objects or
+        simply as integers (the neuron gids).
 
     Returns
     -------
     neurons : Neuron, Population, or ints
         By default, returns a :class:`~dense.elements.Neuron` object if a
-        single neuron is requested, a :class:`~dense.elements.Popuulation` if
-        several neurons are created, or a tuple of the neurons' GIDs if
-        `return_ints` is True.
+        single neuron is requested, a
+        :class:`~dense.elements.Popuulation` if several neurons are
+        created, or a tuple of the neurons' GIDs if `return_ints` is
+        True.
 
     Example
     -------
@@ -184,8 +188,9 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
 
     Note
     ----
-    When specifying `num_neurites`, the first neurite created is an axon unless
-    `has_axon` is set to False, the subsequent neurites are dendrites.
+    When specifying `num_neurites`, the first neurite created is an axon
+    unless `has_axon` is set to False, the subsequent neurites are
+    dendrites.
     If `has_axon` is set to False, then only dendrites are created.
     '''
     params = {} if params is None else params.copy()
@@ -298,8 +303,10 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
 
         ssizes    = params["soma_radius"]
         nneurites = num_neurites
+
         if not is_iterable(params["soma_radius"]):
             ssizes = (params["soma_radius"] for _ in range(n))
+
         if not is_iterable(num_neurites):
             nneurites = (num_neurites for _ in range(n))
 
@@ -333,24 +340,24 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     angle : list, optional (default: automatically positioned)
         Angles of the newly created neurites.
     neurite_types : str or list, optional
-        Types of the neurites, either "axon" or "dendrite". If not provided,
-        the first neurite will be an axon if the neuron has no existing neurites
-        and its `has_axon` variable is True, all other neurites will be
-        dendrites.
+        Types of the neurites, either "axon" or "dendrite". If not
+        provided, the first neurite will be an axon if the neuron has
+        no existing neurites and its `has_axon` variable is True,
+        all other neurites will be dendrites.
     names : list, optional (default: "axon" and "dendrite_X")
         Names of the created neurites.
 
     Note
     ----
-    When using this function, the same number and types of neurites will be
-    created for each neuron; to create varying numbers, types, or relative
-    angles for the neurites, the function must be called separately on the
-    different sets of neurons.
+    When using this function, the same number and types of neurites will
+    be created for each neuron; to create varying numbers, types, or
+    relative angles for the neurites, the function must be called
+    separately on the different sets of neurons.
 
     .. warning ::
 
-        Axon name must always be "axon", trying to name it differently will
-        immediately crash the kernel.
+        Axon name must always be "axon", trying to name it differently
+        will immediately crash the kernel.
     '''
     cdef:
         vector[stype] cneurons
@@ -359,7 +366,7 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
         statusMap common_params
         vector[statusMap] cparams
 
-    params = {} if params is None else params
+    params = {} if params is None else params.copy()
 
     if not nonstring_container(neurons):
         neurons = [neurons]
@@ -416,8 +423,8 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
 
     _set_vector_status(cparams, params)
 
-    create_neurites_(cneurons, num_neurites, cparams, cneurite_types, cangles,
-                     cneurite_names)
+    create_neurites_(cneurons, num_neurites, cparams, cneurite_types,
+                     cangles, cneurite_names)
 
 
 def create_recorders(targets, observables, sampling_intervals=None,
@@ -1538,7 +1545,7 @@ def set_neurite_properties(neuron, neurite, params):
         Parameters of the neurite.
     '''
     neuron   = int(neuron)
-    ntype    = "axon" if str(neurite) == axon else "dendrite"
+    ntype    = "axon" if str(neurite) == "axon" else "dendrite"
     neurite  = _to_bytes(str(neurite))
     gc_model = get_object_properties(neuron, "growth_cone_model",
                                      neurite=neurite)
@@ -2742,7 +2749,7 @@ def _set_neurite_names(has_axon, num_neurites, neurite_params):
     '''
     neurite_names = None
 
-    if neurite_params:
+    if neurite_params and "dendrites" not in neurite_params:
         neurite_names = {k for k in neurite_params}
 
         if len(neurite_params) > num_neurites:

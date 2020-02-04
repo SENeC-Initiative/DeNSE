@@ -166,9 +166,9 @@ class Neuron(object):
         --------
         :func:`~dense.create_neurites`.
         '''
-        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
-                            angles=angles, neurite_types=neurite_types,
-                            names=names)
+        _pg.create_neurites(self, num_neurites=num_neurites,
+                            params=params, angles=angles,
+                            neurite_types=neurite_types, names=names)
 
     def delete_neurites(self, neurite_names=None):
         '''
@@ -247,19 +247,16 @@ class Neuron(object):
         return _pg.get_object_properties(self, property_name=property_name,
                                          level=level, neurite=neurite)
 
-    def set_properties(self, params=None, axon_params=None,
-                       dendrites_params=None):
+    def set_properties(self, params=None, neurite_params=None):
         '''
-        Update the neuronal parameters using the entries contained in `params`.
+        Update the neuronal (and optionaly neurite) parameters.
 
         Parameters
         ----------
         params : dict
             New neuron parameters.
-        axon_params : dict, optional (default: None)
-            New axon parameters.
-        dendrites_params : dict, optional (default: None)
-            New dendrites parameters.
+        neurite_params : dict, optional (default: None)
+            New neurite parameters.
 
         See also
         --------
@@ -268,8 +265,7 @@ class Neuron(object):
         :func:`~dense.elements.Neuron.get_properties`.
         '''
         return _pg.set_object_properties(
-            self, params=params, axon_params=axon_params,
-            dendrites_params=dendrites_params)
+            self, params=params, neurite_params=neurite_params)
 
     def to_swc(self, filename, resolution=10):
         '''
@@ -886,15 +882,9 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_properties(gids, "position",
-                                         return_iterable=True)
-        pos  = [pos[n] for n in gids]
-        rad  = _pg.get_object_properties(gids, "soma_radius",
-                                         return_iterable=True)
-        rad  = [rad[n] for n in gids]
 
-        for n, p, r in zip(gids, pos, rad):
-            super(Population, pop).append(Neuron(n, p, r))
+        for n in gids:
+            super(Population, pop).append(Neuron(n))
 
         pop.sort()
         pop._idx = {}  # converter from gid to idx

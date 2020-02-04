@@ -139,7 +139,7 @@ rec2 = ds.create_recorders(n, "num_growth_cones", levels="neurite")
 # ds.set_object_properties(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 ds.simulate(5*day)
-ds.plot.plot_neurons(show=True)
+# ~ ds.plot.plot_neurons(show=True)
 
 
 lb = {
@@ -157,8 +157,8 @@ neurite_params = {"axon": lb_axon, "dendrites": lb}
 ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(15*day)
-ds.plot.plot_recording(rec, show=False)
-ds.plot.plot_neurons(show=True)
+# ~ ds.plot.plot_recording(rec, show=False)
+# ~ ds.plot.plot_neurons(show=True)
 
 
 end_branching = {
@@ -170,9 +170,9 @@ ds.set_object_properties(n, neurite_params=end_branching)
 
 ds.simulate(10*day)
 
-ds.plot.plot_recording(rec2, show=False)
-ds.plot.plot_dendrogram(n.axon, show=False)
-ds.plot.plot_neurons(show=True, scale_text=False)
+# ~ ds.plot.plot_recording(rec2, show=False)
+# ~ ds.plot.plot_dendrogram(n.axon, show=False)
+# ~ ds.plot.plot_neurons(show=True, scale_text=False)
 
 ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 

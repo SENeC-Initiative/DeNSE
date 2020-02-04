@@ -189,13 +189,16 @@ void Neuron::init_status(
                                    __FUNCTION__, __FILE__, __LINE__);
         }
 
-        for (auto p : neurite_statuses)
+        if (neurite_statuses.find("dendrites") == neurite_statuses.end())
         {
-            if (nas.find(p.first) == nas.end())
+            for (auto p : neurite_statuses)
             {
-                throw InvalidParameter(
-                    "`neurite_angles` contain invalid neurite names.",
-                    __FUNCTION__, __FILE__, __LINE__);
+                if (nas.find(p.first) == nas.end())
+                {
+                    throw InvalidParameter(
+                        "`neurite_angles` contain invalid neurite names.",
+                        __FUNCTION__, __FILE__, __LINE__);
+                }
             }
         }
 

@@ -73,7 +73,7 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      dendrites_params=dend_params, num_neurites=8)
+                      neurite_params=dend_params, num_neurites=8)
 
 ds.simulate(1.*day)
 
@@ -85,7 +85,7 @@ dend_params = {
     # "lateral_branching_angle_mean": 70.*deg,
 }
 
-ds.set_object_properties(n, dendrites_params=dend_params)
+ds.set_object_properties(n, neurite_params=dend_params)
 
 ds.simulate(1.*day)
 
@@ -102,14 +102,8 @@ dend_params = {
     "gc_split_angle_std": 3.*deg,
 }
 
-ds.set_object_properties(n, dendrites_params=dend_params)
+ds.set_object_properties(n, neurite_params=dend_params)
 
 ds.simulate(8.*day)
 
 ds.plot.plot_neurons(scale_text=False)
-
-# tree = n[0].dendrites["dendrite_1"].get_tree()
-# tree.show_dendrogram()
-
-# print(n[0].dendrites.keys())
-# print("Asymmetry:", ds.structure.tree_asymmetry(n[0].dendrites["dendrite_1"]))

@@ -85,6 +85,8 @@ dendrite_params = {
     "T": 1.*hour,
 }
 
+neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+
 
 if __name__ == '__main__':
     kernel = {
@@ -97,45 +99,46 @@ if __name__ == '__main__':
     ds.set_kernel_status(kernel)
 
     neuron = ds.create_neurons(n=num_neurons, params=neuron_params,
-                               axon_params=axon_params,
-                               dendrites_params=dendrite_params, num_neurites=2)
+                               neurite_params=neurite_params,
+                               num_neurites=2)
 
-    rec = ds.create_recorders(neuron, "num_growth_cones", levels="neuron")
+    rec = ds.create_recorders(neuron, "num_growth_cones",
+                              levels="neuron")
 
     ds.simulate(2*hour)
     ds.plot.plot_neurons()
 
-    neuron.dendrites["dendrite_1"].set_properties({
+    neuron.dendrites["dendrite"].set_properties({
         "B": 6.*cpm, "T": 5.*hour,
         # "somatropic_scale": 200.*um, "somatropic_factor": 1.
     })
 
     ds.simulate(15*hour)
-    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"], show=False)
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite"], show=False)
     ds.plot.plot_neurons()
 
-    neuron.set_properties(dendrites_params={
+    neuron.set_properties(neurite_params={"dendrite": {
         "use_van_pelt": False, "use_uniform_branching": True,
-        "uniform_branching_rate": 1.*cph, "speed_growth_cone": 0.1*um/minute,
-        "somatropic_scale": 300.*um, "somatropic_factor": 0.95,
-        "self_avoidance_scale": 5.*um,
-    })
+        "uniform_branching_rate": 1.*cph,
+        "speed_growth_cone": 0.1*um/minute, "somatropic_scale": 300.*um,
+        "somatropic_factor": 0.95, "self_avoidance_scale": 5.*um,
+    }})
 
     ds.simulate(6*day)
-    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite"],
                             ignore_diameter=True, aspect_ratio=0.5,
                             vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
 
-    neuron.set_properties(dendrites_params={
+    neuron.set_properties(neurite_params={"dendrite": {
         "use_van_pelt": False, "use_uniform_branching": True,
-        "uniform_branching_rate": 2.*cph, "speed_growth_cone": 0.1*um/minute,
-        "somatropic_scale": 80.*um, "somatropic_factor": 1.,
-        "diameter_fraction_lb": 0.45,
-    })
+        "uniform_branching_rate": 2.*cph,
+        "speed_growth_cone": 0.1*um/minute, "somatropic_scale": 80.*um,
+        "somatropic_factor": 1., "diameter_fraction_lb": 0.45,
+    }})
 
     ds.simulate(20.*day)
-    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite"],
                             ignore_diameter=True, aspect_ratio=0.2,
                             vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()

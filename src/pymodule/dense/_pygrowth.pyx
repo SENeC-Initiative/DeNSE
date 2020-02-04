@@ -1720,6 +1720,13 @@ cdef _create_neurons(dict params, dict neurite_params,
     # which are the same for all neurons)
     base_neuron_status = _get_scalar_status(params, n)
 
+    # check if neurite_params is a single dict or a dict of dicts
+    dod = (neurite_params
+           and isinstance(next(iter(neurite_params.values())), dict))
+
+    if not dod:
+        neurite_params = {k: neurite_params for k in neurite_names}
+
     # same for neurite parameters
     for key, value in neurite_params.items():
         base_neurite_statuses[_to_bytes(key)] = \
@@ -2194,10 +2201,11 @@ cdef statusMap _get_scalar_status(dict params, int n) except *:
                 y = float(val[1].to('micrometer').magnitude)
                 status[b"x"] = _to_property("x", x)
                 status[b"y"] = _to_property("y", y)
-        elif key == b"neurite_names" and is_scalar(next(iter(val))):
-            # special case for neurite names
-            new_val     = {_to_bytes(v) for v in val}
-            status[key] = _to_property(key, new_val)
+        elif key == b"neurite_names":
+            if not val or (val and is_scalar(next(iter(val)))):
+                # special case for neurite names
+                new_val     = {_to_bytes(v) for v in val}
+                status[key] = _to_property(key, new_val)                
         elif isinstance(val, dict) and is_scalar(list(val.values())[0]):
             new_val = {}
             for k, v in val.items():
@@ -2750,58 +2758,66 @@ def _set_neurite_names(has_axon, num_neurites, neurite_params):
     neurite_params : dict
         The neurite parameters (including the neurite names as keys).
     '''
-    neurite_names = None
+    neurite_names = set()
 
-    if neurite_params and "dendrites" not in neurite_params:
-        neurite_names = {k for k in neurite_params}
+    # check if neurite_params is a single dict or a dict of dicts
+    dod = (neurite_params
+           and isinstance(next(iter(neurite_params.values())), dict))
 
-        if len(neurite_params) > num_neurites:
-            raise ValueError(
-                "Number of neurites and number of entries "
-                "in `neurite_params` do not match.")
-        else:
-            if is_scalar(has_axon):
-                if has_axon and "axon" not in neurite_names:
-                    neurite_names.add("axon")
+    if num_neurites:
+        if dod and "dendrites" not in neurite_params:
+            neurite_names = {k for k in neurite_params}
 
-                if len(neurite_names) < num_neurites:
-                    shift = 1 - has_axon
-                    neurite_names.update({
-                        "dendrite_{}".format(i)
-                        for i in range(len(neurite_names) + shift,
-                                       num_neurites + shift)
-                     })
+            if len(neurite_params) > num_neurites:
+                raise ValueError(
+                    "Number of neurites and number of entries "
+                    "in `neurite_params` do not match.")
             else:
-                base_names = neurite_names.copy()
-                neurite_names = [neurite_names.copy()]*len(has_axon)
+                if is_scalar(has_axon):
+                    if has_axon and "axon" not in neurite_names:
+                        neurite_names.add("axon")
 
-                for i, ha in enumerate(has_axon):
-                    if ha and "axon" not in neurite_names[i]:
-                        neurite_names[i].add("axon")
-                    elif not ha and "axon" in neurite_names[i]:
-                        neurite_names[i].discard("axon")
-                        
-                    if len(neurite_names[i]) < num_neurites:
-                        shift = 1 - ha
-                        neurite_names[i].update({
+                    if len(neurite_names) < num_neurites:
+                        shift = 1 - has_axon
+                        neurite_names.update({
                             "dendrite_{}".format(i)
                             for i in range(len(neurite_names) + shift,
                                            num_neurites + shift)
                          })
-    else:
-        if is_scalar(has_axon):
-            neurite_names  = {"axon"} if has_axon else []
-            neurite_names.update({
-                "dendrite_{}".format(i)
-                for i in range(1, num_neurites + 1 - has_axon)
-            })
+                else:
+                    base_names = neurite_names.copy()
+                    neurite_names = [neurite_names.copy()]*len(has_axon)
+
+                    for i, ha in enumerate(has_axon):
+                        if ha and "axon" not in neurite_names[i]:
+                            neurite_names[i].add("axon")
+                        elif not ha and "axon" in neurite_names[i]:
+                            neurite_names[i].discard("axon")
+                            
+                        if len(neurite_names[i]) < num_neurites:
+                            shift = 1 - ha
+                            neurite_names[i].update({
+                                "dendrite_{}".format(i)
+                                for i in range(
+                                    len(neurite_names) + shift,
+                                    num_neurites + shift)
+                             })
         else:
-            neurite_names = []
-            for i, ha in enumerate(has_axon):
-                neurite_names.append({"axon"} if has_axon else set())
-                neurite_names[i].update({
+            if is_scalar(has_axon):
+                neurite_names  = {"axon"} if has_axon else set()
+                neurite_names.update({
                     "dendrite_{}".format(i)
-                    for i in range(1, num_neurites + 1 - ha)
-                 })
+                    for i in range(1, num_neurites + 1 - has_axon)
+                })
+            else:
+                neurite_names = []
+                for i, ha in enumerate(has_axon):
+                    neurite_names.append(
+                        {"axon"} if has_axon else set())
+
+                    neurite_names[i].update({
+                        "dendrite_{}".format(i)
+                        for i in range(1, num_neurites + 1 - ha)
+                     })
 
     return neurite_names

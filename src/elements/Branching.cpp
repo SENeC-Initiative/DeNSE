@@ -516,17 +516,14 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             // first 2 and last 2 points.
             double branching_dist =
                 uniform_(*(rnd_engine).get()) *
-                (branching_node->get_branch_length() - latbranch_dist_)
+                (branching_node->get_branch_length() - 2*latbranch_dist_)
                 + latbranch_dist_;
 
             branching_point = get_closest_point(branching_node,
                                                 branching_dist);
 
-            printf("length %f vs %f - point %lu vs %lu\n", branching_dist, latbranch_dist_, branching_point, branching_node->get_branch_size());
-
             // actuate lateral branching on the elected node through the
             // NEURITE.
-            printf("calling lateral branching\n");
             success = neurite_->lateral_branching(
                 branching_node, branching_point, new_node, rnd_engine);
             next_uniform_event_ = invalid_ev;

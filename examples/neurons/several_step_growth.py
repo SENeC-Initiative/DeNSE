@@ -125,7 +125,7 @@ if __name__ =='__main__':
     ds.simulate(7 * day)
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
 
-    # ~ ds.plot.plot_neurons(mode="mixed", show=True)
+    ds.plot.plot_neurons(mode="mixed", show=True)
 
 
     '''
@@ -159,12 +159,11 @@ if __name__ =='__main__':
 
     # update the parameters lists of the neurons 'gids'
     ds.set_object_properties(gids, axon_params=vp_axon, dendrites_params=vp_dend)
-    # pprint(ds.get_object_properties(gids))
 
     ds.simulate(7 *day+2*day)
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
-    # ~ ds.plot.plot_neurons(mode="mixed", show=True)
+    ds.plot.plot_neurons(mode="mixed", show=True)
 
     '''
     Change the parameters to include lateral branching
@@ -189,28 +188,9 @@ if __name__ =='__main__':
         "uniform_branching_rate": 0.01 * cpm,
     })
 
-    # Here as the 'gids' are neurons,  the lat_params assigned to 'params', 
-    # are assigned to 'neuron_params', they are then valid both for
-    # the axon and the dendrites
-    # Equivalently we could have written
-    #    dlat_params = {
-    #   "speed_growth_cone": 0.003,
-
-    #    "use_van_pelt": False,
-    #    "use_uniform_branching": True,
-    #    "speed_growth_cone": 0.003,
-    #    "uniform_branching_rate": 0.0001,
-    #    "lateral_branching_angle_mean": 45.,
-    #    "lateral_branching_angle_std": 5.,
-    #    }
-    
-    #    ds.set_object_properties(gids, axon_params=lat_params, dendrites_params=dlat_params)
-
     ds.set_object_properties(gids, params=lat_params, dendrites_params=dlat_params)
 
     ds.simulate(5 * day)
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
     ds.plot.plot_neurons(mode="mixed", show=True)
-
-    #~ pprint(ds.get_object_properties(gids_rec))

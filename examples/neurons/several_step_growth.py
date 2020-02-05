@@ -81,7 +81,7 @@ dendrite_params = {
 
     # extension parameters
     "speed_growth_cone": 0.01 *um/minute,
-    "persistence_length": 80.* um,
+    "persistence_length": 100.* um,
 
     # branching choice and parameters
     "use_uniform_branching": False,
@@ -164,7 +164,6 @@ if __name__ =='__main__':
 
     # update the parameters lists of the neurons 'gids'
     ds.set_object_properties(gids, neurite_params=neurite_params)
-    # pprint(ds.get_object_properties(gids))
 
     ds.simulate(7 *day+2*day)
 
@@ -182,7 +181,7 @@ if __name__ =='__main__':
 
         "use_van_pelt": False,
         "use_uniform_branching": True,
-        "uniform_branching_rate": 0.0001 * cpm,
+        "uniform_branching_rate": 0.01 * cph,
         "lateral_branching_angle_mean": 45. * deg,
         "lateral_branching_angle_std": 5. * deg,
     }
@@ -190,7 +189,7 @@ if __name__ =='__main__':
     dlat_params = lat_params.copy()
     dlat_params.update({
         "speed_growth_cone": 0.03 * um/minute,
-        "uniform_branching_rate": 0.00002 * cpm,
+        "uniform_branching_rate": 0.0012 * cph,
     })
 
     neurite_params = {"axon": lat_params, "dendrites": dlat_params}
@@ -201,5 +200,3 @@ if __name__ =='__main__':
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
     ds.plot.plot_neurons(mode="mixed", show=True)
-
-    #~ pprint(ds.get_object_properties(gids_rec))

@@ -204,8 +204,8 @@ def test_persistence():
                     label="resol: {}".format(resol))
             ax.plot(distances, exp_decay(distances, lp[0]))
 
-        if show_neurons:
-            ds.plot.plot_neurons(show=False, title=str(resol))
+            if show_neurons:
+                ds.plot.plot_neurons(show=False, title=str(resol))
 
     if do_plot:
         ax.plot(distances, np.exp(-distances/l_p), ls="--", c="k")

@@ -99,5 +99,5 @@ ds.plot.plot_neurons()
 
 ''' Save neuronal morphologies '''
 
-# ~ ds.io.save_to_swc("neurons.swc", n) 
+ds.io.save_to_swc("neurons.swc", n) 
 ds.io.save_to_neuroml("neurons.nml", n)

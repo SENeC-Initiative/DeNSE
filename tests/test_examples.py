@@ -30,9 +30,11 @@ import matplotlib.pyplot as plt
 
 import dense as ds
 
+folder = os.path.dirname(__file__)
+folder = folder if folder else "."
 
-root = os.path.abspath(os.path.dirname(__file__) + "/..")
-tuto = root + "/examples/tutorials"
+root   = os.path.abspath(folder + "/..")
+tuto   = root + "/examples/tutorials"
 
 
 def mock_show():
@@ -55,3 +57,24 @@ def test_2_interacting_neurons(monkeypatch):
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
     exec(open(tuto + "/2_interacting-neurons.py").read())
+
+
+def test_3_space_embedded_neurons(monkeypatch):
+    '''
+    Run second example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(tuto + "/3_space-embedding.py").read())
+
+
+if __name__ == "__main__":
+    class mptch:
+        def setattr(*args):
+            pass
+
+    mp = mptch()
+
+    test_1_first_steps(mp)
+    test_2_interacting_neurons(mp)
+    test_3_space_embedded_neurons(mp)

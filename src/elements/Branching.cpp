@@ -512,8 +512,8 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         // branching.
         if (branching_node != nullptr)
         {
-            // choose the point uniformly on the branch, except for
-            // first 2 and last 2 points.
+            // choose the point uniformly on the branch, except on
+            // first and last latbranch_dist_ segments.
             double branching_dist =
                 uniform_(*(rnd_engine).get()) *
                 (branching_node->get_branch_length() - 2*latbranch_dist_)
@@ -527,9 +527,6 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             success = neurite_->lateral_branching(
                 branching_node, branching_point, new_node, rnd_engine);
             next_uniform_event_ = invalid_ev;
-
-            // if the branching node was a GrowthCone, change the
-            // TopologicalNode
         }
         else
         {

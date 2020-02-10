@@ -86,7 +86,9 @@ These two methods are shown below:
 .. literalinclude:: ../../examples/tutorials/named_neurites.py
     :linenos:
     :language: python
-    :lines: 34-36, 40-51, 55-62, 68-76
+    :lines: 34-36, 40-51
+
+For more details, see the `example file <https://github.com/SENeC-Initiative/DeNSE/blob/master/examples/tutorials/named_neurites.py>`_.
 
 Optionally, neurites can also be created after the neuron's creation, using the
 :func:`~dense.create_neurites` function or calling the

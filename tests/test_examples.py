@@ -68,6 +68,14 @@ def test_3_space_embedded_neurons(monkeypatch):
     exec(open(tuto + "/3_space-embedding.py").read())
 
 
+def test_named_neurites():
+    '''
+    Run second example.
+    '''
+    ds.reset_kernel()
+    exec(open(tuto + "/named_neurites.py").read())
+
+
 if __name__ == "__main__":
     class mptch:
         def setattr(*args):
@@ -78,3 +86,4 @@ if __name__ == "__main__":
     test_1_first_steps(mp)
     test_2_interacting_neurons(mp)
     test_3_space_embedded_neurons(mp)
+    test_named_neurites()

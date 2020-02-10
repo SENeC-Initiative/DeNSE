@@ -432,9 +432,15 @@ class Neurite(object):
         return self.__name
 
     def __repr__(self):
+        name = str(self)
+
+        if name != "axon" and "dend" not in name:
+            name += " dendrite"
+
         if self._parent is None:
-            return "Neurite<{} at {}>".format(str(self), id(self))
-        return "Neurite<{} of neuron {}>".format(str(self), int(self._parent))
+            return "Neurite<{} at {}>".format(name, id(self))
+
+        return "Neurite<{} of neuron {}>".format(name, int(self._parent))
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''

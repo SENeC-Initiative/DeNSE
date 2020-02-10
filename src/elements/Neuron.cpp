@@ -550,6 +550,8 @@ std::string Neuron::new_neurite(const std::string &name,
 
             std::sort(angles.begin(), angles.end());
 
+            // we iterate over the angular apertures between the existing
+            // angles until we find one where we can insert the new neurite
             do
             {
                 polarization_angle = 0.;
@@ -576,7 +578,7 @@ std::string Neuron::new_neurite(const std::string &name,
                         dtheta = std::abs(other_angle - angles[i]);
                         // Be more explicit in this function: the axon has
                         // different direction of resting neurites, which is the
-                        // weigth scale of axon polarization weigtV
+                        // weigth scale of axon polarization weigt
                         if (has_axon_ and
                             (std::abs(other_angle - neurite_angles_["axon"]) <
                                  0.0001 or

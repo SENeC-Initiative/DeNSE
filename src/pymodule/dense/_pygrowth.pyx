@@ -216,6 +216,16 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
             warnings.warn(message, category=RuntimeWarning)
             warnings.simplefilter('default', RuntimeWarning)
 
+    # check `num_neurites` and other neurite entries are compatible
+    if not num_neurites:
+        if neurite_names:
+            raise ValueError(
+                "`num_neurites` is 0 but `neurite_names` were provided.")
+
+        if neurite_params:
+            raise ValueError(
+                "`num_neurites` is 0 but `neurite_params` were provided.")
+
     # set growth_cone_model for neurites if not present
     if "growth_cone_model" not in params:
         params["growth_cone_model"] = "default"
@@ -1690,6 +1700,12 @@ cdef _create_neurons(dict params, dict neurite_params,
 
             neurite_names = _set_neurite_names(has_axon, neurites,
                                                neurite_params)
+        elif not isinstance(neurite_names, set):
+            # convert to set if single entry, or to list of sets
+            if neurite_names and is_scalar(next(iter(neurite_names))):
+                neurite_names = set(neurite_names)
+            elif neurite_names:
+                neurite_names = [set(nn) for nn in neurite_names]
     else:
         len_val = len(neurites)
 
@@ -1703,7 +1719,7 @@ cdef _create_neurons(dict params, dict neurite_params,
         # names
         if neurite_names is None:
             has_axon = params.get("has_axon", np.full(n, True))
-            neurite_names = []
+            neurite_names = []  # list of sets
             for ha, nneur in zip(has_axon, neurites):
                 neurite_names.append(
                     _set_neurite_names(ha, nneur, neurite_params))

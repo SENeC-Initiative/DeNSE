@@ -34,7 +34,7 @@ class MemBasedSteeringModel : public virtual SteeringModel
   private:
     double memory_angle_;    // priviledged direction
     double rigidity_factor_; // "strength" of the memory's influence
-    double decay_factor_;    // decay of a segment's influence after 1 um
+    double memory_decay_factor_;    // decay of a segment's influence after 1 um
 
   public:
     MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite);

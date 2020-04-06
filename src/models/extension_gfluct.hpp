@@ -33,7 +33,9 @@ class GFluctExtensionModel : public virtual ExtensionModel
 {
   protected:
     double speed_gc_avg_;
+    double local_speed_;
     double speed_gc_std_;
+    double local_std_;
 
     std::normal_distribution<double> normal_;
 
@@ -44,8 +46,11 @@ class GFluctExtensionModel : public virtual ExtensionModel
                          NeuritePtr neurite);
 
     double compute_speed(mtPtr rnd_engine, double substep) override final;
+    void update_speed(double speed_factor) override final;
+    void update_local_speed(double area_factor) override final;
+    double get_max_speed() const override final;
 
-    virtual void set_status(const statusMap &status) override final;
+    virtual bool set_status(const statusMap &status) override final;
 
     virtual void get_status(statusMap &status) const override final;
 };

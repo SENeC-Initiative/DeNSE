@@ -74,11 +74,11 @@ extern const std::string diameter_eta_exp;
 
 
 #define BRANCHING_PROBA_DEFAULT 0.05
-#define AXON_DIAMETER 6.
-#define DENDRITE_DIAMETER 6.
-#define SOMA_RADIUS 8.
-#define THINNING_RATIO 0.005 // lose 1 micrometer every 200 micrometers
-#define MIN_DIAMETER 0.1     // diameter when a gc stops growing [micrometers]
+#define AXON_DIAMETER 2.
+#define DENDRITE_DIAMETER 2.
+#define SOMA_RADIUS 5.
+#define THINNING_RATIO 0.002 // lose 1 micrometer every 500 micrometers
+#define MIN_DIAMETER 0.05     // diameter when a gc stops growing [micrometers]
 #define DIAMETER_RATIO_AVG 1.
 #define DIAM_RATIO_STD 0.02 // deviation from identical diameters on split
 #define DIAMETER_ETA_EXP 2.67
@@ -147,11 +147,12 @@ extern const std::string points_per_circle;
 // common
 extern const std::string persistence_length;
 extern const std::string rigidity_factor;
+extern const std::string speed_decay_factor;
 extern const std::string speed_growth_cone;
 extern const std::string speed_variance;
 
 // memory-based steering
-extern const std::string decay_factor;
+extern const std::string memory_decay_factor;
 
 // SRF steering
 extern const std::string somatropic_factor;

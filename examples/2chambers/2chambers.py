@@ -25,9 +25,9 @@ import shutil
 import time
 
 import numpy as np
+import matplotlib
+#matplotlib.use("GTK3Agg")
 import matplotlib.pyplot as plt
-
-#  import pdb
 
 import nngt
 nngt.set_config("palette", "Spectral")
@@ -53,18 +53,12 @@ def CleanFolder(tmp_dir, make=True):
 current_dir = os.path.abspath(os.path.dirname(__file__))
 main_dir = current_dir[:current_dir.rfind("/")]
 
-num_omp = 6  # Number of threads
 
 '''
 Main parameters
 '''
 
-# Number of neurons created in each chamber
-num_neurons_left = 5
-num_neurons_right = 5
-
-soma_radius = 8.*um
-culture_size = 900.
+soma_radius = 8.
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
@@ -85,7 +79,7 @@ neuron_params = {
     "persistence_length" : 600. * um,
     "taper_rate": 2./1000.,
 
-    "soma_radius": soma_radius ,
+    "soma_radius": soma_radius * um,
     'B' : 10. * cpm,
     'T' : 10000. * minute,
     'E' : 0.7,
@@ -120,7 +114,7 @@ if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
 
 '''
 Simulation
-'''
+''' 
 def step(time, loop_n, plot=True):
     ds.simulate(time)
     if plot:
@@ -128,101 +122,82 @@ def step(time, loop_n, plot=True):
 
 
 if __name__ == '__main__':
+    number_of_threads = 10
+    kernel = {"seeds": range(number_of_threads),
+              "num_local_threads": number_of_threads ,
+              "resolution": 10. * minute,
+              "adaptive_timestep": -1.,
+              "environment_required": True}
 
-    print('Creating kernel with {0} threads'.format(num_omp))
-    kernel = {
-        "seeds": range(num_omp),
-        "num_local_threads": num_omp,
-        "resolution": 10. * minute,
-        "adaptive_timestep": -1.,
-        "environment_required": True,
-        "interactions": False
-    }
+    np.random.seed(12892) # seeds for the neuron positions
 
-    culture_file = current_dir + "/2chamber_culture_sharpen.svg"
+    culture_file = current_dir + "/2chamber_culture_version2_sharper.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
-    #pdb.set_trace()
     if kernel["environment_required"]:
-        culture = ds.set_environment(culture_file, min_x=0*um, max_x=1500*um)
+        culture = ds.set_environment(culture_file, min_x=0, max_x=1500)
         # generate the neurons inside the left chamber
         pos_left = culture.seed_neurons(
-            neurons=num_neurons_left, xmax=440*um, soma_radius=soma_radius)
+            neurons=100, xmax=440, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
-            neurons=num_neurons_right, xmin=1000*um, soma_radius=soma_radius)
-
-        # ### HERE
-        # /home/ele/.local/lib/python3.7/site-packages/pint/quantity.py:1377: UnitStrippedWarning: The unit of the quantity is stripped.
-        # warnings.warn("The unit of the quantity is stripped.", UnitStrippedWarning)
-
-        # Je comprends que ça doit être un warning anodin qui vient de l'opération de
-        # concaténation des deux listes pos_left et pos_right qui sont dimensionées
-        # la concaténation détruit l'unité qui'il faut assigner à nouveau
-        # en multipliant par "*um" après la concaténation
-        # >>>>>>>>> voir comment enlever le warning
-
-        neuron_params['position'] = np.concatenate((pos_right, pos_left)) * um
+            neurons=100, xmin=1000, soma_radius=soma_radius)
+        neuron_params['position'] = np.concatenate((pos_right, pos_left)) 
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
 
     print("Creating neurons")
+    gids = ds.create_neurons(n=200,
+                             culture=culture,
+                             params=neuron_params,
+                             dendrites_params=dendrite_params,
+                             num_neurites=2)
 
-    # ##### HERE SEGMENTATION FAULT
-    # même avec un nombre réduit (n=2) de neurones
-    gids = ds.create_neurons(n=num_neurons_left+num_neurons_right, culture=culture, params=neuron_params,
-                             dendrites_params=dendrite_params, num_neurites=2)
+    print("neurons done")
 
-    print("Neurons creation OK")
+    print("Starting simulation")
     start = time.time()
     fig, ax = plt.subplots()
     # ~ for _ in range(10):
-    # ~ step(200, 0, True)
-
-    print("Simulation start")
-    step(5 * day, 0, False)
+        # ~ step(200, 0, True)
+    step(3 * day, 0, False)  # set duration of simulated time
     duration = time.time() - start
-    print("Simulation OK")
 
-    print("Preparing plots")
+    print("simulation done")
+
     # prepare the plot
-    ds.plot.plot_neurons(gid=range(num_neurons_left), culture=culture, soma_alpha=0.8,
-                         axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.plot_neurons(gid=range(num_neurons_left, num_neurons_left+
-                         num_neurons_right), show_culture=False, axis=ax,
-                         soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                         show=False)
 
-    print("Preparing plots OK")
+    print("Starting plot")
+    ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
+                       axon_color='g', gc_color="r", axis=ax, show=False)
+    ds.plot.plot_neurons(gid=range(100, 200), show_culture=False, axis=ax,
+                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                       show=False)
     plt.tight_layout()
     ax.set_xlabel("x ($\mu$m)")
     ax.set_ylabel("y ($\mu$m)")
     ax.grid(False)
     plt.show()
-    # ~ plt.show(block=True)
-    print("SIMULATION ENDED")
+    print("plot done")
 
     # save
-    print("Preparing to save")
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))
-    ds.io.save_json_info(filepath=save_path)
-    ds.io.save_to_swc(filename=save_path, resolution=10)
-    print("Preparing to save OK")
+    ds.io.save_to_swc(filename="2chambers_test.swc", resolution=10)
 
-    print("Preparing to generate graph")
-    # ~ graph = ds.generate_network(method="spine_based", connection_proba=0.5)
+    #~ graph = ds.generate_network(method="spine_based", connection_proba=0.5)
     print("\nmaking graph\n")
     graph = ds.morphology.generate_network(connection_proba=1)
+    print("graph generated")
+    print(graph.node_nb(), graph.edge_nb())
+
     population = nngt.NeuralPop(with_models=False)
-    population.create_group("chamber_1", range(100))
-    population.create_group("chamber_2", range(100, 200))
+    population.create_group(range(100), "chamber_1")
+    population.create_group(range(100, 200), "chamber_2")
+
     nngt.Graph.make_network(graph, population)
     print(graph.node_nb(), graph.edge_nb())
-    print("Preparing to generate graph")
-
-
-
-    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",  # decimate=5
-                           show_environment=False, colorbar=False, show=True)
 
     graph.to_file("diode.el")
+
+    nngt.plot.draw_network(graph, ecolor="groups", ncolor="group",# decimate=5,
+                           show_environment=False, colorbar=False, show=True)

@@ -36,7 +36,7 @@ num_omp       = 2
 num_neurons   = 2
 
 simu_params   = {
-    "resolution": 4.*minute,
+    "resolution": 1.*minute,
     "num_local_threads": num_omp,
     "seeds": [0, 1],
     "environment_required": False,
@@ -97,5 +97,5 @@ ds.plot.plot_neurons()
 
 ''' Save neuronal morphologies '''
 
-# ~ ds.io.save_to_swc("neurons.swc", n) 
+ds.io.save_to_swc("neurons.swc", n)
 ds.io.save_to_neuroml("neurons.nml", n)

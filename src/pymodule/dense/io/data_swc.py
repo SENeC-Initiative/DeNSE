@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# dataIO_swc.py
+# data_swc.py
 #
 # This file is part of DeNSE.
 #
@@ -25,16 +25,132 @@ from os.path import join, isfile
 
 import numpy as np
 
+from .. import _pygrowth as _pg
+from ..elements import Neuron, Population
+
 
 __all__ = [
-    "SplitSwcFile",
-    "ImportSwc",
-    "SwcToSegments",
-    "SegmentsToDeNSE",
-    "GetSWCStructure",
-    "GetProperties",
+    "save_to_swc",
+    "load_swc"
+    # ~ "SplitSwcFile",
+    # ~ "ImportSwc",
+    # ~ "SwcToSegments",
+    # ~ "SegmentsToDeNSE",
+    # ~ "GetSWCStructure",
+    # ~ "GetProperties",
 ]
 
+
+def save_to_swc(filename, gid=None, resolution=10):
+    '''
+    Save neurons to SWC file.
+
+    Parameters
+    ----------
+    filename : str
+        Name of the SWC to write.
+    gid : int or list of ints
+        Neurons to save.
+    resolution : int, optional (default: 10)
+        Coarse-graining factor of the structure: only one point every
+        `resolution` will be kept.
+    '''
+    if isinstance(gid, (int, Neuron)):
+        gid = [gid]
+    _pg._neuron_to_swc(filename=filename, gid=gid, resolution=resolution)
+
+
+def load_swc(swc_folder=None, swc_file=None, info=None):
+    """
+    Import SWC files in DeNSE Population:
+        the Population container retrieves all possible data
+        frome the swc file.
+        The import tool will look in the folder for the morphology file,
+        or for single neurons files.
+        the format style of SWC files is the standard
+
+    @todo: redo this
+
+    Parameters
+    ----------
+    swc_folder: str
+        Folder containing morphology.swc or single neurons file
+
+    Returns
+    -------
+    Population: Population container
+        The container can be used to post process the neuron  generated with
+        DeNSE or other neurons in general.
+    """
+    if swc_file is not None:
+        return Population.from_swc(
+            NeuronFromSwcFile(swc_file, info))
+    if swc_folder is not None:
+        return Population.from_swc(
+            NeuronsFromSimulation(swc_folder))
+
+
+def NeuronsFromSimulation(simulation_path):
+    """
+    Return a list of dense_format neurons for all the neurons in the simulation path.
+    The simulations are expected to be a pair of morphology.swc and info.json files with same name.
+    The .json file will contain information on the neurons.
+    In case the swc file contain more than a neuron, let'say N,
+    it will be splitted in N .swc files inside a folder with same name and path.
+    This is done for compatibility with btmorph2.
+
+    Returns
+    -------
+    A list of dense_format = {"gid":gid,"data":file_,"info":json.load(open(simulation_path+".json"))}
+    """
+
+    neurons         = {}
+    simulation_path = simulation_path
+
+    try:
+        imported_list, gids = ImportSwc(os.path.join(
+            simulation_path,"morphology.swc"))
+    except:
+        print("WARNING: {} not found: Neurons have already been "
+              "split".format(os.path.join(simulation_path,"morphology.swc")))
+        imported_list = [
+            os.path.join(simulation_path, f) for f in os.listdir(simulation_path)
+            if f.endswith(".swc") and f != "morphology.swc"
+        ]
+
+    gids = len(imported_list)
+
+    def parse_gid(_file):
+        with open(file_,'r') as fp:
+            line = fp.readline()
+            line = line.split()
+            assert(line[0] == "#gid")
+            return line[1].rstrip()
+
+    for file_ in imported_list:
+        gid          = parse_gid(file_)
+        dense_format = {"gid": gid, "data":file_}
+        neurons[gid] = dense_format
+    try:
+        info = json.load(open(os.path.join(simulation_path,"info.json")))
+    except:
+        raise ValueError("ERROR: {} not found".format(
+            os.path.join(simulation_path,"info.json")))
+
+    info["gids"] = gids
+    neurons      = {"neurons": neurons, "info": info}
+
+    return neurons
+
+
+def NeuronFromSwcFile(filename, info=None):
+    dense_format = {"gid": 0, "data": filename}
+    neurons ={0: dense_format}
+    return  {"neurons": neurons, "info": info}
+
+
+############
+# OLD
 
 def ImportSwc(swc_file):
     """

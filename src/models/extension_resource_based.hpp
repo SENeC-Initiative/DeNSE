@@ -60,6 +60,8 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
     double retraction_th_;
     double branching_th_;
     double branching_proba_;
+    double area_factor_;
+    double inv_area_factor_;
 
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
@@ -67,14 +69,18 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
   public:
     ResourceBasedExtensionModel(GCPtr gc, NeuritePtr neurite);
     ResourceBasedExtensionModel(const ResourceBasedExtensionModel &) = delete;
-    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite);
+    ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy,
+                                GCPtr gc, NeuritePtr neurite);
 
     void initialize_CR();
     void prepare_for_split() override;
     void after_split() override;
     void reset_res_demand();
 
-    double compute_speed(mtPtr rnd_engine, double substep) override;
+    double compute_speed(mtPtr rnd_engine, double substep) override final;
+    void update_speed(double speed_factor) override final;
+    void update_local_speed(double area_factor) override final;
+    double get_max_speed() const override final;
 
     void compute_res_received(double substep);
     double compute_CR(mtPtr rnd_engine, double substep, double step_length,
@@ -88,9 +94,9 @@ class ResourceBasedExtensionModel : public virtual ExtensionModel
     double get_speed() const;
 
     // status
-    void set_status(const statusMap &) override;
+    bool set_status(const statusMap &) override;
     void get_status(statusMap &) const override;
-    virtual double get_state(const std::string& observable) const override;
+    virtual double get_state(const std::string &observable) const override;
 };
 
 } // namespace growth

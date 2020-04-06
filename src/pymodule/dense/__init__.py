@@ -55,10 +55,13 @@ __all__.extend(_pygrowth.__all__)
 try:
     import matplotlib as _mpl
     _with_plot = True
+except ImportError as e:
+    print(e)
+    _with_plot = False
+
+if _with_plot:
     from . import plot
     __all__.append("plot")
-except ImportError:
-    _with_plot = False
 
 
 # initialize the growth library

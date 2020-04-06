@@ -39,8 +39,8 @@ namespace growth
 {
 
 /*
- * Growth Cone is an abstract Class
- * It is a base model which s overloaded by more detailed models.
+ * Growth Cone is an abstract class
+ * It is a base model which is overloaded by more detailed models.
  *
  * Growthcone is a (biological) relevant class, it computes the forces acting on
  * the growth cone from environment or intrinsic phenomena; them it actualizes
@@ -88,10 +88,6 @@ class GrowthCone : public TopologicalNode,
     double delta_angle_;
     double sensing_angle_;
     bool sensing_angle_set_;
-    double avg_speed_;
-    double local_avg_speed_;
-    double speed_variance_;
-    double local_speed_variance_;
     double duration_retraction_; // duration of a retraction period (seconds)
     double proba_retraction_;    // proba of retracting when stuck
     double retracting_todo_;     // duration left to retract
@@ -99,14 +95,13 @@ class GrowthCone : public TopologicalNode,
     double proba_down_move_; // proba of going down if bottom out of reach
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
+    double old_angle_;
 
     space_tree_map current_neighbors_;
 
     double max_sensing_angle_;
     stype min_filopodia_; // minimal number of filopodia
     stype num_filopodia_; // minimal number of filopodia
-
-    double current_diameter_;
 
     Filopodia filopodia_;
     Move move_;
@@ -128,7 +123,7 @@ class GrowthCone : public TopologicalNode,
                         double angle) = 0;
 
     void update_topology(BaseWeakNodePtr parent, NeuritePtr ownNeurite,
-                         float distanceToParent, const BPoint &position,
+                         double distanc_to_parent, const BPoint &position,
                          double angle);
 
     // growth
@@ -148,10 +143,10 @@ class GrowthCone : public TopologicalNode,
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
-    virtual void
-    select_direction(const std::vector<double> &directions_weights,
-                     mtPtr rnd_engine, double &substep, double &new_angle,
-                     stype &default_direction) = 0;
+    virtual void select_direction(const std::vector<double> &directions_weights,
+                                  mtPtr rnd_engine, double &substep,
+                                  double &new_angle,
+                                  stype &default_direction) = 0;
 
     double check_retraction(double substep, mtPtr rnd_engine);
     void change_sensing_angle(double angle);
@@ -159,32 +154,36 @@ class GrowthCone : public TopologicalNode,
     // extension
     void compute_module(double substep);
     virtual void compute_speed(mtPtr rnd_engine, double substep) = 0;
+    virtual void update_speed(double update_factor) = 0;
+    virtual double get_max_speed() = 0;
 
     void init_filopodia();
 
     void set_angle(double angle);
     virtual void prepare_for_split() = 0;
-    virtual void after_split() = 0;
+    virtual void after_split()       = 0;
+
+    virtual void set_position(const BPoint &pos) override final;
 
     // get functions
     double get_module() const;
-    virtual double get_state(const std::string& observable) const;
+    virtual double get_state(const std::string &observable) const;
+    virtual double get_state(const std::string &observable,
+                             std::string &unit) const;
     virtual double get_growth_cone_speed() const;
-    virtual double get_diameter() const override;
     bool just_retracted() const;
     stype get_neuron_id() const;
-    const std::string& get_neurite_name() const;
-    const std::string& get_model_name() const;
+    const std::string &get_neurite_name() const;
+    const std::string &get_model_name() const;
     const BPolygonPtr get_last_segment() const;
     bool is_active() const;
     double get_self_affinity() const;
 
     // status and kernel-related functions
-    virtual void set_diameter(double diameter) override;
     virtual void set_status(const statusMap &status);
     virtual void get_status(statusMap &status) const;
     void update_kernel_variables();
-    void update_growth_properties(const std::string &area_name);
+    virtual void update_growth_properties(const std::string &area_name) = 0;
     void update_filopodia();
 };
 

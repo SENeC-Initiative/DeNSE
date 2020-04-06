@@ -32,19 +32,30 @@ const std::string actin_content_tau("actin_content_tau");
 const std::string actin_freq("actin_freq");
 const std::string actin_wave_speed("actin_wave_speed");
 const std::string active("active");
-const std::string affinity_axon_axon_other_neuron("affinity_axon_axon_other_neuron");
-const std::string affinity_axon_dendrite_other_neuron("affinity_axon_dendrite_other_neuron");
-const std::string affinity_axon_dendrite_same_neuron("affinity_axon_dendrite_same_neuron");
+const std::string
+    affinity_axon_axon_other_neuron("affinity_axon_axon_other_neuron");
+const std::string
+    affinity_axon_dendrite_other_neuron("affinity_axon_dendrite_other_neuron");
+const std::string
+    affinity_axon_dendrite_same_neuron("affinity_axon_dendrite_same_neuron");
 const std::string affinity_axon_self("affinity_axon_self");
-const std::string affinity_axon_soma_other_neuron("affinity_axon_soma_other_neuron");
-const std::string affinity_axon_soma_same_neuron("affinity_axon_soma_same_neuron");
-const std::string affinity_dendrite_axon_other_neuron("affinity_dendrite_axon_other_neuron");
-const std::string affinity_dendrite_axon_same_neuron("affinity_dendrite_axon_same_neuron");
-const std::string affinity_dendrite_dendrite_other_neuron("affinity_dendrite_dendrite_other_neuron");
-const std::string affinity_dendrite_dendrite_same_neuron("affinity_dendrite_dendrite_same_neuron");
+const std::string
+    affinity_axon_soma_other_neuron("affinity_axon_soma_other_neuron");
+const std::string
+    affinity_axon_soma_same_neuron("affinity_axon_soma_same_neuron");
+const std::string
+    affinity_dendrite_axon_other_neuron("affinity_dendrite_axon_other_neuron");
+const std::string
+    affinity_dendrite_axon_same_neuron("affinity_dendrite_axon_same_neuron");
+const std::string affinity_dendrite_dendrite_other_neuron(
+    "affinity_dendrite_dendrite_other_neuron");
+const std::string affinity_dendrite_dendrite_same_neuron(
+    "affinity_dendrite_dendrite_same_neuron");
 const std::string affinity_dendrite_self("affinity_dendrite_self");
-const std::string affinity_dendrite_soma_other_neuron("affinity_dendrite_soma_other_neuron");
-const std::string affinity_dendrite_soma_same_neuron("affinity_dendrite_soma_same_neuron");
+const std::string
+    affinity_dendrite_soma_other_neuron("affinity_dendrite_soma_other_neuron");
+const std::string
+    affinity_dendrite_soma_same_neuron("affinity_dendrite_soma_same_neuron");
 const std::string axon_angle("axon_angle");
 const std::string axon_diameter("axon_diameter");
 const std::string axon_polarization_weight("axon_polarization_weight");
@@ -54,7 +65,7 @@ const std::string branching_proba_default("branching_proba_default");
 
 const std::string critical_pull("critical_pull");
 
-const std::string decay_factor("decay_factor");
+const std::string memory_decay_factor("memory_decay_factor");
 const std::string dendrite_angles("dendrite_angles");
 const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
@@ -90,6 +101,7 @@ const std::string max_arbor_length("max_arbor_length");
 const std::string max_gc_number("max_gc_number");
 const std::string max_sensing_angle("max_sensing_angle");
 const std::string max_synaptic_distance("max_synaptic_distance");
+const std::string min_branching_distance("min_branching_distance");
 
 const std::string neurite_angles("neurite_angles");
 const std::string neurite_type("neurite_type");
@@ -137,6 +149,7 @@ const std::string soma_radius("soma_radius");
 const std::string somatropic_factor("somatropic_factor");
 const std::string somatropic_mode("somatropic_mode");
 const std::string somatropic_scale("somatropic_scale");
+const std::string speed_decay_factor("speed_decay_factor");
 const std::string speed_growth_cone("speed_growth_cone");
 const std::string speed_ratio_retraction("speed_ratio_retraction");
 const std::string speed_variance("speed_variance");

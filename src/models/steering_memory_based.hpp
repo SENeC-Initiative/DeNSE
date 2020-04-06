@@ -32,18 +32,18 @@ namespace growth
 class MemBasedSteeringModel : public virtual SteeringModel
 {
   private:
-    double memory_angle_;     // priviledged direction
-    double rigidity_factor_;  // "strength" of the memory's influence
-    double decay_factor_;     // decay of a segment's influence after 1 um
+    double memory_angle_;    // priviledged direction
+    double rigidity_factor_; // "strength" of the memory's influence
+    double memory_decay_factor_;    // decay of a segment's influence after 1 um
 
   public:
     MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite);
     MemBasedSteeringModel(const MemBasedSteeringModel &copy) = delete;
-    MemBasedSteeringModel(const MemBasedSteeringModel &copy, GCPtr gc, NeuritePtr neurite);
+    MemBasedSteeringModel(const MemBasedSteeringModel &copy, GCPtr gc,
+                          NeuritePtr neurite);
 
-    virtual void
-    compute_direction_probabilities(
-        std::vector<double> &directions_weights, const Filopodia& filo,
+    virtual void compute_direction_probabilities(
+        std::vector<double> &directions_weights, const Filopodia &filo,
         double substep, double &total_proba, bool &stuck) override final;
 
     virtual void set_status(const statusMap &status) override final;

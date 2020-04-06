@@ -26,9 +26,12 @@
 #include "GrowthCone.hpp"
 
 // models
+#include "direction_select_interface.hpp"
 #include "extension_interface.hpp"
 #include "steering_interface.hpp"
-#include "direction_select_interface.hpp"
+
+// spatial
+#include "Area.hpp"
 
 
 namespace growth
@@ -54,8 +57,7 @@ namespace growth
  * (called in :cpp:func:`GrowthCone::make_move`).
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-class GrowthConeModel
-  : public virtual GrowthCone
+class GrowthConeModel : public virtual GrowthCone
 {
   private:
     std::shared_ptr<ElType> elongator_;
@@ -66,7 +68,7 @@ class GrowthConeModel
     GrowthConeModel() = delete;
     // "default" constructor for model manager initial generation
     GrowthConeModel(const std::string &model);
-    GrowthConeModel(const GrowthConeModel& copy);
+    GrowthConeModel(const GrowthConeModel &copy);
 
     // factory function
     static std::shared_ptr<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>
@@ -77,22 +79,24 @@ class GrowthConeModel
                 double angle) override final;
 
     void compute_speed(mtPtr rnd_engine, double substep) override final;
+    void update_growth_properties(const std::string &area_name) override final;
+    inline void update_speed(double update_factor) override final;
+    inline double get_max_speed() override final;
 
     void
     compute_direction_probabilities(std::vector<double> &directions_weights,
                                     double substep) override final;
 
-    void
-    select_direction(const std::vector<double> &directions_weights,
-                     mtPtr rnd_engine, double &substep, double &new_angle,
-                     stype &default_direction) override final;
+    void select_direction(const std::vector<double> &directions_weights,
+                          mtPtr rnd_engine, double &substep, double &new_angle,
+                          stype &default_direction) override final;
 
     void prepare_for_split() override final;
     void after_split() override final;
 
     void set_status(const statusMap &) override final;
     void get_status(statusMap &) const override final;
-    double get_state(const std::string& observable) const override final;
+    double get_state(const std::string &observable) const override final;
 };
 
 
@@ -107,9 +111,14 @@ class GrowthConeModel
  * @todo make private.
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(const std::string &model)
-  : GrowthCone(model)
-{}
+GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(
+    const std::string &model)
+    : GrowthCone(model)
+{
+    // only 'initial models' are directly created, other are cloned, so
+    // we don't need to get the area.
+    //~ update_growth_properties(current_area_);
+}
 
 
 /**
@@ -119,9 +128,11 @@ GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(const std::s
  * @todo make private.
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(const GrowthConeModel<ElType, SteerMethod, DirSelMethod> &copy)
-  : GrowthCone(copy)
-{}
+GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(
+    const GrowthConeModel<ElType, SteerMethod, DirSelMethod> &copy)
+    : GrowthCone(copy)
+{
+}
 
 
 /**
@@ -132,14 +143,18 @@ GrowthConeModel<ElType, SteerMethod, DirSelMethod>::GrowthConeModel(const Growth
 template <class ElType, class SteerMethod, class DirSelMethod>
 std::shared_ptr<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>
 GrowthConeModel<ElType, SteerMethod, DirSelMethod>::create_gc_model(
-  const std::string &model)
+    const std::string &model)
 {
     std::shared_ptr<GrowthConeModel<ElType, SteerMethod, DirSelMethod>> gc =
-        std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(model);
+        std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(
+            model);
 
     gc->elongator_ = std::make_shared<ElType>(gc, nullptr);
 
     gc->steerer_ = std::make_shared<SteerMethod>(gc, nullptr);
+
+    // update growth properties before direction selector
+    gc->update_growth_properties(gc->current_area_);
 
     gc->dir_selector_ = std::make_shared<DirSelMethod>(gc, nullptr);
 
@@ -157,19 +172,21 @@ GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
     BaseWeakNodePtr parent, NeuritePtr neurite, double distanceToParent,
     const BPoint &position, double angle)
 {
-    auto new_cone = std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(*this);
-    
+    auto new_cone =
+        std::make_shared<GrowthConeModel<ElType, SteerMethod, DirSelMethod>>(
+            *this);
+
     // update topology
-    int omp_id   = kernel().parallelism_manager.get_thread_local_id();
-    new_cone->update_topology(parent, neurite, distanceToParent,
-                              position, angle);
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+    new_cone->update_topology(parent, neurite, distanceToParent, position,
+                              angle);
 
     // init the compontents
-    new_cone->elongator_ = std::make_shared<ElType>(
-        *(elongator_.get()), new_cone, neurite);
+    new_cone->elongator_ =
+        std::make_shared<ElType>(*(elongator_.get()), new_cone, neurite);
 
-    new_cone->steerer_ = std::make_shared<SteerMethod>(
-        *(steerer_.get()), new_cone, neurite);
+    new_cone->steerer_ =
+        std::make_shared<SteerMethod>(*(steerer_.get()), new_cone, neurite);
 
     new_cone->dir_selector_ = std::make_shared<DirSelMethod>(
         *(dir_selector_.get()), new_cone, neurite);
@@ -177,8 +194,8 @@ GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
     // update containing area
     new_cone->current_area_ =
         new_cone->using_environment_
-        ? kernel().space_manager.get_containing_area(position)
-        : "";
+            ? kernel().space_manager.get_containing_area(position)
+            : "";
 
     if (new_cone->using_environment_)
     {
@@ -198,7 +215,7 @@ GCPtr GrowthConeModel<ElType, SteerMethod, DirSelMethod>::clone(
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_speed(
-  mtPtr rnd_engine, double substep)
+    mtPtr rnd_engine, double substep)
 {
     move_.speed = elongator_->compute_speed(rnd_engine, substep);
 }
@@ -208,25 +225,32 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_speed(
  * @brief use the `steerer_` member to evaluate the probability of each angle.
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
-void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::compute_direction_probabilities(
-  std::vector<double> &directions_weights, double substep)
+void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::
+    compute_direction_probabilities(std::vector<double> &directions_weights,
+                                    double substep)
 {
-    steerer_->compute_direction_probabilities(
-        directions_weights, filopodia_, substep, total_proba_, stuck_);
+    steerer_->compute_direction_probabilities(directions_weights, filopodia_,
+                                              substep, total_proba_, stuck_);
 }
 
 
 /**
  * @brief use the `dir_selector_` member to chose the next direction.
+ *
+ * The select_direction method computes the `new_angle` by updating the old
+ * value of `move_.angle` by an angular increment.
+ * This is absolutely necessary to be able to compare the two angles (e.g. in
+ * GrowthCone::make_move).
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::select_direction(
-  const std::vector<double> &directions_weights, mtPtr rnd_engine,
-  double &substep, double &new_angle, stype &default_direction)
+    const std::vector<double> &directions_weights, mtPtr rnd_engine,
+    double &substep, double &new_angle, stype &default_direction)
 {
-    dir_selector_->select_direction(directions_weights, filopodia_,
-        rnd_engine, total_proba_, interacting_, move_.angle, substep,
-        move_.module, new_angle, stopped_, default_direction);
+    dir_selector_->select_direction(directions_weights, filopodia_, rnd_engine,
+                                    total_proba_, interacting_, move_.angle,
+                                    substep, move_.module, new_angle, stopped_,
+                                    default_direction);
 }
 
 
@@ -257,18 +281,17 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::after_split()
 
 
 /**
- * @brief prepare the growth cone for a split.
- * @todo
+ * @brief set the growth cone status
  */
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::set_status(
-  const statusMap &status)
+    const statusMap &status)
 {
     // set the default parameters
     GrowthCone::set_status(status);
 
     // then set the models
-    elongator_->set_status(status);
+    bool speed = elongator_->set_status(status);
     steerer_->set_status(status);
 
     // direction selector may need to access all the properties
@@ -280,12 +303,24 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::set_status(
     // update the status and set dire_selector
     base_status.insert(status.begin(), status.end());
     dir_selector_->set_status(base_status);
+
+    // check whether the sensing angle or speed was updated
+    double sa_tmp;
+    bool b_sa = get_param(status, names::sensing_angle, sa_tmp);
+
+    if (b_sa or speed)
+    {
+        update_growth_properties(current_area_);
+    }
 }
 
 
+/**
+ * @brief get the growth cone status
+ */
 template <class ElType, class SteerMethod, class DirSelMethod>
 void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_status(
-  statusMap &status) const
+    statusMap &status) const
 {
     GrowthCone::get_status(status);
     elongator_->get_status(status);
@@ -307,9 +342,12 @@ void GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_status(
 }
 
 
+/**
+ * @brief get a state variable
+ */
 template <class ElType, class SteerMethod, class DirSelMethod>
 double GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_state(
-  const std::string& observable) const
+    const std::string &observable) const
 {
     double value = GrowthCone::get_state(observable);
 
@@ -329,6 +367,68 @@ double GrowthConeModel<ElType, SteerMethod, DirSelMethod>::get_state(
     }
 
     return value;
+}
+
+
+/**
+ * @brief update growth properties
+ */
+template <class ElType, class SteerMethod, class DirSelMethod>
+void GrowthConeModel<ElType, SteerMethod,
+                     DirSelMethod>::update_growth_properties(
+                         const std::string &area_name)
+{
+    // update the growth properties depending on the area
+    AreaPtr area = kernel().space_manager.get_area(area_name);
+
+    // test if the GC is in any Area
+    if (area != nullptr)
+    {
+        current_area_ = area_name;
+
+        // speed and sensing angle may vary
+        move_.sigma_angle =
+            std::min(sensing_angle_ *
+                     area->get_property(names::sensing_angle),
+                     max_sensing_angle_);
+
+        elongator_->update_local_speed(
+            area->get_property(names::speed_growth_cone));
+
+        // substrate affinity depends on the area
+        filopodia_.substrate_affinity =
+            area->get_property(names::substrate_affinity);
+    }
+    else
+    {
+        // just update local speed
+        elongator_->update_local_speed(1.);
+        // and set default sensing angle
+        move_.sigma_angle = sensing_angle_;
+    }
+}
+
+
+/**
+ * @brief update local speed
+ */
+template <class ElType, class SteerMethod, class DirSelMethod>
+void GrowthConeModel<ElType, SteerMethod,
+                     DirSelMethod>::update_speed(
+                         double update_factor)
+{
+    elongator_->update_speed(update_factor);
+}
+
+
+/**
+ * @brief get max speed
+ */
+template <class ElType, class SteerMethod, class DirSelMethod>
+double GrowthConeModel<ElType, SteerMethod,
+                     DirSelMethod>::get_max_speed()
+{
+    return elongator_->get_max_speed();
 }
 
 } // namespace growth

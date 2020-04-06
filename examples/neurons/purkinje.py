@@ -48,7 +48,7 @@ neuron_params = {
     "axon_diameter": 3.*um,
     "position": (0., 0.)*um,
     "max_arbor_length": 20000.*um,
-    "diameter_eta_exp":1.,
+    "diameter_eta_exp": 20.,
     "diameter_ratio_avg": 1.,
 }
 
@@ -66,14 +66,16 @@ dendrite_params = {
     "use_van_pelt": True,
 
     "persistence_length": 100.0 * um,
-    "taper_rate": 1./80.,
-    "diameter_fraction_lb": 0.5,
+    "taper_rate": 1./100.,
+    "diameter_fraction_lb": 0.8,
 
     # SFR parameters
     "somatropic_scale": 100.*um,
-    "somatropic_factor": 0.7,
-    # "self_avoidance_factor": 0.2,
+    "somatropic_factor": 0.8,
+    "self_avoidance_factor": 0.2,
     "self_avoidance_scale": 6.*um,
+
+    "min_branching_distance": 8.*um,
 
     # Best model
     "gc_split_angle_mean": 60.*deg,
@@ -109,6 +111,7 @@ if __name__ == '__main__':
     })
 
     ds.simulate(15*hour)
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"], show=False)
     ds.plot.plot_neurons()
 
     neuron.set_properties(dendrites_params={
@@ -119,6 +122,9 @@ if __name__ == '__main__':
     })
 
     ds.simulate(6*day)
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
+                            ignore_diameter=True, aspect_ratio=0.5,
+                            vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
 
     neuron.set_properties(dendrites_params={
@@ -129,5 +135,8 @@ if __name__ == '__main__':
     })
 
     ds.simulate(20.*day)
+    ds.plot.plot_dendrogram(neuron.dendrites["dendrite_1"],
+                            ignore_diameter=True, aspect_ratio=0.2,
+                            vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
     ds.plot.plot_recording(rec)

@@ -28,7 +28,7 @@
 namespace growth
 {
 
-class NWADirectionSelector: public virtual DirectionSelectModel
+class NWADirectionSelector : public virtual DirectionSelectModel
 {
   private:
     double persistence_length_;
@@ -36,21 +36,22 @@ class NWADirectionSelector: public virtual DirectionSelectModel
 
     std::uniform_real_distribution<double> uniform_;
     std::normal_distribution<double> normal_;
-    
+
   public:
-    NWADirectionSelector() = delete;
-    NWADirectionSelector(const NWADirectionSelector& copy) = delete;
+    NWADirectionSelector()                                 = delete;
+    NWADirectionSelector(const NWADirectionSelector &copy) = delete;
 
     NWADirectionSelector(GCPtr gc, NeuritePtr neurite);
-    NWADirectionSelector(const NWADirectionSelector& copy, GCPtr gc, NeuritePtr neurite);
+    NWADirectionSelector(const NWADirectionSelector &copy, GCPtr gc,
+                         NeuritePtr neurite);
 
-    virtual void
-    select_direction(
-        const std::vector<double> &directions_weights, const Filopodia &filo,
-        mtPtr rnd_engine, double total_proba, bool interacting,
-        double old_angle, double &substep, double &step_length,
-        double &new_angle, bool &stopped,
-        stype &default_direction) override final;
+    virtual void select_direction(const std::vector<double> &directions_weights,
+                                  const Filopodia &filo, mtPtr rnd_engine,
+                                  double total_proba, bool interacting,
+                                  double old_angle, double &substep,
+                                  double &step_length, double &new_angle,
+                                  bool &stopped,
+                                  stype &default_direction) override final;
 
     virtual void set_status(const statusMap &status) override final;
     virtual void get_status(statusMap &status) const override final;

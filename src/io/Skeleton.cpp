@@ -40,10 +40,7 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
     branching_points     = SkelNeurite();
     growth_cones         = SkelNeurite();
     SkelNeurite branches = SkelNeurite();
-    //~ #ifndef NDEBUG
-    //~ printf(" %lu neurites inside the neuron skeleton \n",
-    //~ neuron->get_num_neurites());
-    //~ #endif
+
     for (const auto &neurite : neuron->neurites_)
     {
         if (neurite.first == "axon")
@@ -57,13 +54,13 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 stype i, last(b->size());
                 BPoint p;
 
-                for (i=0; i<last; i+=resolution)
+                for (i = 0; i < last; i += resolution)
                 {
                     p = b->xy_at(i);
                     axon.first.push_back(p.x());
                     axon.second.push_back(p.y());
                 }
-                if (i != last-1)
+                if (i != last - 1)
                 {
                     p = b->get_last_xy();
                     axon.first.push_back(p.x());
@@ -77,10 +74,8 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
 
                 if (node->has_child())
                 {
-                    branching_points.first.push_back(
-                        node->get_position().x());
-                    branching_points.second.push_back(
-                        node->get_position().y());
+                    branching_points.first.push_back(node->get_position().x());
+                    branching_points.second.push_back(node->get_position().y());
                     NodePtr mynode = std::dynamic_pointer_cast<Node>(node);
                     nodes.push_front(mynode->get_child(0));
                     nodes.push_front(mynode->get_child(1));
@@ -106,13 +101,13 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
                 stype i, last(b->size());
                 BPoint p;
 
-                for (i=0; i<last; i+=resolution)
+                for (i = 0; i < last; i += resolution)
                 {
                     p = b->xy_at(i);
                     dendrites.first.push_back(p.x());
                     dendrites.second.push_back(p.y());
                 }
-                if (i != last-1)
+                if (i != last - 1)
                 {
                     p = b->get_last_xy();
                     dendrites.first.push_back(p.x());
@@ -126,10 +121,8 @@ Skeleton::Skeleton(const Neuron *neuron, unsigned int resolution)
 
                 if (node->has_child())
                 {
-                    branching_points.first.push_back(
-                        node->get_position().x());
-                    branching_points.second.push_back(
-                        node->get_position().y());
+                    branching_points.first.push_back(node->get_position().x());
+                    branching_points.second.push_back(node->get_position().y());
                     NodePtr mynode = std::dynamic_pointer_cast<Node>(node);
                     nodes.push_front(mynode->get_child(0));
                     nodes.push_front(mynode->get_child(1));

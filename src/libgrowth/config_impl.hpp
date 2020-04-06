@@ -190,56 +190,56 @@ bool get_param(const statusMap &map, const std::string &key,
 // implementation set_param (write to statusMap to show it to the user)
 
 void set_param(statusMap &map, const std::string &key, const bool &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key, const double &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key, const int &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key, const stype &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key,
-               const std::vector<stype> &value, const std::string& dim)
+               const std::vector<stype> &value, const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key,
-               const std::vector<long> &value, const std::string& dim)
+               const std::vector<long> &value, const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key, const std::string &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
 
 
 void set_param(statusMap &map, const std::string &key,
-               const std::vector<std::string> &value, const std::string& dim)
+               const std::vector<std::string> &value, const std::string &dim)
 {
     map[key] = Property(value, dim);
 }
@@ -247,7 +247,7 @@ void set_param(statusMap &map, const std::string &key,
 
 void set_param(statusMap &map, const std::string &key,
                const std::unordered_map<std::string, double> &value,
-               const std::string& dim)
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }

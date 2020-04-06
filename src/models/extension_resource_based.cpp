@@ -33,7 +33,8 @@
 
 namespace growth
 {
-ResourceBasedExtensionModel::ResourceBasedExtensionModel(GCPtr gc, NeuritePtr neurite)
+ResourceBasedExtensionModel::ResourceBasedExtensionModel(GCPtr gc,
+                                                         NeuritePtr neurite)
     : ExtensionModel(gc, neurite)
     , stochastic_tmp_(0)
     , received_(0)
@@ -52,16 +53,19 @@ ResourceBasedExtensionModel::ResourceBasedExtensionModel(GCPtr gc, NeuritePtr ne
     , branching_proba_(CRITICAL_BRANCHING_PROBA)
     , weight_diameter_(CRITICAL_WEIGHT_DIAMETER)
     , weight_centrifugal_(CRITICAL_WEIGHT_CENTRIFUGAL)
+    , area_factor_(1.)
+    , inv_area_factor_(1.)
 {
     observables_.push_back("resource");
     consumption_rate_ = use_ratio_ + 1. / leakage_;
 
-    normal_          = std::normal_distribution<double>(0, 1);
-    uniform_         = std::uniform_real_distribution<double>(0., 1.);
+    normal_  = std::normal_distribution<double>(0, 1);
+    uniform_ = std::uniform_real_distribution<double>(0., 1.);
 }
 
 
-ResourceBasedExtensionModel::ResourceBasedExtensionModel(const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite)
+ResourceBasedExtensionModel::ResourceBasedExtensionModel(
+    const ResourceBasedExtensionModel &copy, GCPtr gc, NeuritePtr neurite)
     : ExtensionModel(copy, gc, neurite)
     , stochastic_tmp_(0)
     , received_(copy.received_)
@@ -81,9 +85,11 @@ ResourceBasedExtensionModel::ResourceBasedExtensionModel(const ResourceBasedExte
     , branching_proba_(copy.branching_proba_)
     , weight_diameter_(copy.weight_diameter_)
     , weight_centrifugal_(copy.weight_centrifugal_)
+    , area_factor_(copy.area_factor_)
+    , inv_area_factor_(copy.inv_area_factor_)
 {
-    normal_          = std::normal_distribution<double>(0, 1);
-    uniform_         = std::uniform_real_distribution<double>(0., 1.);
+    normal_  = std::normal_distribution<double>(0, 1);
+    uniform_ = std::uniform_real_distribution<double>(0., 1.);
 }
 
 
@@ -139,12 +145,14 @@ double ResourceBasedExtensionModel::get_res_demand()
     // weight by centrifugal order and diameter if required
     if (weight_centrifugal_ > 0)
     {
-        current_demand *= powf(2, -weight_centrifugal_*gc_weakptr_.lock()->get_centrifugal_order());
+        current_demand *=
+            powf(2, -weight_centrifugal_ *
+                        gc_weakptr_.lock()->get_centrifugal_order());
     }
     if (weight_diameter_ > 0)
     {
         double diameter = gc_weakptr_.lock()->get_diameter();
-        current_demand *= (1 + weight_diameter_*diameter*diameter);
+        current_demand *= (1 + weight_diameter_ * diameter * diameter);
     }
 
     return current_demand;
@@ -158,28 +166,55 @@ double ResourceBasedExtensionModel::get_res_demand()
  * average speed over the substep, i.e. it has be set previously using the
  * results of compute_cr_speed and does not need to be recomputed here.
  */
-double ResourceBasedExtensionModel::compute_speed(mtPtr rnd_engine, double substep)
+double ResourceBasedExtensionModel::compute_speed(mtPtr rnd_engine,
+                                                  double substep)
 {
     double speed = 0;
 
     // if it's over the elongation threshold the neurite will extend
     if (stored_ < retraction_th_)
     {
-        speed =
-            retraction_factor_ * (stored_ - retraction_th_) / retraction_th_;
+        speed = inv_area_factor_ * retraction_factor_ *
+                (stored_ - retraction_th_) / retraction_th_;
     }
     else if (stored_ >= elongation_th_)
     {
-        speed = elongation_factor_ * (stored_ - elongation_th_) /
-                      (stored_ + elongation_th_);
+        speed = area_factor_ * elongation_factor_ *
+                (stored_ - elongation_th_) / (stored_ + elongation_th_);
     }
 
     return speed;
 }
 
 
-double ResourceBasedExtensionModel::compute_CR(
-  mtPtr rnd_engine, double substep, double step_length, bool stuck)
+/**
+ * @brief Update growth cone average speed.
+ * This function updates the average speed, e.g. because the number
+ * of growth cones sustained by the neurite changed.
+ * Since the area factor is stored in this model, we do not need to
+ * update the local speed (there is no such value).
+ */
+void ResourceBasedExtensionModel::update_speed(double speed_factor)
+{
+    elongation_factor_ *= speed_factor;
+}
+
+
+void ResourceBasedExtensionModel::update_local_speed(double area_factor)
+{
+    area_factor_     = area_factor;
+    inv_area_factor_ = 1. / area_factor;
+}
+
+
+double ResourceBasedExtensionModel::get_max_speed() const
+{
+    return area_factor_ * elongation_factor_;
+}
+
+
+double ResourceBasedExtensionModel::compute_CR(mtPtr rnd_engine, double substep,
+                                               double step_length, bool stuck)
 {
     if (not stuck)
     {
@@ -205,10 +240,10 @@ double ResourceBasedExtensionModel::compute_CR(
         else if (stored_ > branching_th_ and branch_length > step_length)
         {
             double rnd_throw = uniform_(*(rnd_engine).get());
-            double threshold = branching_proba_ * (stored_ - branching_th_)
-                               / (stored_ + branching_th_);
+            double threshold = branching_proba_ * (stored_ - branching_th_) /
+                               (stored_ + branching_th_);
 
-            if (rnd_throw < substep*threshold)
+            if (rnd_throw < substep * threshold)
             {
                 // create an event so the growth cone will split at the next
                 // step
@@ -216,12 +251,12 @@ double ResourceBasedExtensionModel::compute_CR(
                 ev_time.update(1UL, 0.);
 
                 auto neuron         = neurite_ptr_->get_parent_neuron().lock();
-                stype neuron_gid   = neuron->get_gid();
+                stype neuron_gid    = neuron->get_gid();
                 std::string neurite = neurite_ptr_->get_name();
                 int cone_id         = gc_weakptr_.lock()->get_node_id();
 
-                Event ev = std::make_tuple(
-                    ev_time, neuron_gid, neurite, cone_id, names::gc_splitting);
+                Event ev = std::make_tuple(ev_time, neuron_gid, neurite,
+                                           cone_id, names::gc_splitting);
 
                 kernel().simulation_manager.new_branching_event(ev);
             }
@@ -236,10 +271,16 @@ void ResourceBasedExtensionModel::reset_res_demand()
     //.demand = critical_.initial_demand;
 }
 
-double ResourceBasedExtensionModel::get_speed() const { return elongation_factor_; }
+double ResourceBasedExtensionModel::get_speed() const
+{
+    return elongation_factor_;
+}
 
 
-double ResourceBasedExtensionModel::get_res_received() const { return received_; }
+double ResourceBasedExtensionModel::get_res_received() const
+{
+    return received_;
+}
 
 
 double ResourceBasedExtensionModel::get_res_speed_factor() const
@@ -259,19 +300,39 @@ void ResourceBasedExtensionModel::printinfo() const
     printf("CR retraction_factor:  %f \n", retraction_factor_);
     printf("CR use_ratio:  %f \n", use_ratio_);
     //~ printf("CR available:  %f \n",
-    //neurite_ptr_->get_available_cr(substep));
+    // neurite_ptr_->get_available_cr(substep));
 
     printf("################ \n");
 }
 
 
-void ResourceBasedExtensionModel::set_status(const statusMap &status)
+bool ResourceBasedExtensionModel::set_status(const statusMap &status)
 {
     // state parameters
     get_param(status, names::resource, stored_);
 
     // speed-related stuff
-    get_param(status, names::res_elongation_factor, elongation_factor_);
+    double speed;
+    bool bs, be;
+
+    bs = get_param(status, names::speed_growth_cone, speed);
+
+    be = get_param(status, names::res_elongation_factor, elongation_factor_);
+
+    if (bs and be)
+    {
+        throw std::runtime_error("In the resource-based model, please "
+                                 "use `elongation_factor` and "
+                                 "`retraction_factor` instead of "
+                                 "`speed_growth_cone`.");
+    }
+    else if (bs)
+    {
+        printf("In the resource-based model, please use "
+               "`elongation_factor` and `retraction_factor` instead of "
+               "`speed_growth_cone`.");
+    }
+
     get_param(status, names::res_retraction_factor, retraction_factor_);
     get_param(status, names::res_elongation_threshold, elongation_th_);
     get_param(status, names::res_retraction_threshold, retraction_th_);
@@ -294,6 +355,8 @@ void ResourceBasedExtensionModel::set_status(const statusMap &status)
 #ifndef NDEBUG
     printinfo();
 #endif
+
+    return false;
 }
 
 
@@ -303,19 +366,25 @@ void ResourceBasedExtensionModel::get_status(statusMap &status) const
     set_param(status, names::resource, stored_, "micromole / liter");
 
     // speed-related
-    set_param(status, names::res_elongation_factor, elongation_factor_, "micrometer / minute");
-    set_param(status, names::res_retraction_factor, retraction_factor_, "micrometer / minute");
-    set_param(status, names::res_elongation_threshold, elongation_th_, "micromole / liter");
-    set_param(status, names::res_retraction_threshold, retraction_th_, "micromole / liter");
+    set_param(status, names::res_elongation_factor, elongation_factor_,
+              "micrometer / minute");
+    set_param(status, names::res_retraction_factor, retraction_factor_,
+              "micrometer / minute");
+    set_param(status, names::res_elongation_threshold, elongation_th_,
+              "micromole / liter");
+    set_param(status, names::res_retraction_threshold, retraction_th_,
+              "micromole / liter");
 
-    set_param(status, names::res_branching_threshold, branching_th_, "micromole / liter");
+    set_param(status, names::res_branching_threshold, branching_th_,
+              "micromole / liter");
     set_param(status, names::res_branching_proba, branching_proba_, "");
 
     // use and leakage
     set_param(status, names::res_use_ratio, use_ratio_, "1 / minute");
     set_param(status, names::res_leakage, leakage_, "minute");
     set_param(status, names::res_correlation, correlation_, "");
-    set_param(status, names::res_variance, variance_, "micromole / liter / minute**0.5");
+    set_param(status, names::res_variance, variance_,
+              "micromole / liter / minute**0.5");
     set_param(status, names::res_weight_diameter, weight_diameter_, "");
     set_param(status, names::res_weight_centrifugal, weight_centrifugal_, "");
 }
@@ -324,7 +393,8 @@ void ResourceBasedExtensionModel::get_status(statusMap &status) const
 /**
  * @brief Get the current value of one of the observables
  */
-double ResourceBasedExtensionModel::get_state(const std::string& observable) const
+double
+ResourceBasedExtensionModel::get_state(const std::string &observable) const
 {
     double value = 0.;
 

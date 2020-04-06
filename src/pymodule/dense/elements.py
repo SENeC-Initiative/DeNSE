@@ -26,8 +26,10 @@ from logging import warnings as _warn
 from collections import deque as _deque
 
 import numpy as _np
+
 from . import _pygrowth as _pg
 from ._helpers import nonstring_container as _nsc
+from .units import *
 
 
 __all__ = ["Neuron", "Neurite", "Node", "Population", "Tree"]
@@ -44,8 +46,13 @@ class Neuron(object):
         self._dendrites  = {}
         self.__gid       = gid
 
+    # GID (integer) functions
+
     def __int__(self):
         return self.__gid
+
+    def __eq__(self, other):
+        return int(self) == int(other)
 
     def __lt__(self, other):
         return int(self) < int(other)
@@ -58,15 +65,19 @@ class Neuron(object):
 
     def __ge__(self, other):
         return int(self) >= int(other)
-    
+
+    # representation functions
+
     def __str__(self):
         return str(self.__gid)
-    
+
     def __repr__(self):
         return "Neuron<{}>".format(self.__gid)
-    
+
     def _repr_pretty_(self, p, cycle):
         p.text("Neuron({})".format(self.__gid))
+
+    # attributes
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
@@ -128,8 +139,8 @@ class Neuron(object):
     @property
     def total_length(self):
         ''' Total arbor length of the neuron '''
-        return _pg.get_object_state(self, variable="length")
-    
+        return _pg.get_object_state(self, observable="length")
+
     def create_neurites(self, num_neurites=1, params=None, angles=None,
                         neurite_types=None, names=None):
         '''
@@ -150,7 +161,7 @@ class Neuron(object):
             will be dendrites.
         names : str or list, optional (default: "axon" and "dendrite_X")
             Names of the created neurites.
-        
+
         See also
         --------
         :func:`~dense.create_neurites`.
@@ -182,7 +193,28 @@ class Neuron(object):
             return self.axon
         return self.dendrites[neurite]
 
-    def get_properties(self, property_name=None, level=None, neurite=None):
+    def get_state(self, observable=None):
+        '''
+        Return the values of all or one state observable of the neuron.
+
+        Parameters
+        ----------
+        observable : str, optional (default: all observables)
+            Observable to query.
+
+        Returns
+        -------
+        state : dict or scalar value
+
+        See also
+        --------
+        :func:`~dense.get_state`
+        :func:`~dense.elements.Neuron.get_properties`
+        '''
+        return _pg.get_object_state(self, observable)
+
+    def get_properties(self, property_name=None, level=None,
+                       neurite=None):
         '''
         Get the neuron's properties.
 
@@ -205,7 +237,7 @@ class Neuron(object):
         status : variable
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
-        
+
         See also
         --------
         :func:`~dense.get_object_properties`,
@@ -326,8 +358,8 @@ class Neuron(object):
                         diameter = (diameter for _ in range(len(branch.xy)))
 
                     # subsample positions and diameters
-                    subnodes = branch.xy[::resolution]
-                    subdiam  = diameter[::resolution]
+                    subnodes = branch.xy[::resolution].m
+                    subdiam  = diameter[::resolution].m
 
                     for pos, diam in zip(subnodes, subdiam):
                         p = neuroml.Point3DWithDiam(
@@ -348,7 +380,7 @@ class Neuron(object):
                         # set as next parent
                         p_segment = n_segment
                         parent    = neuroml.SegmentParent(segments=p_segment.id)
-                        seg_id += 1 
+                        seg_id += 1
 
                         neurites_segments.append(n_segment)
 
@@ -369,7 +401,7 @@ class Neuron(object):
         # write
         if write:
             doc = neuroml.NeuroMLDocument(id=filename)
-            doc.cells.append(cell)        
+            doc.cells.append(cell)
             writers.NeuroMLWriter.write(doc, filename)
 
         return cell
@@ -402,7 +434,7 @@ class Neurite(object):
 
     def __str__(self):
         return self.__name
-    
+
     def __repr__(self):
         if self._parent is None:
             return "Neurite<{} at {}>".format(str(self), id(self))
@@ -431,51 +463,29 @@ class Neurite(object):
             else:
                 super(Neurite, self).__setattr__(attribute, value)
 
-    def get_tree(self):
-        return _pg._get_tree(self._parent, str(self))
-
-    def get_properties(self, property_name=None):
+    def get_state(self, observable=None):
         '''
-        Get the neurite's properties.
+        Return the values of all or one state observable of the neurite.
 
         Parameters
         ----------
-        property_name : str, optional (default: None)
-            Name of the property that should be queried. By default, the full
-            dictionary is returned.
+        observable : str, optional (default: all observables)
+            Observable to query.
 
         Returns
         -------
-        status : variable
-            Properties of the neurite: a single value if
-            `property_name` was specified, the full status ``dict`` otherwise.
-        
-        See also
-        --------
-        :func:`~dense.get_object_properties`,
-        :func:`~dense.elements.Neurite.set_properties`,
-        :func:`~dense.elements.Neuron.get_properties`.
-        '''
-        return _pg.get_object_properties(self._parent, property_name=property_name,
-                                         neurite=self)
-
-    def set_properties(self, params):
-        '''
-        Update the neurite parameters using the entries contained in `params`.
-
-        Parameters
-        ----------
-        params : dict
-            New neurite parameters.
+        state : dict or scalar value
 
         See also
         --------
-        :func:`~dense.set_object_properties`,
-        :func:`~dense.elements.Neurite.get_properties`,
-        :func:`~dense.elements.Neuron.set_properties`.
+        :func:`~dense.get_object_state`
+        :func:`~dense.elements.Neuron.get_state`
+        :func:`~dense.elements.Neurite.get_properties`
         '''
-        return _pg.set_neurite_properties(self._parent, self, params=params)
+        return _pg.get_object_state(self, observable)
 
+    def get_tree(self):
+        return _pg._get_tree(self._parent, str(self))
 
     @property
     def name(self):
@@ -483,12 +493,20 @@ class Neurite(object):
         return self.__name
 
     @property
+    def neuron(self):
+        ''' Name of the parent neuron '''
+        return self._parent
+
+    @property
     def branches(self):
         ''' Return the branches composing the neurite '''
-        update = (self._update_time != _pg.get_kernel_status("time"))
-        if not self._has_branches or update:
-            self._update_branches()
-        return self._branches
+        try:
+            update = (self._update_time != _pg.get_kernel_status("time"))
+            if not self._has_branches or update:
+                self._update_branches()
+            return self._branches
+        except Exception as e:
+            raise RuntimeError(str(e))
 
     @property
     def empty(self):
@@ -507,11 +525,13 @@ class Neurite(object):
     def xy(self):
         ''' Points constituting the different segments along the neurite '''
         try:
-            return _np.concatenate([branch.xy for branch in self.branches])
+            arr = _np.concatenate(
+                [branch.xy.m for branch in self.branches])*um
+            return arr
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([[]])*um
 
     @property
     def theta(self):
@@ -551,7 +571,8 @@ class Neurite(object):
     @property
     def total_length(self):
         ''' Total length of the neurite '''
-        return _pg.get_object_state(self._parent, level=str(self), variable="length")
+        return _pg.get_object_state(self._parent, level=str(self),
+                                    observable="length")
 
     @property
     def taper_rate(self):
@@ -578,7 +599,7 @@ class Neurite(object):
         status : variable
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
-        
+
         See also
         --------
         :func:`~dense.get_object_properties`,
@@ -604,7 +625,8 @@ class Neurite(object):
         :func:`~dense.elements.Neuron.set_properties`,
         :func:`~dense.elements.Neurite.get_properties`.
         '''
-        return _pg.set_neurite_properties(self._parent, self, params=params)
+        return _pg.set_neurite_properties(
+            self._parent, self, params=params)
 
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
@@ -615,7 +637,8 @@ class Neurite(object):
 
         for p, d, parent, n in zip(points, diameters, parents, nodes):
             data = (_np.array(p).T, None, None, d)
-            self._branches.append(Branch(data, parent=parent, node_id=n))
+            self._branches.append(
+                Branch(data, parent=parent, node_id=n))
 
         self._has_branches = True
         self._update_time  = _pg.get_kernel_status("time")
@@ -629,10 +652,12 @@ class Branch(object):
     '''
 
     def __init__(self, neurite_path, parent=None, node_id=None):
-        self.xy       = neurite_path[0]
-        self._r       = neurite_path[1]
-        self._theta   = neurite_path[2]
-        self.diameter = 2*neurite_path[3]
+        self.xy       = neurite_path[0] * um
+        self._r       = (neurite_path[1] if neurite_path[1] is None
+                         else neurite_path[1]*um)
+        self._theta   = (neurite_path[2] if neurite_path[2] is None
+                         else neurite_path[2]*radian)
+        self.diameter = neurite_path[3]*um
         self.parent   = parent
         self.node_id  = node_id
 
@@ -642,11 +667,12 @@ class Branch(object):
         Norm of each segment in the Branch.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._r
         else:
-            assert (isinstance(self._r, _np.ndarray)), \
+            assert (isinstance(self._r.m, _np.ndarray)), \
                 "branch's norm is not an array, there is a mistake"
             return self._r
 
@@ -656,11 +682,12 @@ class Branch(object):
         Angle direction of each segment.
         '''
         if self._r is None:
-            assert (isinstance(self.xy, _np.ndarray))
-            self._theta, self._r = _norm_angle_from_vectors(self.xy)
+            assert (isinstance(self.xy.m, _np.ndarray))
+            theta, r = _norm_angle_from_vectors(self.xy.m)
+            self._theta, self._r = theta*rad, r*um
             return self._theta
         else:
-            assert (isinstance(self._theta, _np.ndarray)), \
+            assert (isinstance(self._theta.m, _np.ndarray)), \
                 "branch's angles is not an array, there is a mistake"
             return self._theta
 
@@ -682,13 +709,24 @@ class Node(int):
         self.position       = pos
         self.dist_to_parent = dist_to_parent
         self.children       = []
-        self.parent         = (tree.get(int(parent), parent)
+        self.parent         = (tree.get(parent, parent)
                                if parent is not None else None)
 
     def add_child(self, child):
         self.children.append(child)
         self._tree[int(child)] = child
         child.parent           = self
+
+    def distance_to_soma(self):
+        dts = self.dist_to_parent
+
+        node = self._tree.get(self.parent, None)
+
+        while node is not None:
+            dts += node.dist_to_parent
+            node = self._tree.get(node.parent, None)
+
+        return dts
 
 
 class Tree(dict):
@@ -698,6 +736,7 @@ class Tree(dict):
         self._neuron    = neuron
         self._neurite   = neurite
         self._root      = None
+        self._tips      = set()
         self._tips_set  = False
 
     @property
@@ -718,17 +757,17 @@ class Tree(dict):
         return self._tips
 
     def __setitem__(self, key, value):
-        super(Tree, self).__setitem__(key, value)
-        if value.parent is None or value.parent:
+        super(Tree, self).__setitem__(int(key), value)
+        if value.parent is None or value.parent == value:
             self._root = value
         value._tree    = self
         self._tips_set = False
 
     def update_tips(self):
-        self._tips = []
-        for key, val in self.items():
+        self._tips = set()
+        for val in self.values():
             if not val.children:
-                self._tips.append(val)
+                self._tips.add(val)
         self._tips_set = True
 
     def neurom_tree(self):
@@ -757,60 +796,34 @@ class Tree(dict):
 
         return neuron
 
-    def show_dendrogram(self):
+    def show_dendrogram(self, **kwargs):
         '''
-        Make and display the dendrogram using ETE3
+        Make and display the dendrogram.
 
-        Returns
-        -------
-        t, ts : ete3.Tree, ete3.TreeStyle
+        See also
+        --------
+        Plotting arguments are the same as :func:`dense.plot.plot_dendrogram`.
         '''
-        from ete3 import Tree as Ete3Tree
-        from ete3 import TreeStyle, NodeStyle
-
-        # make the tree from the root
-        t      = Ete3Tree(dist=0, name=int(self._root))
-        ns = NodeStyle()
-        ns["hz_line_width"] = self._root.diameter
-        ns["size"]          = 0
-        t.set_style(ns)
-
-        queue  = _deque(self._root.children)
-        edict  = {int(self._root): t}
-
-        while queue:
-            node   = queue.popleft()
-            parent = edict[node.parent]
-            enode  = parent.add_child(name=int(node), dist=node.dist_to_parent)
-
-            ns = NodeStyle()
-            # ~ ns["vt_line_width"] = node.diameter
-            ns["hz_line_width"] = node.diameter
-            ns["size"]          = 0
-            enode.set_style(ns)
-
-            edict[node] = enode
-            queue.extend(node.children)
-
-        # set style
-        ts = TreeStyle()
-        ts.show_leaf_name = False
-        ts.branch_vertical_margin = self._root.diameter
-
-        # show
-        t.show(tree_style=ts)
-
-        return t, ts
+        from .plot import plot_dendrogram
+        plot_dendrogram(self, **kwargs)
 
     def _cleanup(self):
+        '''
+        This step is necessary to use the Tree properly since it converts
+        parents from int to Node.
+        '''
         for val in self.values():
             val.children = []
+
         for key, val in self.items():
             if val.parent is None or val.parent == val:
                 self._root = val
                 val.parent = None
+                self[val] = val
             else:
-                self[int(val.parent)].children.append(val)
+                self[val.parent].children.append(val)
+                val.parent = self[val.parent]
+
         self.update_tips()
 
 
@@ -873,7 +886,8 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_properties(gids, "position", return_iterable=True)
+        pos  = _pg.get_object_properties(gids, "position",
+                                         return_iterable=True)
         pos  = [pos[n] for n in gids]
         rad  = _pg.get_object_properties(gids, "soma_radius",
                                          return_iterable=True)
@@ -975,7 +989,7 @@ class Population(list):
         '''
         add population
         '''
-        from .io import GetSWCStructure as _get_swc_struct
+        from .io.data_swc import GetSWCStructure as _get_swc_struct
 
         for neuron in neurons:
             gid = neurons[neuron]['gid']

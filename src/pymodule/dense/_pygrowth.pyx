@@ -59,6 +59,7 @@ __all__ = [
     "get_recording",
     "get_simulation_id",
     "get_object_properties",
+    "get_object_state",
     "reset_kernel",
     "set_environment",
     "set_kernel_status",
@@ -153,7 +154,7 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     neurons : Neuron, Population, or ints
         By default, returns a :class:`~dense.elements.Neuron` object if a
         single neuron is requested, a :class:`~dense.elements.Popuulation` if
-        several neurons are created, or a tuple of the neurons' GIDs if 
+        several neurons are created, or a tuple of the neurons' GIDs if
         `return_ints` is True.
 
     Example
@@ -304,7 +305,7 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
         area = get_area(
             on_area if neurites_on_area is True else neurites_on_area,
             culture)
-            
+
         for param in params:
             param = neuron_param_parser(
                 param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
@@ -618,7 +619,7 @@ def generate_model(elongation, steering, direction_selection):
 
     assert direction_selection in dtypes, \
         "Invalid `direction_selection` " + direction_selection + "."
-        
+
     return Model(elongation, steering, direction_selection)
 
 
@@ -733,15 +734,16 @@ def get_simulation_id():
     return _to_string(c_simulation_id)
 
 
-def get_object_properties(gids, property_name=None, level=None, neurite=None,
-                          settables_only=False, return_iterable=False):
+def get_object_properties(obj, property_name=None, level=None,
+                          neurite=None, settables_only=False,
+                          return_iterable=False):
     '''
     Return the object's properties.
 
     Parameters
     ----------
-    gids : int or tuple
-        GIDs of the objects from which the status will be returned.
+    obj : Neuron, list of neurons/gids, Neurite or list of neurites
+        Elements for which the state will be returned.
     property_name : str, optional (default: None)
         Name of the property that should be queried. By default, the full
         dictionary is returned.
@@ -756,7 +758,8 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
     settables_only : bool, optional (default: False)
         Return only settable values; read-only values are hidden.
     return_iterable : bool, optional (default: False)
-        If true, returns a dict or an array, even if only one gid is passed.
+        If true, returns a dict or an array, even if only one gid is
+        passed.
 
     Returns
     -------
@@ -772,8 +775,11 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
         * array of ``dict``s if `gids` contained several nodes and
           `property_name` was not specified.
     '''
+    from .elements import Neuron, Neurite
+
     cdef:
         statusMap c_status
+        vector[stype] gids
         string clevel, cneurite, event_type
 
     status = {}
@@ -781,9 +787,30 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
     if neurite is not None:
         neurite = str(neurite)
 
-    if not nonstring_container(gids):
+    # get the GIDs of the neurons
+
+    if is_integer(obj) or isinstance(obj, Neuron):
         #creates a vector of size 1
-        gids = vector[stype](1, <stype>gids)
+        gids = vector[stype](1, int(obj))
+    elif isinstance(obj, str) or isinstance(obj, Neurite):
+        gids      = vector[stype](1, obj.neuron)
+        obj       = [obj]
+        level     = "neurite" if level is None else level
+    elif nonstring_container(obj):
+        if obj:
+            if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
+                gids = [int(n) for n in obj]
+            elif isinstance(obj[0], Neurite):
+                gids  = [neurite.neuron for neurite in obj]
+                level = "neurite" if level is None else level
+            else:
+                raise ValueError("If `obj` is a list, it must contain "
+                                 "either int, Neuron, or Neurite "
+                                 "objects of the same type.")
+    else:
+        assert nonstring_container(obj) and is_integer(obj[0]), \
+            "Only Neurons/gids or Neurite/list of Neurites are valid " \
+            "parameters for `obj`."
 
     for gid in gids:
         if get_object_type(gid) == "neuron":
@@ -795,11 +822,14 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
             else:
                 clevel = _to_bytes(level)
 
+            valid_lvl = (None, "neuron")
+
             # combine with `neurite`
-            if neurite in _get_neurites(gid) or level not in (None, "neuron"):
-                # if not specified, get first neurite
+            if neurite in _get_neurites(gid) or level not in valid_lvl:
+                # if not specified, get first alphabetical neurite
                 if neurite is None:
-                    neurite = _get_neurites(gid)[0]
+                    neurite = next(iter(_get_neurites(gid)))
+
                 cneurite    = _to_bytes(neurite)
                 c_status    = get_neurite_status_(gid, cneurite, clevel)
                 status[gid] = _statusMap_to_dict(c_status)
@@ -871,46 +901,93 @@ def get_object_properties(gids, property_name=None, level=None, neurite=None,
         return status
 
 
-def get_object_state(gids, variable, level="neuron"):
+def get_object_state(obj, observable=None, level=None,
+                     return_iterable=False):
     '''
     Return the state of a neuron or neurite at the current time.
 
     Parameters
     ----------
-    gids : int or tuple
-        GIDs of the neurons whose state will be returned.
-    variable : str
+    obj : Neuron, list of neurons/gids, Neurite or list of neurites
+        Elements for which the state will be returned.
+    observable : str, optional (default: all observables)
         Name of the property that should be queried.
     level : str, optional (default: "neuron")
         Level at which the status should be obtained (either "neuron",
         "axon", or a specific dendrite name).
+        This entry is valid only if `obj` is a neuron or a list of
+        neurons.
+    return_iterable : bool, optional (default: False)
+        If true, returns a dict or an array, even if only one gid is
+        passed.
 
     Returns
     -------
     state : float or list of floats
     '''
-    cdef:
-        string clevel = _to_bytes(level)
-        string cvar   = _to_bytes(variable)
+    from .elements import Neuron, Neurite
+
+    cdef vector[stype] gids
 
     state = []
 
-    if isinstance(gids, int):
-        #creates a vector of size 1
-        gids = vector[stype](1, <stype>gids)
-    for gid in gids:
-        if get_object_type(gid) == "neuron":
-            if not (level == "neuron" or is_neurite(gid, clevel)):
-                raise RuntimeError(
-                    "`level` must be 'neuron' or a valid neurite.")
-            state.append(get_state_(gid, clevel, cvar))
-        else:
-            raise RuntimeError("Only neuron state can be queried.")
+    is_neuron = True
 
-    if len(state) == 1:
-        return state[0]
+    # get the GIDs of the neurons
+
+    if is_integer(obj) or isinstance(obj, Neuron):
+        #creates a vector of size 1
+        gids = vector[stype](1, int(obj))
+    elif isinstance(obj, str) or isinstance(obj, Neurite):
+        is_neuron = False
+        gids      = vector[stype](1, obj.neuron)
+        obj       = [obj]
+    elif nonstring_container(obj):
+        if obj:
+            if is_integer(obj[0]) or isinstance(obj[0], Neuron): 
+                gids = [int(n) for n in obj]
+            elif isinstance(obj[0], Neurite):
+                is_neuron = False
+                gids      = [neurite.neuron for neurite in obj]
+            else:
+                raise ValueError("If `obj` is a list, it must contain "
+                                 "either int, Neuron, or Neurite "
+                                 "objects of the same type.")
     else:
-        return np.array(state)
+        assert nonstring_container(obj) and is_integer(obj[0]), \
+            "Only Neurons/gids or Neurite/list of Neurites are valid " \
+            "parameters for `obj`."
+
+    # get the state(s)
+    if is_neuron:
+        for gid in gids:
+            if get_object_type(gid) == "neuron":
+                level   = "neuron" if level is None else level
+                c_level = _to_bytes(level)
+
+                if not (level == "neuron" or is_neurite_(gid, c_level)):
+                    raise RuntimeError(
+                        "`level` must be 'neuron' or a valid neurite.")
+
+                result = _get_observables(gid, observable, level)
+
+                state.append(result)
+            else:
+                raise RuntimeError(
+                    "Only neuronal elements can be queried.")
+    else:
+        # neurite
+        assert level is None, "`level` entry invalid for Neurite."
+
+        for gid, neurite in zip(gids, obj):
+            result = _get_observables(gid, observable, str(neurite))
+
+            state.append(result)
+
+    if len(state) == 1 and not return_iterable:
+        return state[0]
+
+    return np.array(state)
 
 
 def get_object_type(gid):
@@ -962,9 +1039,10 @@ def get_default_properties(obj, property_name=None, settables_only=True,
     Parameters
     ----------
     obj : :obj:`str` or :class:`Model`.
-        Name of the object, among "recorder", "neuron", "neurite", or
-        "growth_cone", or a model, either as a string (e.g. "cst_rw_wrc") or
-        as a :class:`Model` object returned by :func:`generate_model`.
+        Name of the object, among "recorder", "neuron", "neurite",
+        "axon", or "growth_cone", or a model, either as a string
+        (e.g. "cst_rw_wrc") or as a :class:`Model` object returned by
+        :func:`generate_model`.
     property_name : str, optional (default: None)
         Name of the property that should be queried. By default, the full
         dictionary is returned.
@@ -994,6 +1072,8 @@ def get_default_properties(obj, property_name=None, settables_only=True,
 
     if obj in gc_models:
         ctype = _to_bytes("growth_cone")
+    elif obj == "growth_cone":
+        ctype = _to_bytes("growth_cone")
     elif obj == "neuron":
         ctype = _to_bytes("neuron")
     elif obj in ["axon", "dendrite", "neurite"]:
@@ -1002,7 +1082,8 @@ def get_default_properties(obj, property_name=None, settables_only=True,
         ctype = _to_bytes("recorder")
     else:
         raise RuntimeError("Unknown object : '" + obj + "'. "
-                           "Candidates are 'recorder' and all entries in "
+                           "Candidates are 'recorder', 'neuron', "
+                           "'neurite', 'axon', and all entries in "
                            "get_models.")
 
     get_defaults_(cname, ctype, b"default", detailed, default_params)
@@ -1661,6 +1742,43 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
             return Population(neurons)
 
 
+def _get_observables(gid, observable, level):
+    cdef:
+        string c_obs, c_unit
+        c_level = _to_bytes(level)
+
+    # get all state values
+    if observable is None:
+        state_vars = get_object_properties(
+            gid, "observables", neurite=level)
+
+        result = {}
+
+        for var in state_vars:
+            c_obs = _to_bytes(var)
+
+            val  = get_state_(gid, c_level, c_obs, c_unit)
+            unit = _to_string(c_unit)
+
+            if unit:
+                result[var] = val*ureg.parse_expression(unit)
+            else:
+                result[var] = val
+
+        return result
+
+    # single state value
+    c_obs = _to_bytes(observable)
+
+    val  = get_state_(gid, c_level, c_obs, c_unit)
+    unit = _to_string(c_unit)
+
+    if unit:
+        return val*ureg.parse_expression(unit)
+
+    return val
+
+
 def _get_pyskeleton(gid, unsigned int resolution=10):
     '''
     Gets the skeletons of the N neurons present in `gid` and returns arrays
@@ -1875,10 +1993,10 @@ def _get_tree(neuron, neurite):
     while keep_going:
         keep_going = walk_neurite_tree_(neuron, cneurite, nprop)
 
-        node      = Node(nprop.n_id, tree, parent=nprop.p_id,
-                         diameter=nprop.diameter,
-                         dist_to_parent=nprop.dist_to_parent,
-                         pos=tuple(nprop.position))
+        node = Node(nprop.n_id, tree, parent=nprop.p_id,
+                    diameter=nprop.diameter,
+                    dist_to_parent=nprop.dist_to_parent,
+                    pos=tuple(nprop.position))
 
         tree[int(node)] = node
 

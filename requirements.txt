@@ -1,0 +1,10 @@
+cython
+dxfgrabber
+nngt
+numpy
+pint
+scipy
+setuptools
+shapely
+svg.path >= 4
+neurom

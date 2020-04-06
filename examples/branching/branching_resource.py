@@ -24,7 +24,7 @@ import dense as ds
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-
+from dense.units import *
 # ~ plt.ion()
 
 
@@ -48,6 +48,7 @@ neuron_params = {
 
     "use_uniform_branching": False,
     "use_van_pelt": False,
+    "use_critical_resource": True,
 
     "diameter_eta_exp": 2.67,
     "diameter_ratio_std": 0.,
@@ -63,7 +64,7 @@ Check for optional parameters
 
 b_th = 100.
 
-if use_critical_resource:
+if neuron_params["use_critical_resource"]:
     cr_params = {
         # Cr model
         "res_retraction_factor": 1.,
@@ -118,12 +119,13 @@ def resource_branching(neuron_params):
                         axon_params=neuron_params)
     step(5000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    ds.SaveSwc(swc_resolution=5)
-    ds.save_json_info()
 
-    swc_file = ds.get_simulation_id()
-    # print(swc_file)
-    return swc_file
+    ds.io.save_to_swc(filename="branching_resource.swc",
+                      resolution=5*minute)
+
+    ds.io.save_json_info()
+
+    swc_file =ds.get_simulation_id()
 
 
 if __name__ == '__main__':
@@ -132,7 +134,7 @@ if __name__ == '__main__':
         "seeds": [18+i for i in range(num_omp)],
         "num_local_threads": num_omp,
         "environment_required": False,
-        "resolution": 1.,
+        "resolution": 1. * minute,
     }
 
     swc_file=resource_branching(neuron_params)

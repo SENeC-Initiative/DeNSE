@@ -18,6 +18,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
+#
+# REQUIREMENT 
+#  Needs the ete3 library for  dendogram browser
+#  pip install --user ete3
+
 
 
 import dense as ds
@@ -95,7 +100,7 @@ def lateral_branching(neuron_params):
     ds.reset_kernel()
     np.random.seed(kernel['seeds'])
     ds.set_kernel_status(kernel, simulation_id="uniform_branching")
-    neuron_params['growth_cone_model'] = 'run_tumble'
+    neuron_params['growth_cone_model'] = 'run-and-tumble'
     neuron_params[use_type] = False
 
     neuron_params["position"] = np.random.uniform(
@@ -110,8 +115,11 @@ def lateral_branching(neuron_params):
                         # ~ axon_params=neuron_params)
     step(2 * day, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
-    ds.SaveSwc(swc_resolution=5)
-    ds.save_json_info()
+
+
+    ds.io.save_to_swc(filename="branching_lateral.swc", resolution=5)
+
+    ds.io.save_json_info()
 
     swc_file =ds.get_simulation_id()
     # print(swc_file)
@@ -123,11 +131,12 @@ if __name__ == '__main__':
     kernel = {
         "seeds": np.random.randint(0, 10000, num_omp).tolist(),
         "num_local_threads": num_omp,
-        "environment_required": False
+        "environment_required": False,
+        "resolution": 2 * minute,
     }
     swc_file=lateral_branching(neuron_params)
 
-    ds.plot_neurons(show=True)
+    ds.plot.plot_neurons(show=True)
 
     pop = ds.get_neurons()
     n   = pop[0]

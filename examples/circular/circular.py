@@ -2,8 +2,6 @@
 #
 # circular.py
 #
-# This current code does not what it is intended, i.e. generate a population
-# of neurons in a circular culture
 # This file is part of DeNSE.
 #
 # Copyright (C) 2019 SeNEC Initiative
@@ -62,9 +60,9 @@ Main parameters
 # 2 3
 np.random.seed(0)
 
-simtime = 50.* hour + 30.* minute
+simtime     = 50.*hour + 30.*minute
 soma_radius = 5.
-num_neurons = 2
+num_neurons = 1
 
 gc_model = 'cst_po_nwa'
 

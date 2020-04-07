@@ -25,7 +25,7 @@ import dense as ds
 from dense.elements import Population
 
 
-pop = Population.from_swc(ds.NeuronsFromSimulation("2culture_swc"))
+pop = Population.from_swc("2chambers_test.swc")
 
 graph, intersections, synapses = ds.generate_network(pop)
 

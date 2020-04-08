@@ -30,6 +30,7 @@ import matplotlib.pyplot as plt
 import nngt
 
 import dense as ds
+from dense.units import *
 
 
 def CleanFolder(tmp_dir, make=True):
@@ -52,36 +53,43 @@ soma_radius = 8.
 num_neurons = 10
 
 #~ gc_model = 'persistent_random_walk'
-gc_model = 'run_tumble'
+gc_model = 'run-and-tumble'
+use_uniform_branching = False
+use_vp = True
+use_run_tumble = False
 
 neuron_params = {
+    "dendrite_diameter": 3. * um,
+    "axon_diameter": 4. * um,
     "growth_cone_model": gc_model,
-    "use_van_pelt": True,
-    "sensing_angle": 0.14,
-    "speed_growth_cone": 0.025,
+    "use_uniform_branching": use_uniform_branching,
+    "use_van_pelt": use_vp ,
+    "sensing_angle": 45.*deg,
+    "speed_growth_cone": 0.025 * um / minute, #0.15
     "filopodia_wall_affinity": 100.,
-    "filopodia_finger_length": 7.,
+    "filopodia_finger_length": 7. * um,
     "filopodia_min_number": 30,
-    "persistence_length": 300.,
-    "B": 3.,
-    "T": 1000.,
-    "E": 1.,
+    "persistence_length": 300. * um,
+    "taper_rate": 1./4000., 
 
-    "soma_radius": soma_radius,
+    "soma_radius": soma_radius * um,
+    'B': 3. * cpm,
+    'T': 1000. * minute,
+    'E': 1.,
 }
+
 
 dendrite_params = {
-    "use_van_pelt": True,
+    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
-    "sensing_angle": 0.14,
-    "speed_growth_cone": 0.01,
-    "filopodia_wall_affinity": 10.,
-    "persistence_length" : 200.,
-    "B":6.,
-    "T":1000.,
-    "E":1.,
+    "speed_growth_cone": 0.01 * um / minute,
+    "filopodia_wall_affinity": 10. ,
+    "persistence_length" : 200. * um,
+    "taper_rate": 3./250.,
+    "B": 6. * cpm,
+    "T": 1000. * minute,
+    'E': 1.,
 }
-
 
 
 '''
@@ -92,14 +100,19 @@ Simulation
 def step(n, loop_n, plot=True):
     ds.simulate(n)
     if plot:
-        ds.plot_neurons(show_nodes=True, show=True)
+        ds.plot.plot_neurons(show_nodes=True, show=True)
 
 
 if __name__ == '__main__':
-    kernel = {"seeds": [33, 64, 84, 65, 68, 23],
-              "num_local_threads": 6,
-              "resolution": 10.}
-    kernel["environment_required"] = True
+    num_omp = 10
+    kernel = {
+        "seeds": range(num_omp),
+        "num_local_threads": num_omp,
+        "resolution": 10. * minute,
+        "adaptive_timestep": -1.,
+        "environment_required": True,
+        "interactions": True
+    }
 
     culture_file = current_dir + "/polygons.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
@@ -109,19 +122,19 @@ if __name__ == '__main__':
         culture = ds.set_environment(culture_file, min_x=0, max_x=1800)
         # generate the neurons inside the left chamber
         # pos_left = culture.seed_neurons(
-            # neurons=100, xmax=540, soma_radius=soma_radius)
+        # neurons=100, xmax=540, soma_radius=soma_radius)
     neuron_params['position'] = culture.seed_neurons(neurons=num_neurons,
-                                                      soma_radius=soma_radius)
+                                                     soma_radius=soma_radius)
 
     print("Creating neurons")
-    gids = ds.create_neurons(n=num_neurons, growth_cone_model="persistent_rw_critical",
-                            culture=culture,
-                            params=neuron_params,
-                            dendrites_params=dendrite_params,
-                            num_neurites=3)
+    gids = ds.create_neurons(n=num_neurons,
+                             # culture=culture,
+                             params=neuron_params,
+                             dendrites_params=dendrite_params,
+                             num_neurites=3)
     start = time.time()
     for i in range(10):
-        step(500, 0, True)
+        step(2 * day, 0, True)
 
     duration = time.time() - start
 
@@ -129,31 +142,11 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
-    save_path = CleanFolder(os.path.join(os.getcwd(),"swc"))
-    ds.save_json_info(filepath=save_path)
-    ds.SaveSwc(filepath=save_path,swc_resolution = 10)
+    save_path = CleanFolder(os.path.join(os.getcwd(), "swc"))
+    ds.io.save_json_info(filepath=save_path)
+    ds.io.save_to_swc(filepath=save_path, swc_resolutio=10)
     structure = ds.morphology.NeuronStructure()
-    graph =ds.generate_network(structure=structure)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    graph = ds.morphology.generate_network(structure=structure)
 
     # ds.reset_kernel()
 

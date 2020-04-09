@@ -26,9 +26,10 @@ from dense.units import *
 from dense.elements import Population
 
 
-pop = Population.from_swc(ds.NeuronsFromSimulation("circular_swc"))
+# pop = Population.from_swc(ds.NeuronsFromSimulation("circular_swc"))
+pop = Population.from_swc(ds.io.load_swc("circular_swc"))
 
-graph, intersections, synapses = ds.generate_network(pop, intersection_positions=True)
+graph, intersections, synapses = ds.morphology.generate_network(pop, intersection_positions=True)
 
 
 ### Plot the graph in 2 subplots:
@@ -43,7 +44,7 @@ graph.to_file("circular.el")
                        # axis = ax2,
                        # dpi = 400)
 
-ax1.set_title("Positions of nurons' soma")
+ax1.set_title("Positions of neurons' soma")
 for neuron in pop:
     ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
@@ -56,6 +57,7 @@ cx.set_title("adjacency matrix of cultured network")
 cx.set_xlabel("Presynaptic neuron ID")
 cx.set_ylabel("Postsynaptic neuron ID")
 dtype = [('ID', int), ('x_', float), ('y_',float)]
+
 import numpy as np
 gids_position = [(ID,xy[0],xy[1]) for ID, xy in  zip(pop.gids,pop.positions)]
 gids_position = np.array(gids_position,dtype)

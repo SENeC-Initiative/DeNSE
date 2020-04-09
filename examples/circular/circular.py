@@ -27,8 +27,14 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
+import nngt
+
 import dense as ds
 from dense.units import *
+
+
+current_dir = os.path.abspath(os.path.dirname(__file__))
+main_dir = current_dir[:current_dir.rfind("/")]
 
 
 def CleanFolder(tmp_dir, make=True):
@@ -49,10 +55,6 @@ def step(n, loop_n, plot=True):
                              show_nodes=True, show_neuron_id=True, show=True)
 
 
-current_dir = os.path.abspath(os.path.dirname(__file__))
-main_dir = current_dir[:current_dir.rfind("/")]
-
-
 '''
 Main parameters
 '''
@@ -60,15 +62,16 @@ Main parameters
 # 2 3
 np.random.seed(0)
 
-simtime     = 50.*hour + 30.*minute
+simtime = 50.*hour + 30.*minute
 soma_radius = 5.
-num_neurons = 1
+num_neurons = 10
 
 gc_model = 'cst_po_nwa'
+use_vp = True
 
 neuron_params = {
     "growth_cone_model": gc_model,
-    "use_van_pelt": True,
+    "use_van_pelt": use_vp,
     "use_uniform_branching": False,
     "sensing_angle": 70.*deg,
     "speed_growth_cone": 0.06 * um / minute,
@@ -90,10 +93,10 @@ neuron_params = {
     # "affinity_dendrite_soma_other_neuron": np.NaN,
     # "affinity_dendrite_soma_same_neuron": np.NaN,
     # "affinity_dendrite_self": np.NaN,
+    "soma_radius": soma_radius * um,
     "B": 2. * cph,
     "T": 2.*day,
     "E": 1.,
-    "soma_radius": soma_radius * um,
 }
 
 dendrite_params = {
@@ -103,8 +106,8 @@ dendrite_params = {
     "filopodia_wall_affinity": 0.01,
     "persistence_length": 200. * um,
     "B": 6. * cph,
-    "T":1000. * minute,
-    "E":1.,
+    "T": 1000. * minute,
+    "E": 1.,
 }
 
 axon_params = {
@@ -125,33 +128,25 @@ Simulation
 '''
 
 if __name__ == '__main__':
-    #~ kernel={"seeds":[33, 64, 84, 65],
-            #~ "num_local_threads":4,
-            #~ "resolution": 30.}
-    kernel = {"seeds": [33, 64, 84, 65, 68, 23],
-              "num_local_threads": 6,
+    num_omp = 10
+    kernel = {
+              "seeds": range(num_omp),
+              "num_local_threads": num_omp,
+              "environment_required": True,
               "resolution": 5. * minute,
               "interactions": True}
-    # kernel = {"seeds":[33],
-    #           "num_local_threads": 1,
-    #           "resolution": 5.*minute,
-    #           "interactions": True}
-    # ~ kernel={
-        # ~ "seeds":[23, 68],
-        # ~ "num_local_threads": 2,
-        # ~ "resolution": 30.*minute
-    # ~ }
-    kernel["environment_required"] = False
+
+    np.random.seed(118239)  # seeds for the neuron positions
 
     ds.set_kernel_status(kernel, simulation_id="ID")
     gids, culture = None, None
 
     if kernel["environment_required"]:
-        shape   = ds.environment.Shape.disk(300.)
+        shape = ds.environment.Shape.disk(300.)
         culture = ds.set_environment(shape)
         # generate the neurons inside the left chamber
         # pos_left = culture.seed_neurons(
-            # neurons=100, xmax=540, soma_radius=soma_radius)
+        # neurons=100, xmax=540, soma_radius=soma_radius)
         neuron_params['position'] = culture.seed_neurons(
             neurons=num_neurons, soma_radius=soma_radius)
     else:
@@ -160,11 +155,11 @@ if __name__ == '__main__':
 
     print("\nCreating neurons\n")
     gids = ds.create_neurons(n=num_neurons,
-                            culture=culture,
-                            params=neuron_params,
-                            dendrites_params=dendrite_params,
-                            axon_params=axon_params,
-                            num_neurites=3)
+                             culture=culture,
+                             params=neuron_params,
+                             dendrites_params=dendrite_params,
+                             axon_params=axon_params,
+                             num_neurites=3)
 
     rec = ds.create_recorders(gids, "num_growth_cones")
 
@@ -172,11 +167,11 @@ if __name__ == '__main__':
     for i in range(1):
         step(1 * day, 0, True)
 
-    dendrite_params.update({"speed_growth_cone" : 0.04 * um / minute,
-                            "use_van_pelt" : False})
+    dendrite_params.update({"speed_growth_cone": 0.04 * um / minute,
+                            "use_van_pelt": False})
 
-    axon_params.update({"speed_growth_cone" : 0.1 * um / minute,
-                        "use_van_pelt" : False,
+    axon_params.update({"speed_growth_cone": 0.1 * um / minute,
+                        "use_van_pelt": False,
                         "use_uniform_branching": True,
                         "uniform_branching_rate": 0.1 * cph,})
 
@@ -185,11 +180,7 @@ if __name__ == '__main__':
                              dendrites_params=dendrite_params,
                              axon_params=axon_params)
 
-    # ~ for i in range(2):
-        # ~ step(4.*day, 0, True)
-    # ~ step(16.25*hour, 0, True)
     step(simtime, 0, True)
-    # ~ step(5.*hour, 0, True)
     duration = time.time() - start
     print(ds.get_kernel_status("time"))
 
@@ -198,11 +189,18 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
-    # ~ save_path = CleanFolder(os.path.join(os.getcwd(),"2culture_swc"))
-    # ~ ds.save_json_info(filepath=save_path)
-    # ~ ds.SaveSwc(filepath=save_path,swc_resolution = 10)
+    save_path = CleanFolder(os.path.join(os.getcwd(), "circular_swc"))
+    ds.io.save_json_info(filepath=save_path)
+    ds.io.save_to_swc(filename=save_path, resolution=10)
+    print("\nmaking graph\n")
+    graph = ds.morphology.generate_network()
+    print("graph generated")
+    print(graph.node_nb(), graph.edge_nb())
 
-    # ~ graph = ds.generate_network(connection_proba=1)
+    population = nngt.NeuralPop(with_models=False)
+    population.create_group(range(num_neurons), "Whole_disk")
+    nngt.Graph.make_network(graph, population)
+    print(graph.node_nb(), graph.edge_nb())
 
-    # ~ graph.to_file("circular.el")
-    # ~ nngt.plot.draw_network(graph, show=True)
+    graph.to_file("circular.el")
+    nngt.plot.draw_network(graph, show=True)

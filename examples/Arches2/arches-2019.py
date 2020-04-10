@@ -41,9 +41,9 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-num_neurons = 200
+num_neurons = 10
 # Simulation duration
-duration = 30  # in days
+duration = 40  # in days
 
 soma_radius = 8.
 use_uniform_branching = False

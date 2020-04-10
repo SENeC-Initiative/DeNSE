@@ -180,7 +180,7 @@ if __name__ == '__main__':
     print("SIMULATION ENDED")
 
     # save
-    graph =ds.generate_network()
+    graph =ds.morphology.generate_network()
     save_path = CleanFolder(os.path.join(os.getcwd(),"diode_double_swc"))
-    ds.save_json_info(filepath=save_path)
-    ds.SaveSwc(filepath=save_path,swc_resolution = 10)
+    ds.io.save_json_info(filepath=save_path)
+    ds.io.save_to_swc(filename=save_path, resolution = 10)

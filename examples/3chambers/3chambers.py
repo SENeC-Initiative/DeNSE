@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 import matplotlib
-matplotlib.use("GTK3Agg")
+#matplotlib.use("GTK3Agg")
 import matplotlib.pyplot as plt
 
 import nngt
@@ -124,20 +124,11 @@ def step(n, loop_n, plot=True):
 
 if __name__ == '__main__':
     number_of_threads = 10
-    #~ kernel={"seeds":[33, 64, 84, 65],
-            #~ "num_local_threads":4,
-            #~ "resolution": 30.}
     kernel = {"seeds": range(number_of_threads),
               "num_local_threads": number_of_threads ,
               "resolution": 10. * minute,
-              "adaptive_timestep": -1.}
-    #~ kernel={"seeds":[33],
-     #~ "num_local_threads": 1,
-    #~ "resolution": 10.}
-    #~ kernel={"seeds":[23, 68],
-    #~ "num_local_threads": 2,
-    #~ "resolution": 30.}
-    kernel["environment_required"] = True
+              "adaptive_timestep": -1.,
+              "environment_required": True}
 
     np.random.seed(12892) # seeds for the neuron positions
 
@@ -169,8 +160,7 @@ if __name__ == '__main__':
     print("Starting simulation")
     start = time.time()
     fig, ax = plt.subplots()
-    # ~ step(3 * day, 0, False)   # set duration of simulated time
-    step(300*minute, 0, False)   # set duration of simulated time
+    step(3 * day, 0, False)   # set duration of simulated time
     duration = time.time() - start
 
     print("simulation done")
@@ -178,14 +168,12 @@ if __name__ == '__main__':
     # prepare the plot
     print("Starting plot")
     ds.plot.plot_neurons(gid=range(100), culture=culture, soma_alpha=0.8,
-                         axon_color='g', gc_color="r", axis=ax,
-                         show_neuron_id=True, show=False)
+                       axon_color='g', gc_color="r", axis=ax, show=False)
     ds.plot.plot_neurons(gid=range(100,200), culture=culture, soma_alpha=0.8,
-                         axon_color='yellow', gc_color="r", axis=ax,
-                         show_neuron_id=True, show=False)
+                       axon_color='yellow', gc_color="r", axis=ax, show=False)
     ds.plot.plot_neurons(gid=range(200, 300), show_culture=False, axis=ax,
-                         soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                         show_neuron_id=True, show=True)
+                       soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                       show=True)
     plt.tight_layout()
     ax.set_xlabel("x ($\mu$m)")
     ax.set_ylabel("y ($\mu$m)")
@@ -204,9 +192,9 @@ if __name__ == '__main__':
     print(graph.node_nb(), graph.edge_nb())
 
     population = nngt.NeuralPop(with_models=False)
-    population.create_group(range(100), "chamber_1", )
-    population.create_group(range(100, 200), "chamber_2")
-    population.create_group(range(200, 300), "chamber_3")
+    population.create_group("chamber_1", range(100))
+    population.create_group("chamber_2", range(100, 200))
+    population.create_group("chamber_3", range(200, 300))
     nngt.Graph.make_network(graph, population)
 
     print(graph.node_nb(), graph.edge_nb())

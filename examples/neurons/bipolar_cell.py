@@ -41,11 +41,6 @@ neuron_params = {
     "dendrite_diameter": 2.*um,
     "axon_diameter": 3.*um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
-    "retraction_probability": 1.,
-    "somatropic_factor": 0.02,
-    "self_avoidance_factor": 1.,
-    "growth_cone_model": "self-referential-forces",
-    "filopodia_finger_length": 20.*um
 }
 
 axon_params = {
@@ -57,8 +52,8 @@ axon_params = {
     # branching
     "use_van_pelt": True,
     "B": 0.2*cpm,
-    "T": 3.5*day,
-    "gc_split_angle_mean": 35.*deg,
+    "T": 5000.*minute,
+    "gc_split_angle_mean": 25.*deg,
 }
 
 dend_params = {
@@ -69,7 +64,7 @@ dend_params = {
     "use_van_pelt": True,
     "B": 1.*cpm,
     "T": 5000.*minute,
-    "gc_split_angle_mean": 45.*deg,
+    "gc_split_angle_mean": 25.*deg,
 }
 
 neurite_params = {"axon": axon_params, "dendrite": dend_params}
@@ -91,7 +86,8 @@ n = ds.create_neurons(n=num_neurons, params=neuron_params,
 
 # first, elongation
 
-ds.simulate(7*day)
+ds.simulate(10000*minute)
+ds.plot.plot_neurons()
 
 
 # then branching
@@ -102,7 +98,7 @@ lb_axon = {
     "use_van_pelt": False,
     "use_flpl_branching": True,
     "flpl_branching_rate": 0.00025*cpm,
-    "lateral_branching_angle_mean": 60.*deg,
+    "lateral_branching_angle_mean": 45.*deg,
 }
 
 dend_params = {
@@ -111,23 +107,24 @@ dend_params = {
     "uniform_branching_rate": 0.0002*cpm,
     "persistence_length": 100.*um,
     "speed_growth_cone": 0.01*um/minute,
-    "lateral_branching_angle_mean": 70.*deg,
+    "lateral_branching_angle_mean": 40.*deg,
 }
 
 neurite_params = {"axon": lb_axon, "dendrite": dend_params}
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
-ds.simulate(21*day)
+ds.simulate(30000*minute)
+ds.plot.plot_neurons()
 
 # then further branching
 
 vp_axon = {
     "use_flpl_branching": False,
-    #~ "use_van_pelt": True,
-    #~ "B": 5.,
-    #~ "T": 40000.,
-    #~ "gc_split_angle_mean": 30.,
+    # "use_van_pelt": True,
+    # "B": 5.,
+    # "T": 40000.,
+    # "gc_split_angle_mean": 30.,
 }
 
 dend_params = {
@@ -135,7 +132,7 @@ dend_params = {
     "use_uniform_branching": False,
     "B": 5.*cpm,
     "T": 50000.*minute,
-    "gc_split_angle_mean": 40.*deg,
+    "gc_split_angle_mean": 30.*deg,
 }
 
 neurite_params = {"axon": vp_axon, "dendrite": dend_params}
@@ -144,32 +141,32 @@ ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(20*day)
 
-# plot
+print(ds.get_kernel_status()["time"])
 
-fig = plt.figure(figsize=(8, 4.8))
+ds.plot.plot_neurons(show=True)
 
-gs = fig.add_gridspec(nrows=2, ncols=3, left=0.02, right=0.98,
-                      top=0.98, bottom=0.02, hspace=0.1, wspace=0.1)
+n.to_swc("pyramidal-cell.swc")
+n.to_neuroml("bipolar_cell.nml")
 
-ax_cell = fig.add_subplot(gs[:, :2])
-ax_axon = fig.add_subplot(gs[0, 2])
-ax_dend = fig.add_subplot(gs[1, 2])
+import neurom as nm
+from neurom import viewer
+nrn = nm.load_neuron("pyramidal-cell.swc")
 
-ax_cell.axis('off')
-ax_axon.axis('off')
-ax_dend.axis('off')
+fig, _ = viewer.draw(nrn)
 
-fig.text(0.01, 0.95, "B.1")
-fig.text(0.6, 0.95, "B.2")
-fig.text(0.6, 0.45, "B.3")
-
-ds.plot.plot_dendrogram(n.axon, show=False, vertical_diam_frac=0.45,
-                        axis=ax_axon)
+for ax in fig.axes:
+    ax.set_title("")
 
 ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
                         vertical_diam_frac=0.45, axis=ax_dend)
 
-ds.plot.plot_neurons(scale_text=False, axis=ax_cell)
+import matplotlib.pyplot as plt
+plt.axis('off')
+fig.suptitle("")
+plt.tight_layout()
+plt.show()
+#~ tree.show_dendrogram()
+
 
 print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
 print("Asymmetry of the dendrite:",

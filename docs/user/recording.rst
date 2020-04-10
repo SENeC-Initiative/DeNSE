@@ -39,4 +39,9 @@ For an insight on the SWC format you're pleased to read the apposite section.
 
 The functions to deal with data storage are written under the name DataIO.
 
-In order to save data you need to set the
+In order to save data you need to use the function of class "io".
+
+ex.:
+
++ dense.io.save_to_swc()
++ dense.io.save_json_info()

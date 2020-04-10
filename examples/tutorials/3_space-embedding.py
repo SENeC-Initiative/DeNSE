@@ -23,11 +23,6 @@
 This file shows how to grow space-embedded neurons with DeNSE.
 """
 
-import numpy as np
-
-np.random.seed(0)
-
-
 ''' Importing DeNSE '''
 
 import dense as ds

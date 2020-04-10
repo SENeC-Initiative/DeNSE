@@ -151,7 +151,7 @@ lb = {
     "use_van_pelt": False,
     #~ 'res_branching_threshold': np.inf,
     "use_uniform_branching": True,
-    "uniform_branching_rate": 0.04*cph, 
+    "uniform_branching_rate": 0.05*cph, 
     "lateral_branching_angle_mean": 45.*deg
 }
 
@@ -163,7 +163,6 @@ ds.simulate(10*day)
 
 ds.plot.plot_neurons(show=True)
 
-
 end_branching = {
     "use_flpl_branching": False,
     "use_uniform_branching": False,
@@ -173,13 +172,18 @@ end_branching = {
 
 ds.set_object_properties(n, neurite_params={"axon": end_branching})
 
+
 ds.simulate(20*day)
 
 print(ds.get_kernel_status("time"))
-
-ds.plot.plot_dendrogram(n.axon, show=False, vertical_diam_frac=0.45)
 ds.plot.plot_neurons(show=True)
 
 ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
-print("Asymmetry of axon:", ds.morphology.tree_asymmetry(n.axon))
+# deprecated syntax
+# tree = n.axon.get_tree()
+# tree.show_dendrogram()
+
+ds.plot.plot_dendrogram(n.axon)
+
+print("Asymmetry of axon:", ds.structure.tree_asymmetry(n[0].axon))

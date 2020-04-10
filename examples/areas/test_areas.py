@@ -51,25 +51,25 @@ env.plot_shape(shape, show=True)
 Set the environment in DeNSE, then create the neurons
 '''
 
-num_omp = 1
-resol   = 2.*minute
 
-nngt.seed(0)
+number_of_threads = 10
+kernel = {
+    "seeds": range(number_of_threads),
+    "num_local_threads": number_of_threads,
+    "resolution": 2 * minute,
+    "adaptive_timestep": -1.,
+    "environment_required": True,
+}
 
-ds.set_kernel_status({
-    "resolution": resol, "num_local_threads": num_omp,
-    "seeds": [2*i+1 for i in range(num_omp)],
-    # ~ "seeds": [11, 6, 7, 9],
-})
+np.random.seed(12892)  # seeds for the neuron positions
 
-np.random.seed(1)
 
 ds.set_environment(shape)
 
 shape = ds.get_environment()
 
 # ~ for a in shape.areas.values():
-    # ~ env.plot_shape(a, show=False)
+# ~ env.plot_shape(a, show=False)
 # ~ env.plot_shape(shape, show=True)
 
 # seed the neurons on top
@@ -88,12 +88,12 @@ dend_params["speed_growth_cone"] = 0.001 * um / minute
 
 # ~ ds.create_neurons(n=100, on_area=top_areas, num_neurites=2)
 # ~ gids = ds.create_neurons(n=100, on_area=top_areas, num_neurites=1, params=params)
-ds.create_neurons(n=1, on_area="default_area", num_neurites=1, params=params)
+ds.create_neurons(n=11, on_area="default_area", num_neurites=1, params=params)
 
-# ~ ds.simulate(400*minute)
+ds.simulate(400*minute)
 # ~ ds.simulate(600*mniute)
-for i in range(15):
-    ds.simulate(22*minute)
-    ds.plot_neurons(show=True)
+#for i in range(15):
+#   ds.simulate(60*minute)
+#   ds.plot.plot_neurons(show=True)
 
-ds.plot_neurons(show=True)
+ds.plot.plot_neurons(show=True)

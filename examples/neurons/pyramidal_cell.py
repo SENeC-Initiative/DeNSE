@@ -24,11 +24,15 @@
 
 import numpy as np
 
+# import matplotlib as mpl
+# mpl.use("Qt5Agg")
+
 import dense as ds
 from dense.units import *
 
 
 # parameters
+
 np.random.seed(0)
 
 num_omp     = 1
@@ -46,7 +50,7 @@ neuron_params = {
 
     # axon versus dendrites orientations
     "polarization_strength": 20.,
-    "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
+    "neurite_angles": {"axon": 90.*deg, "dendrite_1": 200.*deg, "dendrite_2": 320.*deg},
 }
 
 axon_params = {
@@ -54,15 +58,15 @@ axon_params = {
     "growth_cone_model": gc_model,
 
     # Steering parameters
-    "sensing_angle": 80.*deg,
-    "self_avoidance_factor": 0.5,
-    "self_avoidance_scale": 20.*um,
+    "sensing_angle": 85.*deg,
+    # "self_avoidance_factor": 0.,
+    # "self_avoidance_scale": 20.*um,
     "somatropic_scale": 70.*um,
     "somatropic_mode": "window",
 
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
-    "filopodia_min_number": 30,
+    "filopodia_min_number": 30,    
 
     # extension parameters
     "persistence_length": 500.*um,
@@ -80,14 +84,14 @@ axon_params = {
 dend_params = {
     "growth_cone_model": gc_model,
     # Steering parameters
-    "sensing_angle": 80.*deg,
+    "sensing_angle": 85.*deg,
 
-    "somatropic_mode": "sine",
-    "somatropic_factor": 0.02,
-    "somatropic_scale": 50.*um,
+    "somatropic_mode": "window",
+    # "somatropic_factor": 100.,
+    # "somatropic_scale": 100.*um,
     # "rigidity_factor": 0.,
-    "self_avoidance_factor": 0.5,
-    "self_avoidance_scale": 5.*um,
+    # "self_avoidance_factor": 0.,
+    # "self_avoidance_scale": 1.*um,
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,
@@ -132,8 +136,12 @@ rec = ds.create_recorders(n, "num_growth_cones")
 
 ds.simulate(10*day)
 
+print(ds.get_kernel_status('time'))
 
-# ~ ds.plot.plot_neurons(mode="mixed", show=True)
+recording = ds.get_recording(rec, record_format="compact")
+print(recording)
+
+ds.plot.plot_neurons(mode="mixed", show=True)
 
 # second development phase : with lateral branching
 
@@ -141,7 +149,7 @@ ds.simulate(10*day)
 
 lb_axon = {
     # extension parameters
-    "speed_growth_cone": 0.025*um/minute,
+    "speed_growth_cone": 0.02*um/minute,
 
     # branching choice and parameters
     "use_van_pelt": False,
@@ -157,7 +165,7 @@ dend_params = {
     # branching choice and parameters
     "use_van_pelt": False,
     "use_flpl_branching": True,
-    "flpl_branching_rate": 0.2*cpd,
+    "flpl_branching_rate": 0.01*cph,
     "persistence_length": 100.*um,
     "lateral_branching_angle_mean": 40.*deg,
 }
@@ -169,14 +177,13 @@ ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(7*day)
 
-ds.plot.plot_dendrogram(n.axon, show=False)
 ds.plot.plot_neurons(mode="mixed", show=True)
 
 # Now a third step in development
-# reduced branching of axon, growth cone splitting of neurites
+# no branching of axons, growth cone splitting of neurites
 
 vp_axon = {
-    "flpl_branching_rate": 0.01*cph,
+    "use_flpl_branching": False,
 }
 
 dend_params = {
@@ -192,6 +199,6 @@ neurite_params = {"axon": vp_axon, "dendrites": dend_params}
 ds.set_object_properties(n, neurite_params=neurite_params)
 ds.simulate(20*day)
 
-ds.io.save_to_swc("pyramidal-cell.swc", gid=n)
-ds.plot.plot_dendrogram(n.axon, show=False)
 ds.plot.plot_neurons(scale_text=False)
+
+n.to_swc("pyramidal-cell.swc")

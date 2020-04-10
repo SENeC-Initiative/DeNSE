@@ -170,9 +170,16 @@ ds.set_object_properties(n, neurite_params=end_branching)
 
 ds.simulate(10*day)
 
+<<<<<<< HEAD
 # ~ ds.plot.plot_recording(rec2, show=False)
 # ~ ds.plot.plot_dendrogram(n.axon, show=False)
 # ~ ds.plot.plot_neurons(show=True, scale_text=False)
+=======
+ds.plot.plot_recording(rec2, show=False)
+ds.plot.plot_neurons(show=True, scale_text=False)
+>>>>>>> examples2020
 
 ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
+tree = n.axon.get_tree()
+tree.show_dendrogram()

@@ -44,12 +44,15 @@ void NeuronManager::initialize()
     // create default neuron with two neurites (axon + dendrite)
     // set growth cone model to resource-based to get these parameters
     num_created_neurons_ = 0;
-    statusMap empty_params;
+    std::unordered_map<std::string, statusMap> mock;
+    std::unordered_set<std::string> names({"axon", "dendrite"});
+
     statusMap params({{names::num_neurites, Property(2, "")},
                       {names::growth_cone_model,
                        Property("resource-based_pull-only_run-and-tumble", "")},
                       {"x", Property(0., "micrometer")},
-                      {"y", Property(0., "micrometer")}});
+                      {"y", Property(0., "micrometer")},
+                      {names::neurite_names, Property(names, "")}});
 
     // set their status to use all possible parameters to have them all
     // when using GetDefaults
@@ -68,7 +71,7 @@ void NeuronManager::initialize()
 
     // create default neuron
     model_neuron_ = std::make_shared<Neuron>(0);
-    model_neuron_->init_status(params, empty_params, empty_params, rnd_ptr);
+    model_neuron_->init_status(params, mock, rnd_ptr);
 
     // remove information about angles
     model_neuron_->neurite_angles_.clear();
@@ -91,8 +94,7 @@ void NeuronManager::finalize()
  */
 stype NeuronManager::create_neurons(
     const std::vector<statusMap> &neuron_params,
-    const std::vector<statusMap> &axon_params,
-    const std::vector<statusMap> &dendrites_params)
+    const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params)
 {
     stype first_id             = kernel().get_num_created_objects();
     stype previous_num_neurons = neurons_.size();
@@ -114,7 +116,7 @@ stype NeuronManager::create_neurons(
             if (not kernel().space_manager.env_contains(BPoint(x, y)))
             {
                 throw std::runtime_error(
-                    " a Neuron was positioned outside the environment\n");
+                    "A neuron was positioned out of the environment\n");
             }
         }
 
@@ -143,16 +145,22 @@ stype NeuronManager::create_neurons(
         int omp_id       = kernel().parallelism_manager.get_thread_local_id();
         mtPtr rnd_engine = kernel().rng_manager.get_rng(omp_id);
         std::vector<stype> gids(thread_neurons[omp_id]);
+        std::unordered_map<std::string, statusMap> neurite_status;
 
         for (stype gid : gids)
         {
             stype idx        = gid - first_id;
             NeuronPtr neuron = std::make_shared<Neuron>(gid);
 
+            for (auto entry : neurite_params)
+            {
+                neurite_status[entry.first] = entry.second[idx];
+            }
+
             try
             {
-                neuron->init_status(neuron_params[idx], axon_params[idx],
-                                    dendrites_params[idx], rnd_engine);
+                neuron->init_status(neuron_params[idx], neurite_status,
+                                    rnd_engine);
             }
             catch (const std::exception &except)
             {
@@ -309,13 +317,19 @@ void NeuronManager::get_defaults(statusMap &status, const std::string &object,
         }
         model_neuron_->get_status(status);
     }
-    else if (object == "axon")
+    else
     {
-        model_neuron_->get_neurite_status(status, "axon", "neurite");
-    }
-    else if (object == "dendrite" || object == "neurite")
-    {
-        model_neuron_->get_neurite_status(status, "dendrite", "neurite");
+        if (object == "axon" || object == "neurite")
+        {
+            model_neuron_->get_neurite_status(
+                status, "axon", "neurite");
+        }
+
+        if (object == "dendrite" || object == "neurite")
+        {
+            model_neuron_->get_neurite_status(
+                status, "dendrite", "neurite");
+        }
     }
 }
 

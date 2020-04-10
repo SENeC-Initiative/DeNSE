@@ -19,10 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-
-# import matplotlib as mpl
-# mpl.use("Qt5Agg")
-
 import dense as ds
 from dense.units import *
 
@@ -38,7 +34,7 @@ Main parameters
 
 S = 0.901
 E = 0.3
-gc_model = "run-and-tumble"
+gc_model = "simple-random-walk"
 num_neurons = 1
 num_omp     = 1
 
@@ -76,6 +72,12 @@ axon_params = {
     "gc_split_angle_mean": 60.*deg,
 }
 
+# set specific axon params in neurite params
+neurite_params = {"axon": axon_params}
+
+# add generic neurite params directly in neuron_params
+neuron_params.update(dend_params)
+
 
 '''
 Growth
@@ -94,8 +96,7 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      axon_params=axon_params,
-                      dendrites_params=dend_params,
+                      neurite_params=neurite_params,
                       num_neurites=3)
 
 
@@ -127,7 +128,9 @@ axon_vp = {
     "T": 3*day,
 }
 
-ds.set_object_properties(n, axon_params=axon_vp, dendrites_params=dend_vp)
+neurite_params = {"axon": axon_vp, "dendrites": dend_vp}
+
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(12*day)
 
@@ -152,7 +155,9 @@ lb = {
     "lateral_branching_angle_mean": 45.*deg
 }
 
-ds.set_object_properties(n, axon_params=lb_a, dendrites_params=lb)
+neurite_params = {"axon": lb_a, "dendrites": lb}
+
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(10*day)
 
@@ -166,7 +171,7 @@ end_branching = {
     "T": 60*day
 }
 
-ds.set_object_properties(n, axon_params=end_branching, dendrites_params=end_branching)
+ds.set_object_properties(n, neurite_params={"axon": end_branching})
 
 ds.simulate(20*day)
 

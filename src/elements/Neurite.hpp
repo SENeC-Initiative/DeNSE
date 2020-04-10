@@ -139,7 +139,6 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_actin(ActinPtr);
 
     // Get/set functions
-    // void init_status(const statusMap &status);
     const std::string &get_type() const;
     void set_status(const statusMap &);
     void get_status(statusMap &, const std::string &level) const;

@@ -58,7 +58,7 @@ void NWADirectionSelector::select_direction(
 {
     double weight, norm(0.);
 
-    new_angle = 0.;
+    double delta_angle = 0.;  // relative angle
 
     // get weighted values
     for (stype n = 0; n < directions_weights.size(); n++)
@@ -67,13 +67,13 @@ void NWADirectionSelector::select_direction(
 
         if (not std::isnan(weight))
         {
-            new_angle += weight * filo.directions[n];
+            delta_angle += weight * filo.directions[n];
             norm += weight;
         }
     }
 
     // normalize
-    new_angle /= norm;
+    delta_angle /= norm;
 
     // default angle is closest to new_angle
     double dist, min_dist(std::numeric_limits<double>::max());
@@ -93,8 +93,9 @@ void NWADirectionSelector::select_direction(
     }
 
     // add previous angle plus random rotation
-    new_angle += old_angle + noise_amplitude_ * sqrt(substep) *
-                                 normal_(*(rnd_engine.get()));
+    new_angle =
+        old_angle + delta_angle +
+        noise_amplitude_ * sqrt(substep) * normal_(*(rnd_engine.get()));
 }
 
 

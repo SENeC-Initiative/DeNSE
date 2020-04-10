@@ -64,13 +64,31 @@ create the neurites directly.
 
 In |name|, the neurites are directly created with a specific type (either axon
 or dendrite); the types of the newly created neurites depend on the parameter
+``has_axon``, which determines whether the neuron has an `axon` or only
+dendrites. If ``has_axon`` is ``True``, then the first neurite created is an
+axon, while all subsequent neurites are dendrites. Otherwise, only dendrites
+are created. In that second case, if a network is created containing this
+neuron, the corresponding node in the generated network will only have
+incoming edges.
 
-* ``has_axon``, which determines whether the neuron has an `axon` or only
-  dendrites. If ``has_axon`` is ``True``, then the first neurite created is an
-  axon, while all subsequent neurites are dendrites. Otherwise, only dendrites
-  are created. In that second case, if a network is created containing this
-  neuron, the corresponding node in the generated network will only have
-  incoming edges.
+When neurites are created, they are assigned names. This can either be generated
+automatically as ``("axon", "dendrite_1", "dendrite_2", ...)`` or be user
+defined (except for the axon, which must always be named ``"axon"``).
+Custom names for neurites can be provided through the following methods:
+
+1. via the `neurite_names` entry (especially useful if no specific
+   parameters are provided),
+2. directly as entries in the `neurite_params` dictionary containing the
+   specific parameters for each neurite.
+
+These two methods are shown below:
+
+.. literalinclude:: ../../examples/tutorials/named_neurites.py
+    :linenos:
+    :language: python
+    :lines: 34-36, 40-51
+
+For more details, see the `example file <https://github.com/SENeC-Initiative/DeNSE/blob/master/examples/tutorials/named_neurites.py>`_.
 
 Optionally, neurites can also be created after the neuron's creation, using the
 :func:`~dense.create_neurites` function or calling the
@@ -78,23 +96,39 @@ Optionally, neurites can also be created after the neuron's creation, using the
 :class:`~dense.elements.Neuron`.
 
 The neurites created that way will emerge from the neuron with angles that can
-be constrained through the following parameters:
+be constrained in two different ways:
 
-* ``neurite_angles`` sets explicitly the angles of dendrites and axon relative
-  to the horizontal. E.g.
-  ``{neurite_angles": {"axon": 15, "dendrite_1": 60, "dendrite_2": 180}``.
-  This parameter can only be used upon neuron creation through the
-  :func:`~dense.create_neurons` function. Otherwise, the neurite angle can also
-  be set directly using the :func:`~dense.create_neurites` function after neuron
-  creation.
+1. Using ``neurite_angles`` to explicitly set the angles of the dendrites and
+   axon relative to the horizontal. E.g.
+   ``{neurite_angles": {"axon": 15, "dendrite_1": 60, "dendrite_2": 180}``.
+   This parameter can only be used upon neuron creation through the
+   :func:`~dense.create_neurons` function.
+   Otherwise, the neurite angle can also be set directly using the
+   :func:`~dense.create_neurites` function after neuron creation.
+   This parameter can be combined with `random_rotation_angles``.
+   When set to `True`, this wil randomly rotate the neurites as a block,
+   preserving their relative angles.
 
-* ``axon_polarization_weight``: a minimal trophism approach: set the neurite on the other side of the neuron
+2. The neurites can be qualitatively positioned using a probabilistic algorithm
+   through the ``axon_polarization_weight`` (:math:`w_a`) and
+   ``polarization_strength`` (:math:`s_p`) parameters.
+   This provides a minimal trophism approach that will try to put the axon end
+   dendrites on opposing sides of the soma while trying to maximise the distance
+   between neurites.
+   The algorithm to add a neurite at an angle :math:`\theta` is as follow:
 
-* ``polarization_strength``: @TODO I have not understood this!
+   * sort the existing angles :math:`\{\theta_i\}_{i \in [0, n]}`
+   * compute all angular apertures given by
+     :math:`\Delta\theta_i = (\theta_{i+1} - \theta_i) / \gamma_i` for
+     :math:`i \in [0, n]`  with :math:`\theta_{n+1} = \theta_0 + 2\pi` and
+     :math:`\gamma_i = 1 + w_a` if
+     :math:`\theta_a \in \{\theta_i, \theta_{i+1}\}` and :math:`\gamma_i = 1`
+     otherwise
+   * select the largest value :math:`\Delta\theta_m` and insert the new neurite
+     somewhere in the middle through the following formula:
+     :math:`\theta = \theta_m + \Delta\theta_m \left(\frac{1}{2} + \frac{2\chi - 1}{2 s_p}\right)`
+     with :math:`\chi` a uniform random variable on [0, 1].
 
-* ``random_rotation_angles``, when `True` set the neurites extrusion angles
-  randomly. If ``neurite_angles`` is set, all angles are randomly rotated as
-  a block.
 
 .. note::
 
@@ -114,18 +148,21 @@ properties through the ``params`` dictionary.
 For people who prefer a more "object-oriented" approach, you can modify a neuron
 and set its properties directly through the methods of the
 :class:`~dense.elements.Neuron` object, notably
-:func:`~dense.elements.Neuron.set_status`.
+:func:`~dense.elements.Neuron.set_properties`.
 
 Besides the parameters discussed previously, one can also set the following
 properties of the neuron:
 
-* ``axon_diameter`` and ``dendrite_diameter`` specify the initial diameter (at the soma) of both types  of neurites,
+* ``axon_diameter`` and ``dendrite_diameter`` specify the initial diameter
+  (at the soma) of both types  of neurites,
 
 * ``description`` contains a string which can by used to differenciate this
   neuron from other elements,
 
 * the ``growth_cone_model`` entry can be used to set the growth model for all
-  neurites in the neuron. See :ref:`pymodels` for more details. This setting can be overruled by specific settings in the dendrite parameters or axon parameters (see below).
+  neurites in the neuron. See :ref:`pymodels` for more details.
+  This setting can be overruled by specific settings in the dendrite parameters
+  or axon parameters (see below).
 
 
 Neurite properties and structure

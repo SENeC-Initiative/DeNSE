@@ -93,7 +93,7 @@ Once all these parameters are declared, we can configure DeNSE and create the ne
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 57-63
+    :lines: 59-64
 
 As can be seen above, one uses the ``ds`` variable to access the simulator main function. 
 The :func:`~dense.set_kernel_status` function is used here to transfer the parameters to the kernel of DeNSE (the main simulator units).
@@ -109,7 +109,7 @@ Following neuron creation, the simulation can be started and its result can be v
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 66-74
+    :lines: 67-75
 
 After this first 7 day simulation, the parameters of the neurons can be changed to account for changes in developmental mechanisms, so that these new
 parameters can be used to simulate the next part of these cells' growth.
@@ -117,7 +117,7 @@ parameters can be used to simulate the next part of these cells' growth.
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 77-95
+    :lines: 78-97
 
 Here we changed separately the dendritic and axonal parameters using the :func:`~dense.set_object_properties` function on the two neurons which are
 stored in the ``n`` variable (the neurons stored in a :class:`~dense.elements.Population` object).
@@ -128,7 +128,7 @@ Note that the ``neuroml`` python module is necessary to use :func:`~dense.io.sav
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 100-101
+    :lines: 102-103
 
 
 Multiprocessing and random number generation
@@ -213,14 +213,14 @@ We can then create the neurons:
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 63-90
+    :lines: 65-92
 
 And simulate:
 
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 100-104
+    :lines: 102-106
 
 Which leads to the following structure:
 

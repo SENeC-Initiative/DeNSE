@@ -36,7 +36,7 @@ num_omp       = 2
 num_neurons   = 2
 
 simu_params   = {
-    "resolution": 4.*minute,
+    "resolution": 15.*minute,
     "num_local_threads": num_omp,
     "seeds": [0, 1],
     "environment_required": False,
@@ -45,7 +45,7 @@ simu_params   = {
 neuron_params = {
     "axon_diameter": 4.*um,
     "dendrite_diameter": 3.*um,
-    "growth_cone_model": "run-and-tumble",
+    "growth_cone_model": "simple-random-walk",
     "position": [(0., 0.), (100., 100.)]*um,
     "persistence_length": 200.*um,
     "speed_growth_cone": 0.03*um/minute,
@@ -54,13 +54,14 @@ neuron_params = {
     "uniform_branching_rate": 0.009*cph,
 }
 
+neurite_params = {"dendrites": {"taper_rate": 1./200.}}
+
 # configure DeNSE
 ds.set_kernel_status(simu_params)
 
 # create neurons
-n = ds.create_neurons(n=num_neurons,
-                      params=neuron_params,
-                      num_neurites=2)
+n = ds.create_neurons(n=num_neurons, params=neuron_params,
+                      neurite_params=neurite_params, num_neurites=2)
 
 
 ''' Plot the initial state '''
@@ -86,9 +87,10 @@ dend_params = {
     "speed_growth_cone": 0.01*um/minute,
 }
 
+neurite_params = {"axon": axon_params, "dendrites": dend_params}
+
 # update the properties of the neurons
-ds.set_object_properties(n, dendrites_params=dend_params,
-                         axon_params=axon_params)
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 # simulate and plot again
 ds.simulate(7*day)
@@ -97,5 +99,5 @@ ds.plot.plot_neurons()
 
 ''' Save neuronal morphologies '''
 
-# ~ ds.io.save_to_swc("neurons.swc", n) 
+ds.io.save_to_swc("neurons.swc", n) 
 ds.io.save_to_neuroml("neurons.nml", n)

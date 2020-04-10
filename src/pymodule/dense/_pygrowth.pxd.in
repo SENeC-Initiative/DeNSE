@@ -12,6 +12,7 @@ from libcpp.pair cimport pair
 from libcpp.set cimport set as cset
 from libcpp.string cimport string
 from libcpp.unordered_map cimport unordered_map
+from libcpp.unordered_set cimport unordered_set
 from libcpp.vector cimport vector
 
 
@@ -30,7 +31,7 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
     ctypedef enum dtype:
-        BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, MAP_DOUBLE
+        BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, SET_STRING, MAP_DOUBLE
 
     cdef cppclass Property:
         Property() except +
@@ -41,6 +42,7 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
         Property(const vector[long]& v, const string& dim) except +
         Property(const string& s, const string& dim) except +
         Property(const vector[string]& v, const string& dim) except +
+        Property(const unordered_set[string]& v, const string& dim) except +
         Property(const unordered_map[string, double]& v, const string& dim) except +
         dtype data_type
         string dimension
@@ -51,7 +53,8 @@ cdef extern from "../libgrowth/config.hpp" namespace "growth":
         vector[long] ll
         vector[stype] uu
         string s
-        vector[string] ss
+        vector[string] vs
+        unordered_set[string] ss
         unordered_map[string, double] md
 
 
@@ -97,10 +100,9 @@ cdef extern from "../module.hpp" namespace "growth":
                                 const vector[statusMap]& obj_params
                                 ) except +
 
-    cdef stype create_neurons_(const vector[statusMap]& neuron_params,
-                                const vector[statusMap]& axon_params,
-                                const vector[statusMap]& dendrites_params
-                                ) except +
+    cdef stype create_neurons_(
+        const vector[statusMap]& neuron_params,
+        const unordered_map[string, vector[statusMap]]& neurite_params) except +
 
     cdef void create_neurites_(const vector[stype]& neurons,
                                stype num_neurites,
@@ -226,8 +228,12 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef vector[string] get_direction_selection_methods_() except +
 
     cdef void set_status_(stype gid, statusMap neuron_status,
-                          statusMap axon_status,
-                          statusMap dendrites_status) except +
+                          unordered_map[string, statusMap]
+                              neurite_statuses) except +
+
+    cdef void set_status_(vector[stype] gids, vector[statusMap] status,
+                          unordered_map[string, vector[statusMap]]
+                              neurite_statuses) except +
 
     cdef void set_neurite_status_(stype neurton, string neurite,
                                   statusMap status) except +

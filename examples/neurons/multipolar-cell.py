@@ -19,12 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-
-import matplotlib as mpl
-mpl.use("Qt5Agg")
-
 import numpy as np
-import os
 
 import dense as ds
 from dense.units import *
@@ -36,7 +31,7 @@ Main parameters
 
 S = 0.901
 E = 0.3
-gc_model = "res_po_rt"
+gc_model = "res_po_nwa"
 num_neurons = 1
 num_omp     = 1
 
@@ -61,12 +56,12 @@ dend_params = {
     "res_retraction_factor": 0.07 * um/minute,
     "res_elongation_factor": 0.07 * um/minute,
     "res_leakage": 0.05,
-    "res_retraction_threshold": 0.01*uM,
+    "res_retraction_threshold": 0.2*uM,
     "res_elongation_threshold": 0.3*uM,
     "res_leakage": 10.*minute,
     "res_neurite_generated": 2500.*uM,
     "res_correlation": 0.2,
-    "res_variance": 0.01 * uM / minute**0.5,
+    "res_variance": 0.1 * uM / minute**0.5,
     "res_use_ratio": 0.16 * cpm,
 
     # Best model
@@ -92,12 +87,12 @@ axon_params = {
     "res_retraction_factor": 0.10 * um/minute,
     "res_elongation_factor": 0.15 * um/minute,
     "res_leakage": 0.05,
-    "res_retraction_threshold": 0.01*uM,
+    "res_retraction_threshold": 0.2*uM,
     "res_elongation_threshold": 0.3*uM,
     "res_leakage": 10.*minute,
     "res_neurite_generated": 2500.*uM,
     "res_correlation": 0.2,
-    "res_variance": 0.01 * uM / minute**0.5,
+    "res_variance": 0.1 * uM / minute**0.5,
     "res_use_ratio": 0.16 * cpm,
 
     # Best model
@@ -107,6 +102,8 @@ axon_params = {
     "S": 1.,
     "T": 5000.*minute,
 }
+
+neurite_params = {"axon": axon_params, "dendrites": dend_params}
 
 
 '''
@@ -126,10 +123,9 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      axon_params=axon_params, dendrites_params=dend_params,
-                      num_neurites=4)
+                      neurite_params=neurite_params, num_neurites=4)
 
-rec = ds.create_recorders(n, ["angle", "length"], levels="growth_cone")
+rec = ds.create_recorders(n, ["speed", "length"], levels="growth_cone")
 rec2 = ds.create_recorders(n, "num_growth_cones", levels="neurite")
 
 # Turn branching on
@@ -143,8 +139,7 @@ rec2 = ds.create_recorders(n, "num_growth_cones", levels="neurite")
 # ds.set_object_properties(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
 ds.simulate(5*day)
-ds.plot.plot_recording(rec, show=False)
-ds.plot.plot_neurons(show=True)
+# ~ ds.plot.plot_neurons(show=True)
 
 
 lb = {
@@ -157,20 +152,27 @@ lb = {
 lb_axon = lb.copy()
 lb_axon["flpl_branching_rate"] = 0.012*cph
 
-ds.set_object_properties(n, axon_params=lb_axon, dendrites_params=lb)
+neurite_params = {"axon": lb_axon, "dendrites": lb}
+
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(15*day)
-ds.plot.plot_neurons(show=True)
+# ~ ds.plot.plot_recording(rec, show=False)
+# ~ ds.plot.plot_neurons(show=True)
 
 
-end_branching = {"res_branching_threshold": 0.2*uM, 'res_branching_proba': 0.05}
-ds.set_object_properties(n, axon_params=end_branching, dendrites_params=end_branching)
+end_branching = {
+    "res_branching_threshold": 0.2*uM,
+    'res_branching_proba': 0.05
+}
+
+ds.set_object_properties(n, neurite_params=end_branching)
 
 ds.simulate(10*day)
 
-ds.plot.plot_recording(rec2, show=False)
-ds.plot.plot_dendrogram(n.axon, show=False)
-ds.plot.plot_neurons(show=True, scale_text=False)
+# ~ ds.plot.plot_recording(rec2, show=False)
+# ~ ds.plot.plot_dendrogram(n.axon, show=False)
+# ~ ds.plot.plot_neurons(show=True, scale_text=False)
 
 ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 

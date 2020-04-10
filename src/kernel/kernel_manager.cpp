@@ -129,13 +129,15 @@ void KernelManager::initialize()
 
 void KernelManager::finalize()
 {
-    initialized_ = false;
     neuron_manager.finalize();
     record_manager.finalize();
     space_manager.finalize();
     simulation_manager.finalize();
     rng_manager.finalize();
     parallelism_manager.finalize();
+
+    env_required_ = false;
+    initialized_  = false;
 }
 
 
@@ -243,7 +245,7 @@ void KernelManager::set_status(const statusMap &status)
 
     // update the objects
     env_updated *= (env_required_old != env_required_);
-    at_updated *= (at_old != adaptive_timestep_);
+    at_updated  *= (at_old != adaptive_timestep_);
 
     if (env_updated or at_updated)
     {

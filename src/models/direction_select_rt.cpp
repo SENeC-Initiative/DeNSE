@@ -64,8 +64,8 @@ RTDirectionSelector::RTDirectionSelector(const RTDirectionSelector &copy,
 
 void RTDirectionSelector::initialize_rt()
 {
-    // this renormalization of the "tumbling rate" is necessary to obtain
-    // the correct persistence length
+    // this renormalization of the "tumbling rate" is necessary to
+    // obtain the correct persistence length
     tau_ = 24. / (sensing_angle_ * sensing_angle_ * persistence_length_);
 
     exponential_rt_ = std::exponential_distribution<double>(tau_);

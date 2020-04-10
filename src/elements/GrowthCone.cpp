@@ -250,10 +250,10 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         loop_index++;
         if (loop_index > 1000)
         {
-            printf("long loop for gc of neuron %lu on %i - substep %f - ctime "
-                   "%f - next %f\n",
-                   own_neurite_->get_parent_neuron().lock()->get_gid(), omp_id,
-                   substep, current_time, local_substep);
+            printf("long loop for gc of neuron %lu on %i - substep %f "
+                   "- current time %f - next substep %f\n",
+                   own_neurite_->get_parent_neuron().lock()->get_gid(),
+                   omp_id, substep, current_time, local_substep);
             throw std::runtime_error("Neuron stuck in an infinite loop");
         }
 
@@ -266,7 +266,8 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         directions_weights = std::vector<double>(filopodia_.size, 1.);
         wall_presence      = std::vector<bool>(filopodia_.size, false);
 
-        new_pos_area = std::vector<std::string>(filopodia_.size, current_area_);
+        new_pos_area = std::vector<std::string>(filopodia_.size,
+                                                current_area_);
 
         // =================================================== //
         // Are we retracting because we were previously stuck? //

@@ -51,6 +51,7 @@ extern const std::string axon_polarization_weight;
 extern const std::string neurite_angles;
 extern const std::string polarization_strength;
 extern const std::string random_rotation_angles;
+extern const std::string neurite_names;
 
 extern const std::string max_gc_number;
 extern const std::string max_arbor_length;

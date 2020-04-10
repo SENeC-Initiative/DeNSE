@@ -95,8 +95,18 @@ Property::Property(std::string s_, const std::string &dim)
 }
 
 
-Property::Property(const std::vector<std::string> &v, const std::string &dim)
+Property::Property(const std::vector<std::string> &v,
+                   const std::string &dim)
     : data_type(VEC_STRING)
+    , dimension(dim)
+    , vs(v)
+{
+}
+
+
+Property::Property(const std::unordered_set<std::string> &v,
+                   const std::string &dim)
+    : data_type(SET_STRING)
     , dimension(dim)
     , ss(v)
 {
@@ -126,7 +136,10 @@ Property::Property(const Property &prop)
         new (&uu) std::vector<stype>(prop.uu);
         break;
     case VEC_STRING:
-        new (&ss) std::vector<std::string>(prop.ss);
+        new (&vs) std::vector<std::string>(prop.vs);
+        break;
+    case SET_STRING:
+        new (&ss) std::unordered_set<std::string>(prop.ss);
         break;
     case MAP_DOUBLE:
         new (&md) std::unordered_map<std::string, double>(prop.md);
@@ -165,7 +178,10 @@ Property &Property::operator=(const Property &prop)
         md.~unordered_map<std::string, double>();
         break;
     case VEC_STRING:
-        ss.~vector<std::string>();
+        vs.~vector<std::string>();
+        break;
+    case SET_STRING:
+        ss.~unordered_set<std::string>();
         break;
     case STRING:
         s.~basic_string();
@@ -189,7 +205,10 @@ Property &Property::operator=(const Property &prop)
         new (&md) std::unordered_map<std::string, double>(prop.md);
         break;
     case VEC_STRING:
-        new (&ss) std::vector<std::string>(prop.ss);
+        new (&vs) std::vector<std::string>(prop.vs);
+        break;
+    case SET_STRING:
+        new (&ss) std::unordered_set<std::string>(prop.ss);
         break;
     case INT:
         i = prop.i;
@@ -226,7 +245,10 @@ Property::~Property()
         md.~unordered_map<std::string, double>();
         break;
     case VEC_STRING:
-        ss.~vector<std::string>();
+        vs.~vector<std::string>();
+        break;
+    case SET_STRING:
+        ss.~unordered_set<std::string>();
         break;
     case STRING:
         s.~basic_string();

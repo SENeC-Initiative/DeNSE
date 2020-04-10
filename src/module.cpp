@@ -89,12 +89,12 @@ stype create_objects_(const std::string &object_name,
  *
  * @return the gid of the neuron created.
  */
-stype create_neurons_(const std::vector<statusMap> &neuron_params,
-                      const std::vector<statusMap> &axon_params,
-                      const std::vector<statusMap> &dendrites_params)
+stype create_neurons_(
+    const std::vector<statusMap> &neuron_params,
+    const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params)
 {
-    stype num_created = kernel().neuron_manager.create_neurons(
-        neuron_params, axon_params, dendrites_params);
+    stype num_created = kernel().neuron_manager.create_neurons(neuron_params,
+                                                               neurite_params);
 
     // update max_resolution
     kernel().simulation_manager.set_max_resolution();
@@ -103,7 +103,8 @@ stype create_neurons_(const std::vector<statusMap> &neuron_params,
 }
 
 
-void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
+void create_neurites_(const std::vector<stype> &neurons,
+                      stype num_neurites,
                       const std::vector<statusMap> &params,
                       const std::vector<std::string> &neurite_types,
                       const std::vector<double> &angles,
@@ -320,26 +321,115 @@ void set_kernel_status_(const statusMap &status_dict, std::string simulation_ID)
 }
 
 
-void set_status_(stype gid, statusMap neuron_status, statusMap axon_status,
-                 statusMap dendrites_status)
+void set_status_(stype gid, statusMap neuron_status,
+                 std::unordered_map<std::string, statusMap> neurite_statuses)
 {
     // @todo: do this in parallel
     auto neuron = kernel().neuron_manager.get_neuron(gid);
     neuron->set_status(neuron_status);
 
-    auto local_params = neuron_status;
-    for (auto &param : axon_status)
-    {
-        local_params[param.first] = param.second;
-    }
-    neuron->set_neurite_status("axon", local_params);
+    statusMap local_params;
 
-    local_params = neuron_status;
-    for (auto &param : dendrites_status)
+    for (auto entry : neurite_statuses)
     {
-        local_params[param.first] = param.second;
+        local_params = neuron_status;
+
+        for (auto &param : entry.second)
+        {
+            local_params[param.first] = param.second;
+        }
+
+        // check for placeholder "dendrites" entry
+        if (entry.first == "dendrites")
+        {
+            for (auto neurite : get_neurites_(gid))
+            {
+                neuron->set_neurite_status(neurite, local_params);
+            }
+        }
+        else
+        {
+            neuron->set_neurite_status(entry.first, local_params);
+        }
     }
-    neuron->set_neurite_status("dendrite", local_params);
+
+    // update max_resolution for simulation
+    kernel().simulation_manager.set_max_resolution();
+}
+
+
+void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
+                 std::unordered_map<std::string, std::vector<statusMap>>
+                     neurite_statuses)
+{
+    // get the threads of the neurons
+    std::unordered_map<int, std::vector<stype>> map_thread_gids;
+    std::unordered_map<int, std::vector<stype>> map_thread_idx;
+    int thread_id;
+    stype i(0);
+
+    for (stype gid : gids)
+    {
+        thread_id = kernel().neuron_manager.get_neuron_thread(gid);
+
+        auto it = map_thread_gids.find(thread_id);
+
+        if (it == map_thread_gids.end())
+        {
+            map_thread_gids[thread_id] = std::vector<stype>({gid});
+            map_thread_idx[thread_id] = std::vector<stype>({i});
+        }
+        else
+        {
+            map_thread_gids[thread_id].push_back(gid);
+            map_thread_idx[thread_id].push_back(i);
+        }
+
+        i++;
+    }
+
+#pragma omp parallel
+    {
+        int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
+        auto it = map_thread_gids.find(omp_id);
+
+        if (it != map_thread_gids.end())
+        {
+            for (i=0; i < map_thread_gids[omp_id].size(); i++)
+            {
+                auto neuron = kernel().neuron_manager.get_neuron(gids[i]);
+                neuron->set_status(status[i]);
+
+                statusMap local_params;
+
+                for (auto entry : neurite_statuses)
+                {
+                    local_params = status[i];
+
+                    for (auto &param : entry.second[i])
+                    {
+                        local_params[param.first] = param.second;
+                    }
+
+                    // check for placeholder "dendrites" entry
+                    if (entry.first == "dendrites")
+                    {
+                        for (auto neurite : get_neurites_(gids[i]))
+                        {
+                            neuron->set_neurite_status(neurite,
+                                                       local_params);
+                        }
+                    }
+                    else
+                    {
+                        neuron->set_neurite_status(entry.first,
+                                                   local_params);
+                    }
+                }
+            }
+        }
+    }
 
     // update max_resolution for simulation
     kernel().simulation_manager.set_max_resolution();
@@ -484,7 +574,9 @@ void get_defaults_(const std::string &object_name,
     }
     else if (object_type == "neuron" || object_type == "neurite")
     {
-        kernel().neuron_manager.get_defaults(status, object_name, detailed);
+        kernel().neuron_manager.get_defaults(status, object_name,
+                                             detailed);
+
         if (detailed)
         {
             std::string model = (gc_model == "") ? "default" : gc_model;

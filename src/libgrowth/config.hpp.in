@@ -4,6 +4,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
@@ -34,6 +35,7 @@ typedef enum
     VEC_SIZE,
     VEC_LONG,
     STRING,
+    SET_STRING,
     VEC_STRING,
     MAP_DOUBLE
 } dtype;
@@ -51,6 +53,7 @@ class Property
     Property(const std::vector<long> &v, const std::string &dim);
     Property(const std::vector<stype> &v, const std::string &dim);
     Property(std::string s_, const std::string &dim);
+    Property(const std::unordered_set<std::string> &s, const std::string &dim);
     Property(const std::vector<std::string> &v, const std::string &dim);
     Property(const std::unordered_map<std::string, double> &v,
              const std::string &dim);
@@ -72,7 +75,8 @@ class Property
         std::vector<long> ll;
         std::vector<stype> uu;
         std::string s;
-        std::vector<std::string> ss;
+        std::vector<std::string> vs;
+        std::unordered_set<std::string> ss;
         std::unordered_map<std::string, double> md;
     };
 };
@@ -100,6 +104,8 @@ inline bool get_param(const statusMap &map, const std::string &key,
 inline bool get_param(const statusMap &map, const std::string &key,
                       std::vector<std::string> &result);
 inline bool get_param(const statusMap &map, const std::string &key,
+                      std::unordered_set<std::string> &result);
+inline bool get_param(const statusMap &map, const std::string &key,
                       std::unordered_map<std::string, double> &result);
 
 inline void set_param(statusMap &map, const std::string &key, const bool &value,
@@ -118,6 +124,9 @@ inline void set_param(statusMap &map, const std::string &key,
                       const std::string &value, const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::vector<std::string> &value,
+                      const std::string &dim);
+inline void set_param(statusMap &map, const std::string &key,
+                      const std::unordered_set<std::string> &value,
                       const std::string &dim);
 inline void set_param(statusMap &map, const std::string &key,
                       const std::unordered_map<std::string, double> &value,

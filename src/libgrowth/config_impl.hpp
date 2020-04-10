@@ -161,7 +161,23 @@ bool get_param(const statusMap &map, const std::string &key,
     auto res = map.find(key);
     if (res != map.end())
     {
-        result = std::vector<std::string>(res->second.ss);
+        result = std::vector<std::string>(res->second.vs);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+bool get_param(const statusMap &map, const std::string &key,
+               std::unordered_set<std::string> &result)
+{
+    auto res = map.find(key);
+    if (res != map.end())
+    {
+        result = std::unordered_set<std::string>(res->second.ss);
         return true;
     }
     else
@@ -240,6 +256,14 @@ void set_param(statusMap &map, const std::string &key, const std::string &value,
 
 void set_param(statusMap &map, const std::string &key,
                const std::vector<std::string> &value, const std::string &dim)
+{
+    map[key] = Property(value, dim);
+}
+
+
+void set_param(statusMap &map, const std::string &key,
+               const std::unordered_set<std::string> &value,
+               const std::string &dim)
 {
     map[key] = Property(value, dim);
 }

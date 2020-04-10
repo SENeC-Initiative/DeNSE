@@ -114,6 +114,16 @@ void SpaceManager::finalize()
     geom_add_buffer_.clear();
     box_buffer_.clear();
 
+    rtree_.clear();
+
+    // clear environment
+    environment_initialized_ = false;
+    environment_manager_ = nullptr;
+    areas_.clear();
+
+    // reset interactions
+    interactions_ = true;
+
     // remove synapses
     known_synaptic_sites_.clear();
     old_potential_synapse_crossing_.clear();
@@ -460,10 +470,9 @@ void SpaceManager::remove_object(const BBox &box, const ObjectInfo &info,
 }
 
 
-void SpaceManager::update_objects_branching(TNodePtr old_node, NodePtr new_node,
-                                            stype branching_point, stype neuron,
-                                            const std::string &neurite,
-                                            int omp_id)
+void SpaceManager::update_objects_branching(
+  TNodePtr old_node, NodePtr new_node, stype branching_point,
+  stype neuron, const std::string &neurite, int omp_id)
 {
     BPolygonPtr poly;
     BBox box;

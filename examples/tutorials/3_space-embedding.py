@@ -59,7 +59,8 @@ ds.set_environment(env)
 
 # choose neuron positions randomly inside
 soma_radius = 4.*um
-pos = env.seed_neurons(num_neurons, soma_radius=soma_radius, unit="um", return_quantity=False)
+pos = env.seed_neurons(num_neurons, soma_radius=soma_radius, unit="um",
+                       return_quantity=False)
 
 neuron_params = {
     "axon_diameter": 4.*um,
@@ -83,16 +84,17 @@ dend_params = {
     "taper_rate": 1./200.,
 }
 
+neurite_params = {"axon": axon_params, "dendrite": dend_params}
+
 # create neurons
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      axon_params=axon_params,
-                      dendrites_params=dend_params,
+                      neurite_params=neurite_params,
                       num_neurites=2)
 
 
 ''' Plot the initial state '''
 
-# ds.plot.plot_neurons()
+ds.plot.plot_neurons()
 
 
 ''' Simulate a few days then plot the result '''

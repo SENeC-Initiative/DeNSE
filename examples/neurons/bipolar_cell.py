@@ -72,6 +72,8 @@ dend_params = {
     "gc_split_angle_mean": 45.*deg,
 }
 
+neurite_params = {"axon": axon_params, "dendrite": dend_params}
+
 kernel = {
     "resolution": 30.*minute,
     "seeds": [8],
@@ -85,8 +87,7 @@ ds.set_kernel_status(kernel)
 # create neurons
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
-                      axon_params=axon_params, dendrites_params=dend_params,
-                      num_neurites=2)
+                      neurite_params=neurite_params, num_neurites=2)
 
 # first, elongation
 
@@ -113,7 +114,9 @@ dend_params = {
     "lateral_branching_angle_mean": 70.*deg,
 }
 
-ds.set_object_properties(n, dendrites_params=dend_params, axon_params=lb_axon)
+neurite_params = {"axon": lb_axon, "dendrite": dend_params}
+
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(21*day)
 
@@ -135,8 +138,9 @@ dend_params = {
     "gc_split_angle_mean": 40.*deg,
 }
 
-ds.set_object_properties(n, dendrites_params=dend_params,
-                         axon_params=vp_axon)
+neurite_params = {"axon": vp_axon, "dendrite": dend_params}
+
+ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(20*day)
 
@@ -162,11 +166,11 @@ fig.text(0.6, 0.45, "B.3")
 ds.plot.plot_dendrogram(n.axon, show=False, vertical_diam_frac=0.45,
                         axis=ax_axon)
 
-ds.plot.plot_dendrogram(n.dendrites["dendrite_1"], show=False,
+ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
                         vertical_diam_frac=0.45, axis=ax_dend)
 
 ds.plot.plot_neurons(scale_text=False, axis=ax_cell)
 
-print("Asymmetry of axon:", ds.morphology.tree_asymmetry(n.axon))
-print("Asymmetry of dendrite 1:",
-      ds.morphology.tree_asymmetry(n.dendrites["dendrite_1"]))
+print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
+print("Asymmetry of the dendrite:",
+      ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))

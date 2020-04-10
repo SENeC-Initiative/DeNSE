@@ -55,9 +55,10 @@ class NeuronManager : public ManagerInterface
     /**
      * Create neurons.
      */
-    stype create_neurons(const std::vector<statusMap> &neuron_params,
-                         const std::vector<statusMap> &axon_params,
-                         const std::vector<statusMap> &dendrites_params);
+    stype create_neurons(
+        const std::vector<statusMap> &neuron_params,
+        const std::unordered_map<std::string,
+                                 std::vector<statusMap>> &neurite_params);
 
     void delete_neurons(const std::vector<stype> &gids);
 

@@ -36,8 +36,8 @@ from dense.units import *
 # 
 neuron_params = {
     # initial neurite shape parameters
-    "dendrite_diameter": 3.*um,
-    "axon_diameter": 4.*um,
+    "dendrite_diameter": 2.*um,
+    "axon_diameter": 1.*um,
 
     # soma position
     # "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
@@ -45,7 +45,7 @@ neuron_params = {
     # axon versus dendrites orientations
     "polarization_strength": 20.,
     #"neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
-    }
+}
 
 
 axon_params = {
@@ -59,13 +59,14 @@ axon_params = {
     "filopodia_min_number": 30,
 
     # extension parameters
-    "speed_growth_cone": 0.01 *um/minute,
-    "persistence_length": 20.* um,
+    "speed_growth_cone": 0.05 *um/minute,
+    "persistence_length": 200.* um,
+    "taper_rate": 0.0001,
 
     # branching choice and parameters
     "use_uniform_branching": False,
     "use_van_pelt": False,
-    }
+}
 
 dendrite_params = {
     # growth cone model
@@ -76,15 +77,18 @@ dendrite_params = {
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20. *um,
     "filopodia_min_number": 30,
+    "taper_rate": 0.001,
 
     # extension parameters
-    "speed_growth_cone": 0.001 *um/minute,
-    "persistence_length": 20.* um,
+    "speed_growth_cone": 0.01 *um/minute,
+    "persistence_length": 100.* um,
 
     # branching choice and parameters
     "use_uniform_branching": False,
     "use_van_pelt": False,
 }
+
+neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
 
 
 
@@ -107,10 +111,9 @@ if __name__ =='__main__':
 
     neuron_params['position'] = (0, 0)*um
 
-    gids = ds.create_neurons(n=1, 
-                            params = neuron_params,
-                            dendrites_params=dendrite_params,
-                            num_neurites=3)
+    gids = ds.create_neurons(n=1, params=neuron_params,
+                             neurite_params=neurite_params,
+                             num_neurites=3)
 
     '''
     Create recorders
@@ -140,10 +143,10 @@ if __name__ =='__main__':
         "use_van_pelt": True,
         "gc_split_angle_mean": 30.*deg,
         "gc_split_angle_std": 5.*deg,
-        "B" : 900.* cpm,
+        "B" : 5.* cpm,
         "E" : 0.1,
         "S" : 1.5, # large S leads to core dump
-        "T" : 8.6e2 * minute,
+        "T" : 7*day,
     }
 
     vp_dend = {
@@ -151,14 +154,16 @@ if __name__ =='__main__':
         "use_van_pelt": True,
         "gc_split_angle_mean": 30.*deg,
         "gc_split_angle_std": 5.*deg,
-        "B" : 900.* cpm,
+        "B" : 5.* cpm,
         "E" : 0.1,
         "S" : 1.5, # large S leads to core dump
-        "T" : 8.6e2 * minute,
+        "T" : 7*day,
     }
 
+    neurite_params = {"axon": vp_axon, "dendrites": vp_dend}
+
     # update the parameters lists of the neurons 'gids'
-    ds.set_object_properties(gids, axon_params=vp_axon, dendrites_params=vp_dend)
+    ds.set_object_properties(gids, neurite_params=neurite_params)
 
     ds.simulate(7 *day+2*day)
 
@@ -172,23 +177,24 @@ if __name__ =='__main__':
     print("\nLateral branching ON\n")
 
     lat_params = {
-        "speed_growth_cone": 0.005 * um/minute,
+        "speed_growth_cone": 0.05 * um/minute,
 
         "use_van_pelt": False,
         "use_uniform_branching": True,
-        "uniform_branching_rate": 0.005 * cpm,
+        "uniform_branching_rate": 0.01 * cph,
         "lateral_branching_angle_mean": 45. * deg,
         "lateral_branching_angle_std": 5. * deg,
     }
 
     dlat_params = lat_params.copy()
     dlat_params.update({
-        "speed_growth_cone": 0.003 * um/minute,
-
-        "uniform_branching_rate": 0.01 * cpm,
+        "speed_growth_cone": 0.03 * um/minute,
+        "uniform_branching_rate": 0.0012 * cph,
     })
 
-    ds.set_object_properties(gids, params=lat_params, dendrites_params=dlat_params)
+    neurite_params = {"axon": lat_params, "dendrites": dlat_params}
+
+    ds.set_object_properties(gids, neurite_params=neurite_params)
 
     ds.simulate(5 * day)
 

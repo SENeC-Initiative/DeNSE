@@ -64,9 +64,9 @@ stype create_objects_(const std::string &object_name,
                       const std::vector<statusMap> &obj_params);
 
 
-stype create_neurons_(const std::vector<statusMap> &neuron_params,
-                      const std::vector<statusMap> &axon_params,
-                      const std::vector<statusMap> &dendrites_params);
+stype create_neurons_(
+    const std::vector<statusMap> &neuron_params,
+    const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params);
 
 
 void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
@@ -95,8 +95,13 @@ void set_environment_(
     const std::vector<std::unordered_map<std::string, double>> &properties);
 
 
-void set_status_(stype gid, statusMap status, statusMap axon_status,
-                 statusMap dendrites_status);
+void set_status_(stype gid, statusMap status,
+                 std::unordered_map<std::string, statusMap> neurite_statuses);
+
+
+void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
+                 std::unordered_map<std::string, std::vector<statusMap>>
+                     neurite_statuses);
 
 
 void set_neurite_status_(stype neuron, std::string neurite, statusMap status);

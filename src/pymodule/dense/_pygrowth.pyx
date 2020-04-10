@@ -114,8 +114,8 @@ def finalize():
 # Main functions #
 # -------------- #
 
-def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
-                   num_neurites=0, culture=None, on_area=None,
+def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
+                   neurite_names=None, culture=None, on_area=None,
                    neurites_on_area=False, return_ints=False, **kwargs):
     '''
     Create `n` neurons with specific parameters.
@@ -125,37 +125,44 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
     n : int, optional (default: 1)
     params : dict, optional (default: None)
         Parameters of the object (or shape object for obstacle).
-    axon_params : dict, optional (default: same as `params`)
-        Specific parameters for the axonal growth. Entries of the dict can
-        be lists to give different parameters for the axon of each neuron.
-    dendrites_params : dict, optional (default: same as `params`)
-        Specific parameters for the dendritic growth. Entries of the dict can
-        be lists to give different parameters for the dendrites of each neuron.
-        Note that for a given neuron, all dendrites have the same parameters.
-    num_neurites : int or list, optional (default: 0)
-        Number of neurites for each neuron.
+    neurite_params : dict, optional (default: same as `params`)
+        Specific parameters for neurite growth. Entries of the dict can
+        be lists to give different parameters for the neurites of each
+        neuron.
+        To provide different parameters for each neurite, one can
+        provide `neurite_params` as a dict of dict, with the neurite
+        names as keys.
+    num_neurites : int, optional (default: 0)
+        Number of neurites (same for all neurons).
+    neurite_names : list, optional (default: None)
+        Names of the neurites. If not provided, defaults to keys of
+        `dendrite_params`. If `dendrite_params` is also empty, defaults
+        to ["axon", "dendrite_1", dendrite_2", ...] (without "axon" if
+        the neurite has "has_axon" set to False).
     culture : :class:`Shape`, optional (default: existing environment if any)
         Spatial environment where the neurons will grow.
     on_area : str or list, optional (default: everywhere in `culture`)
         Restrict the space where neurons will be randomly seeded to an
         area or a set of areas.
     neurites_on_area : bool, str, area, or list, optional (default: False)
-        Restrict the points where neurites will extend from the soma. This is
-        typically used to account for the fact that when seeded on patterned
-        surfaces, neurons will extend their neurites only on the patterns.
-        If `True`, then `on_area` must be set and the same area will be used.
-        If `False`, neurite are not constrained.
+        Restrict the points where neurites will extend from the soma.
+        This is typically used to account for the fact that, when seeded
+        on patterned surfaces, neurons will extend their neurites only
+        on the patterns.
+        If `True`, then `on_area` must be set and the same area will be
+        used. If `False`, neurite are not constrained.
     return_ints : bool, optional (default: False)
-        Whether the neurons are returned as :class:`Neuron` objects or simply
-        as integers (the neuron gids).
+        Whether the neurons are returned as :class:`Neuron` objects or
+        simply as integers (the neuron gids).
 
     Returns
     -------
     neurons : Neuron, Population, or ints
         By default, returns a :class:`~dense.elements.Neuron` object if a
-        single neuron is requested, a :class:`~dense.elements.Popuulation` if
-        several neurons are created, or a tuple of the neurons' GIDs if
-        `return_ints` is True.
+        single neuron is requested, a
+        :class:`~dense.elements.Popuulation` if several neurons are
+        created, or a tuple of the neurons' GIDs if `return_ints` is
+        True.
 
     Example
     -------
@@ -165,32 +172,42 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             "position": (5., 12.)*um,
             "description": "my_special_neuron"
         }
-        axon_prop = {
-            "speed_growth_cone": 1.*um/hour,
-            "persistence_length": 300.*um
+
+        neurite_prop = {
+            "axon": {
+                "speed_growth_cone": 1.*um/hour,
+                "persistence_length": 300.*um
+            },
+            "dendrite_1": {"speed_growth_cone": 0.2*um/hour},
+            "dendrite_2": {"speed_growth_cone": 0.3*um/hour}
         }
 
-        neuron = ds.create_neurons(
-            params=neuron_prop, num_neurites=3, # axon + 2 dendrites
-            axon_params=axon_prop)
+        neuron = ds.create_neurons(params=neuron_prop,
+                                   num_neurites=3, # axon + 2 dendrites
+                                   neurite_params=neurite_prop)
 
     Note
     ----
-    When specifying `num_neurites`, the first neurite created is an axon unless
-    `has_axon` is set to False, the subsequent neurites are dendrites.
+    When specifying `num_neurites`, the first neurite created is an axon
+    unless `has_axon` is set to False, the subsequent neurites are
+    dendrites.
     If `has_axon` is set to False, then only dendrites are created.
     '''
-    params = {} if params is None else params
+    params = {} if params is None else params.copy()
     assert isinstance(params, dict), "`params` must be a dictionary."
 
     params       = {} if params is None else params.copy()
-    ax_params    = {} if axon_params is None else axon_params.copy()
-    dend_params  = {} if dendrites_params is None else dendrites_params.copy()
+    neur_params  = {} if neurite_params is None \
+                   else neurite_params.copy()
     env_required = get_kernel_status("environment_required")
-    # num_neurites must go in kwargs because it can be a list or an int
-    kwargs['num_neurites'] = num_neurites
+
+    # num_neurites and neurite names go in kwargs for params check and
+    # for convenience with later cython function
+    kwargs['num_neurites']  = num_neurites
+    kwargs['neurite_names'] = neurite_names
+
     # check kwargs for its values
-    authorized = {"num_neurites": None, "rnd_pos": None}
+    authorized = {"rnd_pos", "neurite_names", "num_neurites"}
     for k in kwargs:
         if k not in authorized:
             # turn off filter temporarily
@@ -199,18 +216,26 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             warnings.warn(message, category=RuntimeWarning)
             warnings.simplefilter('default', RuntimeWarning)
 
+    # check `num_neurites` and other neurite entries are compatible
+    if not num_neurites:
+        if neurite_names:
+            raise ValueError(
+                "`num_neurites` is 0 but `neurite_names` were provided.")
+
+        if neurite_params:
+            raise ValueError(
+                "`num_neurites` is 0 but `neurite_params` were provided.")
+
     # set growth_cone_model for neurites if not present
     if "growth_cone_model" not in params:
         params["growth_cone_model"] = "default"
     elif isinstance(params["growth_cone_model"], Model):
         params["growth_cone_model"] = str(params["growth_cone_model"])
-    if "growth_cone_model" not in ax_params:
-        ax_params["growth_cone_model"] = \
-            params.get("growth_cone_model", params["growth_cone_model"])
-    if "growth_cone_model" not in dend_params:
-        dend_params["growth_cone_model"] = \
-            params.get("growth_cone_model", params["growth_cone_model"])
 
+    # save default gc model
+    gc_model = params["growth_cone_model"]
+
+    # check environment
     environment = get_environment()
 
     if env_required:
@@ -248,7 +273,10 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
             if n == 1:
                 params['position'] = (0., 0.)
             else:
-                raise ArgumentError("'position' entry in `params` required.")
+                raise ArgumentError("'position' entry in `params` required "
+                                    "when a spatial environment is used.")
+    elif not isinstance(params, dict):
+        ValueError("`params` must be a dictionary.")
 
     if neurites_on_area:
         # neurite angles will have to be preseved
@@ -259,72 +287,52 @@ def create_neurons(n=1, params=None, axon_params=None, dendrites_params=None,
                              "`neurite_angles`, choose one or the other.")
 
     # check parameters
-    _check_params(params, "neuron", gc_model=params["growth_cone_model"])
-    _check_params(ax_params, "axon", gc_model=ax_params["growth_cone_model"])
-    _check_params(dend_params, "dendrite",
-                  gc_model=dend_params["growth_cone_model"])
+    _check_params(params, "neuron",
+                  gc_model=params["growth_cone_model"])
 
-    if isinstance(params, dict):
-        params = neuron_param_parser(
-            params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
-
-        # check for specific neurite angles
-        if neurites_on_area:
-            area = get_area(
-                on_area if neurites_on_area is True else neurites_on_area,
-                culture)
-
-            pos = params["position"]
-
-            ssizes    = params["soma_radius"]
-            nneurites = num_neurites
-            if not is_iterable(params["soma_radius"]):
-                ssizes = (params["soma_radius"] for _ in range(n))
-            if not is_iterable(num_neurites):
-                nneurites = (num_neurites for _ in range(n))
-
-            nangles  = []
-            neurites = []
-
-            for s, max_neurites, p in zip(ssizes, nneurites, pos):
-                angles = get_neurite_angles(p, s, area, max_neurites)
-                nangles.append(angles)
-                neurites.append(len(angles))
-
-            params["neurite_angles"] = nangles
-            kwargs["num_neurites"]   = neurites
-
-        return _create_neurons(
-            params, ax_params, dend_params, kwargs, n, return_ints)
+    if neur_params:
+        if isinstance(next(iter(neur_params.values())), dict):
+            for key, val in neur_params.items():
+                _check_params(val, "neurite",
+                              gc_model=val.get("growth_cone_model",
+                                               gc_model))
     else:
-        if len(params) != n:
-            raise RuntimeError("`n` is different from params list size.")
-        gids = []
+        gcm = neur_params.get("growth_cone_model", gc_model)
+        _check_params(neur_params, "neurite", gc_model=gcm)
 
-        # prepare area if neurites_on_area
+    params = neuron_param_parser(
+        params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
+
+    # check for specific neurite angles
+    if neurites_on_area:
         area = get_area(
             on_area if neurites_on_area is True else neurites_on_area,
             culture)
 
-        for param in params:
-            param = neuron_param_parser(
-                param, culture, n=1, rnd_pos=rnd_pos, on_area=on_area)
+        pos = params["position"]
 
-            # check for specific neurite angles
-            if neurites_on_area:
-                pos          = params["position"]
-                ssize        = params["soma_size"]
-                max_neurites = num_neurites
+        ssizes    = params["soma_radius"]
+        nneurites = num_neurites
 
-                param["neurite_angles"] = \
-                    get_neurite_angles(pos, ssize, area, max_neurites)
-                kwargs["num_neurites"]  = len(param["neurite_angles"])
+        if not is_iterable(params["soma_radius"]):
+            ssizes = (params["soma_radius"] for _ in range(n))
 
-            gids.append(
-                _create_neurons(
-                    param, ax_params, dend_params, kwargs, 1, return_ints))
-        return gids
+        if not is_iterable(num_neurites):
+            nneurites = (num_neurites for _ in range(n))
 
+        nangles  = []
+        neurites = []
+
+        for s, max_neurites, p in zip(ssizes, nneurites, pos):
+            angles = get_neurite_angles(p, s, area, max_neurites)
+            nangles.append(angles)
+            neurites.append(len(angles))
+
+        params["neurite_angles"] = nangles
+        kwargs["num_neurites"]   = neurites
+
+    return _create_neurons(
+        params, neur_params, kwargs, n, return_ints)
 
 def create_neurites(neurons, num_neurites=1, params=None, angles=None,
                     neurite_types=None, names=None):
@@ -342,24 +350,24 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     angle : list, optional (default: automatically positioned)
         Angles of the newly created neurites.
     neurite_types : str or list, optional
-        Types of the neurites, either "axon" or "dendrite". If not provided,
-        the first neurite will be an axon if the neuron has no existing neurites
-        and its `has_axon` variable is True, all other neurites will be
-        dendrites.
+        Types of the neurites, either "axon" or "dendrite". If not
+        provided, the first neurite will be an axon if the neuron has
+        no existing neurites and its `has_axon` variable is True,
+        all other neurites will be dendrites.
     names : list, optional (default: "axon" and "dendrite_X")
         Names of the created neurites.
 
     Note
     ----
-    When using this function, the same number and types of neurites will be
-    created for each neuron; to create varying numbers, types, or relative
-    angles for the neurites, the function must be called separately on the
-    different sets of neurons.
+    When using this function, the same number and types of neurites will
+    be created for each neuron; to create varying numbers, types, or
+    relative angles for the neurites, the function must be called
+    separately on the different sets of neurons.
 
     .. warning ::
 
-        Axon name must always be "axon", trying to name it differently will
-        immediately crash the kernel.
+        Axon name must always be "axon", trying to name it differently
+        will immediately crash the kernel.
     '''
     cdef:
         vector[stype] cneurons
@@ -368,7 +376,7 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
         statusMap common_params
         vector[statusMap] cparams
 
-    params = {} if params is None else params
+    params = {} if params is None else params.copy()
 
     if not nonstring_container(neurons):
         neurons = [neurons]
@@ -425,8 +433,8 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
 
     _set_vector_status(cparams, params)
 
-    create_neurites_(cneurons, num_neurites, cparams, cneurite_types, cangles,
-                     cneurite_names)
+    create_neurites_(cneurons, num_neurites, cparams, cneurite_types,
+                     cangles, cneurite_names)
 
 
 def create_recorders(targets, observables, sampling_intervals=None,
@@ -437,14 +445,19 @@ def create_recorders(targets, observables, sampling_intervals=None,
     One recorder is created on each thread containing target neurons for every
     observable.
 
-    @todo: LIST OF THE POSSIBLE OBSERVABLES
-
     Note
     ----
     One recorder records only from the neurons located on the same thread. This
     means that, when using multithreading, several recorders might be created
     even for only one observable if the target neurons are handled by several
     different threads.
+
+    Note
+    ----
+    For observables that are available at different levels, the recording at
+    the upper levels is the sum of the values at the lower levels.
+    E.g. for "length", the neurite level give the sum of all branch lengths and
+    the neuron level the sum of all neurite lengths.
 
     Parameters
     ----------
@@ -453,6 +466,7 @@ def create_recorders(targets, observables, sampling_intervals=None,
     observables : string or list of strings
         Names of the properties that will be recorded for each of the target
         neurons. One recorder will be in charge of only one observable.
+        (see below for the list of possible observables)
     sampling_intervals : int or list of ints, optional (default: resolution)
         Interval between two successive recordings for a continuous observable,
         expressed in seconds. Must be a multiple of the resolution for the
@@ -481,6 +495,13 @@ def create_recorders(targets, observables, sampling_intervals=None,
     recorders : tuple
         Gids of the recorders created. `recorders` contains one entry per value
         in `observables` since at least recorder in created for each observable.
+
+    See also
+    --------
+    :func:`~dense.get_default_properties` to find the observables associated
+    to various elements; e.g. use
+    ``ds.get_default_properties("neuron", "observables", False)`` to get the
+    available observables for a neuron.
     '''
     cdef:
         statusMap status
@@ -1362,7 +1383,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
         Used to set a single value.
     simulation_id: str
         Unique identifier of the simulation, generally
-        simulation_id = Hash(kernel_status, axon_params, dend_params)
+        simulation_id = Hash(kernel_status, params)
 
     Note
     ----
@@ -1436,8 +1457,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
     set_kernel_status_(c_status, c_simulation_id)
 
 
-def set_object_properties(objects, params=None, axon_params=None,
-                          dendrites_params=None):
+def set_object_properties(objects, params=None, neurite_params=None):
     '''
     Update the status of the `objects` using the parameters contained in
     `params`.
@@ -1446,104 +1466,82 @@ def set_object_properties(objects, params=None, axon_params=None,
     ----------
     objects : object or int
         Objects to update (either neurons or recorders).
-    params : dict or list of dicts
+    params : dict, optional (default: None)
         New parameters of the objects.
-    axon_params :  dict or list of dicts, optional (default: None)
-        New axon parameters if `objects` are neurons.
-    dendrites_params :  dict or list of dicts, optional (default: None)
-        New dendrites parameters if `objects` are neurons.
+    neurite_params :  dict, optional (default: None)
+        New neurite parameters if `objects` are neurons.
     '''
-    gids             = list(objects) if nonstring_container(objects)\
-                       else [objects]
-    num_objects      = len(gids)
-    params           = {} if params is None else params
-    axon_params      = {} if axon_params is None else axon_params
-    dendrites_params = {} if dendrites_params is None else dendrites_params
+    objects        = objects if nonstring_container(objects) \
+                     else [objects]
+    num_objects    = len(objects)
+    params         = {} if params is None else params.copy()
+    neurite_params = {} if neurite_params is None \
+                       else neurite_params.copy()
 
     cdef:
-        stype i, n = len(gids)
-        statusMap base_neuron_status, base_axon_status, base_dend_status
-
-    it_p, it_a, it_d = params, axon_params, dendrites_params
-    if isinstance(params, dict):
-        it_p = (params for i in range(n))
-        base_neuron_status = _get_scalar_status(params, num_objects)
-    if isinstance(axon_params, dict):
-        it_a = (axon_params for i in range(n))
-        base_axon_status = _get_scalar_status(axon_params, num_objects)
-    if isinstance(dendrites_params, dict):
-        it_d = (dendrites_params for i in range(n))
-        base_dend_status = _get_scalar_status(dendrites_params, num_objects)
+        stype i, n       = len(objects)
+        vector[stype] gids = [int(obj) for obj in objects]
+        statusMap base_neuron_status
+        unordered_map[string, statusMap] base_neurite_statuses
 
     # check parameters
-    if it_a and it_d:
-        for gid, p, p_a, p_d in zip(gids, it_p, it_a, it_d):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            _check_params(p, object_name)
+    for i, gid in enumerate(gids):
+        object_name  = get_object_type(gid)
 
-            astat        = get_object_properties(gid, neurite="axon")
-            old_gc_model = astat["growth_cone_model"] if astat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p_a, "neurite", gc_model=gc_model)
+        _check_params(params, object_name)
 
-            dstat        = get_object_properties(gid, neurite="dendrites")
-            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p_d, "neurite", gc_model=gc_model)
-    elif it_a:
-        for gid, p, p_a in zip(gids, it_p, it_a):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            astat        = get_object_properties(gid, neurite="axon")
-            old_gc_model = astat["growth_cone_model"] if astat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p, object_name)
-            _check_params(p_a, "neurite", gc_model=gc_model)
-    elif it_d:
-        for gid, p, p_d in zip(gids, it_p, it_d):
-            object_name  = get_object_type(gid)
-            def_model    = p.get("growth_cone_model", "default")
-            dstat        = get_object_properties(gid, neurite="dendrites")
-            old_gc_model = dstat["growth_cone_model"] if dstat else def_model
-            gc_model     = p.get("growth_cone_model", old_gc_model)
-            _check_params(p, object_name)
-            _check_params(p_d, "neurite", gc_model=gc_model)
-    else:
-        for gid, p in zip(gids, it_p):
-            object_name = get_object_type(gid)
-            _check_params(p, object_name)
+        base_neuron_status = _get_scalar_status(params, n)
+
+        if object_name == "neuron":
+            def_model = params.get("growth_cone_model", "default")
+
+            if neurite_params:
+                dod = isinstance(next(iter(neurite_params.values())),
+                                 dict)
+                
+                stat = neurite_params
+
+                if not dod:
+                    neurite_names = get_object_properties(
+                        gid, "neurite_names")
+
+                    stat = {
+                        name: neurite_params for name in neurite_names
+                    }
+
+                    # update neurite_params
+                    neurite_params = stat
+                    
+                for neurite, status in stat.items():
+                    nstat = get_object_properties(gid, neurite=neurite)
+                    ntype = "axon" if neurite == "axon" else "neurite"
+                    old_gc_model = nstat["growth_cone_model"] \
+                                   if nstat else def_model
+                    gc_model = status.get("growth_cone_model",
+                                          old_gc_model)
+                    _check_params(nstat, ntype, gc_model=gc_model)
+
+                    base_neurite_statuses[_to_bytes(neurite)] = \
+                        _get_scalar_status(status, n)
 
     cdef:
         vector[statusMap] neuron_statuses = \
             vector[statusMap](num_objects, base_neuron_status)
-        vector[statusMap] axon_statuses = \
-            vector[statusMap](num_objects, base_axon_status)
-        vector[statusMap] dendrites_statuses = \
-            vector[statusMap](num_objects, base_dend_status)
+        unordered_map[string, vector[statusMap]] neurite_statuses
 
-    if isinstance(params, dict):
-        _set_vector_status(neuron_statuses, params)
-    else:
-        for i, p in enumerate(it_p):
-            for k, v in p.items():
-                neuron_statuses[i][_to_bytes(k)] = _to_property(k, v)
-    if isinstance(axon_params, dict):
-        _set_vector_status(axon_statuses, axon_params)
-    else:
-        for i, p in enumerate(it_a):
-            for k, v in p.items():
-                axon_statuses[i][_to_bytes(k)] = _to_property(k, v)
-    if isinstance(dendrites_params, dict):
-        _set_vector_status(dendrites_statuses, dendrites_params)
-    else:
-        for i, p in enumerate(it_d):
-            for k, v in p.items():
-                dendrites_statuses[i][_to_bytes(k)] = _to_property(k, v)
+    for neurite in neurite_params:
+        bneurite = _to_bytes(neurite)
+        neurite_statuses[bneurite] = \
+            vector[statusMap](n, base_neurite_statuses[bneurite])
 
-    for i, neuron in enumerate(gids):
-        set_status_(neuron, neuron_statuses[i], axon_statuses[i],
-                    dendrites_statuses[i])
+    # set the specific properties for each neurons
+    _set_vector_status(neuron_statuses, params)
+    # specific neurite parameters    
+    for neurite, dic_params in neurite_params.items():
+        _set_vector_status(neurite_statuses[_to_bytes(neurite)],
+                           dic_params)
+
+    set_status_(gids, neuron_statuses, neurite_statuses)
 
 
 def set_neurite_properties(neuron, neurite, params):
@@ -1560,11 +1558,12 @@ def set_neurite_properties(neuron, neurite, params):
         Parameters of the neurite.
     '''
     neuron   = int(neuron)
+    ntype    = "axon" if str(neurite) == "axon" else "dendrite"
     neurite  = _to_bytes(str(neurite))
     gc_model = get_object_properties(neuron, "growth_cone_model",
                                      neurite=neurite)
 
-    _check_params(params, "neurite", gc_model=gc_model)
+    _check_params(params, ntype, gc_model=gc_model)
 
     cdef statusMap cparams = _get_scalar_status(params, 1)
 
@@ -1670,8 +1669,9 @@ def _get_branches_data(gid, neurite, start_point=0):
 # Subfunctions #
 # ------------ #
 
-cdef _create_neurons(dict params, dict ax_params, dict dend_params,
-                     dict optional_args, stype n, bool return_ints) except +:
+cdef _create_neurons(dict params, dict neurite_params,
+                     dict optional_args, stype n,
+                     bool return_ints) except +:
     '''
     Create several neurons, return their GIDs.
     @todo: check for unused parameters.
@@ -1679,63 +1679,110 @@ cdef _create_neurons(dict params, dict ax_params, dict dend_params,
     cdef:
         stype i, len_val, num_objects
         int num_neurites
-        statusMap base_neuron_status, base_axon_status, base_dendrites_status
+        statusMap base_neuron_status
+        unordered_map[string, statusMap] base_neurite_statuses
         string description
 
     num_objects = get_num_created_objects_()
-    # neuronal parameters (make default statusMap with scalar values which are
-    # the same for all neurons)
-    base_neuron_status = _get_scalar_status(params, n)
-    # same for neurite parameters
-    base_axon_status = _get_scalar_status(ax_params, n)
-    base_dendrites_status = _get_scalar_status(dend_params, n)
-    # same for neurite number
-    neurites = optional_args.get("num_neurites", 0)
+
+    # check neurite number and names
+    neurites      = optional_args.get("num_neurites", 0)
+    neurite_names = optional_args.get("neurite_names", None)
+
     if is_scalar(neurites):
-        if not isinstance(neurites, (int, np.integer)) or neurites < 0:
-            raise ValueError("`num_neurites` must be a non-negative integer.")
-        base_neuron_status[b"num_neurites"] = _to_property(
-            "num_neurites", neurites)
+        if not is_integer(neurites) or neurites < 0:
+            raise ValueError("`num_neurites` must be a non-negative "
+                             "integer.")
+
+        # names
+        if neurite_names is None:
+            has_axon = params.get("has_axon", True)
+
+            neurite_names = _set_neurite_names(has_axon, neurites,
+                                               neurite_params)
+        elif not isinstance(neurite_names, set):
+            # convert to set if single entry, or to list of sets
+            if neurite_names and is_scalar(next(iter(neurite_names))):
+                neurite_names = set(neurite_names)
+            elif neurite_names:
+                neurite_names = [set(nn) for nn in neurite_names]
+    else:
+        len_val = len(neurites)
+
+        assert len_val == n, \
+            "`num_neurites` vector must be of size " + n + "."
+
+        assert np.all(np.greater_equal(neurites, 0)), \
+            "`num_neurites` must be composed only of non-negative " +\
+            "integers."
+
+        # names
+        if neurite_names is None:
+            has_axon = params.get("has_axon", np.full(n, True))
+            neurite_names = []  # list of sets
+            for ha, nneur in zip(has_axon, neurites):
+                neurite_names.append(
+                    _set_neurite_names(ha, nneur, neurite_params))
+        else:
+            for nnames, nneur in zip(neurite_names, neurites):
+                assert len(nnames) == nneur, "Mismatch between " +\
+                    " number of neurites and number of names."
+
+    # add them to the parameters
+    params["num_neurites"]  = neurites
+    params["neurite_names"] = neurite_names
+
+    # neuronal parameters (make default statusMap with scalar values
+    # which are the same for all neurons)
+    base_neuron_status = _get_scalar_status(params, n)
+
+    # check if neurite_params is a single dict or a dict of dicts
+    dod = (neurite_params
+           and isinstance(next(iter(neurite_params.values())), dict))
+
+    if not dod:
+        neurite_params = {k: neurite_params for k in neurite_names}
+
+    # same for neurite parameters
+    for key, value in neurite_params.items():
+        base_neurite_statuses[_to_bytes(key)] = \
+            _get_scalar_status(value, n)
+
     # fill neuron_params with default statusMap (base_param)
     cdef:
         vector[statusMap] neuron_params = \
             vector[statusMap](n, base_neuron_status)
-        vector[statusMap] axon_params = vector[statusMap](n, base_axon_status)
-        vector[statusMap] dendrites_params = \
-            vector[statusMap](n, base_dendrites_status)
+        unordered_map[string, vector[statusMap]] neurite_statuses
+
+    for neurite in neurite_params:
+        bneurite = _to_bytes(neurite)
+        neurite_statuses[bneurite] = \
+            vector[statusMap](n, base_neurite_statuses[bneurite])
+
     # set the specific properties for each neurons
     _set_vector_status(neuron_params, params)
-    # specific neurite parameters
-    _set_vector_status(axon_params, ax_params)
-    _set_vector_status(dendrites_params, dend_params)
-
-    # if neurites was a list
-    if not is_scalar(neurites):
-        len_val = len(neurites)
-        assert len_val == n, "`num_neurites` vector must be of size " + n + "."
-        assert np.all(np.greater_equal(neurites, 0)), "`num_neurites` must " +\
-            "be composed only of non-negative integers."
-        for i, num_neurites in enumerate(neurites):
-            neuron_params[i][b"num_neurites"] = \
-                _to_property("num_neurites", num_neurites)
+    # specific neurite parameters    
+    for neurite, dic_params in neurite_params.items():
+        _set_vector_status(neurite_statuses[_to_bytes(neurite)],
+                           dic_params)
 
     # create neurons
-    i = create_neurons_(neuron_params, axon_params, dendrites_params)
+    i = create_neurons_(neuron_params, neurite_statuses)
 
-    assert i == n, "Internal error: please file a bug report including a " \
-                   "minimal working example leading to the bug and the full " \
-                   "error message, as well as your Python configuration " \
-                   "(requested neurons: {}; created {}).".format(n, i)
+    assert i == n, "Internal error: please file a bug report " \
+                   "including a minimal working example leading to " \
+                   "the bug and the full error message, as well as " \
+                   "your Python configuration (requested neurons: " \
+                   "{}; created {}).".format(n, i)
+
     if return_ints:
         return tuple(i for i in range(num_objects, num_objects + n))
     else:
         from .elements import Neuron, Population
-        neurons = []
 
-        for i in range(n):
-            pos = (neuron_params[i][b"x"].d, neuron_params[i][b"y"].d)
-            rad = neuron_params[i][b"soma_radius"].d
-            neurons.append(Neuron(num_objects + i, pos, rad))
+        neurons = tuple(
+            Neuron(i) for i in range(num_objects, num_objects + n))
+
         if n == 1:
             return neurons[0]
         else:
@@ -2031,6 +2078,7 @@ cdef Property _to_property(key, value) except *:
         vector[long] c_lvec
         vector[stype] c_ulvec
         vector[string] c_svec
+        unordered_set[string] c_set
         unordered_map[string, double] c_map
         # vector[int] c_int
 
@@ -2057,6 +2105,10 @@ cdef Property _to_property(key, value) except *:
         for k, v in value.items():
             c_map[_to_bytes(k)] = v
         cprop = Property(c_map, c_dim)
+    elif isinstance(value, set):
+        for s in value:
+            c_set.insert(_to_bytes(s))
+        cprop = Property(c_set, c_dim)
     elif nonstring_container(value) and isinstance(value[0], (int, np.integer)):
         all_pos = False
         for val in value:
@@ -2110,6 +2162,8 @@ cdef _property_to_val(Property c_property):
     elif c_property.data_type == STRING:
         return _to_string(c_property.s)
     elif c_property.data_type == VEC_STRING:
+        return [_to_string(s) for s in c_property.vs]
+    elif c_property.data_type == SET_STRING:
         return [_to_string(s) for s in c_property.ss]
     elif c_property.data_type == MAP_DOUBLE:
         return {_to_string(v.first): v.second*dim for v in c_property.md}
@@ -2163,18 +2217,26 @@ cdef statusMap _get_scalar_status(dict params, int n) except *:
                 y = float(val[1].to('micrometer').magnitude)
                 status[b"x"] = _to_property("x", x)
                 status[b"y"] = _to_property("y", y)
-        elif isinstance(val, dict) and is_scalar(next(iter(val))):
+        elif key == b"neurite_names":
+            if not val or (val and is_scalar(next(iter(val)))):
+                # special case for neurite names
+                new_val     = {_to_bytes(v) for v in val}
+                status[key] = _to_property(key, new_val)                
+        elif isinstance(val, dict) and is_scalar(list(val.values())[0]):
             new_val = {}
             for k, v in val.items():
                 new_val[k] = to_cppunit(v, k)
-            status[_to_bytes(key)] = _to_property(key, new_val)
+            status[key] = _to_property(key, new_val)
         elif scalar:
-            status[_to_bytes(key)] = _to_property(key, to_cppunit(val, key))
+            status[key] = _to_property(key, to_cppunit(val, key))
     return status
 
 
 cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                              dict params) except *:
+    '''
+    Parameter conversion for neuron and neurite parameters
+    '''
     cdef:
         stype n = lst_statuses.size()
         stype len_val, len_v, i
@@ -2207,7 +2269,8 @@ cdef void _set_vector_status(vector[statusMap]& lst_statuses,
                 for i in range(n):
                     new_dict = {k: new_val[k][i] for k in di_keys}
                     lst_statuses[i][key] = _to_property(key, new_dict)
-        elif not is_scalar(val):
+        elif not is_scalar(val) and not isinstance(val, set):
+            # set is for scalar neurite names
             len_val = len(val)
             assert len_val == n, \
                 "`{}` vector must be of size {}.".format(key.decode(), n)
@@ -2238,8 +2301,8 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
 
     res_obs   = {}    # data for the observable
     res_times = None  # times (only one if "continuous", else dict)
-    neuron    = None     # sto get neuron gid
-    do_next   = True    # loop over the results
+    neuron    = None  # to get neuron gid
+    do_next   = True  # loop over the results
 
     # get the recording
     if level == "neuron":
@@ -2258,7 +2321,11 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron] = times
-                    assert neuron == int(time_ids[0].ul), "Internal error!"
+
+                    assert neuron == int(time_ids[0].ul), \
+                        "Internal error! Neuron id in recorder does " \
+                        "not match expected id: {} vs {}.".format(
+                            neuron, time_ids[0].ul)
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -2286,8 +2353,17 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 if ev_type == "discrete":
                     get_next_time_(gid, time_ids, times, time_units)
                     res_times[neuron][neurite] = times
-                    assert neuron  == int(time_ids[0].ul), "Internal error!"
-                    assert neurite == _to_string(time_ids[1].s), "Internal error!"
+
+                    assert neuron == int(time_ids[0].ul), \
+                        "Internal error! Neuron id in recorder does " \
+                        "not match expected id: {} vs {}.".format(
+                            neuron, time_ids[0].ul)
+
+                    assert neurite == _to_string(time_ids[1].s), \
+                        "Internal error! Neurite name in recorder " \
+                        "does not match expected name: " \
+                        "{} vs {}.".format(
+                            neurite, _to_string(time_ids[1].s))
             # clear data
             data_ids.clear()
             time_ids.clear()
@@ -2303,9 +2379,22 @@ def _get_recorder_data(gid, recording, rec_status, time_units):
                 neurite         = _to_string(data_ids[1].s)
                 gc              = int(data_ids[2].ul)
                 get_next_time_(gid, time_ids, times, _to_bytes(time_units))
-                assert neuron  == int(time_ids[0].ul), "Internal error!"
-                assert neurite == _to_string(time_ids[1].s), "Internal error!"
-                assert gc      == int(time_ids[2].ul), "Internal error!"
+
+                assert neuron == int(time_ids[0].ul), \
+                    "Internal error! Neuron id in recorder does not " \
+                    "match expected id: {} vs {}.".format(
+                        neuron, time_ids[0].ul)
+
+                assert neurite == _to_string(time_ids[1].s), \
+                    "Internal error! Neurite name in recorder does " \
+                    "not match expected name: {} vs {}.".format(
+                        neurite, _to_string(time_ids[1].s))
+
+                assert gc == int(time_ids[2].ul), \
+                    "Internal error! Growth cone id in recorder does " \
+                    "not match expected id: {} vs {}.".format(
+                        gc, time_ids[2].ul)
+
                 # check if neurite initialized
                 if neuron not in res_obs:
                     res_obs[neuron]   = {}
@@ -2551,14 +2640,14 @@ def _check_params(params, object_name, gc_model=None):
         ctype = _to_bytes("growth_cone")
     elif object_name == "neuron":
         ctype = _to_bytes("neuron")
-    elif object_name in ["axon", "dendrite", "neurite"]:
+    elif object_name in {"axon", "dendrite", "neurite"}:
         ctype = _to_bytes("neurite")
     elif object_name == "recorder":
         ctype = _to_bytes("recorder")
     else:
         raise RuntimeError("Unknown object : '" + object_name + "'. "
-                           "Candidates are 'recorder' and all entries in "
-                           "get_models.")
+                           "Candidates are 'recorder' and all entries "
+                           "in get_models.")
 
     get_defaults_(cname, ctype, cgcmodel, True, default_params)
 
@@ -2670,3 +2759,81 @@ def _check_params(params, object_name, gc_model=None):
             if key not in ("position",):
                 raise KeyError(
                     "Unknown parameter '{}' for `{}`.".format(key, object_name))
+
+
+def _set_neurite_names(has_axon, num_neurites, neurite_params):
+    '''
+    Set the neurite names for one neuron (or n identical neurons)
+
+    Parameters
+    ----------
+    has_axon : bool or list
+        Whether the neuron has an axon.
+    num_neurites : int
+        The number of neurites.
+    neurite_params : dict
+        The neurite parameters (including the neurite names as keys).
+    '''
+    neurite_names = set()
+
+    # check if neurite_params is a single dict or a dict of dicts
+    dod = (neurite_params
+           and isinstance(next(iter(neurite_params.values())), dict))
+
+    if num_neurites:
+        if dod and "dendrites" not in neurite_params:
+            neurite_names = {k for k in neurite_params}
+
+            if len(neurite_params) > num_neurites:
+                raise ValueError(
+                    "Number of neurites and number of entries "
+                    "in `neurite_params` do not match.")
+            else:
+                if is_scalar(has_axon):
+                    if has_axon and "axon" not in neurite_names:
+                        neurite_names.add("axon")
+
+                    if len(neurite_names) < num_neurites:
+                        shift = 1 - has_axon
+                        neurite_names.update({
+                            "dendrite_{}".format(i)
+                            for i in range(len(neurite_names) + shift,
+                                           num_neurites + shift)
+                         })
+                else:
+                    base_names = neurite_names.copy()
+                    neurite_names = [neurite_names.copy()]*len(has_axon)
+
+                    for i, ha in enumerate(has_axon):
+                        if ha and "axon" not in neurite_names[i]:
+                            neurite_names[i].add("axon")
+                        elif not ha and "axon" in neurite_names[i]:
+                            neurite_names[i].discard("axon")
+                            
+                        if len(neurite_names[i]) < num_neurites:
+                            shift = 1 - ha
+                            neurite_names[i].update({
+                                "dendrite_{}".format(i)
+                                for i in range(
+                                    len(neurite_names) + shift,
+                                    num_neurites + shift)
+                             })
+        else:
+            if is_scalar(has_axon):
+                neurite_names  = {"axon"} if has_axon else set()
+                neurite_names.update({
+                    "dendrite_{}".format(i)
+                    for i in range(1, num_neurites + 1 - has_axon)
+                })
+            else:
+                neurite_names = []
+                for i, ha in enumerate(has_axon):
+                    neurite_names.append(
+                        {"axon"} if has_axon else set())
+
+                    neurite_names[i].update({
+                        "dendrite_{}".format(i)
+                        for i in range(1, num_neurites + 1 - ha)
+                     })
+
+    return neurite_names

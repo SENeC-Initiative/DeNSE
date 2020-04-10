@@ -104,6 +104,7 @@ const std::string max_synaptic_distance("max_synaptic_distance");
 const std::string min_branching_distance("min_branching_distance");
 
 const std::string neurite_angles("neurite_angles");
+const std::string neurite_names("neurite_names");
 const std::string neurite_type("neurite_type");
 const std::string noise_amplitude("noise_amplitude");
 const std::string num_neurites("num_neurites");

@@ -41,7 +41,7 @@ class Neuron(object):
     Container allowing direct access to a neuron.
     '''
 
-    def __init__(self, gid, soma_position, soma_radius):
+    def __init__(self, gid):
         self._axon       = None
         self._dendrites  = {}
         self.__gid       = gid
@@ -166,9 +166,9 @@ class Neuron(object):
         --------
         :func:`~dense.create_neurites`.
         '''
-        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
-                            angles=angles, neurite_types=neurite_types,
-                            names=names)
+        _pg.create_neurites(self, num_neurites=num_neurites,
+                            params=params, angles=angles,
+                            neurite_types=neurite_types, names=names)
 
     def delete_neurites(self, neurite_names=None):
         '''
@@ -247,19 +247,16 @@ class Neuron(object):
         return _pg.get_object_properties(self, property_name=property_name,
                                          level=level, neurite=neurite)
 
-    def set_properties(self, params=None, axon_params=None,
-                       dendrites_params=None):
+    def set_properties(self, params=None, neurite_params=None):
         '''
-        Update the neuronal parameters using the entries contained in `params`.
+        Update the neuronal (and optionaly neurite) parameters.
 
         Parameters
         ----------
         params : dict
             New neuron parameters.
-        axon_params : dict, optional (default: None)
-            New axon parameters.
-        dendrites_params : dict, optional (default: None)
-            New dendrites parameters.
+        neurite_params : dict, optional (default: None)
+            New neurite parameters.
 
         See also
         --------
@@ -268,8 +265,7 @@ class Neuron(object):
         :func:`~dense.elements.Neuron.get_properties`.
         '''
         return _pg.set_object_properties(
-            self, params=params, axon_params=axon_params,
-            dendrites_params=dendrites_params)
+            self, params=params, neurite_params=neurite_params)
 
     def to_swc(self, filename, resolution=10):
         '''
@@ -436,9 +432,15 @@ class Neurite(object):
         return self.__name
 
     def __repr__(self):
+        name = str(self)
+
+        if name != "axon" and "dend" not in name:
+            name += " dendrite"
+
         if self._parent is None:
-            return "Neurite<{} at {}>".format(str(self), id(self))
-        return "Neurite<{} of neuron {}>".format(str(self), int(self._parent))
+            return "Neurite<{} at {}>".format(name, id(self))
+
+        return "Neurite<{} of neuron {}>".format(name, int(self._parent))
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
@@ -547,11 +549,11 @@ class Neurite(object):
     def diameter(self):
         ''' Diameter of the different segments along the neurite '''
         try:
-            return _np.concatenate([branch.diameter for branch in self.branches])
+            return _np.array([b.diameter.m for b in self.branches])*um
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([])
 
     @property
     def branching_points(self):
@@ -886,15 +888,9 @@ class Population(list):
         '''
         gids = [int(n) for n in gids]
         pop  = cls(name=name)
-        pos  = _pg.get_object_properties(gids, "position",
-                                         return_iterable=True)
-        pos  = [pos[n] for n in gids]
-        rad  = _pg.get_object_properties(gids, "soma_radius",
-                                         return_iterable=True)
-        rad  = [rad[n] for n in gids]
 
-        for n, p, r in zip(gids, pos, rad):
-            super(Population, pop).append(Neuron(n, p, r))
+        for n in gids:
+            super(Population, pop).append(Neuron(n))
 
         pop.sort()
         pop._idx = {}  # converter from gid to idx

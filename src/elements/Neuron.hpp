@@ -90,8 +90,10 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     ~Neuron();
 
     // Init functions
-    void init_status(const statusMap &status, const statusMap &astatus,
-                     const statusMap &dstatus, mtPtr rnd_engine);
+    void init_status(const statusMap &status,
+                     const std::unordered_map<std::string,
+                                              statusMap> &neurite_statuses,
+                     mtPtr rnd_engine);
     void initialize_next_event(mtPtr rnd_engine);
     void finalize();
 

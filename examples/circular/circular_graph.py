@@ -27,13 +27,14 @@ from dense.elements import Population
 
 
 # pop = Population.from_swc(ds.NeuronsFromSimulation("circular_swc"))
-pop = Population.from_swc(ds.io.load_swc("circular_swc"))
+#pop = Population.from_swc(ds.io.load_swc("circular_swc"))
+pop = Population.from_swc("circular_swc")
 
 graph, intersections, synapses = ds.morphology.generate_network(pop, intersection_positions=True)
 
 
 ### Plot the graph in 2 subplots:
-fig, (ax1,ax2) = plt.subplots(2,1)
+fig, (ax1, ax2) = plt.subplots(2,1)
 ax2.set_title("Connections as a directed graph")
 graph.to_file("circular.el")
 # nngt.plot.draw_network(graph,spatial = True,
@@ -49,8 +50,6 @@ for neuron in pop:
     ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
 fig.savefig("graph_.pdf",format='pdf', ppi=300)
-
-
 
 fig3, cx =plt.subplots(1,1)
 cx.set_title("adjacency matrix of cultured network")

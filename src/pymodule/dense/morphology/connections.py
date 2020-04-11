@@ -48,7 +48,7 @@ def generate_network(source_neurons=None, target_neurons=None,
                      connection_probability=0.2, default_synaptic_strength=1.,
                      only_new_connections=False, autapse_allowed=False,
                      multigraph=False, **kwargs):
-    """
+    r"""
     Create the graph based on the neuron shapes, the spine density, and a
     connection probability.
 
@@ -58,16 +58,16 @@ def generate_network(source_neurons=None, target_neurons=None,
 
     .. math::
 
-        n_{s, p} = \\rho_s \\cdot A_I
+        n_{s, p} = \rho_s \cdot A_I
 
-    with :math:`\\rho_s` the `spine_density` and :math:`A_I` the intersection
+    with :math:`\rho_s` the `spine_density` and :math:`A_I` the intersection
     area.
 
     And the number of actual synapses is then:
 
     .. math::
 
-        N_s = n_{s,p} \\cdot p_c
+        N_s = n_{s,p} \cdot p_c
 
     with :math:`p_c` the connection probability.
 

@@ -19,12 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 #
-# REQUIREMENT 
-#  Needs the ete3 library for  dendogram browser
-#  pip install --user ete3
-
-
-
 import dense as ds
 from dense.units import *
 import numpy as np
@@ -43,7 +37,7 @@ num_neurons = 1
 
 # ~ branching_type = "flpl"
 branching_type = "uniform"
-use_type       = "use_" + branching_type + "_branching"
+use_type = "use_" + branching_type + "_branching"
 branching_rate = branching_type + "_branching_rate"
 
 neuron_params = {
@@ -79,7 +73,6 @@ if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
 '''
 Analyse
 '''
-
 def article_distribution():
     hours_ev = [13, 19, 6, 8, 5, 3, 1, 1]
     hours = range(20,100,10)
@@ -106,13 +99,13 @@ def lateral_branching(neuron_params):
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2)) * um
     gid = ds.create_neurons(n=num_neurons,
-                           params=neuron_params,
-                           num_neurites=2)
+                            params=neuron_params,
+                            num_neurites=2)
 
     step(1*hour, 1, False, False)
     neuron_params[use_type] = True
-    ds.set_object_properties(gid,params = neuron_params)
-                        # ~ axon_params=neuron_params)
+    ds.set_object_properties(gid, params=neuron_params)
+# ~ axon_params=neuron_params)
     step(2 * day, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
 
@@ -139,7 +132,7 @@ if __name__ == '__main__':
     ds.plot.plot_neurons(show=True)
 
     pop = ds.get_neurons()
-    n   = pop[0]
+    n = pop[0]
 
     tree = n.axon.get_tree()
     tree.show_dendrogram()
@@ -149,17 +142,16 @@ if __name__ == '__main__':
     # ~ asym = []
     # ~ num_tips = []
     # ~ for n in pop:
-        # ~ tree = n.axon.get_tree()
-        # ~ num_tips.append(len(tree.tips))
-        # ~ nrn = tree.neurom_tree()
-        # ~ asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
+    # ~ tree = n.axon.get_tree()
+    # ~ num_tips.append(len(tree.tips))
+    # ~ nrn = tree.neurom_tree()
+    # ~ asym.append(np.average(neurom.fst.get("partition_asymmetry", nrn)))
 
     # ~ fig, (ax1, ax2) = plt.subplots(2)
     # ~ ax1.hist(asym)
     # ~ print(np.average(num_tips), np.median(num_tips))
     # ~ ax2.hist(num_tips)
     # ~ plt.show()
-
 
     # ~ import btmorph2
     # ~ import matplotlib.pyplot as plt

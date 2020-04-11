@@ -37,7 +37,6 @@ from ..environment import plot_shape
 from ..units import *
 from .plot_utils import *
 
-import pdb
 
 # ------------ #
 # Plot neurons #
@@ -144,7 +143,7 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     soma_alpha = kwargs.get("soma_alpha", 0.8)
     axon_alpha = kwargs.get("axon_alpha", 0.6)
     dend_alpha = kwargs.get("dend_alpha", 0.6)
-    gc_color   = kwargs.get("gc_color", "g")
+    gc_color = kwargs.get("gc_color", "g")
 
     # get the objects describing the neurons
     if gid is None:
@@ -153,9 +152,9 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         gid = [gid]
 
     somas, growth_cones, nodes = None, None, None
-    axon_lines, dend_lines     = None, None
-    axons, dendrites           = None, None
-    
+    axon_lines, dend_lines = None, None
+    axons, dendrites = None, None
+
     if mode in ("lines", "mixed"):
         somas, axon_lines, dend_lines, growth_cones, nodes = \
             _pg._get_pyskeleton(gid, subsample)
@@ -206,8 +205,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     r_max = np.max(radii)
     r_min = np.min(radii)
 
-    size  = (1.5*r_min if len(gid) <= 10
-             else (r_min if len(gid) <= 100 else 0.7*r_min))
+    size = (1.5*r_min if len(gid) <= 10
+            else (r_min if len(gid) <= 100 else 0.7*r_min))
 
     for i, x, y, r in zip(gid, somas[0], somas[1], radii):
         circle = plt.Circle(
@@ -215,11 +214,11 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         artist = ax.add_artist(circle)
         artist.set_zorder(5)
         if show_neuron_id:
-            str_id    = str(i)
-            xoffset   = len(str_id)*0.35*size
-            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
+            str_id = str(i)
+            xoffset = len(str_id)*0.35*size
+            text = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
             textpatch = PathPatch(text, edgecolor="w", facecolor="w",
-                                   linewidth=0.01*size)
+                                  linewidth=0.01*size)
             ax.add_artist(textpatch)
             textpatch.set_zorder(6)
 
@@ -472,7 +471,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
     tips = set(tree.tips)
 
     # if diameter is ignored, set all values to default_diam
-    default_diam = 0.2*vspace
+    default_diam = vertical_diam_frac*vspace
 
     if ignore_diameter:
         tree.root.diameter = default_diam

@@ -25,8 +25,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from dense.units import *
-# ~ plt.ion()
-
 
 '''
 Main parameters
@@ -116,7 +114,7 @@ def resource_branching(neuron_params):
     step(10, 1, False, False)
     neuron_params['res_branching_threshold'] = b_th
     ds.set_object_properties(gid,params = neuron_params,
-                        axon_params=neuron_params)
+                             axon_params=neuron_params)
     step(5000, 1, False, False)
     # neuron_params['use_lateral_branching'] = True
 
@@ -125,7 +123,7 @@ def resource_branching(neuron_params):
 
     ds.io.save_json_info()
 
-    swc_file =ds.get_simulation_id()
+    swc_file = ds.get_simulation_id()
 
 
 if __name__ == '__main__':
@@ -137,10 +135,10 @@ if __name__ == '__main__':
         "resolution": 1. * minute,
     }
 
-    swc_file=resource_branching(neuron_params)
+    swc_file = resource_branching(neuron_params)
 
     pop = ds.get_neurons()
-    n   = pop[0]
+    n = pop[0]
 
     tree = n.axon.get_tree()
     tree.show_dendrogram()

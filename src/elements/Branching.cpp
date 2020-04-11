@@ -460,13 +460,12 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                 total_length += node.second->get_branch_length();
             }
         }
-        //###################################################################
 
-
-        // Pick up a random number and check which interval it belongs: length_i
-        // < random < length_i+1 It is equivalent to make a weight choice over
-        // the branches
-        //###################################################################
+        //#############################################################
+        // Pick up a random number and check which interval it belongs:
+        // length_i < random < length_i+1 It is equivalent to making a
+        // weighted choice over the branches
+        //#############################################################
         double random_length  = total_length * uniform_(*(rnd_engine).get());
         double current_length = 0.;
 
@@ -507,26 +506,27 @@ bool Branching::uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
             }
         }
 
-        //###################################################################
+        //#############################################################
 
-        // if no node was suited for lateral branching skip the branching.
+        // if no node was suited for lateral branching skip the
+        // branching.
         if (branching_node != nullptr)
         {
-            // choose the point uniformly on the branch, except for first 2 and
-            // last 2 points.
-            branching_point =
+            // choose the point uniformly on the branch, except on
+            // first and last latbranch_dist_ segments.
+            double branching_dist =
                 uniform_(*(rnd_engine).get()) *
-                    (branching_node->get_branch_length() - latbranch_dist_) +
-                latbranch_dist_;
+                (branching_node->get_branch_length() - 2*latbranch_dist_)
+                + latbranch_dist_;
+
+            branching_point = get_closest_point(branching_node,
+                                                branching_dist);
 
             // actuate lateral branching on the elected node through the
             // NEURITE.
             success = neurite_->lateral_branching(
                 branching_node, branching_point, new_node, rnd_engine);
             next_uniform_event_ = invalid_ev;
-
-            // if the branching node was a GrowthCone, change the
-            // TopologicalNode
         }
         else
         {

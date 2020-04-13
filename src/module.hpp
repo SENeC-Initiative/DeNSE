@@ -69,11 +69,10 @@ stype create_neurons_(
     const std::unordered_map<std::string, std::vector<statusMap>> &neurite_params);
 
 
-void create_neurites_(const std::vector<stype> &neurons, stype num_neurites,
-                      const std::vector<statusMap> &params,
-                      const std::vector<std::string> &neurite_types,
-                      const std::vector<double> &angles,
-                      const std::vector<std::string> &names);
+void create_neurites_(
+    const std::vector<stype> &neurons, stype num_neurites,
+    const std::unordered_map<std::string, std::vector<statusMap>> &params,
+    const std::vector<std::string> &names, const std::vector<double> &angles);
 
 
 void delete_neurons_(const std::vector<stype> &gids);

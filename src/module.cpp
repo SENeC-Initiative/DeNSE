@@ -103,12 +103,10 @@ stype create_neurons_(
 }
 
 
-void create_neurites_(const std::vector<stype> &neurons,
-                      stype num_neurites,
-                      const std::vector<statusMap> &params,
-                      const std::vector<std::string> &neurite_types,
-                      const std::vector<double> &angles,
-                      const std::vector<std::string> &names)
+void create_neurites_(
+    const std::vector<stype> &neurons, stype num_neurites,
+    const std::unordered_map<std::string, std::vector<statusMap>> &params,
+    const std::vector<std::string> &names, const std::vector<double> &angles)
 {
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
     std::vector<std::vector<stype>> omp_neuron_vec(num_omp);
@@ -127,70 +125,61 @@ void create_neurites_(const std::vector<stype> &neurons,
         bool gc_model_set;
         GCPtr gc_ptr;
 
-        for (stype i : omp_neuron_vec[omp_id])
+        // loop neurites/params
+        for (const std::string &name : names)
         {
-            NeuronPtr neuron = kernel().neuron_manager.get_neuron(neurons[i]);
-            statusMap status = params[i];
+            auto it = params.find(name);
 
-            stype existing_neurites = neuron->get_num_neurites();
-            bool has_axon           = neuron->has_axon();
+            std::vector<statusMap> vec_statuses;
 
-            gc_model_set = get_param(status, "growth_cone_model", gc_model);
-
-            if (not gc_model_set)
+            if (it == params.end())
             {
-                gc_model = neuron->get_gc_model();
-            }
+                it = params.find("dendrites");
 
-            gc_ptr = kernel().model_manager.get_model(gc_model);
-
-            if (neurite_types.empty())
-            {
-                for (stype j = 0; j < num_neurites; j++)
+                if (it == params.end())
                 {
-                    if ((names.empty() and has_axon and
-                         existing_neurites + j == 0) or
-                        (not names.empty() and names[j] == "axon"))
-                    {
-                        neuron->new_neurite("axon", "axon", gc_ptr, rng);
-                        neuron->set_neurite_status("axon", status);
-                    }
-                    else
-                    {
-                        std::string name =
-                            names.empty()
-                                ? "dendrite_" +
-                                      std::to_string(existing_neurites + j)
-                                : names[j];
-                        neuron->new_neurite(name, "dendrite", gc_ptr, rng);
-                        neuron->set_neurite_status(name, status);
-                    }
+                    vec_statuses =
+                        std::vector<statusMap>(omp_neuron_vec[omp_id].size());
+                }
+                else
+                {
+                    vec_statuses = it->second;
                 }
             }
             else
             {
-                for (stype j = 0; j < num_neurites; j++)
-                {
-                    if (neurite_types[j] == "axon")
-                    {
-                        if (not names.empty() and names[j] != "axon")
-                        {
-                            exit(INVALID_AXON_NAME);
-                        }
+                vec_statuses = it->second;
+            }
 
-                        neuron->new_neurite("axon", "axon", gc_ptr, rng);
-                        neuron->set_neurite_status("axon", status);
-                    }
-                    else
-                    {
-                        std::string name =
-                            names.empty()
-                                ? "dendrite_" +
-                                      std::to_string(existing_neurites + j)
-                                : names[j];
-                        neuron->new_neurite(name, "dendrite", gc_ptr, rng);
-                        neuron->set_neurite_status(name, status);
-                    }
+            // loop neurons
+            for (stype i : omp_neuron_vec[omp_id])
+            {
+                NeuronPtr neuron =
+                    kernel().neuron_manager.get_neuron(neurons[i]);
+
+                statusMap status = vec_statuses[i];
+
+                stype existing_neurites = neuron->get_num_neurites();
+                bool has_axon           = neuron->has_axon();
+
+                gc_model_set = get_param(status, "growth_cone_model", gc_model);
+
+                if (not gc_model_set)
+                {
+                    gc_model = neuron->get_gc_model();
+                }
+
+                gc_ptr = kernel().model_manager.get_model(gc_model);
+
+                if (name == "axon")
+                {
+                    neuron->new_neurite("axon", "axon", gc_ptr, rng);
+                    neuron->set_neurite_status("axon", status);
+                }
+                else
+                {
+                    neuron->new_neurite(name, "dendrite", gc_ptr, rng);
+                    neuron->set_neurite_status(name, status);
                 }
             }
         }

@@ -198,7 +198,7 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
 
     params       = {} if params is None else params.copy()
     neur_params  = {} if neurite_params is None \
-                   else neurite_params.copy()
+                   else deepcopy(neurite_params)
     env_required = get_kernel_status("environment_required")
 
     # num_neurites and neurite names go in kwargs for params check and
@@ -287,18 +287,11 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
                              "`neurite_angles`, choose one or the other.")
 
     # check parameters
-    _check_params(params, "neuron",
-                  gc_model=params["growth_cone_model"])
+    gc_model = params["growth_cone_model"]
 
-    if neur_params:
-        if isinstance(next(iter(neur_params.values())), dict):
-            for key, val in neur_params.items():
-                _check_params(val, "neurite",
-                              gc_model=val.get("growth_cone_model",
-                                               gc_model))
-    else:
-        gcm = neur_params.get("growth_cone_model", gc_model)
-        _check_params(neur_params, "neurite", gc_model=gcm)
+    _check_params(params, "neuron", gc_model=gc_model)
+
+    _check_neurite_params(neur_params, gc_model)
 
     params = neuron_param_parser(
         params, culture, n, rnd_pos=rnd_pos, on_area=on_area)
@@ -334,8 +327,9 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
     return _create_neurons(
         params, neur_params, kwargs, n, return_ints)
 
+
 def create_neurites(neurons, num_neurites=1, params=None, angles=None,
-                    neurite_types=None, names=None):
+                    names=None):
     '''
     Create neurites on the specified neurons.
 
@@ -349,13 +343,11 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
         Parameters of the neurites.
     angle : list, optional (default: automatically positioned)
         Angles of the newly created neurites.
-    neurite_types : str or list, optional
-        Types of the neurites, either "axon" or "dendrite". If not
-        provided, the first neurite will be an axon if the neuron has
-        no existing neurites and its `has_axon` variable is True,
-        all other neurites will be dendrites.
     names : list, optional (default: "axon" and "dendrite_X")
-        Names of the created neurites.
+        Names of the created neurites, if not provided, will an "axon" or
+        a dendrite with default name "dendrite_X" (X being a number) will be
+        created, depending on whether the neuron is supposed to have an axon
+        or not, and depending on the number of pre-existing neurites.
 
     Note
     ----
@@ -367,37 +359,28 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     .. warning ::
 
         Axon name must always be "axon", trying to name it differently
-        will immediately crash the kernel.
+        will lead to an immediate crash.
     '''
     cdef:
         vector[stype] cneurons
         vector[double] cangles
-        vector[string] cneurite_types, cneurite_names
+        vector[string] cneurite_names
         statusMap common_params
-        vector[statusMap] cparams
+        vector[statusMap] vparams
+        unordered_map[string, vector[statusMap]] cparams
 
-    params = {} if params is None else params.copy()
+    params = {} if params is None else deepcopy(params)
 
     if not nonstring_container(neurons):
         neurons = [neurons]
     for n in neurons:
         cneurons.push_back(int(n))
 
+    num_neurons = len(neurons)
+
     if angles is not None:
         for theta in angles:
             cangles.push_back(theta)
-
-    if neurite_types is not None:
-        if not nonstring_container(neurite_types):
-            neurite_types = [neurite_types]
-
-        assert len(neurite_types) == num_neurites, \
-            "`neurite_types` must contain exactly `num_neurites` entries."
-
-        for s in neurite_types:
-            assert s in ("axon", "dendrite"), \
-                "Only 'axon' and 'dendrite' are allowed in `neurite_types`."
-            cneurite_types.push_back(_to_bytes(s))
 
     if names is not None:
         if not nonstring_container(names):
@@ -408,33 +391,57 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
 
         assert len(names) == len(set(names)), "`names` are not unique."
 
+        # check that names and params entries fit
+        if params and isinstance(next(iter(params.values())), dict):
+            # check whether generic "dendrites" entry was used
+            if "dendrites" not in params:
+                assert set(names).contains(params.keys()), \
+                "Some entries in `params` have no associated name in `names`."
+
         for s in names:
             if s == "axon":
                 for n in cneurons:
                     has_axon = neuron_has_axon_(n)
                     neurites = get_neurites_(n)
+
+                    error = "To create a neurite called 'axon', the neurons " +\
+                            "have their `has_axon` parameter to True, and " +\
+                            "should not already possess an axon. "
+    
                     assert has_axon, \
-                        "To create a neurite called 'axon', the neurons " +\
-                        "have their `has_axon` parameter to True, and " +\
-                        "should not already possess an axon. Neuron " +\
-                        "{} has `has_axon` to False.".format(n)
+                        error + "Neuron {} has `has_axon` to False.".format(n)
+
                     assert b"axon" not in list(neurites), \
-                        "To create a neurite called 'axon', the neurons " +\
-                        "have their `has_axon` parameter to True, and " +\
-                        "should not already possess an axon. Neuron " +\
-                        "{} already has an axon.".format(n)
+                        error + "Neuron {} already has an axon.".format(n)
 
             cneurite_names.push_back(_to_bytes(s))
+    else:
+        has_axon = neuron_has_axon_(cneurons[0])
+        names    = _set_neurite_names(has_axon, num_neurites, params)
 
-    _check_params(params, "neurite")
+        cneurite_names = [_to_bytes(name) for name in names]
 
-    common_params = _get_scalar_status(params, num_neurites)
-    cparams       = vector[statusMap](num_neurites, common_params)
+    _check_neurite_params(params, "simple-random-walk")
 
-    _set_vector_status(cparams, params)
+    # create c-parameters
+    if params and isinstance(next(iter(params.values())), dict):
+        for key, val in params.items():
+            common_params = _get_scalar_status(val, num_neurons)
 
-    create_neurites_(cneurons, num_neurites, cparams, cneurite_types,
-                     cangles, cneurite_names)
+            vparams = vector[statusMap](num_neurons, common_params)
+            _set_vector_status(vparams, val)
+
+            cparams[_to_bytes(key)] = vparams
+    else:
+        common_params = _get_scalar_status(params, num_neurons)
+
+        vparams = vector[statusMap](num_neurons, common_params)
+        _set_vector_status(vparams, params)
+
+        for neurite in names:
+            cparams[_to_bytes(neurite)] = vparams
+
+    create_neurites_(cneurons, num_neurites, cparams, cneurite_names, cangles)
 
 
 def create_recorders(targets, observables, sampling_intervals=None,
@@ -1737,13 +1744,14 @@ cdef _create_neurons(dict params, dict neurite_params,
     base_neuron_status = _get_scalar_status(params, n)
 
     # check if neurite_params is a single dict or a dict of dicts
+    # NOTE: using `create_neurons`, entry "dendrites" in neurite_params is
+    # handled at the C++ level
     dod = (neurite_params
            and isinstance(next(iter(neurite_params.values())), dict))
 
     if not dod:
         neurite_params = {k: neurite_params for k in neurite_names}
 
-    # same for neurite parameters
     for key, value in neurite_params.items():
         base_neurite_statuses[_to_bytes(key)] = \
             _get_scalar_status(value, n)
@@ -2121,7 +2129,7 @@ cdef Property _to_property(key, value) except *:
             for val in value:
                 c_lvec.push_back(val)
             cprop = Property(c_lvec, c_dim)
-    elif is_iterable(value) and isinstance(next(iter(value)), str):
+    elif is_iterable(value) and value and isinstance(next(iter(value)), str):
         for val in value:
             c_svec.push_back(_to_bytes(val))
         cprop = Property(c_svec, c_dim)
@@ -2759,6 +2767,20 @@ def _check_params(params, object_name, gc_model=None):
             if key not in ("position",):
                 raise KeyError(
                     "Unknown parameter '{}' for `{}`.".format(key, object_name))
+
+
+def _check_neurite_params(params, gc_model):
+    '''
+    Check that parameters are valid for neurites
+    '''
+    if params:
+        if isinstance(next(iter(params.values())), dict):
+            for p in params.values():
+                gcm = p.get("growth_cone_model", gc_model)
+                _check_params(p, "neurite", gc_model=gcm)
+        else:
+            gcm = params.get("growth_cone_model", gc_model)
+            _check_params(params, "neurite", gc_model=gcm)
 
 
 def _set_neurite_names(has_axon, num_neurites, neurite_params):

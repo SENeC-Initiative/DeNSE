@@ -171,8 +171,8 @@ class Neuron(object):
         --------
         :func:`~dense.create_neurites`.
         '''
-        _pg.create_neurites(self, num_neurites=num_neurites,
-                            params=params, angles=angles, names=names)
+        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
+                            angles=angles, names=names)
 
     def delete_neurites(self, neurite_names=None):
         '''

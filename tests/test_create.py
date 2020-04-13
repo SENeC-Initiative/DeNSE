@@ -68,22 +68,6 @@ def test_create_neurites_one_neuron():
     assert neuron.dendrite1.speed_growth_cone == 0.02*um/minute
     assert neuron.dendrite2.speed_growth_cone == 0.03*um/minute
 
-    # with one neuron, create neurites using "dendrites"
-    neuron = ds.create_neurons()
-
-    neurite_params = {
-        "axon": {"speed_growth_cone": 0.1*um/minute},
-        "dendrites": {"speed_growth_cone": 0.0254*um/minute}
-    }
-
-    neuron.create_neurites(num_neurites=3, params=neurite_params)
-
-    assert set(neuron.neurites.keys()) == {"axon", "dendrite_1", "dendrite_2"}
-    assert neuron.axon.speed_growth_cone == 0.1*um/minute
-
-    for dendrite in neuron.dendrites.values():
-        assert dendrite.speed_growth_cone == 0.0254*um/minute
-
     # with one neuron, create neurites using "dendrites" and names
     neuron = ds.create_neurons()
 

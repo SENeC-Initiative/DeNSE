@@ -373,6 +373,7 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
 
     if not nonstring_container(neurons):
         neurons = [neurons]
+
     for n in neurons:
         cneurons.push_back(int(n))
 
@@ -386,16 +387,20 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
         if not nonstring_container(names):
             names = [names]
 
+        old_names = names
+
+        names = set(names)
+
         assert len(names) == num_neurites, \
             "`names` must contain exactly `num_neurites` entries."
 
-        assert len(names) == len(set(names)), "`names` are not unique."
+        assert len(names) == len(old_names), "`names` are not unique."
 
         # check that names and params entries fit
         if params and isinstance(next(iter(params.values())), dict):
             # check whether generic "dendrites" entry was used
             if "dendrites" not in params:
-                assert set(names).contains(params.keys()), \
+                assert names.contains(params.keys()), \
                 "Some entries in `params` have no associated name in `names`."
 
         for s in names:
@@ -404,23 +409,45 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
                     has_axon = neuron_has_axon_(n)
                     neurites = get_neurites_(n)
 
-                    error = "To create a neurite called 'axon', the neurons " +\
-                            "have their `has_axon` parameter to True, and " +\
-                            "should not already possess an axon. "
-    
-                    assert has_axon, \
-                        error + "Neuron {} has `has_axon` to False.".format(n)
+                    if not has_axon:
+                        # turn off filter temporarily
+                        warnings.simplefilter('always', RuntimeWarning)
+                        message = ("Creating 'axon' on neuron {} that had "
+                                   "`has_axon` set to False").format(n)
+                        warnings.warn(message, category=RuntimeWarning)
+                        warnings.simplefilter('default', RuntimeWarning)
+                        
 
                     assert b"axon" not in list(neurites), \
-                        error + "Neuron {} already has an axon.".format(n)
+                        ("To create a neurite called 'axon', the neurons have "
+                         "their `has_axon` parameter to True, and  should not "
+                         "already possess an axon. Neuron {} already has an "
+                         "axon.").format(n)
 
             cneurite_names.push_back(_to_bytes(s))
     else:
-        has_axon = neuron_has_axon_(cneurons[0])
-        names    = _set_neurite_names(has_axon, num_neurites, params)
+        if "dendrites" in params:
+            raise RuntimeError("If no `names` are given, then they must be "
+                               "provided as keys in `params`: 'dendrites' "
+                               "cannot be used")
+
+        if len(params) != num_neurites:
+            raise RuntimeError(
+                "If no `names` are given, then they must be provided as keys "
+                "in `params`: expected {} entries but got {}".format(
+                    num_neurites, len(params)))
+
+        names = set(params.keys())
 
         cneurite_names = [_to_bytes(name) for name in names]
 
+    assert cneurite_names.size() == num_neurites
+
+    # check that the neurites do not already exist
+    for n in cneurons:
+        assert names.isdisjoint(_get_neurites(n))
+
+    # check the parameters
     _check_neurite_params(params, "simple-random-walk")
 
     # create c-parameters
@@ -1543,6 +1570,7 @@ def set_object_properties(objects, params=None, neurite_params=None):
 
     # set the specific properties for each neurons
     _set_vector_status(neuron_statuses, params)
+
     # specific neurite parameters    
     for neurite, dic_params in neurite_params.items():
         _set_vector_status(neurite_statuses[_to_bytes(neurite)],
@@ -2786,7 +2814,6 @@ def _check_neurite_params(params, gc_model):
 def _set_neurite_names(has_axon, num_neurites, neurite_params):
     '''
     Set the neurite names for one neuron (or n identical neurons)
-
     Parameters
     ----------
     has_axon : bool or list

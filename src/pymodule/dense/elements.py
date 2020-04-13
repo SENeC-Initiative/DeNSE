@@ -630,6 +630,48 @@ class Neurite(object):
         return _pg.set_neurite_properties(
             self._parent, self, params=params)
 
+    def plot_dendrogram(self, axis=None, show_node_id=False,
+                        aspect_ratio=None, vertical_diam_frac=0.2,
+                        ignore_diameter=False, show=True, **kwargs):
+        '''
+        Plot the dendrogram of a neurite.
+
+        Parameters
+        ----------
+        neurite : :class:`~dense.elements.Neurite` object
+            Neurite for which the dendrogram should be plotted.
+        axis : matplotlib.Axes.axis object, optional (default: new one)
+            Axis on which the dendrogram should be plotted.
+        show_node_id : bool, optional (default: False)
+            Display each node number on the branching points.
+        aspect_ratio : float, optional (default: variable)
+            Whether to use a fixed aspect ratio. Automatically set to 1 if
+            `show_node_id` is True.
+        vertical_diam_frac : float, optional (default: 0.2)
+            Fraction of the vertical spacing taken by the branch diameter.
+        ignore_diameter : bool, optional (default: False)
+            Plot all the branches with the same width.
+        show : bool, optional (default: True)
+            Whether the figure should be shown right away.
+        **kwargs : arguments for :class:`matplotlib.patches.Rectangle`
+            For instance `facecolor` or `edgecolor`.
+
+        Returns
+        -------
+        The axis on which the plot was done.
+
+        See also
+        --------
+        :func:`~dense.plot.plot_dendrogram`
+        '''
+        from .plot import plot_dendrogram
+
+        return plot_dendrogram(self, axis=axis, show_node_id=show_node_id,
+                               aspect_ratio=aspect_ratio,
+                               vertical_diam_frac=vertical_diam_frac,
+                               ignore_diameter=ignore_diameter, show=show,
+                               **kwargs)
+
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
         self._branches    = []
@@ -797,17 +839,6 @@ class Tree(dict):
         neuron  = nmNeuron(soma, [neurite], [sections])
 
         return neuron
-
-    def show_dendrogram(self, **kwargs):
-        '''
-        Make and display the dendrogram.
-
-        See also
-        --------
-        Plotting arguments are the same as :func:`dense.plot.plot_dendrogram`.
-        '''
-        from .plot import plot_dendrogram
-        plot_dendrogram(self, **kwargs)
 
     def _cleanup(self):
         '''

@@ -332,8 +332,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 # --------------- #
 
 def plot_dendrogram(neurite, axis=None, show_node_id=False,
-                     aspect_ratio=None, vertical_diam_frac=0.2,
-                     ignore_diameter=False, show=True, **kwargs):
+                    aspect_ratio=None, vertical_diam_frac=0.2,
+                    ignore_diameter=False, show=True, **kwargs):
     '''
     Plot the dendrogram of a neurite.
 
@@ -356,6 +356,14 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
         Plot all the branches with the same width.
     **kwargs : arguments for :class:`matplotlib.patches.Rectangle`
         For instance `facecolor` or `edgecolor`.
+
+    Returns
+    -------
+    The axis on which the plot was done.
+
+    See also
+    --------
+    :func:`~dense.elements.Neurite.plot_dendrogram`
     '''
     import matplotlib.pyplot as plt
 
@@ -579,6 +587,8 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
 
     if show:
         plt.show()
+
+    return axis
 
 
 

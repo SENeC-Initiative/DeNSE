@@ -32,20 +32,27 @@ Main parameters
 
 num_neurons = 1000
 
+
+'''
+Main parameters
+'''
+
+soma_radius = 8.
+num_neurons = 5
+
+#~ gc_model = 'persistent_random_walk'
+
 neuron_params = {
-    # "growth_cone_model": "self_referential_forces",
+    "gc_model": 'run-and-tumble',
 
-    "persistence_length": 1000.0,
-
-    "filopodia_min_number": 30,
-    "speed_growth_cone": 9.,
-    "sensing_angle": 0.1495,
-
-    "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 30.0,
+    "axon_diameter": 4. * um,
+    "dendrite_diameter": 2.*um,
+    "soma_radius": soma_radius * um,
 
     "use_uniform_branching": False,
     "use_van_pelt": False,
+    "use_critical_resource": True,
+
     "use_critical_resource": True,
 
     "diameter_eta_exp": 2.67,
@@ -55,38 +62,61 @@ neuron_params = {
     "gc_split_angle_mean": 10.3,
 }
 
-
-'''
-Check for optional parameters
-'''
-
 b_th = 100.
 
-if neuron_params["use_critical_resource"]:
-    cr_params = {
-        # Cr model
-        "res_retraction_factor": 1.,
-        "res_elongation_factor": 2.,
-        # "res_leakage": 0.05,
-        "res_retraction_threshold": 0.01,
-        "res_elongation_threshold": 0.3,
-        "res_leakage": 10.0,
-        "res_neurite_generated": 2500.,
-        "res_correlation": 0.2,
-        "res_variance": 0.01,
-        "res_use_ratio": 0.16,
-        "res_branching_threshold": b_th,
-        "res_branching_proba": 0.1,
-        "res_weight_centrifugal": 0.,
-        "res_weight_diameter": 0.5,
-    }
-    neuron_params.update(cr_params)
+# "use_critical_resource"] parameters
+cr_params = {
+    # Cr model
+    "res_retraction_factor": 1.,
+    "res_elongation_factor": 2.,
+    # "res_leakage": 0.05,
+    "res_retraction_threshold": 0.01,
+    "res_elongation_threshold": 0.3,
+    "res_leakage": 10.0,
+    "res_neurite_generated": 2500.,
+    "res_correlation": 0.2,
+    "res_variance": 0.01,
+    "res_use_ratio": 0.16,
+    "res_branching_threshold": b_th,
+    "res_branching_proba": 0.1,
+    "res_weight_centrifugal": 0.,
+    "res_weight_diameter": 0.5,
+}
+neuron_params.update(cr_params)
 
+
+axon_params = {
+    "growth_cone_model": 'run-and-tumble',
+    "use_van_pelt": False,
+    "sensing_angle": 45.*deg,
+    "speed_growth_cone": 0.025 * um / minute, #0.15
+    "filopodia_wall_affinity": 100.,
+    "filopodia_finger_length": 7. * um,
+    "filopodia_min_number": 30,
+    "persistence_length": 300. * um,
+    "taper_rate": 1./4000., 
+    'B': 3. * cpm,
+    'T': 1000. * minute,
+    'E': 1.,
+}
+
+dendrite_params = {
+    "growth_cone_model": 'run-and-tumble',
+    "use_van_pelt": False,
+    "speed_growth_cone": 0.01 * um / minute,
+    "filopodia_wall_affinity": 10. ,
+    "persistence_length" : 200. * um,
+    "taper_rate": 3./250.,
+    "B": 6. * cpm,
+    "T": 1000. * minute,
+    'E': 1.,
+}
+
+neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
 
 '''
 Analysis
 '''
-
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
     if plot:
@@ -101,12 +131,13 @@ def step(n, loop_n, save_path, plot=True):
 def resource_branching(neuron_params):
     ds.reset_kernel()
     np.random.seed(kernel['seeds'])
-    ds.set_kernel_status(kernel, simulation_id="van_pelt_branching")
-    neuron_params['growth_cone_model'] = 'run_tumble_critical'
+    ds.set_kernel_status(kernel, simulation_id="branching")
+    neuron_params['growth_cone_model'] = 'res_po_rt'
     neuron_params['res_branching_threshold'] = np.inf
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2))
+    
     gid = ds.create_neurons(
         n=num_neurons, params=neuron_params, axon_params=neuron_params,
         num_neurites=1, position=[])

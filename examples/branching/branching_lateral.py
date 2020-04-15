@@ -32,51 +32,13 @@ import matplotlib.pyplot as plt
 Main parameters
 '''
 
-rate = 0.005 * cpm
-num_neurons = 1
+rate = 1. * cpm
+num_neurons = 10
 
-# ~ branching_type = "flpl"
+# ~ branching_type 
 branching_type = "uniform"
 use_type = "use_" + branching_type + "_branching"
 branching_rate = branching_type + "_branching_rate"
-
-neuron_params = {
-    "axon_angle": 90.*deg,
-    # "growth_cone_model": "self_referential_forces",
-
-    "persistence_length": 10000.0 * um ,
-
-    "filopodia_min_number": 30,
-    "speed_growth_cone": 0.9 * um / minute,
-    "sensing_angle": 60.*deg,
-
-    "filopodia_finger_length": 10.0 * um,
-    "lateral_branching_angle_mean": 45.*deg,
-    "lateral_branching_angle_std": 0.*deg,
-
-    use_type: True,
-    branching_rate: rate,
-
-    "use_van_pelt": False,
-}
-
-
-'''
-Optional parameters
-'''
-
-if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["rw_persistence_length"] = 1.8 * um
-    neuron_params["rw_memory_tau"] = 4. * um
-
-
-'''
-Analyse
-'''
-def article_distribution():
-    hours_ev = [13, 19, 6, 8, 5, 3, 1, 1]
-    hours = range(20,100,10)
-
 
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
@@ -89,26 +51,77 @@ def step(n, loop_n, save_path, plot=True):
                 show_nodes=False, save_path=save_path)
 
 
-def lateral_branching(neuron_params):
+def lateral_branching():
     ds.reset_kernel()
     np.random.seed(kernel['seeds'])
-    ds.set_kernel_status(kernel, simulation_id="uniform_branching")
-    neuron_params['growth_cone_model'] = 'run-and-tumble'
-    neuron_params[use_type] = False
+    ds.set_kernel_status(kernel, simulation_id="branching")
+
+    neuron_params = {
+        "axon_angle": 90.*deg,
+        "growth_cone_model": 'run-and-tumble',
+
+        "persistence_length": 10000.0 * um,
+
+        "filopodia_min_number": 30,
+        "speed_growth_cone": 0.9 * um / minute,
+        "sensing_angle": 60.*deg,
+
+        "filopodia_finger_length": 10.0 * um,
+        "lateral_branching_angle_mean": 45.*deg,
+        "lateral_branching_angle_std": 0.*deg,
+
+        use_type: False,
+        branching_rate: rate,
+
+        "use_van_pelt": False,
+    }
 
     neuron_params["position"] = np.random.uniform(
         -500, 500, (num_neurons, 2)) * um
+
     gid = ds.create_neurons(n=num_neurons,
                             params=neuron_params,
                             num_neurites=2)
 
     step(1*hour, 1, False, False)
-    neuron_params[use_type] = True
-    ds.set_object_properties(gid, params=neuron_params)
-# ~ axon_params=neuron_params)
-    step(2 * day, 1, False, False)
-    # neuron_params['use_lateral_branching'] = True
 
+    neuron_params[use_type] = True
+    neuron_params['use_flpl_branching'] = True
+    ds.set_object_properties(gid, params=neuron_params)
+    # ~ axon_params=neuron_params)
+
+    # second development phase : with lateral branching
+    # updated parameters
+
+    lb_axon = {
+        # extension parameters
+        "speed_growth_cone": 0.02*um/minute,
+
+        # branching choice and parameters
+        "use_van_pelt": False,
+        "use_flpl_branching": True,
+        "flpl_branching_rate": 0.04*cph,
+        "lateral_branching_angle_mean": 40.*deg,
+    }
+
+    dend_params = {
+        # extension parameters
+        "speed_growth_cone": 0.01*um/minute,
+
+        # branching choice and parameters
+        "use_van_pelt": False,
+        "use_flpl_branching": True,
+        "flpl_branching_rate": 0.01*cph,
+        "persistence_length": 100.*um,
+        "lateral_branching_angle_mean": 40.*deg,
+    }
+
+    neurite_params = {"axon": lb_axon, "dendrites": dend_params}
+
+    # updates neurites parameters
+    ds.set_object_properties(gid, neurite_params=neurite_params)
+
+    step(7 * day, 1, False, False)
 
     ds.io.save_to_swc(filename="branching_lateral.swc", resolution=5)
 
@@ -127,7 +140,7 @@ if __name__ == '__main__':
         "environment_required": False,
         "resolution": 2 * minute,
     }
-    swc_file=lateral_branching(neuron_params)
+    swc_file = lateral_branching()
 
     ds.plot.plot_neurons(show=True)
 
@@ -135,7 +148,7 @@ if __name__ == '__main__':
     n = pop[0]
 
     tree = n.axon.get_tree()
-    tree.show_dendrogram()
+    n.axon.plot_dendrogram(show=True)
 
     # ~ import neurom
     # ~ from neurom import viewer

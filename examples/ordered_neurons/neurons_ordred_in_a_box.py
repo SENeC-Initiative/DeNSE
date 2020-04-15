@@ -77,7 +77,7 @@ axon_params = {
     "taper_rate": 1./4000., 
     'B': 3. * cpm,
     'T': 1000. * minute,
-    'E': 1.,   
+    'E': 1.,
 }
 
 dendrite_params = {
@@ -141,26 +141,33 @@ if __name__ == '__main__':
         positions.append((900, y))
     neuron_params['position'] = positions *um
     print("Creating neurons")
+    # gids = ds.create_neurons(n=num_neurons,
+    #                          params=neuron_params,
+    #                          num_neurites=0)
+
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             num_neurites=0)
+                             num_neurites=3,
+                             "neurite_angles": {"axon": 0.*deg,
+                                                "dendrite_1": 160.*deg,
+                                                "dendrite_2": 200.*deg})
 
-    print("Creating neurites")
+    # print("Creating neurites")
 
-    for neuron in gids:
-        # neuron.create_neurites(num_neurites=3,
-        #                        params=neurite_params,
-        #                        neurite_types=["axon", "dendrite", "dendrite"])
-        # Add axon
-        neuron.create_neurites(num_neurites=1,
-                               params=axon_params,
-                               neurite_angles={"axon": 15},
-                               neurite_types="axon")
-        # Add dendrites
-        neuron.create_neurites(num_neurites=2,
-                               params=dendrite_params,
-                               neurite_angles={"dendrite_1": 120, "dendrite_2": -120},
-                               neurite_types=["dendrite","dendrite"])
+    # for neuron in gids:
+    #     # neuron.create_neurites(num_neurites=3,
+    #     #                        params=neurite_params,
+    #     #                        neurite_types=["axon", "dendrite", "dendrite"])
+    #     # Add axon
+    #     neuron.create_neurites(num_neurites=1,
+    #                            params=axon_params,
+    #                            angles={"axon": 15},
+    #                            neurite_types="axon")
+    #     # Add dendrites
+    #     neuron.create_neurites(num_neurites=2,
+    #                            params=dendrite_params,
+    #                            angles={"dendrite_1": 120, "dendrite_2": -120},
+    #                            neurite_types=["dendrite","dendrite"])
 
     start = time.time()
     for i in range(3):

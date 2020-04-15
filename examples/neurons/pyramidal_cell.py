@@ -35,9 +35,9 @@ from dense.units import *
 
 np.random.seed(0)
 
-num_omp     = 1
+num_omp = 1
 num_neurons = 1
-gc_model    = "self-referential-forces"
+gc_model = "self-referential-forces"
 
 
 neuron_params = {
@@ -51,7 +51,7 @@ neuron_params = {
     # axon versus dendrites orientations
     "polarization_strength": 20.,
     "neurite_angles": {"axon": 90.*deg, "dendrite_1": 200.*deg, "dendrite_2": 320.*deg},
-}
+    }
 
 axon_params = {
     # growth cone model
@@ -66,7 +66,7 @@ axon_params = {
 
     #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
-    "filopodia_min_number": 30,    
+    "filopodia_min_number": 30,
 
     # extension parameters
     "persistence_length": 500.*um,

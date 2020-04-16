@@ -153,6 +153,10 @@ class Neuron(object):
         '''
         Create new neurites.
 
+        Neurite types (axon or dendrite) are based on the neurite names: axon
+        must always be named "axon", all other names will be associated to a
+        dendrite.
+
         Parameters
         ----------
         num_neurites : int, optional (default: 1)

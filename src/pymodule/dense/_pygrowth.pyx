@@ -333,6 +333,9 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     '''
     Create neurites on the specified neurons.
 
+    Neurite types (axon or dendrite) are based on the neurite names: axon must
+    always be named "axon", all other names will be associated to a dendrite.
+
     Parameters
     ----------
     neurons : :class:`~dense.elements.Neuron`, list, or GIDs
@@ -355,11 +358,6 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     be created for each neuron; to create varying numbers, types, or
     relative angles for the neurites, the function must be called
     separately on the different sets of neurons.
-
-    .. warning ::
-
-        Axon name must always be "axon", trying to name it differently
-        will lead to an immediate crash.
     '''
     cdef:
         vector[stype] cneurons
@@ -391,10 +389,10 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
 
         names = set(names)
 
+        assert len(names) == len(old_names), "`names` are not unique."
+
         assert len(names) == num_neurites, \
             "`names` must contain exactly `num_neurites` entries."
-
-        assert len(names) == len(old_names), "`names` are not unique."
 
         # check that names and params entries fit
         if params and isinstance(next(iter(params.values())), dict):

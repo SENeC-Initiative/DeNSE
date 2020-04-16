@@ -135,6 +135,14 @@ be constrained in two different ways:
      with :math:`\chi` a uniform random variable on [0, 1].
 
 
+Examples:
+
+.. literalinclude:: ../../examples/tutorials/named_neurites.py
+    :linenos:
+    :language: python
+    :lines: 131-141
+
+
 .. note::
 
     Using ``num_neurites`` on growth cone creation with the
@@ -177,13 +185,19 @@ Properties of a neurite (axon or dendrites) are specific to this neurite, unlike
 those set using the neuronal parameters. They govern the growth process and the
 branching mechanisms of the neurite of interest.
 
-**Note : generic neurite properties both for dendrites' and axon's growth (see growth_model) can be assigned once as neuron parameters. These general settings can be overruled by the specific settings of dendrites' and axon's properties.**
+.. note ::
+
+    Generic neurite properties both for dendrites' and axon's growth (see
+    :ref:`pymodels`) can be assigned once as neuron parameters.
+    These general settings can be overruled by the specific settings of
+    dendrites' and axon's properties.
 
 Getting and setting properties
 ------------------------------
 
 All the properties described here can be set with
-:func:`~dense.set_object_properties` through the ``axon_params`` or ``dendrites_params`` dictionaries, or directly on the
+:func:`~dense.set_object_properties` through the ``axon_params`` or
+``dendrites_params`` dictionaries, or directly on the
 :class:`~dense.elements.Neurite` object through its
 :func:`~dense.elements.Neurite.set_properties`
 Some neurite-specific properties which are independent of the specific

@@ -115,3 +115,36 @@ except Exception as e:
     error_caught = True
 
 assert error_caught, "Previous code should have failed (incompatible names)."
+
+
+''' Compare methods '''
+
+
+angles = {"axon": 90.*deg, "dendrite": 210.*deg}
+
+params = {
+    "position": (0., 0.)*um,
+    "neurite_angles": angles,
+    "random_rotation_angles": False
+}
+
+# at neuron creation
+neuron = ds.create_neurons(params=params, num_neurites=2,
+                           neurite_names=["axon", "dendrite"])
+
+# after neuron creation
+neurons = ds.create_neurons(2)
+
+neurons[5].create_neurites(2, names=["axon", "dendrite"], angles=angles)
+
+ds.create_neurites(neurons[6], num_neurites=2, names=["axon", "dendrite"],
+                   angles=angles)
+
+import numpy as np
+
+for k, v in angles.items():
+    assert np.isclose(neuron.neurite_angles[k], v)
+
+for n in neurons:
+    for k, v in angles.items():
+        assert np.isclose(n.neurite_angles[k], v)

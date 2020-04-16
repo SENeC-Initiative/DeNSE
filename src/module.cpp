@@ -106,7 +106,8 @@ stype create_neurons_(
 void create_neurites_(
     const std::vector<stype> &neurons, stype num_neurites,
     const std::unordered_map<std::string, std::vector<statusMap>> &params,
-    const std::vector<std::string> &names, const std::vector<double> &angles)
+    const std::vector<std::string> &names,
+    const std::unordered_map<std::string, double> &angles)
 {
     int num_omp = kernel().parallelism_manager.get_num_local_threads();
     std::vector<std::vector<stype>> omp_neuron_vec(num_omp);
@@ -156,6 +157,9 @@ void create_neurites_(
             {
                 NeuronPtr neuron =
                     kernel().neuron_manager.get_neuron(neurons[i]);
+
+                // update angles
+                neuron->update_angles(angles);
 
                 statusMap status = vec_statuses[i];
 

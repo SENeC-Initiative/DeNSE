@@ -361,7 +361,7 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     '''
     cdef:
         vector[stype] cneurons
-        vector[double] cangles
+        unordered_map[string, double] cangles
         vector[string] cneurite_names
         statusMap common_params
         vector[statusMap] vparams
@@ -378,8 +378,8 @@ def create_neurites(neurons, num_neurites=1, params=None, angles=None,
     num_neurons = len(neurons)
 
     if angles is not None:
-        for theta in angles:
-            cangles.push_back(theta)
+        for neurite, theta in angles.items():
+            cangles[_to_bytes(neurite)] = theta
 
     if names is not None:
         if not nonstring_container(names):

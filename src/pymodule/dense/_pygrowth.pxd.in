@@ -107,7 +107,8 @@ cdef extern from "../module.hpp" namespace "growth":
     cdef void create_neurites_(
         const vector[stype]& neurons, stype num_neurites,
         const unordered_map[string, vector[statusMap]]& params,
-        const vector[string]& names, const vector[double]& angles) except +
+        const vector[string]& names,
+        const unordered_map[string, double]& angles) except +
 
     cdef void delete_neurons_(const vector[stype] &neurons) except +
 

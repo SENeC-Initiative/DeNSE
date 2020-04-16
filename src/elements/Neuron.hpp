@@ -129,6 +129,7 @@ class Neuron : public std::enable_shared_from_this<Neuron>
     void get_neurite_status(statusMap &status, std::string neurite_type,
                             const std::string &level);
     void update_kernel_variables();
+    void update_angles(const std::unordered_map<std::string, double> &angles);
 
     bool has_axon() const;
 

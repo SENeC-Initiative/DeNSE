@@ -50,7 +50,7 @@ Main parameters
 '''
 
 soma_radius = 8.
-num_neurons = 5
+num_neurons = 10
 
 #~ gc_model = 'persistent_random_walk'
 gc_model = 'run-and-tumble'
@@ -108,7 +108,7 @@ def step(n, loop_n, plot=True):
 if __name__ == '__main__':
     num_omp = 10
     kernel = {
-        "seeds": range(num_omp),
+        "seeds": range(10, 10+num_omp),
         "num_local_threads": num_omp,
         "resolution": 10. * minute,
         "adaptive_timestep": -1.,
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     min_y = -707
     max_y = +707
 
-    y_margin = 200  # choice of margin not to seed neurons closer to the border
+    y_margin = (max_y-min_y)/num_neurons  # choice of margin not to seed neurons closer to the border
 
     if kernel["environment_required"]:
         culture = ds.set_environment(culture_file, min_x=0, max_x=1800)
@@ -147,17 +147,17 @@ if __name__ == '__main__':
 
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             num_neurites=3,
-                             "neurite_angles": {"axon": 0.*deg,
-                                                "dendrite_1": 160.*deg,
-                                                "dendrite_2": 200.*deg})
+                             num_neurites=2,
+                             random_rotation_angles=False,
+                             neurite_angles={"axon": 0.*deg,
+                                             "dendrite_1": 180.*deg})
 
     # print("Creating neurites")
 
     # for neuron in gids:
-    #     # neuron.create_neurites(num_neurites=3,
-    #     #                        params=neurite_params,
-    #     #                        neurite_types=["axon", "dendrite", "dendrite"])
+    #    # neuron.create_neurites(num_neurites=3,
+    #    #                        params=neurite_params,
+    #    #                        names=["axon", "dendrite_1", "dendrite_2"])
     #     # Add axon
     #     neuron.create_neurites(num_neurites=1,
     #                            params=axon_params,
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "swc"))
     ds.io.save_json_info(filepath=save_path)
-    ds.io.save_to_swc(filename=save_path, swc_resolutio=10)
+    ds.io.save_to_swc(filename=save_path, resolution=10)
     structure = ds.morphology.NeuronStructure()
     graph = ds.morphology.generate_network(structure=structure)
 

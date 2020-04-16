@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 #
-#  vAnalysis  of neuronal morphologies using btmorh
+#  Analysis  of neuronal morphologies using btmorh
 # 
 
 import btmorph2

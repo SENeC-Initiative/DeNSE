@@ -163,12 +163,8 @@ if __name__ =='__main__':
     neurite_params = {"axon": vp_axon, "dendrites": vp_dend}
 
     # update the parameters lists of the neurons 'gids'
-<<<<<<< HEAD
+
     ds.set_object_properties(gids, neurite_params=neurite_params)
-=======
-    ds.set_object_properties(gids, axon_params=vp_axon, dendrites_params=vp_dend)
-    # pprint(ds.get_object_properties(gids))
->>>>>>> examples2020
 
     ds.simulate(7 *day+2*day)
 
@@ -186,18 +182,14 @@ if __name__ =='__main__':
 
         "use_van_pelt": False,
         "use_uniform_branching": True,
-<<<<<<< HEAD
         "uniform_branching_rate": 0.01 * cph,
-=======
-        "uniform_branching_rate": 0.00005 * cpm,
->>>>>>> examples2020
+
         "lateral_branching_angle_mean": 45. * deg,
         "lateral_branching_angle_std": 5. * deg,
     }
 
     dlat_params = lat_params.copy()
     dlat_params.update({
-<<<<<<< HEAD
         "speed_growth_cone": 0.03 * um/minute,
         "uniform_branching_rate": 0.0012 * cph,
     })
@@ -205,31 +197,7 @@ if __name__ =='__main__':
     neurite_params = {"axon": lat_params, "dendrites": dlat_params}
 
     ds.set_object_properties(gids, neurite_params=neurite_params)
-=======
-        "speed_growth_cone": 0.003 * um/minute,
 
-        "uniform_branching_rate": 0.0001 * cpm,
-    })
-
-    # Here as the 'gids' are neurons,  the lat_params assigned to 'params', 
-    # are assigned to 'neuron_params', they are then valid both for
-    # the axon and the dendrites
-    # Equivalently we could have written
-    #    dlat_params = {
-    #   "speed_growth_cone": 0.003,
-
-    #    "use_van_pelt": False,
-    #    "use_uniform_branching": True,
-    #    "speed_growth_cone": 0.003,
-    #    "uniform_branching_rate": 0.0001,
-    #    "lateral_branching_angle_mean": 45.,
-    #    "lateral_branching_angle_std": 5.,
-    #    }
-    
-    #    ds.set_object_properties(gids, axon_params=lat_params, dendrites_params=dlat_params)
-
-    ds.set_object_properties(gids, params=lat_params, dendrites_params=dlat_params)
->>>>>>> examples2020
 
     ds.simulate(5 * day)
 

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+l# -*- coding: utf-8 -*-
 #
 # polygons_graph.py
 #
@@ -20,8 +20,13 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-
+import numpy as np
 import matplotlib.pyplot as plt
+import pint
+
+# necessary for plots with pint dimensioned variables
+ureg = pint.UnitRegistry()
+ureg.setup_matplotlib()
 
 import dense as ds
 from dense.elements import Population
@@ -31,46 +36,48 @@ try:
 except:
     raise("add culture folder as first argument")
 
-pop = Population.from_swc(ds.NeuronsFromSimulation(culture_folder))
-
-graph, intersections, synapses = ds.generate_network(pop,
-                                                intersection_positions=True)
+#pop = Population.from_swc(ds.NeuronsFromSimulation(culture_folder))
 
 
-### Plot the graph in 2 subplots:
-fig, (ax1,ax2) = plt.subplots(2,1)
+pop = ds.io.load_swc(swc_folder=culture_folder, swc_file="swc.swc") 
+
+
+graph, intersections, synapses = ds.morphology.generate_network(
+                                pop, intersection_positions=True)
+
+
+# Plot the graph in 2 subplots:
+fig, (ax1, ax2) = plt.subplots(2, 1)
 ax2.set_title("Connections as a directed graph")
 # nngt.plot.draw_network(graph,spatial = True,
-                       # nsize="out-degree",
-                       # ncolor="betweenness",
-                       # esize=0.01,
-                       # decimate =2,
-                       # axis = ax2,
-                       # dpi = 400)
+# nsize="out-degree",
+# ncolor="betweenness",
+# esize=0.01,
+# decimate =2,
+# axis = ax2,
+# dpi = 400)
 
-ax1.set_title("Positions of nurons' soma")
+ax1.set_title("Positions of neurons' soma")
 for neuron in pop:
     ax1.scatter(neuron.position[0], neuron.position[1], c='r')
 fig.tight_layout()
-fig.savefig("graph_.pdf",format='pdf', ppi=300)
+fig.savefig("graph_.pdf", format='pdf', ppi=300)
 
-
-
-fig3, cx =plt.subplots(1,1)
+fig3, cx = plt.subplots(1, 1)
 cx.set_title("adjacency matrix of cultured network")
 cx.set_xlabel("Presynaptic neuron ID")
 cx.set_ylabel("Postsynaptic neuron ID")
-dtype = [('ID', int), ('x_', float), ('y_',float)]
-import numpy as np
-gids_position = [(ID,xy[0],xy[1]) for ID, xy in  zip(pop.gids,pop.positions)]
+dtype = [('ID', int), ('x_', float), ('y_', float)]
+
+gids_position = [(ID, xy[0], xy[1]) for ID, xy in zip(pop.gids, pop.positions)]
 gids_position = np.array(gids_position,dtype)
 gids_sorted = np.sort(gids_position,order=["x_","y_"])['ID']
-trans_gid = { gid: num+1 for num,gid in enumerate(gids_sorted)}
+trans_gid = {gid: num+1 for num, gid in enumerate(gids_sorted)}
 
-def positions_from_gid(gid,pop):
+def positions_from_gid(gid, pop):
     neuron = pop.get_gid(gid)[1][0]
-    x,y = neuron.position
-    return x,y
+    x, y = neuron.position
+    return x,  y
 
 cax = fig.add_axes([0.27, 0.8, 0.5, 0.05])
 
@@ -110,6 +117,7 @@ for neuron in pop:
 from matplotlib.colors import LogNorm
 import matplotlib
 import copy
+
 my_cmap = copy.copy(matplotlib.cm.get_cmap('viridis')) # copy the default cmap
 my_cmap.set_bad((0,0,0))
 bx1.hist2d(_x,_y,bins=100,

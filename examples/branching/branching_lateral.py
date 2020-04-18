@@ -147,9 +147,10 @@ if __name__ == '__main__':
     pop = ds.get_neurons()
     n = pop[0]
 
-    tree = n.axon.get_tree()
-    n.axon.plot_dendrogram(show=True)
+    # tree = n.axon.get_tree()
+    # n.axon.plot_dendrogram(show=True)
 
+    ds.plot.plot_dendrogram(n.axon, show=True)
     # ~ import neurom
     # ~ from neurom import viewer
     # ~ asym = []

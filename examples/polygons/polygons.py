@@ -50,7 +50,7 @@ Main parameters
 '''
 
 soma_radius = 8.
-num_neurons = 10
+num_neurons = 15
 
 #~ gc_model = 'persistent_random_walk'
 gc_model = 'run-and-tumble'
@@ -61,6 +61,10 @@ use_run_tumble = False
 neuron_params = {
     "dendrite_diameter": 3. * um,
     "axon_diameter": 4. * um,
+    "soma_radius": soma_radius * um,
+}
+
+axon_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp ,
@@ -72,12 +76,10 @@ neuron_params = {
     "persistence_length": 300. * um,
     "taper_rate": 1./4000., 
 
-    "soma_radius": soma_radius * um,
     'B': 3. * cpm,
     'T': 1000. * minute,
     'E': 1.,
 }
-
 
 dendrite_params = {
     "use_van_pelt": use_vp,
@@ -91,6 +93,7 @@ dendrite_params = {
     'E': 1.,
 }
 
+neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
 
 '''
 Simulation
@@ -130,11 +133,11 @@ if __name__ == '__main__':
     gids = ds.create_neurons(n=num_neurons,
                              # culture=culture,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=dendrite_params,
                              num_neurites=3)
     start = time.time()
-    for i in range(10):
-        step(2 * day, 0, True)
+    for i in range(1):
+        step(15 * day, 0, True)
 
     duration = time.time() - start
 
@@ -144,22 +147,32 @@ if __name__ == '__main__':
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "swc"))
     ds.io.save_json_info(filepath=save_path)
-    ds.io.save_to_swc(filename=save_path, swc_resolutio=10)
-    structure = ds.morphology.NeuronStructure()
-    graph = ds.morphology.generate_network(structure=structure)
+    file_name = "polygons.swc"
+    ds.io.save_to_swc(filename=save_path+".swc", gid=gids, resolution=10)
+    ds.io.save_to_neuroml("neurons.nml", gid=gids)
 
-    # ds.reset_kernel()
+    # Following graph generation code does not work, why ?
+    # print("\ngenerating graph\n")
+    # structure = ds.morphology.NeuronStructure()
+    # graph = ds.morphology.generate_network(structure=structure)
+    # graph.to_file("connections_graph.el")
 
-    ### Import population for network analysis
-    # ng_population = ds.SimulationsFromFolder(save_path)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # population = ds.SwcEnsemble.from_population(ng_population)
+    # nngt.plot.draw_network(graph,
+    #                        show_environment=False,
+    #                        colorbar=False, show=True)
+    # print("graph generated")
 
-    # intersection = ds.IntersectionsFromEnsemble(population)
-    # num_connections = np.sum([len(a) for a in intersection.values()])
-    # graph = ds.generate_network(population, intersection)
-    # #graph info
-    # nngt.plot.degree_distribution(graph, ['in', 'out', 'total'])
-    # nngt.plot.draw_network(graph, esize=0.1, show=True)
 
-    # print("duration", duration)
+    # With nngt
+    population = nngt.NeuralPop(with_models=False)
+    population.create_group(range(num_neurons), "All_neurons")
+    nngt.Graph.make_network(graph, population)
+
+    graph.to_file("connections_graph.el")
+
+    nngt.plot.draw_network(graph,
+                           show_environment=False,
+                           colorbar=False, show=True)
+
+    print("The graph has {} nodes and {} edges"
+          .format(graph.node_nb(), graph.edge_nb()))

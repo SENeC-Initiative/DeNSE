@@ -62,6 +62,8 @@ neuron_params = {
     "axon_diameter": 4. * um,
     "dendrite_diameter": 2.*um,
     "soma_radius": soma_radius * um,
+    "random_rotation_angles": False,
+    "neurite_angles": {"axon": 0.*deg, "dendrite_1": 180.*deg}
 }
 
 axon_params = {
@@ -74,7 +76,7 @@ axon_params = {
     "filopodia_finger_length": 7. * um,
     "filopodia_min_number": 30,
     "persistence_length": 300. * um,
-    "taper_rate": 1./4000., 
+    "taper_rate": 1./4000.,
     'B': 3. * cpm,
     'T': 1000. * minute,
     'E': 1.,
@@ -84,8 +86,8 @@ dendrite_params = {
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.01 * um / minute,
-    "filopodia_wall_affinity": 10. ,
-    "persistence_length" : 200. * um,
+    "filopodia_wall_affinity": 10.,
+    "persistence_length": 200. * um,
     "taper_rate": 3./250.,
     "B": 6. * cpm,
     "T": 1000. * minute,
@@ -108,6 +110,8 @@ def step(n, loop_n, plot=True):
 if __name__ == '__main__':
     num_omp = 10
     kernel = {
+        # For random simulations each time
+        # "seeds": np.random.randint(0, 100, num_omp),
         "seeds": range(10, 10+num_omp),
         "num_local_threads": num_omp,
         "resolution": 10. * minute,
@@ -147,10 +151,8 @@ if __name__ == '__main__':
 
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             num_neurites=2,
-                             random_rotation_angles=False,
-                             neurite_angles={"axon": 0.*deg,
-                                             "dendrite_1": 180.*deg})
+                             neurite_params=neurite_params,
+                             num_neurites=2)
 
     # print("Creating neurites")
 

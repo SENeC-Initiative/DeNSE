@@ -1,3 +1,8 @@
  
-From the /examples_ARCHIVES/brancing/ folder
-adapt the other branching examples
+ Put parameters that illustrate branching
+ 
+From the /examples_Deprecated/brancing/ folder
+put examples of the other branching types
+
+branching_lateral.py  
+correct plot_dendogram()

@@ -39,7 +39,7 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-num_neurons = 50
+num_neurons = 5
 
 # Simulation duration
 duration = 30  # in days
@@ -55,6 +55,10 @@ gc_model ="simple-random-walk"
 neuron_params = {
     "dendrite_diameter": 3. * um,
     "axon_diameter": 4. * um,
+    "soma_radius": soma_radius * um,
+}
+
+axon_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
@@ -66,7 +70,6 @@ neuron_params = {
     "persistence_length" : 500. * um, #600
     "taper_rate": 1./2000.,
 
-    "soma_radius": soma_radius * um,
     'B' : 10. * cpm,
     'T' : 10000. * minute,
     'E' : 0.7,
@@ -81,6 +84,7 @@ dendrite_params = {
     "taper_rate": 3./250.,
 }
 
+neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
 
 '''
 Check for optional parameters
@@ -104,10 +108,12 @@ if (neuron_params.get("growth_cone_model", "") ==
 Simulation
 '''
 
+
 def step(time, loop_n, plot=True):
     ds.simulate(time)
     if plot:
         ds.plot_neurons(show_nodes=True, show=True)
+
 
 if __name__ == '__main__':
     number_of_threads = 10
@@ -117,11 +123,7 @@ if __name__ == '__main__':
               "adaptive_timestep": -1.,
               "environment_required": True}
 
-    np.random.seed(12892) # seeds for the neuron positions
-    # ok pour 35 pas pour 40
-    #np.random.seed(21829)  # seeds for the neuron positions
-    # ok pour 40
-    #np.random.seed(118239)  # seeds for the neuron positions
+    np.random.seed(12892)  # seeds for the neuron positions
 
     culture_file = current_dir + "arches_3c.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
@@ -142,7 +144,7 @@ if __name__ == '__main__':
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=neurite_params,
                              num_neurites=2)
 
     ds.plot.plot_neurons(show=True)

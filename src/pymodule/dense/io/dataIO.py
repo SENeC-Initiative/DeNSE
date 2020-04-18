@@ -48,7 +48,7 @@ def save_json_info(filepath="default", gid=None):
     filepath is usually the simulation_ID.
     """
     if filepath == "default":
-        filepath =  _pg.get_simulation_id()
+        filepath = _pg.get_simulation_id()
     if not isdir(filepath):
         try:
             os.makedirs(filepath)
@@ -58,12 +58,12 @@ def save_json_info(filepath="default", gid=None):
     if gid is None:
         gid = _pg.get_neurons()
 
-    kernel  = _pg.get_kernel_status()
+    kernel = _pg.get_kernel_status()
     neurons = _pg.get_object_properties(gid)
 
     experiment_dict = {}
 
-    experiment_dict['kernel']  = kernel
+    experiment_dict['kernel'] = kernel
     experiment_dict['neurons'] = neurons
 
     # convert the quantities to strings
@@ -72,12 +72,17 @@ def save_json_info(filepath="default", gid=None):
     path = os.path.join(filepath, "info.json")
 
     with open(path, "w") as dumper:
-        json.dump(experiment_dict, dumper, sort_keys =True)
+        json.dump(experiment_dict, dumper, sort_keys=True)
 
 
 def save_to_neuroml(filename, gid=None, resolution=10):
     '''
     Save the morphology of each neuron to a single NeuroML file.
+
+    NeuroML is an XML (Extensible Markup Language) based model description
+    language that aims to provide a common data format for defining and
+    exchanging models in computational neuroscience.  It is focused on
+    biophysical and anatomical detailed models.
 
     Parameters
     ----------

@@ -45,6 +45,15 @@ def save_to_swc(filename, gid=None, resolution=10):
     '''
     Save neurons to SWC file.
 
+    SWC files are a common format used  to store neuron morphologies,
+    and are especially used to share digitally reconstructed neurons
+    using NeuroMorpho.org. The format was designed to store trees as
+    connected cylindrical segments to form the basis of compartmental
+    models.
+
+    (Alternatively DENsE is able to store neuron morphologies in 
+    the *neuroml* format using the dense.io.save_to_neuroml() method.)
+
     Parameters
     ----------
     filename : str

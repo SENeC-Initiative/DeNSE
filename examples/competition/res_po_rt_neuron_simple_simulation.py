@@ -22,13 +22,19 @@
 
 import dense as ds
 import numpy as np
+import matplotlib.pyplot as plt
 from dense.units import *
+
 
 '''
 Main parameters
 '''
 resolution = 1
-gc_model = "run_tumble_critical"
+#gc_model = "run_tumble_critical"
+gc_model = "res_po_rt"
+
+neuron_params = {}
+
 axon_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": True,
@@ -55,20 +61,47 @@ axon_params = {
     "T": 1000. * minute,
 }
 
+dendrite_params = {
+    "growth_cone_model": gc_model,
+    "use_van_pelt": True,
+
+    "persistence_length": 50.0 * um,
+
+    # Cr model
+    "res_retraction_factor": 0.010 * um / minute,
+    "res_elongation_factor": 0.30 * um / minute,
+    # "res_weight": -.0,
+    "res_retraction_threshold": 0.10 * uM,
+    "res_elongation_threshold": 0.3 * uM,
+    # "res_split_th": 0.80,
+    "res_neurite_generated": 2500. * uM,
+    "res_neurite_delivery_tau": 50. * minute,
+    "res_correlation": 0.4,
+    "res_variance": 0.04 * uM / minute ** 0.5,
+    "res_use_ratio": 1. * cpm,
+
+    # Best model
+    "B": 40. * cpm,
+    "E": 0.6,
+    "S": 1.,
+    "T": 1000. * minute,
+}
+neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+
 '''
 Analysis
 '''
 
 
 def step(n, loop_n, save_path, plot=True):
-    ds.Simulate(n)
+    ds.simulate(n)
     if plot:
         if save_path is False:
-            ds.PlotNeuron(
-                show_nodes=True)
+            ds.plot.plot_neurons(show_nodes=True)
         else:
-            ds.PlotNeuron(
+            ds.plot.plot_neurons(
                 show_nodes=False, save_path=save_path)
+
 
 def run_dense(neuron_params):
     """
@@ -76,24 +109,30 @@ def run_dense(neuron_params):
 
     #~ np.random.seed(kernel['seeds'])
     kernel["resolution"] = resolution * minute
-    ds.SetKernelStatus(kernel, simulation_ID="case_neuron")
-    neuron_params = {}
+    ds.set_kernel_status(kernel, simulation_id="case_neuron")
+
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (1, 2)) * um
 
-    gid = ds.CreateNeurons(n=1,
-                           params=neuron_params,
-                           axon_params=axon_params,
-                           num_neurites=1,
-                           )
-    rec = ds.CreateRecorders(gid, ["resource"], levels="growth_cone")
+    gid = ds.create_neurons(n=1,
+                            params=neuron_params,
+                            neurite_params=neurite_params,
+                            num_neurites=2,
+                            )
+#    rec = ds.create_recorders(gid, ["length"], levels="growth_cone")
+    rec = ds.create_recorders(gid, ["resource"], levels="growth_cone")
+#    rec = ds.create_recorders(gid, ["resource"], levels="growth_cone")
 
-    step(3000. / resolution * minute, 1, False, True)
-    step(3000. / resolution * minute, 1, False, True)
+# ONLY FIRST STEP WORKS
+    step(6000 * minute, 1, False, True)
+# THIS ONE REMAINS STUCKED
+    step(6000. * minute, 1, False, True)
+    step(3000. * minute, 1, False, True)
 
-    ds.plot.PlotRecording(rec, show=False)
+# RECORDER DOES NOT WORK, CHECK
+    ds.plot.plot_recording(rec, show=False)
 
-    swc_file = ds.GetSimulationID()
+    swc_file = ds.get_simulation_id()
     return swc_file
 
 
@@ -106,7 +145,6 @@ if __name__ == '__main__':
         "environment_required": False
     }
 
-    swc_file = run_dense()
-    import matplotlib.pyplot as plt
+    swc_file = run_dense(neuron_params)
 
     plt.show()

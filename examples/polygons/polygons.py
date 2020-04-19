@@ -153,17 +153,9 @@ if __name__ == '__main__':
 
     # Following graph generation code does not work, why ?
     # print("\ngenerating graph\n")
-    # structure = ds.morphology.NeuronStructure()
-    # graph = ds.morphology.generate_network(structure=structure)
-    # graph.to_file("connections_graph.el")
+    structure = ds.morphology.NeuronStructure()
+    graph = ds.morphology.generate_network(structure=structure)
 
-    # nngt.plot.draw_network(graph,
-    #                        show_environment=False,
-    #                        colorbar=False, show=True)
-    # print("graph generated")
-
-
-    # With nngt
     population = nngt.NeuralPop(with_models=False)
     population.create_group(range(num_neurons), "All_neurons")
     nngt.Graph.make_network(graph, population)

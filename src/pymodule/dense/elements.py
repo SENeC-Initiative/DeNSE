@@ -141,10 +141,13 @@ class Neuron(object):
         '''
         Return the :class:`~dense.elements.Neurite` container for the axon.
         '''
-        if self._axon is None and self._in_simulator:
+        if self._in_simulator:
             neurites = _pg._get_neurites(self)
-            if "axon" in neurites:
+            has_axon = "axon" in neurites
+            if has_axon and self._axon is None:
                 self._axon = Neurite(None, "axon", name="axon", parent=self)
+            elif not has_axon:
+                self._axon = None
 
         return self._axon
 
@@ -160,7 +163,7 @@ class Neuron(object):
             if set_dend != set(self._dendrites.keys()):
                 dendrites = {}
 
-                for name in neurites:
+                for name in set_dend:
                     dendrites[name] = Neurite(
                         None, "dendrite", name=name, parent=self)
 
@@ -219,6 +222,9 @@ class Neuron(object):
         _pg.create_neurites(self, num_neurites=num_neurites, params=params,
                             angles=angles, names=names)
 
+        # update _axon and _dendrites
+        names = list(params) if names is None else names
+
         for name in names:
             if name == "axon":
                 self._axon = Neurite(None, "axon", name="axon", parent=self)
@@ -247,7 +253,7 @@ class Neuron(object):
         for name in neurite_names:
             if name == "axon":
                 self._axon = None
-            else:
+            elif name in self._dendrites:
                 del self._dendrites[name]
 
     def get_neurite(self, neurite):

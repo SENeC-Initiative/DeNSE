@@ -127,7 +127,7 @@ def test_delete_neurites():
         assert len(n.neurites) == 1, \
             "Failed with state " + str(initial_state)
 
-    ds.create_neurites(neurons[0], neurite_types="axon")
+    ds.create_neurites(neurons[0], names="axon")
 
     assert neurons[0].has_axon, \
         "Failed with state " + str(initial_state)

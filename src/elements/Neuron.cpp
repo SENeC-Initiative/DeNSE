@@ -314,6 +314,15 @@ void Neuron::init_status(
 }
 
 
+void Neuron::update_angles(const std::unordered_map<std::string, double> &angles)
+{
+    for (auto entry : angles)
+    {
+        neurite_angles_[entry.first] = rnd_angle_ + entry.second;
+    }
+}
+
+
 void Neuron::initialize_next_event(mtPtr rnd_engine)
 {
     if (use_actin_waves_ and next_actin_event_ == 0)

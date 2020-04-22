@@ -81,6 +81,9 @@ class Neuron(object):
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
+        if attribute in self.dendrites:
+            return self.dendrites[attribute]
+
         ndict = _pg.get_object_properties(self, level="neuron")
 
         if attribute in ndict:
@@ -118,11 +121,13 @@ class Neuron(object):
         Return a dict containing one :class:`~dense.elements.Neurite` container
         for each dendrite, with its name as key.
         '''
-        neurites = [k for k in _pg._get_neurites(self) if k != "axon"]
+        neurites  = [k for k in _pg._get_neurites(self) if k != "axon"]
         dendrites = {}
+
         for name in neurites:
             dendrites[name] = Neurite(
                 None, "dendrite", name=name, parent=self)
+
         return dendrites
 
     @property
@@ -132,8 +137,10 @@ class Neuron(object):
         for each neurite, with its name as key.
         '''
         neurites = self.dendrites
+
         if self.axon is not None:
             neurites[self.axon.name] = self.axon
+
         return neurites
 
     @property
@@ -142,9 +149,13 @@ class Neuron(object):
         return _pg.get_object_state(self, observable="length")
 
     def create_neurites(self, num_neurites=1, params=None, angles=None,
-                        neurite_types=None, names=None):
+                        names=None):
         '''
         Create new neurites.
+
+        Neurite types (axon or dendrite) are based on the neurite names: axon
+        must always be named "axon", all other names will be associated to a
+        dendrite.
 
         Parameters
         ----------
@@ -154,21 +165,18 @@ class Neuron(object):
             Parameters of the neurites.
         angle : list, optional (default: automatically positioned)
             Angles of the newly created neurites.
-        neurite_types : str or list, optional
-            Types of the neurites, either "axon" or "dendrite". If not provided,
-            the first neurite will be an axon if the neuron has no existing
-            neurites and its `has_axon` variable is True, all other neurites
-            will be dendrites.
         names : str or list, optional (default: "axon" and "dendrite_X")
-            Names of the created neurites.
+            Names of the created neurites, if not provided, will an "axon" or
+            a dendrite with default name "dendrite_X" (X being a number) will be
+            created, depending on whether the neuron is supposed to have an axon
+            or not, and depending on the number of pre-existing neurites.
 
         See also
         --------
         :func:`~dense.create_neurites`.
         '''
-        _pg.create_neurites(self, num_neurites=num_neurites,
-                            params=params, angles=angles,
-                            neurite_types=neurite_types, names=names)
+        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
+                            angles=angles, names=names)
 
     def delete_neurites(self, neurite_names=None):
         '''

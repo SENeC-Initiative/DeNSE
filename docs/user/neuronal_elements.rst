@@ -63,11 +63,14 @@ provide a value to the ``num_neurites`` argument (by default 0) in order to
 create the neurites directly.
 
 In |name|, the neurites are directly created with a specific type (either axon
-or dendrite); the types of the newly created neurites depend on the parameter
-``has_axon``, which determines whether the neuron has an `axon` or only
-dendrites. If ``has_axon`` is ``True``, then the first neurite created is an
-axon, while all subsequent neurites are dendrites. Otherwise, only dendrites
-are created. In that second case, if a network is created containing this
+or dendrite).
+The types of the newly created neurites depend on the parameter ``has_axon``,
+which determines whether the neuron has an `axon` or only dendrites and on the
+name of the neurite.
+If ``has_axon`` is ``True``, then naming a neurite "axon" is authorized and
+will create an axon, while any other name will be associated to a dendrite.
+If ``has_axon`` is ``False``, only dendrites are created.
+In that second case, if a network is created containing this
 neuron, the corresponding node in the generated network will only have
 incoming edges.
 
@@ -76,9 +79,10 @@ automatically as ``("axon", "dendrite_1", "dendrite_2", ...)`` or be user
 defined (except for the axon, which must always be named ``"axon"``).
 Custom names for neurites can be provided through the following methods:
 
-1. via the `neurite_names` entry (especially useful if no specific
-   parameters are provided),
-2. directly as entries in the `neurite_params` dictionary containing the
+1. via the `neurite_names` entry for :func:`~dense.create_neurites` (especially
+   useful if no specific parameters are provided), or directly as `names`
+   when using the :meth:`~dense.elements.Neuron.create_neurites` method.
+2. directly as keys in the `neurite_params`/`params` dictionary containing the
    specific parameters for each neurite.
 
 These two methods are shown below:
@@ -92,19 +96,20 @@ For more details, see the `example file <https://github.com/SENeC-Initiative/DeN
 
 Optionally, neurites can also be created after the neuron's creation, using the
 :func:`~dense.create_neurites` function or calling the
-:func:`~dense.elements.Neuron.create_neurites` method of the
+:meth:`~dense.elements.Neuron.create_neurites` method of the
 :class:`~dense.elements.Neuron`.
 
 The neurites created that way will emerge from the neuron with angles that can
 be constrained in two different ways:
 
-1. Using ``neurite_angles`` to explicitly set the angles of the dendrites and
-   axon relative to the horizontal. E.g.
-   ``{neurite_angles": {"axon": 15, "dendrite_1": 60, "dendrite_2": 180}``.
+1. Using ``neurite_angles`` in the neuron parameter dictionary to explicitly
+   set the angles of the dendrites and axon relative to the horizontal. E.g.
+   ``{"neurite_angles": {"axon": 15, "dendrite_1": 60, "dendrite_2": 180}``.
    This parameter can only be used upon neuron creation through the
    :func:`~dense.create_neurons` function.
    Otherwise, the neurite angle can also be set directly using the
-   :func:`~dense.create_neurites` function after neuron creation.
+   :func:`~dense.create_neurites` function after neuron creation or via
+   ``angles`` in :meth:`~dense.elements.Neuron.create_neurites`.
    This parameter can be combined with `random_rotation_angles``.
    When set to `True`, this wil randomly rotate the neurites as a block,
    preserving their relative angles.
@@ -128,6 +133,14 @@ be constrained in two different ways:
      somewhere in the middle through the following formula:
      :math:`\theta = \theta_m + \Delta\theta_m \left(\frac{1}{2} + \frac{2\chi - 1}{2 s_p}\right)`
      with :math:`\chi` a uniform random variable on [0, 1].
+
+
+Examples:
+
+.. literalinclude:: ../../examples/tutorials/named_neurites.py
+    :linenos:
+    :language: python
+    :lines: 131-141
 
 
 .. note::
@@ -172,13 +185,19 @@ Properties of a neurite (axon or dendrites) are specific to this neurite, unlike
 those set using the neuronal parameters. They govern the growth process and the
 branching mechanisms of the neurite of interest.
 
-**Note : generic neurite properties both for dendrites' and axon's growth (see growth_model) can be assigned once as neuron parameters. These general settings can be overruled by the specific settings of dendrites' and axon's properties.**
+.. note ::
+
+    Generic neurite properties both for dendrites' and axon's growth (see
+    :ref:`pymodels`) can be assigned once as neuron parameters.
+    These general settings can be overruled by the specific settings of
+    dendrites' and axon's properties.
 
 Getting and setting properties
 ------------------------------
 
 All the properties described here can be set with
-:func:`~dense.set_object_properties` through the ``axon_params`` or ``dendrites_params`` dictionaries, or directly on the
+:func:`~dense.set_object_properties` through the ``axon_params`` or
+``dendrites_params`` dictionaries, or directly on the
 :class:`~dense.elements.Neurite` object through its
 :func:`~dense.elements.Neurite.set_properties`
 Some neurite-specific properties which are independent of the specific

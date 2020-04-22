@@ -50,7 +50,7 @@ max_y = 132 # set here same aspect ratio  X , Y as size of environment
 culture_file = current_dir + "/angle40.svg"
 
 neuron_params = {
-    "growth_cone_model": 'run-and-tumble'
+    "growth_cone_model": 'run-and-tumble',
     "axon_angle": 0.*deg,
     "use_uniform_branching": False,
     "taper_rate": 4./700.,

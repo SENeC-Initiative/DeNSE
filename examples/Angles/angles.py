@@ -130,11 +130,20 @@ if __name__ == '__main__':
     max_y = 580  # set here same aspect ratio  X , Y as size of environment
     #  in the svg file
 
-    culture_file = current_dir + "angles5.svg"
+    culture_file = current_dir + "angles_NO.svg"
+    # culture_file = current_dir + "angles0.svg"
+    # culture_file = current_dir + "angles5.svg"
+    # culture_file = current_dir + "angles10.svg"
+    # culture_file = current_dir + "angles20.svg"
+    # culture_file = current_dir + "angles30.svg"
+    # culture_file = current_dir + "angles40.svg"
+    # culture_file = current_dir + "angles50.svg"
+    # culture_file = current_dir + "angles60.svg"
+    # culture_file = current_dir + "angles70.svg"
+    # culture_file = current_dir + "angles80.svg"
+    # culture_file = current_dir + "angles90.svg"
 
-    #culture_file = current_dir + "Arches20reduced_thick-Tanguy.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
-#ds.set_kernel_status({"interactions": False})
 
     gids, culture = None, None
     print(ds.get_kernel_status("num_local_threads"))

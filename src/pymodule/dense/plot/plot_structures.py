@@ -321,7 +321,6 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         xbins = int((np.max(x) - np.min(x)) / dstep)
         ybins = int((np.max(y) - np.min(y)) / dstep)
 
-
         dstep = int(dstep)
         counts, xbins, ybins = np.histogram2d(
                                               x, y, bins=(dstep, dstep),
@@ -406,8 +405,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 # --------------- #
 
 def plot_dendrogram(neurite, axis=None, show_node_id=False,
-                     aspect_ratio=None, vertical_diam_frac=0.2,
-                     ignore_diameter=False, show=True, **kwargs):
+                    aspect_ratio=None, vertical_diam_frac=0.2,
+                    ignore_diameter=False, show=True, **kwargs):
     '''
     Plot the dendrogram of a neurite.
 
@@ -430,6 +429,14 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
         Plot all the branches with the same width.
     **kwargs : arguments for :class:`matplotlib.patches.Rectangle`
         For instance `facecolor` or `edgecolor`.
+
+    Returns
+    -------
+    The axis on which the plot was done.
+
+    See also
+    --------
+    :func:`~dense.elements.Neurite.plot_dendrogram`
     '''
     import matplotlib.pyplot as plt
 
@@ -654,13 +661,16 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
     if show:
         plt.show()
 
+    return axis
+
+
 # ---------------- #
 # Plot environment #
 # ---------------- #
 
 def plot_environment(culture=None, title='Environment', ax=None, m='',
-                    mc="#999999", fc="#ccccff", ec="#444444", alpha=0.5,
-                    brightness="height", show=True, **kwargs):
+                     mc="#999999", fc="#ccccff", ec="#444444", alpha=0.5,
+                     brightness="height", show=True, **kwargs):
     '''
     Plot the environment in which the neurons grow.
 

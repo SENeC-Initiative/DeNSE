@@ -161,6 +161,9 @@ stype NeuronManager::create_neurons(
             {
                 neuron->init_status(neuron_params[idx], neurite_status,
                                     rnd_engine);
+
+                // inside try to avoid pushing invalid neurons
+                local_neurons.push_back(neuron);
             }
             catch (const std::exception &except)
             {
@@ -168,16 +171,20 @@ stype NeuronManager::create_neurons(
                     captured_exception = std::current_exception();
                 });
             }
-
-            local_neurons.push_back(neuron);
         }
+
+#pragma omp barrier
 
 #pragma omp critical
         {
-            for (stype i = 0; i < gids.size(); i++)
+            // add neurons only if no error occured
+            if (captured_exception == nullptr)
             {
-                neurons_.insert({gids[i], local_neurons[i]});
-                neurons_on_thread_[omp_id].push_back(local_neurons[i]);
+                for (stype i = 0; i < gids.size(); i++)
+                {
+                    neurons_.insert({gids[i], local_neurons[i]});
+                    neurons_on_thread_[omp_id].push_back(local_neurons[i]);
+                }
             }
         }
     }
@@ -191,6 +198,7 @@ stype NeuronManager::create_neurons(
 
     // tell the kernel manager to update the number of objects
     stype num_created = neurons_.size() - previous_num_neurons;
+
     kernel().update_num_objects(num_created);
 
     return num_created;

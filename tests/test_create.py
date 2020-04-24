@@ -45,5 +45,90 @@ def test_create():
     assert not neuron.neurites
 
 
+def test_create_neurites_one_neuron():
+    '''
+    Detailed neurite creation for a single neuron
+    '''
+    ds.reset_kernel()
+
+    # with one neuron, create neurites, all named
+    neuron = ds.create_neurons()
+
+    neurite_params = {
+        "axon": {"speed_growth_cone": 0.1*um/minute},
+        "dendrite1": {"speed_growth_cone": 0.02*um/minute},
+        "dendrite2": {"speed_growth_cone": 0.03*um/minute}
+    }
+
+    neuron.create_neurites(num_neurites=3, params=neurite_params)
+
+    assert len(neuron.neurites) == 3
+    assert set(neuron.dendrites.keys()) == {"dendrite1", "dendrite2"}
+    assert neuron.axon.speed_growth_cone == 0.1*um/minute
+    assert neuron.dendrite1.speed_growth_cone == 0.02*um/minute
+    assert neuron.dendrite2.speed_growth_cone == 0.03*um/minute
+
+    # with one neuron, create neurites using "dendrites" and names
+    neuron = ds.create_neurons()
+
+    neurite_params = {
+        "axon": {"speed_growth_cone": 0.1*um/minute},
+        "dendrites": {"speed_growth_cone": 0.0256*um/minute}
+    }
+
+    neuron.create_neurites(num_neurites=3, params=neurite_params,
+                           names=["axon", "d1", "d2"])
+
+    assert set(neuron.neurites.keys()) == {"axon", "d1", "d2"}
+    assert neuron.axon.speed_growth_cone == 0.1*um/minute
+
+    for dendrite in neuron.dendrites.values():
+        assert dendrite.speed_growth_cone == 0.0256*um/minute
+
+    # with one neuron, create neurites with all same parameters and names
+    neuron = ds.create_neurons()
+
+    neurite_params = {"speed_growth_cone": 0.0236*um/minute}
+
+    neuron.create_neurites(num_neurites=3, params=neurite_params,
+                           names=["axon", "dend1", "dend2"])
+
+    assert set(neuron.neurites.keys()) == {"axon", "dend1", "dend2"}
+    for neurite in neuron.neurites.values():
+        assert neurite.speed_growth_cone == 0.0236*um/minute
+
+
+def test_create_neurites_many_neurons():
+    '''
+    Detailed neurite creation for many neurons
+    '''
+    ds.reset_kernel()
+
+    # with two neurons, create neurites, all named
+    neurons = ds.create_neurons(2)
+
+    neurite_params = {
+        "axon": {"speed_growth_cone": [0.1, 0.095]*um/minute},
+        "d1": {"speed_growth_cone": [0.02, 0.021]*um/minute},
+        "d2": {"speed_growth_cone": [0.03, 0.029]*um/minute}
+    }
+
+    ds.create_neurites(neurons, num_neurites=3, params=neurite_params)
+
+    for neuron in neurons:
+        assert set(neuron.neurites.keys()) == {"axon", "d1", "d2"}
+
+    assert neurons[0].axon.speed_growth_cone == 0.1*um/minute
+    assert neurons[1].axon.speed_growth_cone == 0.095*um/minute
+
+    assert neurons[0].d1.speed_growth_cone == 0.02*um/minute
+    assert neurons[1].d1.speed_growth_cone == 0.021*um/minute
+
+    assert neurons[0].d2.speed_growth_cone == 0.03*um/minute
+    assert neurons[1].d2.speed_growth_cone == 0.029*um/minute
+
+
 if __name__ == "__main__":
     test_create()
+    test_create_neurites_one_neuron()
+    test_create_neurites_many_neurons()

@@ -71,8 +71,21 @@ def test_elements():
     for obs in neuron.get_properties("observables"):
         neuron.get_state(obs)
 
-    neuron.create_neurites()
+    # cannot create existing neurite
+    failed = False
+
+    try:
+        neuron.create_neurites(names="dendrite_1")
+    except:
+        failed = True
+
+    assert failed
+
+    neuron.create_neurites(names="dendrite_2")
+
     neuron.delete_neurites("dendrite_1")
+
+    neuron.create_neurites(names="dendrite_1")
 
     # test neurite
     neuron.axon.get_properties()

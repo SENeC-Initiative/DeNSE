@@ -104,12 +104,11 @@ cdef extern from "../module.hpp" namespace "growth":
         const vector[statusMap]& neuron_params,
         const unordered_map[string, vector[statusMap]]& neurite_params) except +
 
-    cdef void create_neurites_(const vector[stype]& neurons,
-                               stype num_neurites,
-                               const vector[statusMap]& params,
-                               const vector[string]& neurite_types,
-                               const vector[double]& angles,
-                               const vector[string]& names) except +
+    cdef void create_neurites_(
+        const vector[stype]& neurons, stype num_neurites,
+        const unordered_map[string, vector[statusMap]]& params,
+        const vector[string]& names,
+        const unordered_map[string, double]& angles) except +
 
     cdef void delete_neurons_(const vector[stype] &neurons) except +
 
@@ -206,6 +205,8 @@ cdef extern from "../module.hpp" namespace "growth":
                              const string& time_units) except +
 
     cdef string object_type_(stype gid) except +
+
+    cdef bool neuron_has_axon_(stype gid) except +
 
     cdef void reset_kernel_() except +
 

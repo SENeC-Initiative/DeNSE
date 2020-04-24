@@ -37,7 +37,7 @@ from dense.units import *
 n = ds.create_neurons()
 
 # adding neurites
-n.create_neurites(2)
+n.create_neurites(2, names=["axon", "dendrite_1"])
 
 
 ''' Access the neurites and set the parameters '''

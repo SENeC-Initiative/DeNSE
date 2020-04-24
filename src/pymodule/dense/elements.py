@@ -81,6 +81,9 @@ class Neuron(object):
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
+        if attribute in self.dendrites:
+            return self.dendrites[attribute]
+
         ndict = _pg.get_object_properties(self, level="neuron")
 
         if attribute in ndict:
@@ -118,11 +121,13 @@ class Neuron(object):
         Return a dict containing one :class:`~dense.elements.Neurite` container
         for each dendrite, with its name as key.
         '''
-        neurites = [k for k in _pg._get_neurites(self) if k != "axon"]
+        neurites  = [k for k in _pg._get_neurites(self) if k != "axon"]
         dendrites = {}
+
         for name in neurites:
             dendrites[name] = Neurite(
                 None, "dendrite", name=name, parent=self)
+
         return dendrites
 
     @property
@@ -132,8 +137,10 @@ class Neuron(object):
         for each neurite, with its name as key.
         '''
         neurites = self.dendrites
+
         if self.axon is not None:
             neurites[self.axon.name] = self.axon
+
         return neurites
 
     @property
@@ -142,9 +149,13 @@ class Neuron(object):
         return _pg.get_object_state(self, observable="length")
 
     def create_neurites(self, num_neurites=1, params=None, angles=None,
-                        neurite_types=None, names=None):
+                        names=None):
         '''
         Create new neurites.
+
+        Neurite types (axon or dendrite) are based on the neurite names: axon
+        must always be named "axon", all other names will be associated to a
+        dendrite.
 
         Parameters
         ----------
@@ -154,21 +165,18 @@ class Neuron(object):
             Parameters of the neurites.
         angle : list, optional (default: automatically positioned)
             Angles of the newly created neurites.
-        neurite_types : str or list, optional
-            Types of the neurites, either "axon" or "dendrite". If not provided,
-            the first neurite will be an axon if the neuron has no existing
-            neurites and its `has_axon` variable is True, all other neurites
-            will be dendrites.
         names : str or list, optional (default: "axon" and "dendrite_X")
-            Names of the created neurites.
+            Names of the created neurites, if not provided, will an "axon" or
+            a dendrite with default name "dendrite_X" (X being a number) will be
+            created, depending on whether the neuron is supposed to have an axon
+            or not, and depending on the number of pre-existing neurites.
 
         See also
         --------
         :func:`~dense.create_neurites`.
         '''
-        _pg.create_neurites(self, num_neurites=num_neurites,
-                            params=params, angles=angles,
-                            neurite_types=neurite_types, names=names)
+        _pg.create_neurites(self, num_neurites=num_neurites, params=params,
+                            angles=angles, names=names)
 
     def delete_neurites(self, neurite_names=None):
         '''
@@ -630,6 +638,48 @@ class Neurite(object):
         return _pg.set_neurite_properties(
             self._parent, self, params=params)
 
+    def plot_dendrogram(self, axis=None, show_node_id=False,
+                        aspect_ratio=None, vertical_diam_frac=0.2,
+                        ignore_diameter=False, show=True, **kwargs):
+        '''
+        Plot the dendrogram of a neurite.
+
+        Parameters
+        ----------
+        neurite : :class:`~dense.elements.Neurite` object
+            Neurite for which the dendrogram should be plotted.
+        axis : matplotlib.Axes.axis object, optional (default: new one)
+            Axis on which the dendrogram should be plotted.
+        show_node_id : bool, optional (default: False)
+            Display each node number on the branching points.
+        aspect_ratio : float, optional (default: variable)
+            Whether to use a fixed aspect ratio. Automatically set to 1 if
+            `show_node_id` is True.
+        vertical_diam_frac : float, optional (default: 0.2)
+            Fraction of the vertical spacing taken by the branch diameter.
+        ignore_diameter : bool, optional (default: False)
+            Plot all the branches with the same width.
+        show : bool, optional (default: True)
+            Whether the figure should be shown right away.
+        **kwargs : arguments for :class:`matplotlib.patches.Rectangle`
+            For instance `facecolor` or `edgecolor`.
+
+        Returns
+        -------
+        The axis on which the plot was done.
+
+        See also
+        --------
+        :func:`~dense.plot.plot_dendrogram`
+        '''
+        from .plot import plot_dendrogram
+
+        return plot_dendrogram(self, axis=axis, show_node_id=show_node_id,
+                               aspect_ratio=aspect_ratio,
+                               vertical_diam_frac=vertical_diam_frac,
+                               ignore_diameter=ignore_diameter, show=show,
+                               **kwargs)
+
     def _update_branches(self):
         cneurite          = _pg._to_bytes(str(self))
         self._branches    = []
@@ -797,17 +847,6 @@ class Tree(dict):
         neuron  = nmNeuron(soma, [neurite], [sections])
 
         return neuron
-
-    def show_dendrogram(self, **kwargs):
-        '''
-        Make and display the dendrogram.
-
-        See also
-        --------
-        Plotting arguments are the same as :func:`dense.plot.plot_dendrogram`.
-        '''
-        from .plot import plot_dendrogram
-        plot_dendrogram(self, **kwargs)
 
     def _cleanup(self):
         '''

@@ -189,9 +189,9 @@ void ParallelismManager::set_status(const statusMap &status)
 
 void ParallelismManager::get_status(statusMap &status) const
 {
-    set_param(status, "num_mpi_processes", num_mpi_, "");
+    // set_param(status, "num_mpi_processes", num_mpi_, "");
+    // set_param(status, "num_virtual_processes", num_omp_ * num_mpi_, "");
     set_param(status, "num_local_threads", num_omp_, "");
-    set_param(status, "num_virtual_processes", num_omp_ * num_mpi_, "");
 }
 
 } // namespace growth

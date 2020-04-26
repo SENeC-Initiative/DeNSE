@@ -227,6 +227,75 @@ Which leads to the following structure:
 .. image:: ./images/neurons_in_square.png
 
 
+Other Examples
+==============
+
+The ../examples folder contains a collections of different applications cases illustrating DeNSE functions.
+
+Models
+------
+
+../../examples/models
+Contains examples concerning growth models
+
+../../examples/models/neurons
+Contains a collections of DeNSE models built to generate various neuronal shapes : pyramidal cells, Purkinje cells, multipolar cells, chandelier cells, starbus amacrine, etc... The models were hand tuned for a qualitative resemblance with the corresponding cell types.
+
+../../examples/models/competition
+Illustrates competition based elongation models
+
+../../examples/models/branching
+Shows codes to explore the branching models
+
+
+../../examples/models/random_walks
+Contains a code to run successively different simulations with different persistence lengths for a random walk base growth cone model.
+
+
+Space Embedding
+----------------
+../../space_embedding
+Contains examples to make neurons grow in spatially bounded regions
+
+../../examples/space_embedding/polygons
+Shows an example of multiple neurons growing in a space limited region containing obstacles. The connectivity network is generated at the end of the simulation.
+
+../../examples/space_embedding/patterns
+Illustrates growing of neurons in a complex geometry.
+
+../../examples/space_embedding/ordered_neurons
+Shows a code to generate neurons placed at precise locations and with controlled initial orientation of dendrites
+
+../../examples/space_embedding/droplets
+Shows a code to generate a neuronal network in a complex geometry
+
+
+Multiple chambers
+----------------
+Special case of Space Embedding, here the culture is made of different growth chambers in communication through channels of different shapes
+
+
+
+Growth Studies
+--------------
+Different applications how to study network growth
+
+../../examples/growth_studies/turning_angles
+Neurons arrive on an obstacle with different inclination
+
+../../examples/growth_studies/turning_walls_exp
+Neurons arrive in a chamber with different angles of the opening funnel
+
+../../examples/growth_studies/recorders
+Shows the usage of recorders
+
+Older examples
+--------------
+Old examples with deprecated DeNSE syntax can be found in ../../examples_DEPRECATED. Maintained here for documentation purpose and future development.
+
+../../examples/TODO_examples
+Examples currently under rewriting
+
 Complex structures
 ==================
 

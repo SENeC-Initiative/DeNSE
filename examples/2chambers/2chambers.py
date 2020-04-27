@@ -66,8 +66,6 @@ use_run_tumble = False
 gc_model = 'run-and-tumble'
 
 neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
@@ -86,12 +84,17 @@ neuron_params = {
 }
 
 dendrite_params = {
+    "initial_diameter": 3. * um,
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,
     "taper_rate": 3./250.,
+}
+
+neurite_params = {
+    "axon": {"initial_diameter": 4. * um}, "dendrite": dendrite_params
 }
 
 
@@ -155,7 +158,7 @@ if __name__ == '__main__':
 
     print("Creating neurons")
     gids = ds.create_neurons(n=200, culture=culture, params=neuron_params,
-                            dendrites_params=dendrite_params, num_neurites=2)
+                            neurite_params=dendrite_params, num_neurites=2)
 
     start = time.time()
     fig, ax = plt.subplots()

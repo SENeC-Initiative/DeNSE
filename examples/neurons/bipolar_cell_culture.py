@@ -37,8 +37,6 @@ num_neurons = 1
 filename    = "bipolar-cell.swc"
 
 bip_nrn = {
-    "dendrite_diameter": 2.,
-    "axon_diameter": 3.,
     "description": "bipolar cell",
     "soma_radius": 8.,
     "position": [(0., 0.)]
@@ -49,6 +47,7 @@ bip_nrn = {
 # initial period (first 5 days)
 
 bip_axon_i = {
+    "initial_diameter": 3.,
     "persistence_length": 500.,
     "speed_growth_cone": 0.03,
     # diameter
@@ -62,6 +61,7 @@ bip_axon_i = {
 }
 
 bip_dend_i = {
+    "initial_diameter": 2.,
     "persistence_length": 250.,
     "speed_growth_cone": 0.01,
     "thinning_ratio": 1./300.,

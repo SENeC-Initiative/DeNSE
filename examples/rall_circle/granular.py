@@ -36,12 +36,9 @@ num_neurons = 15
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
-
-
     "filopodia_min_number": 30,
     "speed_growth_cone": 1.,
     "sensing_angle": 0.1495,
-    # "dendrite_diameter":20.,
 
 }
 

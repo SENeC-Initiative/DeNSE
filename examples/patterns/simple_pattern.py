@@ -50,13 +50,13 @@ neuron_params = {
     "filopodia_wall_affinity": 0.01,
     "filopodia_finger_length": 10. * um,
     "filopodia_min_number": 15,
-    "speed_growth_cone": 0.25 * um/minute,
-    "persistence_length": 200. * um,
     "soma_radius": soma_radius,
     "retraction_probability": 0.1,
-    "axon_diameter": 2.*um,
-    "dendrite_diameter": 2.*um,
     "affinity_axon_axon_other_neuron": 100.,
+}
+
+axon_params = {
+    "initial_diameter": 2.*um,
 }
 
 dendrite_params = {
@@ -66,7 +66,10 @@ dendrite_params = {
     "speed_growth_cone": 0.1*um/minute,
     "filopodia_wall_affinity": 0.01,
     "persistence_length" : 100. * um,
+    "initial_diameter": 2.*um,
 }
+
+neurite_params={"axon": axon_params, "dendrites": dendrite_params}
 
 
 '''
@@ -92,12 +95,14 @@ if __name__ == '__main__':
 
     gids = ds.create_neurons(n=int(0.8*num_neurons), culture=interior,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=neurite_params,
+                             neurite_names=["axon", "dendrite_1", "dendrite_2"],
                              num_neurites=3)
 
     gids = ds.create_neurons(n=int(0.2*num_neurons), culture=exterior,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=neurite_params,
+                             neurite_names=["axon", "dendrite_1", "dendrite_2"],
                              num_neurites=3)
 
     for i in range(2):

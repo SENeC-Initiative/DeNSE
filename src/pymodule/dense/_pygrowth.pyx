@@ -763,6 +763,7 @@ def get_kernel_status(property_name=None):
     '''
     cdef:
         statusMap c_status = get_kernel_status_()
+
     if property_name is None:
         return _statusMap_to_dict(c_status, with_time=True)
     elif property_name == "time":
@@ -771,9 +772,9 @@ def get_kernel_status(property_name=None):
             dict_time[unit] = _property_to_val(
                 c_status[_to_bytes(unit)]).magnitude
         return Time(**dict_time)
-    else:
-        property_name = _to_bytes(property_name)
-        return _property_to_val(c_status[property_name])
+
+    property_name = _to_bytes(property_name)
+    return _property_to_val(c_status[property_name])
 
 
 def get_simulation_id():
@@ -1446,45 +1447,25 @@ def set_kernel_status(status, value=None, simulation_id=None):
         string c_simulation_id = _to_bytes(simulation_id)
 
     internal_status = deepcopy(status)
+    old_status      = _statusMap_to_dict(c_status_old, with_time=True)
 
     if value is not None:
-        assert is_string(status), "When using `value`, status must be the " +\
-            "name of the kernel property that will be set."
-        assert status in get_kernel_status(), "`" + status + "` option unknown."
-        if status == "environment_required" and value is True:
-            # make sure that, if neurons exist, their growth cones are not using
-            # the `simple_random_walk` model, which is not compatible.
-            neurons = get_neurons()
-            if neurons:
-                for n in neurons:
-                    assert get_object_properties(
-                        n, "growth_cone_model") != "simple_random_walk", \
-                        "The `simple_random_walk` model, is not compatible " +\
-                        "with complex environments."
-        elif status == "resolution":
-            assert isinstance(value, ureg.Quantity), \
-                "`resolution` must be a time quantity."
-            value = value.m_as("minute")
-        key = _to_bytes(status)
+        internal_status = {status: value}
+
+    _check_params(internal_status, "kernel")
+
+    for key, value in internal_status.items():
+        if key not in old_status:
+            raise KeyError(
+                "`{}` is not a valid option.".format(key))
+
+        if isinstance(value, ureg.Quantity):
+            value = value.m_as(old_status[key].u)
+
+        key    = _to_bytes(key)
         c_prop = _to_property(key, value)
+
         c_status.insert(pair[string, Property](key, c_prop))
-    else:
-        for key, value in internal_status.items():
-            assert key in get_kernel_status(), \
-                "`" + key + "` option unknown."
-
-            if key == "resolution":
-                assert isinstance(value, ureg.Quantity), \
-                    "`resolution` must be a time quantity."
-                internal_status[key] = value.m_as("minute")
-
-        for key, value in internal_status.items():
-            key = _to_bytes(key)
-            if c_status_old.find(key) == c_status.end():
-                raise KeyError(
-                    "`{}` is not a valid option.".format(key.decode()))
-            c_prop = _to_property(key, value)
-            c_status.insert(pair[string, Property](key, c_prop))
 
     set_kernel_status_(c_status, c_simulation_id)
 
@@ -2670,20 +2651,23 @@ def _check_params(params, object_name, gc_model=None):
         statusMap default_params
         Property prop
 
-    if object_name in get_models(False):
-        ctype = _to_bytes("growth_cone")
-    elif object_name == "neuron":
-        ctype = _to_bytes("neuron")
-    elif object_name in {"axon", "dendrite", "neurite"}:
-        ctype = _to_bytes("neurite")
-    elif object_name == "recorder":
-        ctype = _to_bytes("recorder")
+    if object_name == "kernel":
+        default_params = get_kernel_status_()
     else:
-        raise RuntimeError("Unknown object : '" + object_name + "'. "
-                           "Candidates are 'recorder' and all entries "
-                           "in get_models.")
+        if object_name in get_models(False):
+            ctype = _to_bytes("growth_cone")
+        elif object_name == "neuron":
+            ctype = _to_bytes("neuron")
+        elif object_name in {"axon", "dendrite", "neurite"}:
+            ctype = _to_bytes("neurite")
+        elif object_name == "recorder":
+            ctype = _to_bytes("recorder")
+        else:
+            raise RuntimeError("Unknown object : '" + object_name + "'. "
+                               "Candidates are 'recorder' and all entries "
+                               "in get_models.")
 
-    get_defaults_(cname, ctype, cgcmodel, True, default_params)
+        get_defaults_(cname, ctype, cgcmodel, True, default_params)
 
     if object_name != "recorder":
         get_defaults_(cgcmodel, _to_bytes("growth_cone"),
@@ -2712,7 +2696,7 @@ def _check_params(params, object_name, gc_model=None):
             elif prop.data_type == VEC_STRING:
                 assert nonstring_container(val), \
                     "'{}' should be a (list of) list.".format(key)
-                if val:
+                if len(val):
                     if nonstring_container(val):
                         val = val[0]
                     for v in val:
@@ -2770,12 +2754,11 @@ def _check_params(params, object_name, gc_model=None):
                 elif prop.data_type in (VEC_SIZE, VEC_LONG):
                     assert nonstring_container(val), \
                         "'{}' should be a (list of) list.".format(key)
-                    if val:
+                    if len(val):
                         if nonstring_container(val):
                             val = val[0]
-                        for v in val:
-                            assert isinstance(v, (int, np.integer)), \
-                                "'{}' values should be integers.".format(key)
+                        assert isinstance(val, (int, np.integer)), \
+                            "'{}' values should be integers.".format(key)
                 elif prop.data_type == MAP_DOUBLE:
                     if isinstance(val, dict) and nonstring_container(val):
                         val = val[0]

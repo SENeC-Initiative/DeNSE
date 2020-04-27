@@ -40,11 +40,34 @@ class Neuron(object):
     '''
     Container allowing direct access to a neuron.
     '''
+    
+    def __init__(self, gid, **kwargs):
+        '''
+        Create a neuron object.
 
-    def __init__(self, gid):
+        Parameters
+        ----------
+        gid : int
+            GID of the neuron.
+        **kwargs : dict
+            Optional arguments used when loading neurons that do not exist
+            in the simulator.
+        '''
         self._axon       = None
         self._dendrites  = {}
-        self.__gid       = gid
+        self.__gid       = int(gid)
+
+        self._in_simulator = True
+
+        # check if object exists
+        try:
+            _pg.get_object_type(gid)
+        except RuntimeError:
+            # object does not exist, use kwargs for some information
+            self._in_simulator = False
+
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
     # GID (integer) functions
 
@@ -81,13 +104,17 @@ class Neuron(object):
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
+        if attribute.startswith("_"):
+            return super(Neuron, self).__getattribute__(attribute)
+
         if attribute in self.dendrites:
             return self.dendrites[attribute]
 
-        ndict = _pg.get_object_properties(self, level="neuron")
+        if self._in_simulator:
+            ndict = _pg.get_object_properties(self, level="neuron")
 
-        if attribute in ndict:
-            return ndict[attribute]
+            if attribute in ndict:
+                return ndict[attribute]
 
         raise AttributeError(
             "{!r} has not attribute '{}'".format(self, attribute))
@@ -95,8 +122,9 @@ class Neuron(object):
     def __setattr__(self, attribute, value):
         ''' Set neuronal properties directly '''
         if attribute.startswith("_"):
-            super(Neuron, self).__setattr__(attribute, value)
-        else:
+            return super(Neuron, self).__setattr__(attribute, value)
+
+        if self._in_simulator:
             ndict = _pg.get_object_properties(
                 self, level="neuron", settables_only=True)
 
@@ -104,16 +132,24 @@ class Neuron(object):
                 _pg.set_object_properties(self, {attribute: value})
             else:
                 super(Neuron, self).__setattr__(attribute, value)
+        else:
+            raise AttributeError(
+                "{!r} has not attribute '{}'".format(self, attribute))
 
     @property
     def axon(self):
         '''
         Return the :class:`~dense.elements.Neurite` container for the axon.
         '''
-        neurites = _pg._get_neurites(self)
-        if "axon" in neurites:
-            return Neurite(None, "axon", name="axon", parent=self)
-        return None
+        if self._in_simulator:
+            neurites = _pg._get_neurites(self)
+            has_axon = "axon" in neurites
+            if has_axon and self._axon is None:
+                self._axon = Neurite(None, "axon", name="axon", parent=self)
+            elif not has_axon:
+                self._axon = None
+
+        return self._axon
 
     @property
     def dendrites(self):
@@ -121,14 +157,19 @@ class Neuron(object):
         Return a dict containing one :class:`~dense.elements.Neurite` container
         for each dendrite, with its name as key.
         '''
-        neurites  = [k for k in _pg._get_neurites(self) if k != "axon"]
-        dendrites = {}
+        if self._in_simulator:
+            set_dend  = set(k for k in _pg._get_neurites(self) if k != "axon")
 
-        for name in neurites:
-            dendrites[name] = Neurite(
-                None, "dendrite", name=name, parent=self)
+            if set_dend != set(self._dendrites.keys()):
+                dendrites = {}
 
-        return dendrites
+                for name in set_dend:
+                    dendrites[name] = Neurite(
+                        None, "dendrite", name=name, parent=self)
+
+                self._dendrites = dendrites
+
+        return self._dendrites.copy()
 
     @property
     def neurites(self):
@@ -139,14 +180,17 @@ class Neuron(object):
         neurites = self.dendrites
 
         if self.axon is not None:
-            neurites[self.axon.name] = self.axon
+            neurites["axon"] = self.axon
 
         return neurites
 
     @property
     def total_length(self):
         ''' Total arbor length of the neuron '''
-        return _pg.get_object_state(self, observable="length")
+        if self._in_simulator:
+            return _pg.get_object_state(self, observable="length")
+
+        return _np.sum(n.total_length for n in self.neurites.values())
 
     def create_neurites(self, num_neurites=1, params=None, angles=None,
                         names=None):
@@ -178,6 +222,16 @@ class Neuron(object):
         _pg.create_neurites(self, num_neurites=num_neurites, params=params,
                             angles=angles, names=names)
 
+        # update _axon and _dendrites
+        names = list(params) if names is None else names
+
+        for name in names:
+            if name == "axon":
+                self._axon = Neurite(None, "axon", name="axon", parent=self)
+            else:
+                self._dendrites[name] = \
+                    Neurite(None, "dendrite", name=name, parent=self)
+
     def delete_neurites(self, neurite_names=None):
         '''
         Delete neurites.
@@ -193,12 +247,22 @@ class Neuron(object):
         '''
         _pg.delete_neurites(neurite_names=neurite_names, neurons=self)
 
+        if isinstance(neurite_names, str):
+            neurite_names = [neurite_names]
+
+        for name in neurite_names:
+            if name == "axon":
+                self._axon = None
+            elif name in self._dendrites:
+                del self._dendrites[name]
+
     def get_neurite(self, neurite):
         '''
         Returns the required neurite.
         '''
-        if "axon" in neurite:
+        if neurite == "axon":
             return self.axon
+
         return self.dendrites[neurite]
 
     def get_state(self, observable=None):
@@ -272,7 +336,7 @@ class Neuron(object):
         :func:`~dense.elements.Neurite.set_properties`,
         :func:`~dense.elements.Neuron.get_properties`.
         '''
-        return _pg.set_object_properties(
+        _pg.set_object_properties(
             self, params=params, neurite_params=neurite_params)
 
     def to_swc(self, filename, resolution=10):
@@ -424,6 +488,8 @@ class Neurite(object):
         self._parent       = None if parent is None else int(parent)
         self._branches     = branches
         self.__name        = name
+        self._in_simulator = \
+            False if (parent is None or not parent._in_simulator) else True
 
         if branches:
             self._has_branches = True
@@ -457,8 +523,7 @@ class Neurite(object):
         if attribute in ndict:
             return ndict[attribute]
 
-        raise AttributeError(
-            "{!r} has not attribute '{}'".format(self, attribute))
+        super(Neurite, self).__getattribute__(attribute)
 
     def __setattr__(self, attribute, value):
         ''' Set neuronal properties directly '''
@@ -510,13 +575,13 @@ class Neurite(object):
     @property
     def branches(self):
         ''' Return the branches composing the neurite '''
-        try:
+        if self._in_simulator:
             update = (self._update_time != _pg.get_kernel_status("time"))
             if not self._has_branches or update:
                 self._update_branches()
             return self._branches
-        except Exception as e:
-            raise RuntimeError(str(e))
+
+        return self._branches
 
     @property
     def empty(self):
@@ -704,12 +769,12 @@ class Branch(object):
     '''
 
     def __init__(self, neurite_path, parent=None, node_id=None):
-        self.xy       = neurite_path[0] * um
-        self._r       = (neurite_path[1] if neurite_path[1] is None
-                         else neurite_path[1]*um)
-        self._theta   = (neurite_path[2] if neurite_path[2] is None
-                         else neurite_path[2]*radian)
-        self.diameter = neurite_path[3]*um
+        xy, r, t, d = neurite_path
+
+        self.xy       = xy * um
+        self._r       = r if r is None else r*um
+        self._theta   = t if t is None else t*radian
+        self.diameter = d if d is None else d*um
         self.parent   = parent
         self.node_id  = node_id
 
@@ -1008,14 +1073,21 @@ class Population(list):
         return [neuron.position for neuron in self]
 
     def _add_structure_population(self, structure):
+        dd = structure["dendrites"]
+        ax = structure["axon"]
+
         for enum, gid in enumerate(structure['gid']):
             # @todo include radii in structure
-            neuron = Neuron(gid, structure['position'][enum], 8.)
+            neuron = Neuron(gid, position=structure['position'][enum],
+                            soma_radius=8.)
 
-            neuron._axon     = _neurite_from_skeleton(
-                structure["axon"][enum], "axon", parent=gid)
-            neuron.dendrites[enum] = _neurite_from_skeleton(
-                structure["dendrites"][enum], "dendrite", parent=gid)
+            if _np.any(ax[enum]):
+                neuron._axon = _neurite_from_skeleton(
+                    ax[enum], "axon", parent=gid)
+
+            if _np.any(dd[enum]):
+                neuron.dendrites[enum] = _neurite_from_skeleton(
+                    dd[enum], "dendrite", parent=gid)
 
             super(Population, self).append(neuron)
         self.sort()
@@ -1043,7 +1115,10 @@ class Population(list):
                 _warn.warn("Cannot retrieve `soma_radius` from info.json file "
                               "setting default radius to 8.")
                 soma_radius = 8.
-            super(Population, self).append(Neuron(gid, position, soma_radius))
+
+            super(Population, self).append(
+                Neuron(gid, position=position, soma_radius=soma_radius))
+
             if isinstance(axon, list):
                 self[gid].axon = Neurite([Branch(ax) for ax in axon],
                                          neurite_type="axon", name="axon")

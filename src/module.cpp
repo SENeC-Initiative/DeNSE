@@ -667,7 +667,6 @@ void get_branches_data_(stype neuron, const std::string &neurite_name,
         std::vector<std::vector<double>> points_tmp;
         BranchPtr b = node_it->second->get_branch();
 
-
         if (b->size() != 0)
         {
             const std::vector<double> &xx = b->get_xlist();

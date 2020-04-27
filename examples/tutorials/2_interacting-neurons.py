@@ -53,7 +53,7 @@ neuron_params = {
 }
 
 neurite_params = {
-    "axon": {"initial_diameter": 4.*um}
+    "axon": {"initial_diameter": 4.*um},
     "dendrites": {"taper_rate": 1./200., "initial_diameter": 3.*um}
 }
 

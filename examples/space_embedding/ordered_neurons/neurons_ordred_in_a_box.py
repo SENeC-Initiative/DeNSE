@@ -63,7 +63,8 @@ neuron_params = {
     "dendrite_diameter": 2.*um,
     "soma_radius": soma_radius * um,
     "random_rotation_angles": False,
-    "neurite_angles": {"axon": 0.*deg, "dendrite_1": 180.*deg}
+    "neurite_names": ["axon", "dendrite_1"],
+    "neurite_angles": {"axon": 0.*deg, "dendrite_1": 180.*deg},
 }
 
 axon_params = {
@@ -138,7 +139,7 @@ if __name__ == '__main__':
     if kernel["environment_required"]:
         culture = ds.set_environment(culture_file, min_x=0, max_x=1800)
 
-    # neuron_params['position'] = [(900., 0.),(900., 100.)] *um
+    # neuron_params['position'] = [(900., 0.),(900., 100.)] *um 
     positions = []
     for y in np.linspace(min_y+y_margin,
                          max_y-y_margin, num_neurons):

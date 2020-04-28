@@ -49,8 +49,9 @@ use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 
-#gc_model = 'run-and-tumble'
-gc_model ="simple-random-walk"
+# gc_model = 'run-and-tumble'
+
+gc_model = "simple-random-walk"
 
 neuron_params = {
     "dendrite_diameter": 3. * um,
@@ -59,17 +60,17 @@ neuron_params = {
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
-    "speed_growth_cone": 0.5 * um / minute,#0.5
+    "speed_growth_cone": 0.5 * um / minute,  # 0.5
     "filopodia_wall_affinity": 800.,
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
-    "persistence_length" : 500. * um, #600
+    "persistence_length": 500. * um,  # 600
     "taper_rate": 1./2000.,
 
     "soma_radius": soma_radius * um,
-    'B' : 10. * cpm,
-    'T' : 10000. * minute,
-    'E' : 0.7,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
 dendrite_params = {
@@ -87,7 +88,7 @@ Check for optional parameters
 '''
 
 if use_run_tumble:
-    neuron_params ={
+    neuron_params = {
         "persistence_length": 12. * um
     }
 
@@ -104,12 +105,15 @@ if (neuron_params.get("growth_cone_model", "") ==
 Simulation
 '''
 
+
 def step(time, loop_n, plot=True):
     ds.simulate(time)
     if plot:
         ds.plot_neurons(show_nodes=True, show=True)
 
+
 if __name__ == '__main__':
+    np.random.seed(12892)  # seeds for the neuron positions
     number_of_threads = 10
     kernel = {"seeds": range(number_of_threads),
               "num_local_threads": number_of_threads,
@@ -117,24 +121,18 @@ if __name__ == '__main__':
               "adaptive_timestep": -1.,
               "environment_required": True}
 
-    np.random.seed(12892) # seeds for the neuron positions
-    # ok pour 35 pas pour 40
-    #np.random.seed(21829)  # seeds for the neuron positions
-    # ok pour 40
-    #np.random.seed(118239)  # seeds for the neuron positions
-
-    culture_file = current_dir + "OneDrop.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
 
     gids, culture = None, None
     print(ds.get_kernel_status("num_local_threads"))
 
+    culture_file = current_dir + "OneDrop.svg"
     if kernel["environment_required"]:
         culture = ds.set_environment(culture_file, min_x=0, max_x=800)
         # generate the neurons inside the left chamber
         pos = culture.seed_neurons(
             # upper region ymin=500.
-            neurons=num_neurons, soma_radius=soma_radius) 
+            neurons=num_neurons, soma_radius=soma_radius)
         neuron_params['position'] = pos
     else:
         neuron_params['position'] = np.random.uniform(-1000, 1000, (200, 2)) * um
@@ -162,7 +160,7 @@ if __name__ == '__main__':
     # prepare the plot
     print("Starting plot")
     fig, ax = plt.subplots()
-    #ds.plot.plot_neurons(show_density=False, dstep=4., dmax=10, cmap="jet",
+    # ds.plot.plot_neurons(show_density=False, dstep=4., dmax=10, cmap="jet",
     #                     show_neuron_id=True)
     ds.plot.plot_neurons(culture=culture,
                          soma_alpha=0.4,

@@ -20,12 +20,17 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Generate the morphology of a bipolar cell (spindle neuron) """
+""" Generate the morphology of a bipolar cell (spindle neuron) 
+    Also illustrates generation of dendogram
+"""
 
 import numpy as np
 import os
 
 import matplotlib.pyplot as plt
+
+import neurom as nm
+from neurom import viewer
 
 import dense as ds
 from dense.units import *
@@ -33,7 +38,7 @@ from dense.units import *
 
 # parameters
 
-num_omp     = 1
+num_omp = 1
 num_neurons = 1
 
 
@@ -145,12 +150,15 @@ print(ds.get_kernel_status()["time"])
 
 ds.plot.plot_neurons(show=True)
 
-n.to_swc("pyramidal-cell.swc")
+# I/O of morphology files
+
+n.to_swc("bipolar_cell.swc")
 n.to_neuroml("bipolar_cell.nml")
 
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("pyramidal-cell.swc")
+
+# Example of analysis, loading into neuroml for visualization and analysis
+
+nrn = nm.load_neuron("bipolar_cell.swc") # check if ok swc also, or nm necessary
 
 fig, _ = viewer.draw(nrn)
 
@@ -158,9 +166,8 @@ for ax in fig.axes:
     ax.set_title("")
 
 ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
-                        vertical_diam_frac=0.45, axis=ax_dend)
+                        vertical_diam_frac=0.45, axis=ax)
 
-import matplotlib.pyplot as plt
 plt.axis('off')
 fig.suptitle("")
 plt.tight_layout()

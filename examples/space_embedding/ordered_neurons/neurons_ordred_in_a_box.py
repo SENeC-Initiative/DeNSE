@@ -95,7 +95,7 @@ dendrite_params = {
     'E': 1.,
 }
 
-neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+neurite_params = {"axon": axon_params, "dendrite_1": dendrite_params}
 
 '''
 Simulation
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                              neurite_params=neurite_params,
                              num_neurites=2)
 
-    # print("Creating neurites")
+    print("Creating neurites")
 
     # for neuron in gids:
     #    # neuron.create_neurites(num_neurites=3,

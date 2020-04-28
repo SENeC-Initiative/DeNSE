@@ -241,6 +241,9 @@ Contains examples concerning growth models
 ../../examples/models/neurons
 Contains a collections of DeNSE models built to generate various neuronal shapes : pyramidal cells, Purkinje cells, multipolar cells, chandelier cells, starbus amacrine, etc... The models were hand tuned for a qualitative resemblance with the corresponding cell types.
 
+analysis.py is an example code for importing and displaying a morphology file in neurom format
+
+
 ../../examples/models/competition
 Illustrates competition based elongation models
 
@@ -253,7 +256,8 @@ Contains a code to run successively different simulations with different persist
 
 
 Space Embedding
-----------------
+---------------
+
 ../../space_embedding
 Contains examples to make neurons grow in spatially bounded regions
 
@@ -271,13 +275,14 @@ Shows a code to generate a neuronal network in a complex geometry
 
 
 Multiple chambers
-----------------
+-----------------
 Special case of Space Embedding, here the culture is made of different growth chambers in communication through channels of different shapes
 
 
 
 Growth Studies
 --------------
+
 Different applications how to study network growth
 
 ../../examples/growth_studies/turning_angles

@@ -22,8 +22,7 @@
 
 import dense as ds
 from dense.units import *
-import numpy as np
-import os
+
 
 # import matplotlib as mpl
 # mpl.use("Qt5Agg")
@@ -37,7 +36,7 @@ Main parameters
 gc_model = "self-referential-forces"
 
 num_neurons = 1
-num_omp     = 1
+num_omp = 1
 
 neuron_params = {
     "growth_cone_model": gc_model,
@@ -112,12 +111,9 @@ if __name__ == '__main__':
     })
 
     ds.simulate(15*hour)
-<<<<<<< HEAD
+
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite"], show=False)
     ds.plot.plot_neurons()
-=======
-    ds.plot.plot_neurons(scale=False)
->>>>>>> examples2020
 
     neuron.set_properties(neurite_params={"dendrite": {
         "use_van_pelt": False, "use_uniform_branching": True,
@@ -127,14 +123,10 @@ if __name__ == '__main__':
     }})
 
     ds.simulate(6*day)
-<<<<<<< HEAD
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite"],
                             ignore_diameter=True, aspect_ratio=0.5,
                             vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
-=======
-    ds.plot.plot_neurons(scale_text=False)  # scale bar is 50 um
->>>>>>> examples2020
 
     neuron.set_properties(neurite_params={"dendrite": {
         "use_van_pelt": False, "use_uniform_branching": True,
@@ -144,13 +136,8 @@ if __name__ == '__main__':
     }})
 
     ds.simulate(20.*day)
-<<<<<<< HEAD
     ds.plot.plot_dendrogram(neuron.dendrites["dendrite"],
                             ignore_diameter=True, aspect_ratio=0.2,
                             vertical_diam_frac=0.45, show=False)
     ds.plot.plot_neurons()
     ds.plot.plot_recording(rec)
-=======
-    ds.plot.plot_neurons(scale_text=False)  # scale bar is 50 um
-    ds.plot.plot_recording(rec)
->>>>>>> examples2020

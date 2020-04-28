@@ -23,98 +23,103 @@
 import dense as ds
 import numpy as np
 import os
-from dense.units import *
+
 
 '''
 Main parameters
 '''
 
-num_neurons = 4
-soma_radius = 8.
-
-gc_model = 'cst_po_nwa'
-use_uniform_branching = True
-use_vp = False
-use_run_tumble = False
+num_neurons           = 4
+use_vp                = False
 
 neuron_params = {
-    "axon_diameter": 4. * um,
-    "dendrite_diameter": 2.*um,
-    "soma_radius": soma_radius * um,
-}
+    # "growth_cone_model": "self_referential_forces",
+    "growth_cone_model": "persistent_random_walk",
 
-axon_params = {
-    "growth_cone_model": gc_model,
-    "use_uniform_branching": use_uniform_branching,
-    "uniform_branching_rate": 0.002 *cpm,
-    "use_van_pelt": use_vp ,
-    "sensing_angle": 45.*deg,
-    "speed_growth_cone": 0.5 * um / minute, 
-    "gc_split_angle_mean": 10.3 *deg,
-    "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50. * um,
     "filopodia_min_number": 30,
-    "persistence_length": 300. * um,
-    "taper_rate": 1./4000., 
-    'B': 3. * cpm,
-    'T': 1000. * minute,
-    'E': 1.,
-}
+    "speed_growth_cone": 1.,
+    "sensing_angle": 0.1195,
 
-dendrite_params = {
-    "growth_cone_model": gc_model,
+    "filopodia_wall_affinity": 2.,
+    "filopodia_finger_length": 50.0,
+    "use_uniform_branching": True,
+    "uniform_branching_rate": 0.002,
+
     "use_van_pelt": use_vp,
-    "speed_growth_cone": 0.1 * um / minute,
-    "filopodia_wall_affinity": 10.,
-    "filopodia_finger_length": 50. * um,
-    "persistence_length": 200. * um,
-    "taper_rate": 3./250.,
-    "B": 6. * cpm,
-    "T": 1000. * minute,
-    'E': 1.,
+
+    "gc_split_angle_mean": 10.3,
 }
 
-neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+
+'''
+Check for optional parameters
+'''
+
+if use_critical_resource:
+    cr_params = {
+        "res_speed_factor": 0.10,
+        "res_amount": 1.,
+        "res_leakage": 0.05,
+        "res_retraction_threshold": 0.30,
+        "res_elongation_threshold": 0.50,
+        "res_split_th": 0.80,
+        "res_demand_correlation": 0.9910,
+        "res_demand_stddev": 0.2,
+        "res_demand_mean": 1.,
+        "res_use_ratio": 0.7
+    }
+    neuron_params.update(cr_params)
+    dendrite_params["critical_resource_speed_factor"] = 0.05
+
+if use_vp:
+    vp_params = {
+        "B" : 2.,
+        "E" : 0.905,
+        "S" : 1.0, # large S leads to core dump
+        "T" : 0.001,
+    }
+    neuron_params.update(vp_params)
+
+if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
+    neuron_params["persistence_length"] = 30.
+
 
 '''
 Simulation
 '''
 
-
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
     if plot:
-        ds.plot.plot_neurons(
+        ds.plot_neurons(
             show_nodes=False, save_path=save_path)
 
 
-def random_walk_axon(neuron_params, neurite_params):
+def random_walk_axon(neuron_params):
     np.random.seed(kernel['seeds'])
     ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
+    neuron_params['growth_cone_model'] = 'random_walk'
 
     neuron_params["position"] = np.random.uniform(
-        -500, 500, (num_neurons, 2))*um
+        -500, 500, (num_neurons, 2))
     ds.create_neurons(n=num_neurons,
-                      params=neuron_params,
-                      neurite_params=neurite_params,
-                      num_neurites=2
-                      )
-
-    name = str(neurite_params["axon"]["persistence_length"])
-    step(1*day, 1, os.path.join(os.getcwd(), "random_walk_axon_"+name))
+                            params=neuron_params,
+                            num_neurites=1,
+                            position=[]
+                            )
+    name = str (neuron_params["persistence_length"])
+    step(1000, 1, os.path.join(os.getcwd(),"random_walk_axon_"+name))
 
     ds.reset_kernel()
 
 
 if __name__ == '__main__':
-    num_omp = 10
     kernel = {
-        "seeds": range(10, 10+num_omp),
-        "num_local_threads": num_omp,
+        "seeds": [33, 345],
+        "num_local_threads": 2,
         "environment_required": False
     }
-    for x in [3.0, 30.0, 300.0, 600.]:
+    for x in [3.0, 9.0, 15.0, 20.0]:
         print(x)
-        axon_params["persistence_length"] = x*um
-        print(axon_params)
-        random_walk_axon(neuron_params, neurite_params)
+        neuron_params["persistence_length"] = x
+        random_walk_axon(neuron_params)

@@ -128,7 +128,7 @@ axon_vp = {
     "T": 3*day,
 }
 
-neurite_params = {"axon": axon_vp, "dendrites": dend_vp}
+neurite_params = {"axon": axon_vp, "dendrite": dend_vp}
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
@@ -186,4 +186,6 @@ ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 ds.plot.plot_dendrogram(n.axon)
 
-print("Asymmetry of axon:", ds.structure.tree_asymmetry(n[0].axon))
+print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
+print("Asymmetry of the dendrite:",
+      ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))

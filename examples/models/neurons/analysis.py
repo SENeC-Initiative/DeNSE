@@ -20,7 +20,9 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Generate the morphology of a starburst amacrine cell """
+""" Example of import of morphology file in neurom  and display with 
+    neurom of a neuron morphology file
+"""
 
 import os
 
@@ -31,8 +33,6 @@ import seaborn as sns
 
 import neurom as nm
 from neurom import viewer
-
-import dense as ds
 
 
 def max_asym(n):
@@ -50,7 +50,7 @@ filename = "pyramidal-cell.swc"
 
 nrn = nm.load_neuron(filename)
 
-neurite = 2 # axon (except for starbust)
+neurite = 2  # axon (except for starbust)
 
 
 # Asymmetry
@@ -80,12 +80,13 @@ ax.set_ylabel("Intersections")
 plt.tight_layout()
 
 fig, _ = viewer.draw(nrn)
-fig, _ = viewer.draw(nrn.neurites[neurite])
+for i, nrt in enumerate(nrn.neurites):
+    fig, _ = viewer.draw(nrn.neurites[i])
 
 for ax in fig.axes:
     ax.set_title("")
 
-import matplotlib.pyplot as plt
+
 plt.axis('off')
 fig.suptitle("")
 plt.tight_layout()

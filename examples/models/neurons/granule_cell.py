@@ -23,6 +23,10 @@
 """ Generate the morphology of a granule cell """
 
 import numpy as np
+import matplotlib.pyplot as plt
+
+import neurom as nm
+from neurom import viewer
 
 import dense as ds
 from dense.units import *
@@ -30,7 +34,7 @@ from dense.units import *
 
 # parameters
 
-num_omp     = 1
+num_omp = 1
 num_neurons = 1
 
 
@@ -98,19 +102,14 @@ lb_axon = {
 
 ds.set_object_properties(n, neurite_params={"axon": lb_axon})
 
-<<<<<<< HEAD
 ds.simulate(7 * day)
 
 ds.plot.plot_dendrogram(n.axon, show=False)
-=======
-ds.simulate(5 * day)
->>>>>>> examples2020
+
 
 ds.io.save_to_swc("granule-cell.swc", gid=n)
 ds.plot.plot_neurons(show=True, subsample=50)
 
-import neurom as nm
-from neurom import viewer
 nrn = nm.load_neuron("granule-cell.swc")
 
 fig, _ = viewer.draw(nrn)
@@ -120,13 +119,12 @@ for ax in fig.axes:
 
 
 #~ tree = n[0].axon.get_tree()
-tree2 = n[0].axon.get_tree()
+tree2 = n.axon.get_tree()
 print(tree2.neuron, tree2.neurite)
 
-import matplotlib.pyplot as plt
 plt.axis('off')
 fig.suptitle("")
 plt.tight_layout()
 plt.show()
 #~ tree.show_dendrogram()
-tree2.show_dendrogram()
+n.axon.plot_dendrogram(show=True)

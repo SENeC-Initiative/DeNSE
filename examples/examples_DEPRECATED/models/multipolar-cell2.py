@@ -22,8 +22,10 @@
 
 import dense as ds
 import numpy as np
-import os
 
+from dense.units import *
+import neurom as nm
+from neurom import viewer
 
 '''
 Main parameters
@@ -33,32 +35,33 @@ S = 0.901
 E = 0.3
 gc_model = "run_tumble"
 num_neurons = 1
-num_omp     = 1
+num_omp = 1
 
 neuron_params = {
     "filopodia_min_number": 30,
-    "sensing_angle": 0.1495,
-    "dendrite_diameter": 2.,
-    "axon_diameter": 3.,
-    "position": np.array([(0., 0.)]),
-    "neurite_angles": {"axon": 4.8, "dendrite_1": 2., "dendrite_2": 1.1}
+    "sensing_angle": 0.1495 * rad,
+    "dendrite_diameter": 2. * um,
+    "axon_diameter": 3. * um,
+    "position": np.array([(0., 0.)])*um,
+    "neurite_angles": {"axon": 4.8 * rad, 
+                       "dendrite_1": 2.*rad, "dendrite_2": 1.1 *rad}
 }
 
 dend_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": True,
 
-    "persistence_length": 150.0,
+    "persistence_length": 150.0 * um,
     "thinning_ratio": 1./100.,
-    "speed_growth_cone": 0.008,
+    "speed_growth_cone": 0.008 * um / minute,
 
     # Best model
-    "gc_split_angle_mean": 1.,
-    "B": 2.,
+    "gc_split_angle_mean": 1. * rad,
+    "B": 2. * cpm,
     "E": 0.,
     "S": 1.,
-    "T": 5000.,
-    "gc_split_angle_mean": 30.,
+    "T": 5000. * minute,
+    "gc_split_angle_mean": 30. * deg,
 }
 
 axon_params = {
@@ -70,38 +73,39 @@ axon_params = {
     "filopodia_finger_length": 50.0,
     "thinning_ratio": 1./200.,
 
-    "persistence_length": 300.0,
-    "speed_growth_cone": 0.015,
-    "gc_split_angle_mean": 60.,
+    "persistence_length": 300.0 * um,
+    "speed_growth_cone": 0.015 * um / minute,
+    "gc_split_angle_mean": 60.*deg,
 
     # Best model
-    "gc_split_angle_mean": 1.2,
+    "gc_split_angle_mean": 1.2 * rad,
     "B": 5.,
     "E": 0.,
     "S": 1.,
-    "T": 20000.,
+    "T": 20000. * minute,
 }
 
 
 '''
 Growth
 '''
-
 kernel = {
-    "resolution": 50.,
-    "seeds": [5],
+    "resolution": 30.*minute,
+    "seeds": [10],
     "environment_required": False,
     "num_local_threads": num_omp,
 }
 
-ds.get_kernel_status(kernel)
+ds.set_kernel_status(kernel)
+
 
 
 # create neurons
 
-n = ds.create_neurons(n=num_neurons, gc_model="run_tumble", params=neuron_params,
-                     axon_params=axon_params, dendrites_params=dend_params,
-                     num_neurites=3)
+n = ds.create_neurons(n=num_neurons, gc_model="run_tumble",
+                      params=neuron_params,
+                      axon_params=axon_params, dendrites_params=dend_params,
+                      num_neurites=3)
 
 # Turn branching on
 
@@ -113,35 +117,35 @@ d_rsrc_branching = {'res_branching_threshold': 60., 'res_branching_proba': 0.000
 #~ ds.set_object_properties(n, params=resource_branching)
 ds.set_object_properties(n, axon_params=resource_branching, dendrites_params=d_rsrc_branching)
 
-ds.simulate(20000)
+ds.simulate(20000 * minute)
 
 ds.plot.plot_neurons(show=True)
 
 lb = {
     "use_van_pelt": False,
     'res_branching_threshold': np.inf, "use_flpl_branching": True,
-    "flpl_branching_rate": 0.001, 
-    "lateral_branching_angle_mean": 45.
+    "flpl_branching_rate": 0.001 * cph, 
+    "lateral_branching_angle_mean": 45. * deg
 }
 
 no_b = {"use_van_pelt": False}
 
 ds.set_object_properties(n, axon_params=lb, dendrites_params=no_b)
 
-ds.simulate(50000)
+ds.simulate(50000 * minute)
 
-end_branching = { "use_flpl_branching": False, "use_van_pelt": True, "T": 60000.}
-ds.set_object_properties(n, axon_params=end_branching, dendrites_params=end_branching)
+end_branching = {"use_flpl_branching": False, "use_van_pelt": True, "T": 60000.}
+ds.set_object_properties(n, axon_params=end_branching,
+                         dendrites_params=end_branching)
 
-ds.simulate(100000)
+ds.simulate(100000 * minute)
 
 ds.plot.plot_neurons(show=True)
 
-ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
+ds.save_to_swc("multipolar-cell2.swc", gid=n, resolution=50)
 
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("chandelier-cell.swc")
+
+nrn = nm.load_neuron("multipolar-cell2.swc")
 
 fig, _ = viewer.draw(nrn)
 
@@ -156,4 +160,4 @@ plt.axis('off')
 fig.suptitle("")
 plt.tight_layout()
 plt.show()
-tree.show_dendrogram()
+

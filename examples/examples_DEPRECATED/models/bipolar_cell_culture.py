@@ -32,7 +32,7 @@ import seaborn as sns
 
 # parameters
 
-num_omp     = 1
+num_omp = 1
 num_neurons = 1
 filename    = "bipolar-cell.swc"
 

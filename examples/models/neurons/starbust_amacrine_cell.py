@@ -30,7 +30,7 @@ import os
 
 # parameters
 
-num_omp     = 1
+num_omp = 1
 num_neurons = 1
 
 
@@ -107,14 +107,6 @@ ds.set_object_properties(n, neurite_params=dend_params)
 ds.simulate(8.*day)
 
 ds.plot.plot_neurons(scale_text=False)
-<<<<<<< HEAD
-=======
 
-n.to_swc("starbust-amacrine.swc")
 
-# tree = n[0].dendrites["dendrite_1"].get_tree()
-# tree.show_dendrogram()
-
-# print(n[0].dendrites.keys())
-# print("Asymmetry:", ds.structure.tree_asymmetry(n[0].dendrites["dendrite_1"]))
->>>>>>> examples2020
+ds.io.save_to_swc("starbust_amacrine_cell.swc", gid=n, resolution=50)

@@ -35,13 +35,12 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 2. * um,
-    "axon_diameter": 3.5 * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "growth_cone_model": "simple-random-walk"
 }
 
 axon_params = {
+    "initial_diameter": 3.5 * um,
     "persistence_length": 200. * um,
     "speed_growth_cone": 0.04 * um / minute,
     # diameter
@@ -56,6 +55,7 @@ axon_params = {
 }
 
 dend_params = {
+    "initial_diameter": 2. * um,
     "taper_rate": 1.5/100.,
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.0001 * cpm,

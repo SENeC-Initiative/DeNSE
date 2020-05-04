@@ -93,8 +93,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
 
     // Init and finalize functions
     void init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
-                         const std::string &neurite_name, double soma_radius,
-                         double neurite_diameter);
+                         const std::string &neurite_name, double soma_radius);
     void set_soma_angle(const double angle);
     double get_soma_angle() const;
     void finalize();
@@ -157,6 +156,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     void add_node(NodePtr);
 
     void update_gc_speed();
+    void update_initial_diameter(double diameter);
 
     bool walk_tree(NodeProp &np) const;
     simple_gc_range active_gc_range() const;
@@ -201,6 +201,7 @@ class Neurite : public std::enable_shared_from_this<Neurite>
     std::string neurite_type_;
     double taper_rate_; // diameter thinning with distance
     double min_diameter_;
+    double initial_diameter_;
     double gc_speed_decay_;
 
     // competition

@@ -37,10 +37,6 @@ gc_model    = "self-referential-forces"
 
 
 neuron_params = {
-    # initial neurite shape parameters
-    "dendrite_diameter": 3.*um,
-    "axon_diameter": 4.*um,
-
     # soma position
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
 
@@ -71,6 +67,7 @@ axon_params = {
     # neurite shape paramters
     "taper_rate": 1./400.,
     "diameter_ratio_avg": 0.5,
+    "initial_diameter": 4.*um,
 
     # branching choice and parameter
     "use_van_pelt": False,
@@ -98,6 +95,7 @@ dend_params = {
 
     # neurite shape paramters
     "taper_rate": 1./150.,
+    "initial_diameter": 3.*um,
 
     # branching choice and parameters
     "use_uniform_branching": False,

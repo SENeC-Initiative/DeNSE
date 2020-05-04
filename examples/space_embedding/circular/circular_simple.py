@@ -58,11 +58,8 @@ def step(n, loop_n, plot=True):
 '''
 Main parameters
 '''
-
-# 2 3
 np.random.seed(0)
 
-simtime = 50.*hour + 30.*minute
 soma_radius = 5.
 num_neurons = 10
 
@@ -115,7 +112,7 @@ Simulation
 '''
 
 if __name__ == '__main__':
-    num_omp = 1
+    num_omp = 10
     kernel = {
               "seeds": range(num_omp),
               "num_local_threads": num_omp,
@@ -150,28 +147,19 @@ if __name__ == '__main__':
     rec = ds.create_recorders(gids, "num_growth_cones")
 
     start = time.time()
-    for i in range(3):
-        step(1 * day, 0, True)
 
-    # dendrite_params.update({"speed_growth_cone": 0.04 * um / minute,
-    #                         "use_van_pelt": False})
+    print("Day 1")
+    step(1 * day, 0, True)
 
-    # axon_params.update({"speed_growth_cone": 0.1 * um / minute,
-    #                     "use_van_pelt": False,
-    #                     "use_uniform_branching": True,
-    #                     "uniform_branching_rate": 0.1 * cph,})
+    print("Day 3")
+    step(2 * day, 0, True)
 
-    print("update parameters")
-    ds.set_object_properties(gids,
-                             params=neuron_params,
-                             neurite_params=neurite_params)
+    print("Day 6")
+    step(3 * day, 0, True)
 
-    print("parameters updated")
-    print("extension run")
-    for i in range(3):
-        step(1 * day, 0, True)
-    step(simtime, 0, True)
-    print("extension run done")
+    print("Day 12")
+    step(6 * day, 0, True)
+
     duration = time.time() - start
     print(ds.get_kernel_status("time"))
 
@@ -181,8 +169,9 @@ if __name__ == '__main__':
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "circular_swc"))
-    ds.io.save_json_info(filepath=save_path)
-    ds.io.save_to_swc(filename=save_path, resolution=10)
+    # ds.io.save_json_info(filepath=save_path)
+    filename = "circular_swc.swc"
+    ds.io.save_to_swc(filename=filename, resolution=10)
     print("\nmaking graph\n")
     graph = ds.morphology.generate_network()
     print("graph generated")

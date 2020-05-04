@@ -21,7 +21,9 @@
 
 import numpy as np
 
-def generate_network(population=None, gids=None, method="intersection",intersection_proba=1.):
+
+def generate_network(population=None, gids=None, method="intersection",
+                     intersection_proba=1.):
     """
     Create the
     """
@@ -44,8 +46,9 @@ def generate_network(population=None, gids=None, method="intersection",intersect
 
     graph = nngt.SpatialGraph(nodes=num_neurons, positions=positions)
     if method is "intersection":
-        intersections, synapses, liste= Intersections(gids, axons, dendrites_s,
-                                      intersection_proba)
+        intersections, synapses, liste =\
+                                        Intersections(gids, axons, dendrites_s,
+                                                      intersection_proba)
     for node_out, nodes_in in intersections.items():
         edges = np.zeros((len(nodes_in), 2), dtype=int)
         edges[:, 0] = node_out

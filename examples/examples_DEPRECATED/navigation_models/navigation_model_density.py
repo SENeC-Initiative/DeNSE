@@ -31,7 +31,7 @@ ureg = pint.UnitRegistry()  # Allow matplotlib to use units
 ureg.setup_matplotlib(True)
 import copy
 
-num_neurons = 1
+num_neurons = 2
 
 
 def step(n, loop_n, save_path, plot=True):
@@ -45,12 +45,13 @@ def run_dense(neuron_params, axes, letter, single=False):
     # neuron_params["rw_memory_tau"]: 4.,
     # neuron_params["rw_delta_corr"]: 1.8,
     ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
-    neuron_params["position"] = np.zeros((num_neurons, 2)) * um
+    n = np.zeros((num_neurons, 2)) * um
     simulated_neurons = num_neurons
 
     if single:
         simulated_neurons = 1.
         neuron_params["position"] = np.array([0, 0]) * um
+
     gids = ds.create_neurons(n=simulated_neurons,
                              params=neuron_params,
                              num_neurites=1
@@ -60,7 +61,7 @@ def run_dense(neuron_params, axes, letter, single=False):
          plot=False)
 
     neurons = ds.get_neurons()
-    # extracts the skeleton of the morphology as cooridnate of the segments
+    # extracts the skeleton of the morphology as coordinate of the segments
     # (this is the in morphology.NeuronStructure)
     structure = ds.morphology.NeuronStructure(neurons)
     population = ds.elements.Population.from_structure(structure)
@@ -124,11 +125,11 @@ if __name__ == '__main__':
         if model is "run-and-tumble":
             neuron_params["persistence_length"] = 50. * um
 
-        if model is "persistent_random_walk":
+        if model is "cst_po_nwa":
             neuron_params["persistence_length"] = 10. * um
             ciao = "1"
 
-        if model is "self_referential_forces":
+        if model is "self-referential-forces":
             neuron_params["srf_somatropic_force"] = 4.
             neuron_params["srf_somatropic_decay"] = 1.
             neuron_params["srf_inertial_decay"] = 1.
@@ -136,7 +137,8 @@ if __name__ == '__main__':
             print("model is {}".format(model))
 
         neuron_params["growth_cone_model"] = model
-        run_dense(neuron_params, axe, letter)
+
+#        run_dense(neuron_params, axe, letter)
         run_dense(neuron_params, axe, letter, single=True)
     fig.tight_layout()
     plt.show()

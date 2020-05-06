@@ -57,7 +57,6 @@ const std::string
 const std::string
     affinity_dendrite_soma_same_neuron("affinity_dendrite_soma_same_neuron");
 const std::string axon_angle("axon_angle");
-const std::string axon_diameter("axon_diameter");
 const std::string axon_polarization_weight("axon_polarization_weight");
 
 const std::string B("B");
@@ -67,7 +66,6 @@ const std::string critical_pull("critical_pull");
 
 const std::string memory_decay_factor("memory_decay_factor");
 const std::string dendrite_angles("dendrite_angles");
-const std::string dendrite_diameter("dendrite_diameter");
 const std::string description("description");
 const std::string diameter_eta_exp("diameter_eta_exp");
 const std::string diameter_fraction_lb("diameter_fraction_lb");
@@ -91,6 +89,7 @@ const std::string growth_cone_model("growth_cone_model");
 const std::string has_axon("has_axon");
 
 const std::string initial_branch_lenght("initial_branch_lenght");
+const std::string initial_diameter("initial_diameter");
 const std::string interactions("interactions");
 
 const std::string lateral_branching_angle_mean("lateral_branching_angle_mean");

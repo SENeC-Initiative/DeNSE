@@ -73,7 +73,7 @@ Once this is done, we can set the various parameters for the simulation and the 
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 35-55
+    :lines: 35-58
 
 The first line here declares the number of OpenMP processes that will be used, i.e. how many parallel threads will be used to perform the simulation.
 The second line will be used to set the number of neurons that will be simulated.
@@ -93,7 +93,7 @@ Once all these parameters are declared, we can configure DeNSE and create the ne
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 59-64
+    :lines: 60-65
 
 As can be seen above, one uses the ``ds`` variable to access the simulator main function. 
 The :func:`~dense.set_kernel_status` function is used here to transfer the parameters to the kernel of DeNSE (the main simulator units).
@@ -109,7 +109,7 @@ Following neuron creation, the simulation can be started and its result can be v
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 67-75
+    :lines: 68-76
 
 After this first 7 day simulation, the parameters of the neurons can be changed to account for changes in developmental mechanisms, so that these new
 parameters can be used to simulate the next part of these cells' growth.
@@ -117,7 +117,7 @@ parameters can be used to simulate the next part of these cells' growth.
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 78-97
+    :lines: 79-98
 
 Here we changed separately the dendritic and axonal parameters using the :func:`~dense.set_object_properties` function on the two neurons which are
 stored in the ``n`` variable (the neurons stored in a :class:`~dense.elements.Population` object).
@@ -128,7 +128,7 @@ Note that the ``neuroml`` python module is necessary to use :func:`~dense.io.sav
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 102-103
+    :lines: 103-104
 
 
 Multiprocessing and random number generation

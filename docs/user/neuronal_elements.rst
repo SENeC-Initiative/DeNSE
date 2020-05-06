@@ -166,8 +166,7 @@ and set its properties directly through the methods of the
 Besides the parameters discussed previously, one can also set the following
 properties of the neuron:
 
-* ``axon_diameter`` and ``dendrite_diameter`` specify the initial diameter
-  (at the soma) of both types  of neurites,
+* ``soma_radius`` to characterize the size of the cell body,
 
 * ``description`` contains a string which can by used to differenciate this
   neuron from other elements,
@@ -188,7 +187,7 @@ branching mechanisms of the neurite of interest.
 .. note ::
 
     Generic neurite properties both for dendrites' and axon's growth (see
-    :ref:`pymodels`) can be assigned once as neuron parameters.
+    :ref:`pymodels`) can also be assigned for all neurites as neuron parameters.
     These general settings can be overruled by the specific settings of
     dendrites' and axon's properties.
 
@@ -214,6 +213,8 @@ Some neurite-specific properties which are independent of the specific
   reduction of the neurite diameter with distance from the soma. At a distance
   :math:`l` from the soma, the diameter an unbranched neurite will thus be
   :math:`d = d_0 - r_t\cdot l`.
+
+* ``initial_diameter`` gives the size of the neurite at the soma.
 
 From a :class:`~dense.elements.Neuron` object, the neurites can directly be
 accessed using the ``axon`` or ``dendrites`` properties: ::

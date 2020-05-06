@@ -63,8 +63,6 @@ pos = env.seed_neurons(num_neurons, soma_radius=soma_radius, unit="um",
                        return_quantity=False)
 
 neuron_params = {
-    "axon_diameter": 4.*um,
-    "dendrite_diameter": 3.*um,
     "growth_cone_model": "simple-random-walk",
     "position": [tuple(p) for p in pos]*um,
     "persistence_length": 200.*um,
@@ -77,11 +75,13 @@ neuron_params = {
 axon_params = {
     "max_arbor_length": 1.*cm,
     "taper_rate": 1./400.,
+    "initial_diameter": 4.*um,
 }
 
 dend_params = {
     "max_arbor_length": 500.*um,
     "taper_rate": 1./200.,
+    "initial_diameter": 3.*um,
 }
 
 neurite_params = {"axon": axon_params, "dendrite": dend_params}

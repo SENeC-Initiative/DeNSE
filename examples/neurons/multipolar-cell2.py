@@ -38,8 +38,6 @@ num_omp     = 1
 neuron_params = {
     "filopodia_min_number": 30,
     "sensing_angle": 0.1495,
-    "dendrite_diameter": 2.,
-    "axon_diameter": 3.,
     "position": np.array([(0., 0.)]),
     "neurite_angles": {"axon": 4.8, "dendrite_1": 2., "dendrite_2": 1.1}
 }
@@ -48,9 +46,10 @@ dend_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": True,
 
-    "persistence_length": 150.0,
-    "thinning_ratio": 1./100.,
-    "speed_growth_cone": 0.008,
+    "persistence_length": 150.0 * um,
+    "taper_rate": 1./100.,
+    "initial_diameter": 2. * um,
+    "speed_growth_cone": 0.008 * um / minute,
 
     # Best model
     "gc_split_angle_mean": 1.,
@@ -68,10 +67,11 @@ axon_params = {
 
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
-    "thinning_ratio": 1./200.,
+    "taper_rate": 1./200.,
+    "initial_diameter": 3. * um,
 
-    "persistence_length": 300.0,
-    "speed_growth_cone": 0.015,
+    "persistence_length": 300.0 * um,
+    "speed_growth_cone": 0.015 * um / minute,
     "gc_split_angle_mean": 60.,
 
     # Best model

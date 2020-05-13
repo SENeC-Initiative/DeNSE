@@ -65,8 +65,11 @@ use_run_tumble = False
 
 gc_model = 'run-and-tumble'
 
-neuron_params = {
+neuron_params = {"soma_radius": soma_radius * um}
+
+axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
@@ -74,10 +77,8 @@ neuron_params = {
     "filopodia_wall_affinity": 500.,
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
-    "persistence_length" : 600. * um,
+    "persistence_length": 600. * um,
     "taper_rate": 1./1000.,
-
-    "soma_radius": soma_radius * um,
     'B': 10. * cpm,
     'T': 10000. * minute,
     'E': 0.7,
@@ -93,7 +94,7 @@ dendrite_params = {
     "taper_rate": 3./250.,
 }
 
-neurite_params = {"axon": {"initial_diameter": 4. * um},
+neurite_params = {"axon": axon_params,
                   "dendrite": dendrite_params}
 
 '''

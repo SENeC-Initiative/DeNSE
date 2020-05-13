@@ -64,7 +64,9 @@ use_run_tumble = False
 
 gc_model = 'run-and-tumble'
 
-neuron_params = {
+neuron_params = {"soma_radius": soma_radius * um}
+
+axon_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
@@ -74,9 +76,7 @@ neuron_params = {
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
     "persistence_length" : 600. * um,
-    "taper_rate": 2./1000.,
-
-    "soma_radius": soma_radius * um,
+    "taper_rate": 1./1000.,
     'B': 10. * cpm,
     'T': 10000. * minute,
     'E': 0.7,
@@ -92,9 +92,8 @@ dendrite_params = {
     "taper_rate": 3./250.,
 }
 
-neurite_params = {"axon": {"initial_diameter": 4. * um},
-                  "dendrite": dendrite_params}
-
+neurite_params = {"axon": axon_params,
+                  "dendrite_1": dendrite_params}
 
 '''
 Check for optional parameters
@@ -145,9 +144,10 @@ if __name__ == '__main__':
             neurons=int(num_neurons/2), xmax=440, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
             neurons=int(num_neurons/2), xmin=1000, soma_radius=soma_radius)
-        neuron_params['position'] = np.concatenate((pos_right, pos_left)) 
+        neuron_params['position'] = np.concatenate((pos_right, pos_left))
     else:
-        neuron_params['position'] = np.random.uniform(-1000, 1000, (num_neurons, 2)) * um
+        neuron_params['position'] = np.random.uniform(-1000, 1000, 
+                                                      (num_neurons, 2)) * um
 
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,

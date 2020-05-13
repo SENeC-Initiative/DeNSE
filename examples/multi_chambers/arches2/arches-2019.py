@@ -31,11 +31,8 @@ import nngt
 import dense as ds
 from dense.units import *
 
-import pdb
-
 current_dir = os.path.abspath(os.path.dirname(__file__)) + "/"
 main_dir = current_dir[:current_dir.rfind("/")]
-
 
 '''
 Main parameters
@@ -50,13 +47,14 @@ use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 
-#gc_model = 'run-and-tumble'
+
 gc_model = "simple-random-walk"
 
-neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
+neuron_params = {"soma_radius": soma_radius * um}
+
+axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
@@ -66,31 +64,30 @@ neuron_params = {
     "filopodia_min_number": 30,
     "persistence_length" : 500. * um, #600
     "taper_rate": 1./2000.,
-
-    "soma_radius": soma_radius * um,
-    'B' : 10. * cpm,
-    'T' : 10000. * minute,
-    'E' : 0.7,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
 dendrite_params = {
-    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": use_vp,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,
     "taper_rate": 3./250.,
 }
 
+neurite_params = {"axon": axon_params,
+                  "dendrite_1": dendrite_params}
 
 '''
 Check for optional parameters
 '''
 
 if use_run_tumble:
-    neuron_params ={
-        "persistence_length": 12. * um
-    }
+    neuron_params = {"persistence_length": 12. * um}
 
 if use_uniform_branching:
     neuron_params["uniform_branching_rate"] = 0.001
@@ -121,13 +118,8 @@ if __name__ == '__main__':
               "adaptive_timestep": -1.,
               "environment_required": True}
 
-    np.random.seed(128924) # seeds for the neuron positions
-    # ok pour 35 pas pour 40
-    # np.random.seed(21829)  # seeds for the neuron positions
-    # ok pour 40
-    # np.random.seed(118239)  # seeds for the neuron positions
+    np.random.seed(128924)  # seeds for the neuron positions
 
-    # Environment parameters and file
     min_x = 0  # "Arches20reduced2c2.svg" has x segment of length 164.91 cm
     max_x = 800  # and height of 84.94 cm
     min_y = -193
@@ -138,7 +130,7 @@ if __name__ == '__main__':
 
     #culture_file = current_dir + "Arches20reduced_thick-Tanguy.svg"
     ds.set_kernel_status(kernel, simulation_id="ID")
-#ds.set_kernel_status({"interactions": False})
+    #ds.set_kernel_status({"interactions": False})
 
     gids, culture = None, None
     print(ds.get_kernel_status("num_local_threads"))
@@ -164,7 +156,7 @@ if __name__ == '__main__':
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=neurite_params,
                              num_neurites=1)
 
     ds.plot.plot_neurons(show=True)

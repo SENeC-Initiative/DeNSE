@@ -52,7 +52,6 @@ Main parameters
 soma_radius = 8.
 num_neurons = 10
 
-#~ gc_model = 'persistent_random_walk'
 gc_model = 'run-and-tumble'
 use_uniform_branching = False
 use_vp = True
@@ -95,7 +94,8 @@ dendrite_params = {
     'E': 1.,
 }
 
-neurite_params = {"axon": axon_params, "dendrite_1": dendrite_params}
+neurite_params = {"axon": axon_params,
+                  "dendrite_1": dendrite_params}
 
 '''
 Simulation

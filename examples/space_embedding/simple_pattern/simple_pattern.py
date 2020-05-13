@@ -42,14 +42,11 @@ cwd = os.path.dirname(os.path.realpath(__file__))
 
 gc_model = 'run-and-tumble'
 
-neuron_params = {
-    "soma_radius": soma_radius,
-    "axon_diameter": 2.*um,
-    "dendrite_diameter": 2.*um,
-}
+neuron_params = {"soma_radius": soma_radius}
 
 axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_van_pelt": False,
     "sensing_angle": 70.*deg,
     "filopodia_wall_affinity": 0.01,
@@ -61,8 +58,9 @@ axon_params = {
 }
 
 dendrite_params = {
-    "use_van_pelt": False,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": False,
     "sensing_angle": 30.*deg,
     "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
@@ -70,7 +68,7 @@ dendrite_params = {
 }
 
 
-neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
 
 '''
 Simulation

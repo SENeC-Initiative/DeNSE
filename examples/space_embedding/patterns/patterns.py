@@ -41,9 +41,7 @@ cwd = os.path.dirname(os.path.realpath(__file__))
 
 gc_model = 'run-and-tumble'
 
-neuron_params = {
-    "soma_radius": soma_radius,
-}
+neuron_params = {"soma_radius": soma_radius}
 
 axon_params = {
     "initial_diameter": 2.*um,

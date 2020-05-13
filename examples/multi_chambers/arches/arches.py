@@ -53,14 +53,14 @@ use_run_tumble = False
 gc_model ="simple-random-walk"
 
 neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
+
     "soma_radius": soma_radius * um,
 }
 
 axon_params = {
     "growth_cone_model": gc_model,
     "use_uniform_branching": use_uniform_branching,
+    "initial_diameter": 4. * um,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
     "speed_growth_cone": 0.5 * um / minute,#0.5
@@ -70,14 +70,15 @@ axon_params = {
     "persistence_length" : 500. * um, #600
     "taper_rate": 1./2000.,
 
-    'B' : 10. * cpm,
-    'T' : 10000. * minute,
-    'E' : 0.7,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
 dendrite_params = {
-    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": use_vp,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,

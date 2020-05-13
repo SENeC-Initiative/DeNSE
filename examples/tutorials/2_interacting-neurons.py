@@ -32,23 +32,18 @@ from dense.units import *
 
 ''' Configuring the simulator and the neuronal properties '''
 
-num_omp       = 2
-num_neurons   = 2
+num_omp = 2
+num_neurons = 2
 
-simu_params   = {
-<<<<<<< HEAD
-    "resolution": 15.*minute,
-=======
+simu_params = {
+
     "resolution": 1.*minute,
->>>>>>> examples2020
     "num_local_threads": num_omp,
     "seeds": [0, 1],
     "environment_required": False,
 }
 
 neuron_params = {
-    "axon_diameter": 4.*um,
-    "dendrite_diameter": 3.*um,
     "growth_cone_model": "simple-random-walk",
     "position": [(0., 0.), (100., 100.)]*um,
     "persistence_length": 200.*um,
@@ -58,8 +53,11 @@ neuron_params = {
     "uniform_branching_rate": 0.009*cph,
 }
 
-neurite_params = {"dendrites": {"taper_rate": 1./200.}}
 
+neurite_params = {
+    "axon": {"initial_diameter": 4.*um},
+    "dendrites": {"taper_rate": 1./200., "initial_diameter": 3.*um}
+}
 # configure DeNSE
 ds.set_kernel_status(simu_params)
 
@@ -103,9 +101,7 @@ ds.plot.plot_neurons()
 
 ''' Save neuronal morphologies '''
 
-<<<<<<< HEAD
-ds.io.save_to_swc("neurons.swc", n) 
-=======
+# In the swc format
 ds.io.save_to_swc("neurons.swc", n)
->>>>>>> examples2020
+# In the Neurom format
 ds.io.save_to_neuroml("neurons.nml", n)

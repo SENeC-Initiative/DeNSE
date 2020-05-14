@@ -66,9 +66,7 @@ num_neurons = 10
 gc_model = 'cst_po_nwa'
 use_vp = True
 
-neuron_params = {
-    "soma_radius": soma_radius * um,
-}
+neuron_params = {"soma_radius": soma_radius * um}
 
 dendrite_params = {
     "use_van_pelt": True,

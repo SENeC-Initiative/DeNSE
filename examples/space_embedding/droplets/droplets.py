@@ -40,23 +40,20 @@ Main parameters
 '''
 
 num_neurons = 50
-
-# Simulation duration
-duration = 30  # in days
-
+gc_model = "simple-random-walk"
 soma_radius = 8.
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 
-# gc_model = 'run-and-tumble'
+# Simulation duration
+duration = 30  # in days
 
-gc_model = "simple-random-walk"
+neuron_params = {"soma_radius": soma_radius * um}
 
-neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
+axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
@@ -66,22 +63,23 @@ neuron_params = {
     "filopodia_min_number": 30,
     "persistence_length": 500. * um,  # 600
     "taper_rate": 1./2000.,
-
-    "soma_radius": soma_radius * um,
     'B': 10. * cpm,
     'T': 10000. * minute,
     'E': 0.7,
 }
 
 dendrite_params = {
-    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": use_vp,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
-    "persistence_length" : 200. * um,
+    "persistence_length": 200. * um,
     "taper_rate": 3./250.,
 }
 
+neurite_params = {"axon": axon_params,
+                  "dendrite_1": dendrite_params}
 
 '''
 Check for optional parameters
@@ -140,7 +138,7 @@ if __name__ == '__main__':
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=neurite_params,
                              num_neurites=2)
 
     ds.plot.plot_neurons(show=True)

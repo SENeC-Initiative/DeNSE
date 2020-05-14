@@ -259,8 +259,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 
         fig, ax2 = plt.subplots()
 
-# https://stackoverflow.com/questions/20474549/extract-points-coordinates-from-a-polygon-in-shapely#20476150
-#        x,y= axons[].exterior.coords.xy
+        # https://stackoverflow.com/questions/20474549/extract-points-coordinates-from-a-polygon-in-shapely#20476150
+        # x,y= axons[].exterior.coords.xy
 
         def extract_neurites_coordinate(neurites):
             '''

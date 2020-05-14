@@ -23,7 +23,7 @@
 import dense as ds
 import numpy as np
 import os
-
+from dense.units import *
 
 '''
 Main parameters

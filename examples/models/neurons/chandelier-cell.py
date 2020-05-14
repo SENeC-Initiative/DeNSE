@@ -36,13 +36,11 @@ S = 0.901
 E = 0.3
 gc_model = "simple-random-walk"
 num_neurons = 1
-num_omp     = 1
+num_omp = 1
 
 neuron_params = {
     "filopodia_min_number": 30,
     "sensing_angle": 0.1495*rad,
-    "dendrite_diameter": 2.*um,
-    "axon_diameter": 3.*um,
     "position": np.array([(0., 0.)])*um,
     "neurite_angles": {
         "axon": 275.*deg, "dendrite_1": 115.*deg, "dendrite_2": 65.*deg}
@@ -51,13 +49,14 @@ neuron_params = {
 dend_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
-
+    "initial_diameter": 2.*um,
     "persistence_length": 150.0*um,
     "taper_rate": 1./100.,
     "speed_growth_cone": 0.008*um/minute,
 }
 
 axon_params = {
+    "initial_diameter": 3.*um,
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
     "use_flpl_branching": False,
@@ -73,10 +72,10 @@ axon_params = {
 }
 
 # set specific axon params in neurite params
-neurite_params = {"axon": axon_params}
+neurite_params = {"axon": axon_params, "dendrites": dend_params}
 
-# add generic neurite params directly in neuron_params
-neuron_params.update(dend_params)
+# # add generic neurite params directly in neuron_params
+# neuron_params.update(dend_params)
 
 
 '''
@@ -128,7 +127,13 @@ axon_vp = {
     "T": 3*day,
 }
 
-neurite_params = {"axon": axon_vp, "dendrite": dend_vp}
+
+axon_params.update(axon_vp)
+dend_params.update(dend_vp)
+dend_params.pop("initial_diameter")
+axon_params.pop("initial_diameter")
+dend_params.pop("taper_rate")
+axon_params.pop("taper_rate")
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
@@ -141,23 +146,25 @@ ds.plot.plot_neurons()
 
 lb_a = {
     "use_van_pelt": False,
-    #~ 'res_branching_threshold': np.inf,
+    # ~ 'res_branching_threshold': np.inf,
     "use_flpl_branching": True,
-    "flpl_branching_rate": 0.1*cph, 
+    "flpl_branching_rate": 0.1*cph,
     "lateral_branching_angle_mean": 45.*deg
 }
 
 lb = {
     "use_van_pelt": False,
-    #~ 'res_branching_threshold': np.inf,
     "use_uniform_branching": True,
-    "uniform_branching_rate": 0.05*cph, 
+    "uniform_branching_rate": 0.05*cph,
     "lateral_branching_angle_mean": 45.*deg
 }
 
-neurite_params = {"axon": lb_a, "dendrites": lb}
+# neurite_params = {"axon": lb_a, "dendrites": lb}
+axon_params.update(lb_a)
+dend_params.update(lb)
 
 ds.set_object_properties(n, neurite_params=neurite_params)
+
 
 ds.simulate(10*day)
 
@@ -187,5 +194,6 @@ ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 ds.plot.plot_dendrogram(n.axon)
 
 print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
-print("Asymmetry of the dendrite:",
-      ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))
+
+print("Asymmetry of a dendrite:",
+      ds.morphology.tree_asymmetry(n.dendrites["dendrite_2"]))

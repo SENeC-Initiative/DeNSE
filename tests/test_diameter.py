@@ -38,8 +38,9 @@ def test_initial_diam():
 
     # create one neuron
     neuron = ds.create_neurons(num_neurites=1,
-                               params={"axon_diameter": diam})
+                               params={"initial_diameter": diam})
 
+    assert neuron.axon.initial_diameter == diam
     assert neuron.axon.branches[0].diameter == diam
 
 
@@ -51,11 +52,15 @@ def test_final_diam():
 
     taper = 0.005
 
+    neurite_params = {
+        "axon": {"initial_diameter": diam_axon},
+        "dendrite_1": {"initial_diameter": diam_dend}
+    }
+
     # create one neuron
     neuron = ds.create_neurons(num_neurites=2,
-                               params={"axon_diameter": diam_axon,
-                                       "dendrite_diameter": diam_dend,
-                                       "taper_rate": taper})
+                               params={"taper_rate": taper},
+                               neurite_params=neurite_params)
 
     ds.simulate(100.*minute)
 
@@ -65,7 +70,9 @@ def test_final_diam():
     daxon_th = diam_axon - len_axon*taper
     ddend_th = diam_dend - len_dend*taper
 
+    assert np.isclose(neuron.axon.initial_diameter.m, diam_axon.m)
     assert np.isclose(neuron.axon.branches[0].diameter.m, daxon_th.m)
+    assert np.isclose(neuron.dendrite_1.initial_diameter.m, diam_dend.m)
     assert np.isclose(
         neuron.dendrites["dendrite_1"].branches[0].diameter.m,
         ddend_th.m)

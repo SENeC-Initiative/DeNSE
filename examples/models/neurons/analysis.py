@@ -2,6 +2,9 @@
 #
 # analysis.py
 #
+# Example code to use Neurom for the morphological analysis of neurons
+# saved as .swc files
+#
 # This file is part of DeNSE.
 #
 # Copyright (C) 2019 SeNEC Initiative
@@ -44,9 +47,10 @@ sns.set(style="white", rc={"axes.facecolor": (0, 0, 0, 0)}, font_scale=1.5)
 
 # ~ filename = "starbust-amacrine.swc"
 # ~ filename = "starbust-amacrine-rt.swc"
-filename = "pyramidal-cell.swc"
+# filename = "pyramidal-cell.swc"
 # ~ filename = "granule-cell.swc"
 # ~ filename = "chandelier-cell.swc"
+filename = 'multipolar-cell.swc'
 
 nrn = nm.load_neuron(filename)
 

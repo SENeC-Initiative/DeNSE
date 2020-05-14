@@ -39,13 +39,12 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 2. * um,
-    "axon_diameter": 3.5 * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "growth_cone_model": "simple-random-walk"
 }
 
 axon_params = {
+    "initial_diameter": 3.*um,
     "persistence_length": 200. * um,
     "speed_growth_cone": 0.04 * um / minute,
     # diameter
@@ -60,6 +59,7 @@ axon_params = {
 }
 
 dend_params = {
+    "initial_diameter": 2.*um,
     "taper_rate": 1.5/100.,
     "use_uniform_branching": True,
     "uniform_branching_rate": 0.0001 * cpm,
@@ -106,8 +106,11 @@ ds.simulate(7 * day)
 
 ds.plot.plot_dendrogram(n.axon, show=False)
 
+# Alternative syntax
+n.axon.plot_dendrogram(show=True)
 
 ds.io.save_to_swc("granule-cell.swc", gid=n)
+
 ds.plot.plot_neurons(show=True, subsample=50)
 
 nrn = nm.load_neuron("granule-cell.swc")
@@ -118,13 +121,14 @@ for ax in fig.axes:
     ax.set_title("")
 
 
-#~ tree = n[0].axon.get_tree()
 tree2 = n.axon.get_tree()
+
 print(tree2.neuron, tree2.neurite)
 
 plt.axis('off')
+
 fig.suptitle("")
+
 plt.tight_layout()
+
 plt.show()
-#~ tree.show_dendrogram()
-n.axon.plot_dendrogram(show=True)

@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 #
 # several_step_growth.py
+# Same code as  /example/models/branching/branching_on_and_off_example.py
+# duplicated and renamed in this folder for illustration of modeling
+# several growth steps with different parameters
 #
 # This file is part of DeNSE.
 #
@@ -33,28 +36,25 @@ from dense.units import *
 # Neuron parameters defines the general properties of the neuron
 # Growth_models parameters defined at the neuron level are applied
 # to all the neurites (dendrites and axon)
-# 
-neuron_params = {
-    # initial neurite shape parameters
-    "dendrite_diameter": 2.*um,
-    "axon_diameter": 1.*um,
 
+neuron_params = {
     # soma position
     # "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
 
     # axon versus dendrites orientations
     "polarization_strength": 20.,
-    #"neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
+    # "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
 }
 
 
 axon_params = {
+    "initial_diameter": 1.*um,
     # growth cone model
     "growth_cone_model": "cst_mem_nwa",
 
     # Steering parameters
     "sensing_angle": 0.1433 *rad,
-    #"filopodia_wall_affinity": 0.05,
+    # "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20. *um,
     "filopodia_min_number": 30,
 
@@ -69,12 +69,13 @@ axon_params = {
 }
 
 dendrite_params = {
+    "initial_diameter": 2.*um,
     # growth cone model
     "growth_cone_model": "cst_mem_nwa",
 
     # Steering parameters
     "sensing_angle": 0.1433 *rad,
-    #"filopodia_wall_affinity": 0.05,
+    # "filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20. *um,
     "filopodia_min_number": 30,
     "taper_rate": 0.001,
@@ -90,14 +91,10 @@ dendrite_params = {
 
 neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
 
+if __name__ == '__main__':
 
-
-if __name__ =='__main__':
-    # ~ kernel={"seeds":[33, 64, 84, 65, 68, 23],
-            # ~ "num_local_threads": 6,
-            # ~ "resolution": 30.}
-    kernel={
-        "seeds":[33],
+    kernel = {
+        "seeds": [33],
         "num_local_threads": 1,
         "resolution": 30.*minute,
         "environment_required": False
@@ -130,7 +127,6 @@ if __name__ =='__main__':
 
     ds.plot.plot_neurons(mode="mixed", show=True)
 
-
     '''
     Change the parameters to include growth cone splitting
     '''
@@ -143,10 +139,10 @@ if __name__ =='__main__':
         "use_van_pelt": True,
         "gc_split_angle_mean": 30.*deg,
         "gc_split_angle_std": 5.*deg,
-        "B" : 5.* cpm,
-        "E" : 0.1,
-        "S" : 1.5, # large S leads to core dump
-        "T" : 7*day,
+        "B": 5.* cpm,
+        "E": 0.1,
+        "S": 1.5, # large S leads to core dump
+        "T": 7*day,
     }
 
     vp_dend = {
@@ -154,10 +150,10 @@ if __name__ =='__main__':
         "use_van_pelt": True,
         "gc_split_angle_mean": 30.*deg,
         "gc_split_angle_std": 5.*deg,
-        "B" : 5.* cpm,
-        "E" : 0.1,
-        "S" : 1.5, # large S leads to core dump
-        "T" : 7*day,
+        "B": 5.* cpm,
+        "E": 0.1,
+        "S": 1.5, # large S leads to core dump
+        "T": 7*day,
     }
 
     neurite_params = {"axon": vp_axon, "dendrites": vp_dend}
@@ -198,10 +194,7 @@ if __name__ =='__main__':
 
     ds.set_object_properties(gids, neurite_params=neurite_params)
 
-
     ds.simulate(5 * day)
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
     ds.plot.plot_neurons(mode="mixed", show=True)
-
-    #~ pprint(ds.get_object_properties(gids_rec))

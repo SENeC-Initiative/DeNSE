@@ -51,21 +51,16 @@ Main parameters
 
 soma_radius = 8.
 num_neurons = 15
-
-#~ gc_model = 'persistent_random_walk'
 gc_model = 'run-and-tumble'
 use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 
-neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
-    "soma_radius": soma_radius * um,
-}
+neuron_params = {"soma_radius": soma_radius * um}
 
 axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp ,
     "sensing_angle": 45.*deg,
@@ -82,8 +77,9 @@ axon_params = {
 }
 
 dendrite_params = {
-    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": use_vp,
     "speed_growth_cone": 0.01 * um / minute,
     "filopodia_wall_affinity": 10. ,
     "persistence_length" : 200. * um,
@@ -93,7 +89,9 @@ dendrite_params = {
     'E': 1.,
 }
 
-neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+
+neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
+
 
 '''
 Simulation

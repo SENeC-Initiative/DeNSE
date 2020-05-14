@@ -41,10 +41,6 @@ gc_model = "self-referential-forces"
 
 
 neuron_params = {
-    # initial neurite shape parameters
-    "dendrite_diameter": 3.*um,
-    "axon_diameter": 4.*um,
-
     # soma position
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
 
@@ -54,6 +50,7 @@ neuron_params = {
     }
 
 axon_params = {
+    "initial_diameter": 4.*um,
     # growth cone model
     "growth_cone_model": gc_model,
 
@@ -82,6 +79,7 @@ axon_params = {
 }
 
 dend_params = {
+    "initial_diameter": 2.*um,
     "growth_cone_model": gc_model,
     # Steering parameters
     "sensing_angle": 85.*deg,

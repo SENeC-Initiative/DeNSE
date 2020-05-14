@@ -38,8 +38,6 @@ num_omp = 1
 neuron_params = {
     "filopodia_min_number": 30,
     "sensing_angle": 70.*deg,
-    "dendrite_diameter": 2.*um,
-    "axon_diameter": 3.5*um,
     "position": np.array([(0., 0.)])*um,
     "gc_split_angle_mean": 30.*deg,
     "soma_radius": 4.*um,
@@ -48,7 +46,7 @@ neuron_params = {
 dend_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
-
+    "initial_diameter": 2.*um,
     "persistence_length": 150.*um,
     "taper_rate": 1./130.,
 
@@ -73,6 +71,7 @@ dend_params = {
 }
 
 axon_params = {
+    "initial_diameter": 3.5*um,
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
     "use_flpl_branching": False,
@@ -170,14 +169,14 @@ ds.set_object_properties(n, neurite_params=end_branching)
 
 ds.simulate(10*day)
 
-
 ds.plot.plot_recording(rec2, show=False)
-ds.plot.plot_neurons(show=True, scale_text=False)
 
+ds.plot.plot_neurons(show=True, scale_text=False)
 
 ds.io.save_to_swc("multipolar-cell.swc", gid=n, resolution=50)
 
 tree = n.axon.get_tree()
+
 print(tree.neuron, tree.neurite)
 
 n.axon.plot_dendrogram(show=True)

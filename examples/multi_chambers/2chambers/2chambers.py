@@ -25,15 +25,11 @@ import shutil
 import time
 
 import numpy as np
-import matplotlib
-#matplotlib.use("GTK3Agg")
 import matplotlib.pyplot as plt
-
-import nngt
-nngt.set_config("palette", "Spectral")
-
 import dense as ds
 from dense.units import *
+import nngt
+nngt.set_config("palette", "Spectral")
 
 try:
     import seaborn as sns
@@ -67,10 +63,11 @@ use_run_tumble = False
 
 gc_model = 'run-and-tumble'
 
-neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
+neuron_params = {"soma_radius": soma_radius * um}
+
+axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
@@ -79,15 +76,14 @@ neuron_params = {
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
     "persistence_length" : 600. * um,
-    "taper_rate": 2./1000.,
-
-    "soma_radius": soma_radius * um,
-    'B' : 10. * cpm,
-    'T' : 10000. * minute,
-    'E' : 0.7,
+    "taper_rate": 1./1000.,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
 dendrite_params = {
+    "initial_diameter": 3. * um,
     "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
     "speed_growth_cone": 0.2 * um / minute,
@@ -96,6 +92,8 @@ dendrite_params = {
     "taper_rate": 3./250.,
 }
 
+neurite_params = {"axon": axon_params,
+                  "dendrite_1": dendrite_params}
 
 '''
 Check for optional parameters
@@ -146,15 +144,16 @@ if __name__ == '__main__':
             neurons=int(num_neurons/2), xmax=440, soma_radius=soma_radius)
         pos_right = culture.seed_neurons(
             neurons=int(num_neurons/2), xmin=1000, soma_radius=soma_radius)
-        neuron_params['position'] = np.concatenate((pos_right, pos_left)) 
+        neuron_params['position'] = np.concatenate((pos_right, pos_left))
     else:
-        neuron_params['position'] = np.random.uniform(-1000, 1000, (num_neurons, 2)) * um
+        neuron_params['position'] = np.random.uniform(-1000, 1000, 
+                                                      (num_neurons, 2)) * um
 
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,
                              culture=culture,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
+                             neurite_params=dendrite_params,
                              num_neurites=2)
 
     print("neurons done")

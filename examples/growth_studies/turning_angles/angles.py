@@ -31,8 +31,6 @@ import nngt
 import dense as ds
 from dense.units import *
 
-import pdb
-
 current_dir = os.path.abspath(os.path.dirname(__file__)) + "/"
 main_dir = current_dir[:current_dir.rfind("/")]
 
@@ -41,7 +39,8 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-num_neurons = 100
+num_neurons = 50
+
 # Simulation duration
 duration = 1.5  # in days
 
@@ -50,13 +49,13 @@ use_uniform_branching = False
 use_vp = True
 use_run_tumble = False
 
-# gc_model = 'run-and-tumble'
 gc_model = "simple-random-walk"
 
-neuron_params = {
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
+neuron_params = {"soma_radius": soma_radius * um}
+
+axon_params = {
     "growth_cone_model": gc_model,
+    "initial_diameter": 4. * um,
     "use_uniform_branching": use_uniform_branching,
     "use_van_pelt": use_vp,
     "sensing_angle": 45.*deg,
@@ -66,58 +65,37 @@ neuron_params = {
     "filopodia_min_number": 30,
     "persistence_length" : 600. * um, #600
     "taper_rate": 1./2000.,
-
-    "soma_radius": soma_radius * um,
-    'B' : 10. * cpm,
-    'T' : 10000. * minute,
-    'E' : 0.7,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
+
 dendrite_params = {
-    "use_van_pelt": use_vp,
     "growth_cone_model": gc_model,
+    "initial_diameter": 3. * um,
+    "use_van_pelt": use_vp,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,
     "taper_rate": 3./250.,
+    'B': 10. * cpm,
+    'T': 10000. * minute,
+    'E': 0.7,
 }
 
-
-'''
-Check for optional parameters
-'''
-
-if use_run_tumble:
-    neuron_params ={
-        "persistence_length": 12. * um
-    }
-
-if use_uniform_branching:
-    neuron_params["uniform_branching_rate"] = 0.001
-
-
-if (neuron_params.get("growth_cone_model", "") ==
-   "persistent_random_walk"):
-    neuron_params["persistence_length"] = 20. * um
-
+neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
+#neurite_params = {"axon": axon_params}
 
 '''
 Simulation
 '''
 
-
-def step(time, loop_n, plot=True):
-    ds.simulate(time)
-
-    if plot:
-        ds.plot.plot_neurons(show_nodes=True, show=True)
-
-
 if __name__ == '__main__':
     number_of_threads = 10
     kernel = {"seeds": range(number_of_threads),
               "num_local_threads": number_of_threads,
-              "resolution": 10. * minute, #10
+              "resolution": 10. * minute,
               "adaptive_timestep": -1.,
               "environment_required": True}
 
@@ -130,9 +108,10 @@ if __name__ == '__main__':
     max_y = 580  # set here same aspect ratio  X , Y as size of environment
     #  in the svg file
 
-    culture_file = current_dir + "angles_NO.svg"
+
+    # culture_file = current_dir + "angles_NO.svg"
     # culture_file = current_dir + "angles0.svg"
-    # culture_file = current_dir + "angles5.svg"
+    culture_file = current_dir + "angles5.svg"
     # culture_file = current_dir + "angles10.svg"
     # culture_file = current_dir + "angles20.svg"
     # culture_file = current_dir + "angles30.svg"
@@ -169,8 +148,8 @@ if __name__ == '__main__':
     print("Creating neurons")
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
-                             dendrites_params=dendrite_params,
-                             num_neurites=1)
+                             neurite_params=neurite_params,
+                             num_neurites=2)
 
     ds.plot.plot_neurons(show=True)
     print("creation of neurons done")
@@ -178,31 +157,28 @@ if __name__ == '__main__':
     print("Starting simulation")
     try:
         start = time.time()
-        step(duration * day, 0, False)
+        ds.simulate(duration * day)
         duration = time.time() - start
+        print("Simulation done")
+        print("duration = {}".format(duration))
     except Exception as e:
         print(e)
-    print("Simulation done")
-    print("duration = {}".format(duration))
 
     # prepare the plot
     print("Starting plot")
     fig, ax = plt.subplots()
-    #ds.plot.plot_neurons(show_density=False, dstep=4., dmax=10, cmap="jet",
-    #                     show_neuron_id=True)
+
     ds.plot.plot_neurons(culture=culture,
                          soma_alpha=0.4,
                          axon_color='g',
                          gc_color="r",
                          axis=ax,
-                         show_density=True,
+                         show_density=False,
                          dstep=100.,
                          x_min=min_x,
                          x_max=max_x,
                          y_min=min_y,
                          y_max=max_y,
-                         #dmin=0,
-                         #dmax=10,
                          show=False)
     plt.tight_layout()
     ax.set_xlabel("x ($\mu$m)")

@@ -107,11 +107,6 @@ def step(n, loop_n, save_path, plot=True):
 
 
 def run_dense(neuron_params, neurite_params):
-    """
-    """
-    #~ np.random.seed(kernel['seeds'])
-    kernel["resolution"] = resolution * minute
-    ds.set_kernel_status(kernel, simulation_id="case_neuron")
 
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (1, 2)) * um
@@ -198,12 +193,13 @@ def run_dense(neuron_params, neurite_params):
 
 if __name__ == '__main__':
     kernel = {
-        # ~ "seeds": [33, 345, 17, 193, 177],
-        # ~ "num_local_threads": 5,
+        "resolution": 1.*minute,
         "seeds": [0],
         "num_local_threads": 1,
         "environment_required": False
     }
+
+    ds.set_kernel_status(kernel, simulation_id="case_neuron")
 
     swc_file = run_dense(neuron_params, neurite_params)
     # ~ import btmorph2

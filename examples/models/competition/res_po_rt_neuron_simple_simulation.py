@@ -30,7 +30,6 @@ from dense.units import *
 Main parameters
 '''
 resolution = 1
-#gc_model = "run_tumble_critical"
 gc_model = "res_po_rt"
 
 neuron_params = {}
@@ -45,14 +44,14 @@ axon_params = {
     "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.30 * um / minute,
     # "res_weight": -.0,
-    "res_retraction_threshold": 0.10 * uM,
-    "res_elongation_threshold": 0.3 * uM,
+    "res_retraction_threshold": 0.20 * uM,
+    "res_elongation_threshold": 0.91 * uM,
     # "res_split_th": 0.80,
-    "res_neurite_generated": 2500. * uM,
+    "res_neurite_generated": 550. * uM,
     "res_neurite_delivery_tau": 50. * minute,
-    "res_correlation": 0.4,
-    "res_variance": 0.04 * uM / minute ** 0.5,
-    "res_use_ratio": 1. * cpm,
+    "res_correlation": 0.01,
+    "res_variance": 0.01 * uM / minute ** 0.5,
+    "res_use_ratio": .26 * cpm,
 
     # Best model
     "B": 40. * cpm,
@@ -74,11 +73,11 @@ dendrite_params = {
     "res_retraction_threshold": 0.10 * uM,
     "res_elongation_threshold": 0.3 * uM,
     # "res_split_th": 0.80,
-    "res_neurite_generated": 2500. * uM,
-    "res_neurite_delivery_tau": 50. * minute,
-    "res_correlation": 0.4,
-    "res_variance": 0.04 * uM / minute ** 0.5,
-    "res_use_ratio": 1. * cpm,
+    "res_neurite_generated": 550. * uM,
+    #"res_neurite_delivery_tau": 50. * minute,
+    "res_correlation": 0.01,
+    "res_variance": 0.01 * uM / minute ** 0.5,
+    "res_use_ratio": 0.26 * cpm,
 
     # Best model
     "B": 40. * cpm,
@@ -106,11 +105,6 @@ def step(n, loop_n, save_path, plot=True):
 def run_dense(neuron_params):
     """
     """
-
-    #~ np.random.seed(kernel['seeds'])
-    kernel["resolution"] = resolution * minute
-    ds.set_kernel_status(kernel, simulation_id="case_neuron")
-
     neuron_params["position"] = np.random.uniform(
         -1000, 1000, (1, 2)) * um
 
@@ -138,12 +132,13 @@ def run_dense(neuron_params):
 
 if __name__ == '__main__':
     kernel = {
-        # ~ "seeds": [33, 345, 17, 193, 177],
-        # ~ "num_local_threads": 5,
+        "resolution": 1.*minute,
         "seeds": [0],
         "num_local_threads": 1,
         "environment_required": False
     }
+
+    ds.set_kernel_status(kernel, simulation_id="case_neuron")
 
     swc_file = run_dense(neuron_params)
 

@@ -51,10 +51,12 @@ def step(n, loop_n, save_path, plot=True):
                 show_nodes=False, save_path=save_path)
 
 
-def lateral_branching():
+def lateral_branching(kernel):
+
     ds.reset_kernel()
-    np.random.seed(kernel['seeds'])
+
     ds.set_kernel_status(kernel, simulation_id="branching")
+    np.random.seed(kernel['seeds'])
 
     neuron_params = {
         "axon_angle": 90.*deg,
@@ -83,6 +85,7 @@ def lateral_branching():
                             params=neuron_params,
                             num_neurites=2)
 
+    print("Simulation 1 hour")
     step(1*hour, 1, False, False)
 
     neuron_params[use_type] = True
@@ -121,6 +124,8 @@ def lateral_branching():
     # updates neurites parameters
     ds.set_object_properties(gid, neurite_params=neurite_params)
 
+    print("Simulation 7 days")
+
     step(7 * day, 1, False, False)
 
     ds.io.save_to_swc(filename="branching_lateral.swc", resolution=5)
@@ -138,9 +143,12 @@ if __name__ == '__main__':
         "seeds": np.random.randint(0, 10000, num_omp).tolist(),
         "num_local_threads": num_omp,
         "environment_required": False,
-        "resolution": 2 * minute,
+        "resolution": 2.*minute,
     }
-    swc_file = lateral_branching()
+
+    ds.set_kernel_status(kernel)
+
+    swc_file = lateral_branching(kernel)
 
     ds.plot.plot_neurons(show=True)
 
@@ -180,4 +188,3 @@ if __name__ == '__main__':
     # ~ # plt.show()
     # ~ plt.savefig("dendrogram-rate{}.pdf".format(rate), format="pdf", ppi =300)
     # ~ plt.show(block = True)
-

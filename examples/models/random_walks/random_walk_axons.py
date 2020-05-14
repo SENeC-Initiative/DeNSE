@@ -24,91 +24,65 @@ import dense as ds
 import numpy as np
 import os
 
-
+from dense.units import *
 '''
 Main parameters
 '''
 
-num_neurons           = 4
-use_vp                = False
+num_neurons = 4
 
-neuron_params = {
-    # "growth_cone_model": "self_referential_forces",
-    "growth_cone_model": "persistent_random_walk",
+neuron_params = {}
 
+
+axon_params = {
+    "growth_cone_model": "cst_po_nwa",
+
+    "sensing_angle": 70.*deg,
+    "speed_growth_cone": 0.1 * um / minute,
+    "filopodia_wall_affinity": 10.,
+    "filopodia_finger_length": 10. * um,
     "filopodia_min_number": 30,
-    "speed_growth_cone": 1.,
-    "sensing_angle": 0.1195,
+    "affinity_axon_axon_other_neuron": 100.,
 
-    "filopodia_wall_affinity": 2.,
-    "filopodia_finger_length": 50.0,
-    "use_uniform_branching": True,
-    "uniform_branching_rate": 0.002,
-
-    "use_van_pelt": use_vp,
-
-    "gc_split_angle_mean": 10.3,
+    "persistence_length": 500.*um,
+    "taper_rate": 1./400.,
+    "diameter_ratio_avg": 0.5,
+    # branching
+    "use_van_pelt": False,
+    "use_uniform_branching": False,
+    "filopodia_wall_affinity": 10.
 }
 
 
-'''
-Check for optional parameters
-'''
-
-if use_critical_resource:
-    cr_params = {
-        "res_speed_factor": 0.10,
-        "res_amount": 1.,
-        "res_leakage": 0.05,
-        "res_retraction_threshold": 0.30,
-        "res_elongation_threshold": 0.50,
-        "res_split_th": 0.80,
-        "res_demand_correlation": 0.9910,
-        "res_demand_stddev": 0.2,
-        "res_demand_mean": 1.,
-        "res_use_ratio": 0.7
-    }
-    neuron_params.update(cr_params)
-    dendrite_params["critical_resource_speed_factor"] = 0.05
-
-if use_vp:
-    vp_params = {
-        "B" : 2.,
-        "E" : 0.905,
-        "S" : 1.0, # large S leads to core dump
-        "T" : 0.001,
-    }
-    neuron_params.update(vp_params)
-
-if neuron_params.get("growth_cone_model", "") == "persistent_random_walk":
-    neuron_params["persistence_length"] = 30.
-
-
+neurite_params = {"axon": axon_params}
 '''
 Simulation
 '''
 
+
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
     if plot:
-        ds.plot_neurons(
+        ds.plot.plot_neurons(
             show_nodes=False, save_path=save_path)
 
 
-def random_walk_axon(neuron_params):
+def random_walk_axon(neuron_params, axon_params):
     np.random.seed(kernel['seeds'])
     ds.set_kernel_status(kernel, simulation_id="random_walk_axons")
-    neuron_params['growth_cone_model'] = 'random_walk'
 
     neuron_params["position"] = np.random.uniform(
-        -500, 500, (num_neurons, 2))
+        -500, 500, (num_neurons, 2))*um
+    neurite_params = {"axon": axon_params}
+    print(axon_params["persistence_length"])
+
     ds.create_neurons(n=num_neurons,
-                            params=neuron_params,
-                            num_neurites=1,
-                            position=[]
-                            )
-    name = str (neuron_params["persistence_length"])
-    step(1000, 1, os.path.join(os.getcwd(),"random_walk_axon_"+name))
+                      params=neuron_params,
+                      neurite_params=neurite_params,
+                      num_neurites=1,
+                      )
+    name = str(axon_params["persistence_length"])
+    step(48 * hour, 1, os.path.join(os.getcwd(), "random_walk_axon_"+name))
 
     ds.reset_kernel()
 
@@ -119,7 +93,6 @@ if __name__ == '__main__':
         "num_local_threads": 2,
         "environment_required": False
     }
-    for x in [3.0, 9.0, 15.0, 20.0]:
-        print(x)
-        neuron_params["persistence_length"] = x
-        random_walk_axon(neuron_params)
+    for x in [3.0, 90.0, 300., 600.]*um:
+        axon_params["persistence_length"] = x
+        random_walk_axon(neuron_params, axon_params)

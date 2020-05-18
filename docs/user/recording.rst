@@ -38,7 +38,7 @@ The `static_data` are the `morphology.swc` and `info.json`, both are produced at
 For an insight on the SWC format we invite you to read the associated section. The SWC format is one of the most widely used neuron morphology formats (in particular, a standardized version of this format is used by the `neuromorpho <http://www.neuromorpho.org>`_ archive).
 
 
-DENsE can also store neuron morphologies in the *neuroml* format, an alternative data format for defining and
+DENsE can also store neuron morphologies in the `NeuroML <https://neuroml.org/>`_ format, an alternative data format for defining and
     exchanging models in computational neuroscience focused on
     biophysical and anatomical detailed models.
 

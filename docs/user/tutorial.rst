@@ -230,7 +230,7 @@ Which leads to the following structure:
 Other Examples
 ==============
 
-The ../examples folder contains a collections of different applications cases illustrating DeNSE functions.
+The `examples <https://github.com/SENeC-Initiative/DeNSE/tree/master/examples>`_ folder contains a collections of different applications cases illustrating DeNSE functions.
 
 Models
 ------

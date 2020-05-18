@@ -35,7 +35,7 @@ The file will be saved in the current working directory in the path:
 
 The `static_data` are the `morphology.swc` and `info.json`, both are produced at the end of the simulation, they can be placed where the user prefer, since we do expect these are the data usually required.
 
-For an insight on the SWC format you're pleased to read the apposite section. The SWC format is one of the most widely used  neuron morphologyformats (in particular, a standardized version of this format is used by the neuromorpho_ http://www.neuromorpho.org/ archive  ).
+For an insight on the SWC format we invite you to read the associated section. The SWC format is one of the most widely used neuron morphology formats (in particular, a standardized version of this format is used by the `neuromorpho <http://www.neuromorpho.org>`_ archive).
 
 
 DENsE can also store neuron morphologies in the *neuroml* format, an alternative data format for defining and

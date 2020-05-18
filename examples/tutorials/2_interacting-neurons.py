@@ -43,8 +43,6 @@ simu_params   = {
 }
 
 neuron_params = {
-    "axon_diameter": 4.*um,
-    "dendrite_diameter": 3.*um,
     "growth_cone_model": "simple-random-walk",
     "position": [(0., 0.), (100., 100.)]*um,
     "persistence_length": 200.*um,
@@ -54,7 +52,10 @@ neuron_params = {
     "uniform_branching_rate": 0.009*cph,
 }
 
-neurite_params = {"dendrites": {"taper_rate": 1./200.}}
+neurite_params = {
+    "axon": {"initial_diameter": 4.*um},
+    "dendrites": {"taper_rate": 1./200., "initial_diameter": 3.*um}
+}
 
 # configure DeNSE
 ds.set_kernel_status(simu_params)

@@ -44,8 +44,6 @@ neuron_params = {
     "filopodia_min_number": 15,
     "speed_growth_cone": 0.2 * um / minute,
     "sensing_angle": 0.1495 * rad,
-    "dendrite_diameter": 6.*um,
-    "axon_diameter": 3.*um,
     "position": (0., 0.)*um,
     "max_arbor_length": 20000.*um,
     "diameter_eta_exp": 20.,
@@ -55,6 +53,7 @@ neuron_params = {
 axon_params = {
     "persistence_length": 200.0 * um,
     "taper_rate": 1./400.,
+    "initial_diameter": 3.*um,
     "somatropic_scale": 500.*um,
     "somatropic_factor": 0.7,
     "self_avoidance_factor": 0.3,
@@ -67,6 +66,7 @@ dendrite_params = {
 
     "persistence_length": 100.0 * um,
     "taper_rate": 1./100.,
+    "initial_diameter": 6.*um,
     "diameter_fraction_lb": 0.8,
 
     # SFR parameters

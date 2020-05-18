@@ -41,8 +41,6 @@ num_omp     = 1
 neuron_params = {
     "filopodia_min_number": 30,
     "sensing_angle": 0.1495*rad,
-    "dendrite_diameter": 2.*um,
-    "axon_diameter": 3.*um,
     "position": np.array([(0., 0.)])*um,
     "neurite_angles": {
         "axon": 275.*deg, "dendrite_1": 115.*deg, "dendrite_2": 65.*deg}
@@ -54,6 +52,7 @@ dend_params = {
 
     "persistence_length": 150.0*um,
     "taper_rate": 1./100.,
+    "initial_diameter": 2.*um,
     "speed_growth_cone": 0.008*um/minute,
 }
 
@@ -66,6 +65,7 @@ axon_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0*um,
     "taper_rate": 1./200.,
+    "initial_diameter": 3.*um,
 
     "persistence_length": 300.0*um,
     "speed_growth_cone": 0.015*um/minute,

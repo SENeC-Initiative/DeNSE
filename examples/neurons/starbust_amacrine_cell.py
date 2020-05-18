@@ -35,7 +35,6 @@ num_neurons = 1
 
 
 neuron_params = {
-    "dendrite_diameter": 2. * um,
     "soma_radius": 3. * um,
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2)) * um,
     "has_axon": False,
@@ -43,6 +42,7 @@ neuron_params = {
 }
 
 dend_params = {
+    "initial_diameter": 2. * um,
     "sensing_angle": 45.*deg,
     "persistence_length": 25. * um,
     "speed_growth_cone": 0.01 * um/minute,

@@ -74,6 +74,7 @@ Neurite::Neurite(const std::string &name, const std::string &neurite_type,
     , max_gc_num_(MAX_GC_NUM)
     , max_arbor_len_(MAX_ARBOR_LENGTH)
     , fixed_arbor_len_(0.)
+    , initial_diameter_(NEURITE_DIAMETER)
     // parameters for van Pelt branching
     , lateral_branching_angle_mean_(LATERAL_BRANCHING_ANGLE_MEAN)
     , lateral_branching_angle_std_(LATERAL_BRANCHING_ANGLE_STD)
@@ -148,10 +149,9 @@ Neurite::~Neurite()
  * @param neurite_name
  */
 void Neurite::init_first_node(BaseWeakNodePtr soma, const BPoint &pos,
-                              const std::string &name, double soma_radius,
-                              double neurite_diameter)
+                              const std::string &name, double soma_radius)
 {
-    auto firstNode = std::make_shared<Node>(soma, 0., pos, neurite_diameter,
+    auto firstNode = std::make_shared<Node>(soma, 0., pos, initial_diameter_,
                                             shared_from_this());
 
     firstNode->centrifugal_order_ = 0;
@@ -1237,6 +1237,15 @@ void Neurite::get_distances(stype node, stype segment, double &dist_to_parent,
 }
 
 
+void Neurite::update_initial_diameter(double diameter)
+{
+    initial_diameter_ = diameter;
+
+    nodes_[0]->set_diameter(diameter);
+    growth_cones_[1]->set_diameter(diameter);
+}
+
+
 //###################################################
 //                  get/set status
 //###################################################
@@ -1244,6 +1253,8 @@ void Neurite::get_distances(stype node, stype segment, double &dist_to_parent,
 
 void Neurite::set_status(const statusMap &status)
 {
+    bool sim_started  = (kernel().simulation_manager.get_time() != Time());
+
     get_param(status, names::max_gc_number, max_gc_num_);
     get_param(status, names::max_arbor_length, max_arbor_len_);
 
@@ -1253,8 +1264,28 @@ void Neurite::set_status(const statusMap &status)
     get_param(status, names::gc_split_angle_mean, gc_split_angle_mean_);
     get_param(status, names::gc_split_angle_std, gc_split_angle_std_);
 
-    get_param(status, names::speed_decay_factor, gc_speed_decay_);    
+    get_param(status, names::speed_decay_factor, gc_speed_decay_);
 
+    // initial diameter
+    double init_diam = initial_diameter_;
+
+    bool bid = get_param(status, names::initial_diameter, init_diam);
+
+    if (bid and init_diam != initial_diameter_)
+    {
+        if (sim_started)
+        {
+            throw InvalidArg("Cannot change the initial diameter for a neurite "
+                             " after simulation start.",
+                             __FUNCTION__, __FILE__, __LINE__);
+        }
+        else
+        {
+            update_initial_diameter(init_diam);
+        }
+    }
+
+    // taper rate
     double tr;
     bool tr_set = get_param(status, names::taper_rate, tr);
 
@@ -1370,6 +1401,11 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
     if (level == "neurite")
     {
         set_param(status, names::neurite_type, neurite_type_, "");
+
+        set_param(status, names::taper_rate, taper_rate_, "");
+        set_param(status, names::initial_diameter, initial_diameter_,
+                  "micrometer");
+
         set_param(status, names::diameter_fraction_lb, diam_frac_lb_, "");
         set_param(status, names::gc_split_angle_mean, gc_split_angle_mean_,
                   "rad");
@@ -1381,7 +1417,6 @@ void Neurite::get_status(statusMap &status, const std::string &level) const
                   lateral_branching_angle_mean_, "rad");
         set_param(status, names::observables, observables_, "");
 
-        set_param(status, names::taper_rate, taper_rate_, "1 / micrometer");
         set_param(status, names::diameter_ratio_std, diameter_ratio_std_, "");
         set_param(status, names::diameter_ratio_avg, diameter_ratio_avg_, "");
         set_param(status, names::diameter_eta_exp, diameter_eta_exp_, "");

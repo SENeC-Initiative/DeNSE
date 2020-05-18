@@ -49,6 +49,7 @@ dend_params = {
     "initial_diameter": 2.*um,
     "persistence_length": 150.*um,
     "taper_rate": 1./130.,
+    "initial_diameter": 2.*um,
 
     # Cr model
     "res_retraction_factor": 0.07 * um/minute,
@@ -79,6 +80,7 @@ axon_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 10.*um,
     "taper_rate": 1./300.,
+    "initial_diameter": 3.5*um,
 
     "persistence_length": 250.*um,
 

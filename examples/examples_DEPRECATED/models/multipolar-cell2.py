@@ -39,12 +39,18 @@ num_omp = 1
 
 neuron_params = {
     "filopodia_min_number": 30,
+<<<<<<< HEAD:examples/examples_DEPRECATED/models/multipolar-cell2.py
     "sensing_angle": 0.1495 * rad,
     "dendrite_diameter": 2. * um,
     "axon_diameter": 3. * um,
     "position": np.array([(0., 0.)])*um,
     "neurite_angles": {"axon": 4.8 * rad, 
                        "dendrite_1": 2.*rad, "dendrite_2": 1.1 *rad}
+=======
+    "sensing_angle": 0.1495,
+    "position": np.array([(0., 0.)]),
+    "neurite_angles": {"axon": 4.8, "dendrite_1": 2., "dendrite_2": 1.1}
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/neurons/multipolar-cell2.py
 }
 
 dend_params = {
@@ -52,7 +58,12 @@ dend_params = {
     "use_van_pelt": True,
 
     "persistence_length": 150.0 * um,
+<<<<<<< HEAD:examples/examples_DEPRECATED/models/multipolar-cell2.py
     "thinning_ratio": 1./100.,
+=======
+    "taper_rate": 1./100.,
+    "initial_diameter": 2. * um,
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/neurons/multipolar-cell2.py
     "speed_growth_cone": 0.008 * um / minute,
 
     # Best model
@@ -71,11 +82,16 @@ axon_params = {
 
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0,
-    "thinning_ratio": 1./200.,
+    "taper_rate": 1./200.,
+    "initial_diameter": 3. * um,
 
     "persistence_length": 300.0 * um,
     "speed_growth_cone": 0.015 * um / minute,
+<<<<<<< HEAD:examples/examples_DEPRECATED/models/multipolar-cell2.py
     "gc_split_angle_mean": 60.*deg,
+=======
+    "gc_split_angle_mean": 60.,
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/neurons/multipolar-cell2.py
 
     # Best model
     "gc_split_angle_mean": 1.2 * rad,

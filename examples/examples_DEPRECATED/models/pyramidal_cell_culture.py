@@ -44,8 +44,6 @@ sim_time = 5 * day
 
 pyr_nrn = {
     "growth_cone_model" : 'cst_po_rt',
-    "dendrite_diameter": 3. * um,
-    "axon_diameter": 4. * um,
     "polarization_strength": 20.,
     "neurite_angles": {"axon": 1.57, "dendrite_1": 3.9, "dendrite_2": 5.5},
     "description": "pyramidal cell",
@@ -59,7 +57,8 @@ pyr_axon_i = {
     "persistence_length": 500. * um,
     "speed_growth_cone": 0.07 * um / minute,
     # diameter
-    #"thinning_ratio": 1./320.,
+    "initial_diameter": 4. * um,
+    "taper_rate": 1./320.,
     "diameter_ratio_avg": 0.5,
     # branching
     "use_van_pelt": False,
@@ -69,7 +68,8 @@ pyr_axon_i = {
 pyr_dend_i = {
     "persistence_length": 250. * um,
     "speed_growth_cone": 0.01 * um / minute,
-    #"thinning_ratio": 1./200.,
+    "taper_rate": 1./200.,
+    "initial_diameter": 3. * um,
     "use_uniform_branching": False,
     "use_van_pelt": True,
     "B": 1. * cpm,

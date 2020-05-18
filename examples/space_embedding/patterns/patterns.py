@@ -63,7 +63,16 @@ dendrite_params = {
     "sensing_angle": 30.*deg,
     "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
+<<<<<<< HEAD:examples/space_embedding/patterns/patterns.py
     "persistence_length": 100. * um,
+=======
+    "persistence_length" : 100. * um,
+    "initial_diameter": 2.*um,
+}
+
+neurite_params = {
+    "axon": {"initial_diameter": 2.*um}, "dendrites": dendrite_params
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/patterns/patterns.py
 }
 
 
@@ -93,12 +102,22 @@ if __name__ == '__main__':
     # ~ ds.environment.plot_shape(culture, show=True)
 
     gids = ds.create_neurons(n=num_neurons,
+<<<<<<< HEAD:examples/space_embedding/patterns/patterns.py
                              culture=culture,
                              on_area=culture.non_default_areas.keys(),
                              neurites_on_area=True,
                              params=neuron_params,
                              neurite_params=neurite_params,
                              num_neurites=3)
+=======
+                            culture=culture,
+                            on_area=culture.non_default_areas.keys(),
+                            neurites_on_area=True,
+                            params=neuron_params,
+                            neurite_params=neurite_params,
+                            neurite_names=["axon", "dendrite_1", "dendrite_2"],
+                            num_neurites=3)
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/patterns/patterns.py
 
     ds.plot.plot_neurons(show=False)
     # ~ xlim = -10200., -9500.

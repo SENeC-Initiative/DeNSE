@@ -60,6 +60,7 @@ axon_params = {
     "speed_growth_cone": 0.05 *um/minute,
     "persistence_length": 200.* um,
     "taper_rate": 0.0001,
+    "initial_diameter": 1.*um,
 
     # branching choice and parameters
     "use_uniform_branching": False,
@@ -77,6 +78,7 @@ dendrite_params = {
     "filopodia_finger_length": 20. *um,
     "filopodia_min_number": 30,
     "taper_rate": 0.001,
+    "initial_diameter": 2.*um,
 
     # extension parameters
     "speed_growth_cone": 0.01 *um/minute,

@@ -53,6 +53,7 @@ axon_params = {
     # diameter
     "taper_rate": 1./300.,
     "diameter_ratio_avg": 0.5,
+    "initial_diameter": 3.*um,
     # branching
     "use_van_pelt": True,
     "B": 0.2*cpm,
@@ -65,6 +66,7 @@ dend_params = {
     "persistence_length": 250.*um,
     "speed_growth_cone": 0.01*um/minute,
     "taper_rate": 1./200.,
+    "initial_diameter": 2.*um,
     "use_uniform_branching": False,
     "use_van_pelt": True,
     "B": 1.*cpm,

@@ -53,7 +53,6 @@ neuron_params = {
     "uniform_branching_rate": 0.009*cph,
 }
 
-
 neurite_params = {
     "axon": {"initial_diameter": 4.*um},
     "dendrites": {"taper_rate": 1./200., "initial_diameter": 3.*um}

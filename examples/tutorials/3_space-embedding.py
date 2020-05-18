@@ -71,12 +71,14 @@ axon_params = {
     "initial_diameter": 4.*um,
     "max_arbor_length": 1.*cm,
     "taper_rate": 1./400.,
+    "initial_diameter": 4.*um,
 }
 
 dend_params = {
     "initial_diameter": 3.*um,
     "max_arbor_length": 500.*um,
     "taper_rate": 1./200.,
+    "initial_diameter": 3.*um,
 }
 
 neurite_params = {"axon": axon_params, "dendrite": dend_params}

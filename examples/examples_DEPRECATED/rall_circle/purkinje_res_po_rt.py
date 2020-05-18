@@ -37,9 +37,15 @@ num_neurons = 1
 
 neuron_params = {
     # "growth_cone_model": "self_referential_forces",
+<<<<<<< HEAD:examples/examples_DEPRECATED/rall_circle/purkinje_res_po_rt.py
 
     "filopodia_min_number": 30,
     "sensing_angle": 0.1495 * rad,
+=======
+    "filopodia_min_number": 30,
+    "speed_growth_cone": 1.,
+    "sensing_angle": 0.1495,
+>>>>>>> 9221a0d13af0528f4a4c142b92f511c7575695c6:examples/rall_circle/purkinje.py
 
 }
 

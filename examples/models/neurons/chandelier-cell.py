@@ -52,6 +52,7 @@ dend_params = {
     "initial_diameter": 2.*um,
     "persistence_length": 150.0*um,
     "taper_rate": 1./100.,
+    "initial_diameter": 2.*um,
     "speed_growth_cone": 0.008*um/minute,
 }
 
@@ -65,6 +66,7 @@ axon_params = {
     "filopodia_wall_affinity": 2.,
     "filopodia_finger_length": 50.0*um,
     "taper_rate": 1./200.,
+    "initial_diameter": 3.*um,
 
     "persistence_length": 300.0*um,
     "speed_growth_cone": 0.015*um/minute,

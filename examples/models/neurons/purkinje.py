@@ -53,6 +53,7 @@ axon_params = {
     "initial_diameter": 3.*um,
     "persistence_length": 200.0 * um,
     "taper_rate": 1./400.,
+    "initial_diameter": 3.*um,
     "somatropic_scale": 500.*um,
     "somatropic_factor": 0.7,
     "self_avoidance_factor": 0.3,

@@ -29,7 +29,6 @@ This file shows how to grow two interacting neurons with DeNSE.
 import dense as ds
 from dense.units import *
 
-
 ''' Configuring the simulator and the neuronal properties '''
 
 num_omp = 2
@@ -97,11 +96,9 @@ ds.set_object_properties(n, neurite_params=neurite_params)
 ds.simulate(7*day)
 ds.plot.plot_neurons()
 
-
 ''' Save neuronal morphologies '''
 
 # In the swc format
 ds.io.save_to_swc("neurons.swc", n)
 # In the Neurom format
-Silmathoron-neurite-diam
 ds.io.save_to_neuroml("neurons.nml", n)

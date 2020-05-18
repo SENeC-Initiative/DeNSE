@@ -84,13 +84,14 @@ axon_params = {
 }
 
 dendrite_params = {
+    "growth_cone_model": gc_model,
     "initial_diameter": 3. * um,
     "use_van_pelt": use_vp,
-    "growth_cone_model": gc_model,
     "speed_growth_cone": 0.2 * um / minute,
     "filopodia_wall_affinity": 10.,
     "persistence_length" : 200. * um,
     "taper_rate": 3./250.,
+    "initial_diameter": 3. * um,
 }
 
 neurite_params = {"axon": axon_params,

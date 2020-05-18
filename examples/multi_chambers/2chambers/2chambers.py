@@ -150,6 +150,7 @@ if __name__ == '__main__':
                                                       (num_neurons, 2)) * um
 
     print("Creating neurons")
+<<<<<<< HEAD:examples/multi_chambers/2chambers/2chambers.py
     gids = ds.create_neurons(n=num_neurons,
                              culture=culture,
                              params=neuron_params,
@@ -157,6 +158,10 @@ if __name__ == '__main__':
                              num_neurites=2)
 
     print("neurons done")
+=======
+    gids = ds.create_neurons(n=200, culture=culture, params=neuron_params,
+                            neurite_params=dendrite_params, num_neurites=2)
+>>>>>>> 7c1b172c6b1101c5b2f3092a6b8df0805a016a2b:examples/2chambers/2chambers.py
 
     print("Starting simulation")
     start = time.time()

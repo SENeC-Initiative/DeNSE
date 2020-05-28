@@ -78,13 +78,14 @@ def load_swc(swc_folder=None, swc_file=None, info=None):
         or for single neurons files.
         the format style of SWC files is the standard
 
-    @todo: redo this.
+        NB :
             Currently if swc_file is given, the code assumes the file
             contains only one neuron !
             If both swc_folder and swc_file are given, it assumes the file
             contains only one neuron.
             If the swc file contains more thant one neurone, give only
             the swc_folder path.
+        (Issue reported !)
 
     Parameters
     ----------

@@ -70,7 +70,7 @@ dend_params = {
     "use_uniform_branching": False,
     "use_van_pelt": True,
     "B": 1.*cpm,
-    "T": 5000.*minute,
+    "T": 3.5 * day,
     "gc_split_angle_mean": 25.*deg,
 }
 
@@ -93,7 +93,7 @@ n = ds.create_neurons(n=num_neurons, params=neuron_params,
 
 # first, elongation
 
-ds.simulate(10000*minute)
+ds.simulate(7*day)
 ds.plot.plot_neurons()
 
 
@@ -121,7 +121,7 @@ neurite_params = {"axon": lb_axon, "dendrite": dend_params}
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
-ds.simulate(30000*minute)
+ds.simulate(21*day)
 ds.plot.plot_neurons()
 
 # then further branching

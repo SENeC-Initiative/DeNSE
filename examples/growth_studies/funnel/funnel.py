@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# RenaudAngles.py
+# funnel.py
 #
 # This file is part of DeNSE.
 #
@@ -56,10 +56,7 @@ culture_file = current_dir + "/angle40.svg"
 
 neuron_params = {"soma_radius": soma_radius,
                  "random_rotation_angles": False,
-                 #"neurite_names": ["axon", "dendrite_1"],
                  "neurite_names": ["axon"],
-                 #"neurite_angles": {"axon": 0.*deg,
-                 #                  "dendrite_1": 180.*deg}
                  "neurite_angles": {"axon": 0.*deg}
                  }
 
@@ -91,7 +88,6 @@ dendrite_params = {
 }
 
 neurite_params = {"axon": axon_params}
-#neurite_params = {"axon": axon_params, "dendrite_1": dendrite_params}
 
 
 def step(n, loop_n, plot=True):

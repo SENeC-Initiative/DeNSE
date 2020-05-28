@@ -38,16 +38,16 @@ from dense.units import *
 Setting the parameters
 '''
 
-num_neurons   = 100
+num_neurons = 100
 
-simtime       = 10000.
-num_omp       = 4
-resolutions   = (1., 10., 20., 30.)
+simtime = 10000.
+num_omp = 4
+resolutions = (1., 10., 20., 30.)
 
-gc_model      = "run-and-tumble"
+gc_model = "run-and-tumble"
 sensing_angle = 70.*deg
 
-cmap    = None
+cmap = None
 do_plot = int(os.environ.get("DO_PLOT", True))
 
 if do_plot:
@@ -59,14 +59,15 @@ colors = np.linspace(0.2, 0.8, len(resolutions))
 '''
 Analysis functions
 '''
+
+
 def exp_decay(x, lp):
     return np.exp(-x / lp)
 
 
 def norm_angle_from_vectors(vectors):
-    #~ angles  = np.arctan2(vectors[:, 1], vectors[:, 0])
-    angles  = np.arctan2(vectors[1], vectors[0])
-    norms   = np.linalg.norm(vectors, axis=0)
+    angles = np.arctan2(vectors[1], vectors[0])
+    norms = np.linalg.norm(vectors, axis=0)
     return angles, norms
 
 
@@ -96,9 +97,9 @@ def correlation(points, distances):
     vectors = np.diff(points[:, ~np.isnan(points[0])], axis=1)
 
     if np.shape(vectors)[0] > 0:
-        _, rho     = norm_angle_from_vectors(vectors)
+        _, rho = norm_angle_from_vectors(vectors)
         tot_length = np.sum(rho)
-        list_len   = np.cumsum(rho)
+        list_len = np.cumsum(rho)
 
         if np.max(distances) > tot_length:
             raise RuntimeError(
@@ -106,19 +107,20 @@ def correlation(points, distances):
                 "length: {} vs {}.".format(np.max(distances),
                                            tot_length))
 
-        x0    = vectors[:, 0]
+        x0 = vectors[:, 0]
         norm0 = np.linalg.norm(x0)
 
         nn = []
         for d in distances:
             nn.append(np.where(list_len >= d)[0][0])
 
-        xxn   = vectors[:, nn]
+        xxn = vectors[:, nn]
         normn = np.linalg.norm(xxn, axis=0)
 
         return (x0[0]*xxn[0] + x0[1]*xxn[1]) / (norm0*normn)
     else:
         return np.NaN
+
 
 '''
 Simulations with DeNSE
@@ -126,11 +128,11 @@ Simulations with DeNSE
 
 show_neurons = False
 
-gc_pos     = []
+gc_pos = []
 data_times = {}
-statuses   = {}
+statuses = {}
 
-fig, ax   = None, None
+fig, ax = None, None
 fig2, ax2 = None, None
 
 if do_plot:
@@ -139,9 +141,9 @@ if do_plot:
 
 sensing_angles = np.linspace(0.1, 3., 10)
 
-speed     = 0.2 
-l_p       = 500.
-dist_max  = speed*simtime
+speed = 0.2 
+l_p = 500.
+dist_max = speed*simtime
 dist_step = 50.
 distances = np.arange(dist_step, dist_max, dist_step)
 
@@ -187,7 +189,7 @@ def test_persistence():
 
         axons = [neuron.axon.xy.m.transpose() for neuron in population]
 
-        sequence  = []
+        sequence = []
         for i, points in enumerate(axons):
             sequence.append(correlation(points, distances))
 

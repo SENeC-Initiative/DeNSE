@@ -32,13 +32,14 @@ import matplotlib.pyplot as plt
 Main parameters
 '''
 
-rate = 1. * cpm
+rate = .005 * cpm
 num_neurons = 10
 
 # ~ branching_type 
 branching_type = "uniform"
 use_type = "use_" + branching_type + "_branching"
 branching_rate = branching_type + "_branching_rate"
+
 
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
@@ -187,4 +188,4 @@ if __name__ == '__main__':
     # ~ neuron1.plot_dendrogram()
     # ~ # plt.show()
     # ~ plt.savefig("dendrogram-rate{}.pdf".format(rate), format="pdf", ppi =300)
-    # ~ plt.show(block = True)
+    plt.show(block = True)

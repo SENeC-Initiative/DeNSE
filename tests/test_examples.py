@@ -33,6 +33,7 @@ folder = folder if folder else "."
 
 root = os.path.abspath(folder + "/..")
 neuron_models = root + "/examples/models/neurons"
+branching_dir = root + "/examples/models/branching"
 
 
 def mock_show():
@@ -99,7 +100,9 @@ def test_7_several_step_growth(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(neuron_models + "/several_step_growth.py").read())
+    exec(open(branching_dir +
+              "/several_step_growth_and_on_and_off_branching.py").read())
+
 
 if __name__ == "__main__":
     class mptch:

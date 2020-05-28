@@ -24,6 +24,8 @@
 
 import os
 
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit
@@ -54,12 +56,9 @@ if do_plot:
 
 colors = np.linspace(0.2, 0.8, len(resolutions))
 
-
-
 '''
 Analysis functions
 '''
-
 def exp_decay(x, lp):
     return np.exp(-x / lp)
 

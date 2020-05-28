@@ -23,10 +23,11 @@
 """ Testing network generation """
 
 import numpy as np
+# import matplotlib
+# matplotlib.use('Agg')
 
 import dense as ds
 from dense.units import *
-
 
 np.random.seed(0)
 

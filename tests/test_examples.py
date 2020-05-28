@@ -45,7 +45,7 @@ def test_1_bipolar_cell(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/bipolar_cell.py").read())
+    exec(open(neuron_models + "/bipolar_cell.py").read())
 
 
 def test_2_chandelier_cell(monkeypatch):
@@ -54,7 +54,7 @@ def test_2_chandelier_cell(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/chandelier-cell.py").read())
+    exec(open(neuron_models + "/chandelier-cell.py").read())
 
 
 def test_3_granule_cell(monkeypatch):
@@ -63,7 +63,7 @@ def test_3_granule_cell(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/granule_cell.py").read())
+    exec(open(neuron_models + "/granule_cell.py").read())
 
 
 def test_4_purkinje(monkeypatch):
@@ -72,7 +72,7 @@ def test_4_purkinje(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/purkinje.py").read())
+    exec(open(neuron_models + "/purkinje.py").read())
 
 
 def test_5_pyramidal(monkeypatch):
@@ -81,7 +81,7 @@ def test_5_pyramidal(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/pyramidal.py").read())
+    exec(open(neuron_models + "/pyramidal_cell.py").read())
 
 
 def test_6_starbust_amacrine_cell(monkeypatch):
@@ -90,7 +90,7 @@ def test_6_starbust_amacrine_cell(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/starbust_amacrine_cell.py").read())
+    exec(open(neuron_models + "/starbust_amacrine_cell.py").read())
 
 
 def test_7_several_step_growth(monkeypatch):
@@ -99,7 +99,7 @@ def test_7_several_step_growth(monkeypatch):
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(models + "/several_step_growth.py").read())
+    exec(open(neuron_models + "/several_step_growth.py").read())
 
 if __name__ == "__main__":
     class mptch:

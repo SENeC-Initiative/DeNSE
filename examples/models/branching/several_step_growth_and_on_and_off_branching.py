@@ -28,7 +28,7 @@ from pprint import pprint
 import numpy as np
 import matplotlib.pyplot as plt
 
-import nngt
+#import nngt
 import dense as ds
 from dense.units import *
 

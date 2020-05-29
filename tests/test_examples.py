@@ -115,10 +115,10 @@ if __name__ == "__main__":
 
     mp = mptch()
 
-    test_1_bipolar_cell(mp)
+    # test_1_bipolar_cell(mp)
     test_2_chandelier_cell(mp)
-    test_3_granule_cell(mp)
-    test_4_purkinje(mp)
-    test_5_pyramidal(mp)
-    test_6_starbust_amacrine_cell(mp)
-    test_7_several_step_growth(mp)
+    # test_3_granule_cell(mp)
+    # test_4_purkinje(mp)
+    # test_5_pyramidal(mp)
+    # test_6_starbust_amacrine_cell(mp)
+    # test_7_several_step_growth(mp)

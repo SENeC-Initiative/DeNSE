@@ -24,7 +24,9 @@
 
 import os
 import matplotlib
-matplotlib.use('Agg')
+do_plot = int(os.environ.get("DO_PLOT", True))
+if not do_plot:
+    matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 

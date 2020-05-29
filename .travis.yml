@@ -37,7 +37,7 @@ before_install:
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++;
       pip install setuptools cython;
-      pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
+      pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib neurom;
       pip install --no-binary shapely, shapely;
     fi
   # update brew and pip on mac (note that mac is without nngt)
@@ -47,7 +47,7 @@ before_install:
       pip3 install cython;
       pip3 install numpy scipy pint pyneuroml pytest;
       pip3 install --no-binary shapely, shapely;
-      pip3 install matplotlib networkx svg.path dxfgrabber PyOpenGL;
+      pip3 install matplotlib networkx svg.path dxfgrabber PyOpenGL neurom;
     fi
   # use miniconda on windows
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
@@ -60,7 +60,7 @@ before_install:
       conda install python cmake geos boost;
       conda --version ; python --version ; pip --version;
       pip install cython;
-      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml;
+      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom;
       pip install nngt;
     fi
 

@@ -23,8 +23,8 @@
 """ Testing network generation """
 
 import numpy as np
-# import matplotlib
-# matplotlib.use('Agg')
+import matplotlib
+matplotlib.use('Agg')
 
 import dense as ds
 from dense.units import *
@@ -95,8 +95,8 @@ def test_network(plot=False):
     initial_state = np.random.get_state()
 
     num_neurons = 100
-    positions   = np.random.uniform(-200, 200, (num_neurons, 2))*um
-    params      = {
+    positions = np.random.uniform(-200, 200, (num_neurons, 2))*um
+    params = {
         "position": positions, "growth_cone_model": "run-and-tumble",
     }
 

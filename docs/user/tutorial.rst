@@ -294,12 +294,6 @@ Neurons arrive in a chamber with different angles of the opening funnel
 ../../examples/growth_studies/recorders
 Shows the usage of recorders
 
-Older examples
---------------
-Old examples with deprecated DeNSE syntax can be found in ../../examples_DEPRECATED. Maintained here for documentation purpose and future development.
-
-../../examples/TODO_examples
-Examples currently under rewriting
 
 Complex structures
 ==================

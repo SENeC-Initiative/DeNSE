@@ -29,11 +29,8 @@ import matplotlib.pyplot as plt
 '''
 Main parameters
 '''
-'''
-Main parameters
-'''
+
 resolution = 1
-#gc_model = "run_tumble_critical"
 gc_model = "res_po_rt"
 
 neuron_params = {}
@@ -43,14 +40,10 @@ axon_params = {
     "use_van_pelt": True,
 
     "persistence_length": 1000.0 * um,
-
-    # Cr model
     "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.30 * um / minute,
-    # "res_weight": -.0,
     "res_retraction_threshold": 0.10 * uM,
     "res_elongation_threshold": 0.3 * uM,
-    # "res_split_th": 0.80,
     "res_neurite_generated": 2500. * uM,
     "res_neurite_delivery_tau": 50. * minute,
     "res_correlation": 0.4,
@@ -69,14 +62,10 @@ dendrite_params = {
     "use_van_pelt": True,
 
     "persistence_length": 50.0 * um,
-
-    # Cr model
     "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.30 * um / minute,
-    # "res_weight": -.0,
     "res_retraction_threshold": 0.10 * uM,
     "res_elongation_threshold": 0.3 * uM,
-    # "res_split_th": 0.80,
     "res_neurite_generated": 2500. * uM,
     "res_neurite_delivery_tau": 50. * minute,
     "res_correlation": 0.4,
@@ -116,13 +105,11 @@ def run_dense(neuron_params, neurite_params):
                             neurite_params=neurite_params,
                             num_neurites=2,
                             )
-#    rec = ds.create_recorders(gid, ["length"], levels="growth_cone")
+
     rec = ds.create_recorders(gid, ["speed"], levels="growth_cone")
-#    rec = ds.create_recorders(gid, ["resource"], levels="growth_cone")
 
     step(24000 * minute, 1, False, True)
 
-    # ~ rec = ds.create_recorders(gid, ["speed", "resource"], levels="growth_cone")
     rec = ds.create_recorders(gid, ["speed"], levels="growth_cone")
 
     step(24000 * minute, 1, False, True)
@@ -202,15 +189,5 @@ if __name__ == '__main__':
     ds.set_kernel_status(kernel, simulation_id="case_neuron")
 
     swc_file = run_dense(neuron_params, neurite_params)
-    # ~ import btmorph2
 
-    # ~ neuron1 = btmorph2.NeuronMorphology(
-    # ~ os.path.join(swc_file, "morphology.swc"))
-    # total_length = neuron1.total_length()
-    # print( 'Total neurite length=%f', total_length)
-
-    # ~ no_terminals = neuron1.no_terminals()
-    # print( 'Number of terminals=%f',  no_terminals)
-
-    # ~ neuron1.plot_dendrogram()
     plt.show()

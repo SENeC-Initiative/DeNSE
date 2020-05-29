@@ -24,9 +24,13 @@
 
 import os
 import matplotlib
+do_plot = int(os.environ.get("DO_PLOT", True))
+
+if not do_plot:
+    matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import dense as ds
-matplotlib.use('Agg')
 
 folder = os.path.dirname(__file__)
 folder = folder if folder else "."

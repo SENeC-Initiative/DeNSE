@@ -25,7 +25,10 @@
 import os
 
 import matplotlib
-matplotlib.use('Agg')
+do_plot = int(os.environ.get("DO_PLOT", True))
+if not do_plot:
+    matplotlib.use('Agg')
+
 import numpy as np
 import scipy.linalg as spl
 from scipy.optimize import curve_fit

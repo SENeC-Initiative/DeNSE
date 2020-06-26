@@ -483,14 +483,6 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
     if ignore_diameter:
         tree.root.diameter = default_diam
 
-    # get root as first node with 2 children
-    while len(root.children) == 1:
-        root.children[0].dist_to_parent += root.dist_to_parent
-        root = root.children[0]
-
-        if ignore_diameter:
-            root.diameter = default_diam
-
     queue = deque([root])
 
     while queue:
@@ -500,7 +492,7 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
         if ignore_diameter:
             node.diameter = default_diam
 
-        if len(node.children) == 1:
+        if len(node.children) == 1 and node != root:
             # gc died there, transfer children and update them
             parent = node.parent
 
@@ -584,8 +576,12 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
 
         parent_diam = 0 if node.parent is None else node.parent.diameter
 
-        x = x0 + node.parent.distance_to_soma() \
-            - vbar_diam_ratio*parent_diam*hv_ratio
+        x = x0
+
+        # skip for root (parent is None)
+        if node.parent is not None:
+            x += node.parent.distance_to_soma() \
+                 - vbar_diam_ratio*parent_diam*hv_ratio
 
         # get parent y
         y = parent_y.get(node.parent, 0.)
@@ -593,8 +589,8 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
         num_up, num_down = 0.5, 0.5
 
         if node.children:
-            num_up   = len(up_tips[node])
-            num_down = len(down_tips[node])
+            num_up   = 0 if node not in up_tips else len(up_tips[node])
+            num_down = 0 if node not in down_tips else len(down_tips[node])
 
             children_y[node] = []
 
@@ -606,13 +602,22 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
         parent_y[node] = y
         parent_x[node] = x + node.dist_to_parent
 
-        children_y[node.parent].append(y)
+        # ignore root
+        if node.parent is not None:
+            children_y[node.parent].append(y)
 
         axis.add_artist(
             Rectangle((x, y), node.dist_to_parent, node.diameter,
                       fill=True, **kwargs))
 
     # last iteration for vertical connections
+    # set root as last node with a single child
+    while len(root.children) == 1:
+        root = root.children[0]
+
+        if ignore_diameter:
+            root.diameter = default_diam
+
     queue = deque([root])
 
     while queue:

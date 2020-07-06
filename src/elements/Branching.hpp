@@ -61,6 +61,7 @@ class Branching
     double E_;
     double S_;
     double T_;
+    double dt_exp;
 
     bool use_critical_resource_;
 
@@ -124,6 +125,8 @@ class Branching
     void set_status(const statusMap &);
     //~ void get_status(statusMap &) const;
     void get_status(statusMap &) const;
+
+    bool is_vanpelt_branch(mtPtr rnd_engine);
 };
 } // namespace growth
 #endif /* BRANCHING_H */

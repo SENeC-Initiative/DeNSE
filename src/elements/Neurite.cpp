@@ -351,6 +351,26 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
  */
 void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
 {
+    if (branching_model_->use_van_pelt_){
+        if (branching_model_->is_vanpelt_branch(rnd_engine))
+        {
+            // create an event so the growth cone will split at the next
+            // step
+            Time ev_time = kernel().simulation_manager.get_time();
+            ev_time.update(1UL, 0.);
+
+            auto neuron         = get_parent_neuron().lock();
+            stype neuron_gid    = neuron->get_gid();
+            std::string neurite = get_name();
+
+            Event ev = std::make_tuple(ev_time, neuron_gid, neurite,
+                                       -2, names::gc_splitting);
+
+            kernel().simulation_manager.new_branching_event(ev);
+        }
+    }
+
+
     // if using critical_resource model it's necessary to recompute the amount
     // of critical_resource required from each growth cone.
     //~ if (use_critical_resource_)
@@ -553,7 +573,12 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
     double branching_angle = gc_split_angle_mean_ +
                              gc_split_angle_std_ * normal_(*(rnd_engine).get());
 
-    // ratio between the diameters of the two neurites,
+#ifndef NDEBUG
+        printf("branching angle: %f \n", branching_angle);
+        printf("branching mean angle: %f \n", gc_split_angle_mean_);
+#endif
+
+        // ratio between the diameters of the two neurites,
     // it's a gaussian distributed value arround 1.
     double ratio;
 
@@ -633,16 +658,23 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 
     if (new_diameter - taper_rate_ * dist_to_parent <= 0)
     {
+    #ifndef NDEBUG
+        printf("No branching: Diameter too small\n");
+    #endif
         return nullptr;
     }
 
     if (not kernel().space_manager.env_contains(p))
     {
+#ifndef NDEBUG
+            printf("No branching: Out of environment \n");
+#endif
         return nullptr;
     }
 
     if (kernel().space_manager.interactions_on())
     {
+
         if (std::isnan(growth_cones_.begin()->second->get_self_affinity()))
         {
             // check that the target point is not inside its own neurite
@@ -652,6 +684,14 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                     p, parent_.lock()->get_gid(), name_,
                     0.5 * nodes_[0]->get_diameter(), poly))
             {
+#ifndef NDEBUG
+                printf("No branching: self intersection \n");
+                printf("Branching point, dist to parent: %f \n", dist_to_parent );
+                printf("Branching point, x: %f, y: %f \n", p.x(), p.y());
+                double x_ = branching_node->get_position().x();
+                double y_ = branching_node->get_position().y();
+                printf("Parent point, x: %f, y: %f \n", x_, y_);
+#endif
                 return nullptr;
             }
         }
@@ -886,6 +926,8 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 {
     if (not branching_cone->is_dead() and active_)
     {
+
+
         double direction = branching_cone->move_.angle;
 
         // prepare growth cone variables for split
@@ -931,9 +973,15 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
                    branching_cone->get_centrifugal_order());
             assert(new_node->get_child(0) == branching_cone);
             assert(nodes_[new_node->get_node_id()]->has_child() == true);
-
+    #ifndef NDEBUG
+            printf("VP occurrence success");
+            printf("Details: ID origin: %i, ID sibling %i\n",branching_cone->get_node_id(), sibling->get_node_id());
+    #endif
             return true;
         }
+#ifndef NDEBUG
+        printf("Null pointer sibling created \n");
+#endif
     }
 
     return false;

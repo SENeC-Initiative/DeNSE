@@ -101,15 +101,6 @@ ds.set_kernel_status(kernel)
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
                       neurite_params=neurite_params, num_neurites=3)
 
-# Turn branching on
-
-#~ vp_branching = {'use_van_pelt': True}
-# resource_branching = {'res_branching_threshold': 80., 'res_branching_proba': 0.0005}
-# d_rsrc_branching = {'res_branching_threshold': 60., 'res_branching_proba': 0.0003}
-
-#~ ds.set_object_properties(n, params=vp_branching)
-#~ ds.set_object_properties(n, params=resource_branching)
-
 dend_params['res_branching_threshold'] = 80.
 dend_params['res_branching_proba'] = 0.0003
 axon_params['res_branching_threshold'] = 80.

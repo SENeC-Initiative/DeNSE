@@ -24,12 +24,8 @@
 
 import numpy as np
 
-# import matplotlib as mpl
-# mpl.use("Qt5Agg")
-
 import dense as ds
 from dense.units import *
-
 
 # parameters
 
@@ -43,7 +39,6 @@ gc_model = "self-referential-forces"
 neuron_params = {
     # soma position
     "position": np.random.uniform(-1000, 1000, (num_neurons, 2))*um,
-
     # axon versus dendrites orientations
     "polarization_strength": 20.,
     "neurite_angles": {"axon": 90.*deg, "dendrite_1": 200.*deg, "dendrite_2": 320.*deg},
@@ -53,27 +48,19 @@ axon_params = {
     "initial_diameter": 4.*um,
     # growth cone model
     "growth_cone_model": gc_model,
-
     # Steering parameters
     "sensing_angle": 85.*deg,
-    # "self_avoidance_factor": 0.,
-    # "self_avoidance_scale": 20.*um,
     "somatropic_scale": 70.*um,
     "somatropic_mode": "window",
-
-    #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,
-
     # extension parameters
     "persistence_length": 500.*um,
     "speed_growth_cone": 0.04*um/minute,
-
     # neurite shape paramters
     "taper_rate": 1./400.,
     "diameter_ratio_avg": 0.5,
     "initial_diameter": 4.*um,
-
     # branching choice and parameter
     "use_van_pelt": False,
     "use_uniform_branching": False,
@@ -84,25 +71,14 @@ dend_params = {
     "growth_cone_model": gc_model,
     # Steering parameters
     "sensing_angle": 85.*deg,
-
     "somatropic_mode": "window",
-    # "somatropic_factor": 100.,
-    # "somatropic_scale": 100.*um,
-    # "rigidity_factor": 0.,
-    # "self_avoidance_factor": 0.,
-    # "self_avoidance_scale": 1.*um,
-    #"filopodia_wall_affinity": 0.05,
     "filopodia_finger_length": 20.*um,
     "filopodia_min_number": 30,
-
     # extension parameters
     "persistence_length": 100.*um,
     "speed_growth_cone": 0.01*um/minute,
-
     # neurite shape paramters
     "taper_rate": 1./150.,
-    "initial_diameter": 3.*um,
-
     # branching choice and parameters
     "use_uniform_branching": False,
     "use_van_pelt": False,
@@ -150,7 +126,6 @@ ds.plot.plot_neurons(mode="mixed", show=True)
 lb_axon = {
     # extension parameters
     "speed_growth_cone": 0.02*um/minute,
-
     # branching choice and parameters
     "use_van_pelt": False,
     "use_flpl_branching": True,
@@ -161,7 +136,6 @@ lb_axon = {
 dend_params = {
     # extension parameters
     "speed_growth_cone": 0.01*um/minute,
-
     # branching choice and parameters
     "use_van_pelt": False,
     "use_flpl_branching": True,

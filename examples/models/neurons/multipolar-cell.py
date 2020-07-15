@@ -68,7 +68,7 @@ dend_params = {
     "B": 3.*cpm,
     "E": 0.,
     "S": 1.,
-    "T": 5000.*minute,
+    "T": 2.5*day,
 }
 
 axon_params = {

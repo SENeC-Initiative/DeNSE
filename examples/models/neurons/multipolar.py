@@ -34,7 +34,6 @@ from dense.units import *
 Main parameters
 '''
 
-
 num_neurons = 2
 
 neuron_params = {
@@ -45,15 +44,10 @@ neuron_params = {
 
 dendrite_params = {
     "growth_cone_model": "res_po_rt",
-
     "use_van_pelt": False,
     "use_flpl_branching": False,
-
     "filopodia_wall_affinity": 2.,
-
     "persistence_length": 200.*um,
-    # "use_flpl_branching": use_uniform_branching,
-
     # CR model for branching
     "res_retraction_factor": 0.10 * um/minute,
     "res_elongation_factor": 0.10 * um/minute,
@@ -69,18 +63,13 @@ dendrite_params = {
 
 axon_params = {
     "growth_cone_model": "res_po_rt",
-
     "use_van_pelt": False,
     "use_flpl_branching": False,
-
     "filopodia_wall_affinity": 2.,
-
     "persistence_length": 400.0 * um,
-
     # Cr model for branching
     "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.10 * um / minute,
-
     "res_retraction_threshold": 0.10 * uM,
     "res_elongation_threshold": 0.3 * uM,
     "res_neurite_generated": 2500. * uM,
@@ -97,7 +86,6 @@ neurite_params = {"axon": axon_params,
 '''
 Analysis
 '''
-
 
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
@@ -139,13 +127,11 @@ if __name__ == '__main__':
     axon_params["E"] = 0.2
     axon_params["S"] = 1.
     axon_params["T"] = 10000. * minute
-
     dendrite_params['use_van_pelt'] = True
     dendrite_params["B"] = 90. * cpm
     dendrite_params["E"] = 0.2
     dendrite_params["S"] = 1.
     dendrite_params["T"] = 10000. * minute
-
     axon_params['use_flpl_branching'] = False
     axon_params['flpl_branching_rate'] = 0.001*cpm
 
@@ -159,19 +145,8 @@ if __name__ == '__main__':
     axon_migated = {
         "sensing_angle": 50.*deg,
         'use_van_pelt': True,
-        # "flpl_branching_rate" : 0.004,
-        # "res_retraction_threshold": 0.4 * uM,
-        # "res_elongation_threshold": 0.15 * uM,
-        # "res_elongation_factor": 0.6 * um / minute,
-        # # 'use_van_pelt' : True,
-        # "res_neurite_generated": 4500. * uM,
-        # "res_neurite_delivery_tau": 50. * minute,
-        # "res_correlation": 0.15,
-        # "res_variance": 0.02 * uM / minute ** 0.5,
-        # "res_use_ratio": 0.3 * cpm,
         "res_retraction_factor": 0.010 * um / minute,
         "res_elongation_factor": 0.20 * um / minute,
-
         "res_retraction_threshold": 0.10 * uM,
         "res_elongation_threshold": 0.3 * uM,
         "res_neurite_generated": 2500. * uM,

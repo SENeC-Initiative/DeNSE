@@ -180,13 +180,11 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     neuron1 = btmorph2.NeuronMorphology(
         os.path.join(swc_file, "morphology.swc"))
-    # total_length = neuron1.total_length()
-    # print( 'Total neurite length=%f', total_length)
+    total_length = neuron1.total_length()
+    print( 'Total neurite length=%f', total_length)
 
     no_terminals = neuron1.no_terminals()
-    # print( 'Number of terminals=%f',  no_terminals)
-
-    # neuron1.plot_dendrogram()
-    plt.show(block=True)
-    # plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S), format="pdf", ppi =300)
+    print( 'Number of terminals=%f',  no_terminals)
+    plt.savefig("dendrogram-E_{}-S_{}.pdf".format(E,S), format="pdf", ppi =300)
     plt.show()
+    

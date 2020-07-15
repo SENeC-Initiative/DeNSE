@@ -129,7 +129,6 @@ axon_vp = {
     "T": 3*day,
 }
 
-
 axon_params.update(axon_vp)
 dend_params.update(dend_vp)
 dend_params.pop("initial_diameter")
@@ -144,7 +143,6 @@ ds.simulate(12*day)
 # ds.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 ds.plot.plot_neurons()
-
 
 lb_a = {
     "use_van_pelt": False,
@@ -167,7 +165,6 @@ dend_params.update(lb)
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
-
 ds.simulate(10*day)
 
 ds.plot.plot_neurons(show=True)
@@ -181,17 +178,12 @@ end_branching = {
 
 ds.set_object_properties(n, neurite_params={"axon": end_branching})
 
-
 ds.simulate(20*day)
 
 print(ds.get_kernel_status("time"))
 ds.plot.plot_neurons(show=True)
 
 ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
-
-# deprecated syntax
-# tree = n.axon.get_tree()
-# tree.show_dendrogram()
 
 ds.plot.plot_dendrogram(n.axon)
 

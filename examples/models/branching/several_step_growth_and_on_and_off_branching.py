@@ -28,10 +28,8 @@ from pprint import pprint
 import numpy as np
 import matplotlib.pyplot as plt
 
-#import nngt
 import dense as ds
 from dense.units import *
-
 
 # Neuron parameters defines the general properties of the neuron
 # Growth_models parameters defined at the neuron level are applied
@@ -45,7 +43,6 @@ neuron_params = {
     "polarization_strength": 20.,
     # "neurite_angles": {"axon": 90.*deg, "dendrite_1": 210.*deg, "dendrite_2": 310.*deg},
 }
-
 
 axon_params = {
     "initial_diameter": 1.*um,
@@ -159,7 +156,6 @@ if __name__ == '__main__':
     neurite_params = {"axon": vp_axon, "dendrites": vp_dend}
 
     # update the parameters lists of the neurons 'gids'
-
     ds.set_object_properties(gids, neurite_params=neurite_params)
 
     ds.simulate(7 *day+2*day)
@@ -179,7 +175,6 @@ if __name__ == '__main__':
         "use_van_pelt": False,
         "use_uniform_branching": True,
         "uniform_branching_rate": 0.01 * cph,
-
         "lateral_branching_angle_mean": 45. * deg,
         "lateral_branching_angle_std": 5. * deg,
     }
@@ -198,3 +193,4 @@ if __name__ == '__main__':
 
     print("Simulation time : {}".format(dense.get_kernel_status('time')))
     ds.plot.plot_neurons(mode="mixed", show=True)
+    

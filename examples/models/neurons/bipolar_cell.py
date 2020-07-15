@@ -19,18 +19,15 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-
-""" Generate the morphology of a bipolar cell (spindle neuron) 
-    Also illustrates generation of dendogram
+"""
+Generate the morphology of a bipolar cell (spindle neuron) 
+Also illustrates generation of dendogram
 """
 
 import numpy as np
 import os
 
 import matplotlib.pyplot as plt
-
-import neurom as nm
-from neurom import viewer
 
 import dense as ds
 from dense.units import *
@@ -57,8 +54,8 @@ axon_params = {
     # branching
     "use_van_pelt": True,
     "B": 0.2*cpm,
-    "T": 5000.*minute,
-    "gc_split_angle_mean": 25.*deg,
+    "T": 3.5*day,
+    "gc_split_angle_mean": 35.*deg,
 }
 
 dend_params = {
@@ -71,7 +68,7 @@ dend_params = {
     "use_van_pelt": True,
     "B": 1.*cpm,
     "T": 3.5 * day,
-    "gc_split_angle_mean": 25.*deg,
+    "gc_split_angle_mean": 35.*deg,
 }
 
 neurite_params = {"axon": axon_params, "dendrite": dend_params}
@@ -159,24 +156,29 @@ n.to_neuroml("bipolar_cell.nml")
 
 
 # Example of analysis, loading into neuroml for visualization and analysis
+try:
+    import neurom as nm
+    from neurom import viewer
+    nrn = nm.load_neuron("bipolar_cell.swc") # check if ok swc also, or nm necessary
 
-nrn = nm.load_neuron("bipolar_cell.swc") # check if ok swc also, or nm necessary
+    fig, _ = viewer.draw(nrn)
 
-fig, _ = viewer.draw(nrn)
+    for ax in fig.axes:
+       ax.set_title("")
 
-for ax in fig.axes:
-    ax.set_title("")
-
-ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
+    ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
                         vertical_diam_frac=0.45, axis=ax)
 
-plt.axis('off')
-fig.suptitle("")
-plt.tight_layout()
-plt.show()
-#~ tree.show_dendrogram()
+    plt.axis('off')
+    fig.suptitle("")
+    plt.tight_layout()
+    plt.show()
+    #~ tree.show_dendrogram()
 
 
-print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
-print("Asymmetry of the dendrite:",
+    print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
+    print("Asymmetry of the dendrite:",
       ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))
+
+except ImportError:
+    pass

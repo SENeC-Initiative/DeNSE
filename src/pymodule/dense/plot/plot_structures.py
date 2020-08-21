@@ -314,8 +314,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
             x_dendrites, y_dendrites = extract_neurites_coordinate(
                                         dendrites)
 
-            x = np.concatenate(x, x_dendrites)
-            y = np.concatenate(y, y_dendrites)
+            x = np.concatenate((x, x_dendrites))
+            y = np.concatenate((y, y_dendrites))
 
         # Scaling density levels
         xbins = int((np.max(x) - np.min(x)) / dstep)

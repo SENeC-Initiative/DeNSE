@@ -159,7 +159,7 @@ if __name__ == '__main__':
     gids = ds.create_neurons(n=num_neurons,
                              params=neuron_params,
                              neurite_params=neurite_params,
-                             num_neurites=1)
+                             num_neurites=2)
 
     ds.plot.plot_neurons(show=True)
     print("creation of neurons done")

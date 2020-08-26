@@ -121,7 +121,7 @@ try:
 
     for ax in fig.axes:
         ax.set_title("")
-except import error:
+except ImportError:
     pass
 
 

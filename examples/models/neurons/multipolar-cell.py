@@ -68,7 +68,7 @@ dend_params = {
     "B": 3.*cpm,
     "E": 0.,
     "S": 1.,
-    "T": 2.5*day,
+    "T": 3.5*day,
 }
 
 axon_params = {
@@ -101,7 +101,7 @@ axon_params = {
     "B": 9.*cpm,
     "E": 0.,
     "S": 1.,
-    "T": 5000.*minute,
+    "T": 3.5.*day,
 }
 
 neurite_params = {"axon": axon_params, "dendrites": dend_params}

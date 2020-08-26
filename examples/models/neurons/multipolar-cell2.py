@@ -57,7 +57,7 @@ dend_params = {
     "B": 2.*cpm,
     "E": 0.,
     "S": 1.,
-    "T": 5000.*minute,
+    "T": 3.5.*day,
 
 }
 
@@ -79,7 +79,7 @@ axon_params = {
     "B": 5.*cpm,
     "E": 0.,
     "S": 1.,
-    "T": 20000.*minute,
+    "T": 14.*day,
 }
 neurite_params = {"axon": axon_params, "dendrites": dend_params}
 
@@ -114,7 +114,6 @@ axon_params.pop("taper_rate")
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
-#ds.simulate(20000)
 ds.simulate(1 * day)
 
 ds.plot.plot_neurons(show=True)
@@ -122,7 +121,7 @@ ds.plot.plot_neurons(show=True)
 lb = {
     "use_van_pelt": False,
     'res_branching_threshold': np.inf, "use_flpl_branching": True,
-    "flpl_branching_rate": 0.001, 
+    "flpl_branching_rate": 0.001,
     "lateral_branching_angle_mean": 45.
 }
 
@@ -135,7 +134,6 @@ ds.set_object_properties(n, neurite_params=neurite_params)
 
 ds.simulate(5 * day)
 ds.plot.plot_neurons(show=True)
-#ds.simulate(50000)
 
 end_branching = {"use_flpl_branching": False, "use_van_pelt": True, "T": 60000.}
 axon_params.update(end_branching)
@@ -143,20 +141,24 @@ dend_params.update(end_branching)
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
-#ds.simulate(100000)
 ds.simulate(10 * hour)
 ds.plot.plot_neurons(show=True)
 
 n.to_swc("chandelier-cell.swc",  resolution=50)
 
-import neurom as nm
-from neurom import viewer
-nrn = nm.load_neuron("chandelier-cell.swc")
+try:
+    from neurom import viewer
 
-fig, _ = viewer.draw(nrn)
+    import neurom as nm
 
-for ax in fig.axes:
-    ax.set_title("")
+    nrn = nm.load_neuron("chandelier-cell.swc")
+
+    fig, _ = viewer.draw(nrn)
+
+    for ax in fig.axes:
+        ax.set_title("")
+except import error:
+    pass
 
 plt.axis('off')
 fig.suptitle("")

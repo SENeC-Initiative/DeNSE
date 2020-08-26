@@ -127,8 +127,6 @@ def run_dense(neuron_params, neurite_params):
                              neurite_params=neurite_params)
     step(6000./resolution * minute, 1, False, True)
     axon_migated = {
-        # 'use_flpl_branching' : True,
-        # "flpl_branching_rate" : 0.004 * cpm,
         "res_retraction_threshold": 0.4 * uM,
         "res_elongation_threshold": 0.15 * uM,
         "res_elongation_factor": 0.4 * um / minute,
@@ -166,15 +164,10 @@ def run_dense(neuron_params, neurite_params):
                              neurite_params=neurite_params)
     step(10 * minute, 1, False, True)
     step(10 * minute, 1, False, False)
-    # neuron_params['use_lateral_branching'] = True
-    #~ ds.SaveSwc(swc_resolution=5)
-    #~ ds.save_json_info()
     ds.plot.plot_recording(rec, show=False)
 
     swc_file = ds.get_simulation_id()
-    # print(swc_file)
 
-    # ds.reset_kernel()
     return swc_file
 
 

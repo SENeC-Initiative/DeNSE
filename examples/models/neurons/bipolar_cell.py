@@ -124,11 +124,7 @@ ds.plot.plot_neurons()
 # then further branching
 
 vp_axon = {
-    "use_flpl_branching": False,
-    # "use_van_pelt": True,
-    # "B": 5.,
-    # "T": 40000.,
-    # "gc_split_angle_mean": 30.,
+    "use_flpl_branching": False
 }
 
 dend_params = {
@@ -164,21 +160,19 @@ try:
     fig, _ = viewer.draw(nrn)
 
     for ax in fig.axes:
-       ax.set_title("")
+        ax.set_title("")
 
     ds.plot.plot_dendrogram(n.dendrites["dendrite"], show=False,
-                        vertical_diam_frac=0.45, axis=ax)
+                            vertical_diam_frac=0.45, axis=ax)
 
     plt.axis('off')
     fig.suptitle("")
     plt.tight_layout()
     plt.show()
-    #~ tree.show_dendrogram()
-
 
     print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
     print("Asymmetry of the dendrite:",
-      ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))
+          ds.morphology.tree_asymmetry(n.dendrites["dendrite"]))
 
 except ImportError:
     pass

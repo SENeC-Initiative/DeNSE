@@ -25,9 +25,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import neurom as nm
-from neurom import viewer
-
 import dense as ds
 from dense.units import *
 
@@ -113,12 +110,19 @@ ds.io.save_to_swc("granule-cell.swc", gid=n)
 
 ds.plot.plot_neurons(show=True, subsample=50)
 
-nrn = nm.load_neuron("granule-cell.swc")
 
-fig, _ = viewer.draw(nrn)
+try:
+    import neurom as nm
+    from neurom import viewer
 
-for ax in fig.axes:
-    ax.set_title("")
+    nrn = nm.load_neuron("granule-cell.swc")
+
+    fig, _ = viewer.draw(nrn)
+
+    for ax in fig.axes:
+        ax.set_title("")
+except import error:
+    pass
 
 
 tree2 = n.axon.get_tree()

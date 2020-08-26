@@ -39,9 +39,9 @@ main_dir = current_dir[:current_dir.rfind("/")]
 Main parameters
 '''
 
-num_neurons = 10
+num_neurons = 100
 # Simulation duration
-duration = 40  # in days
+duration = 10  # in days
 
 soma_radius = 8.
 use_uniform_branching = False
@@ -62,7 +62,7 @@ axon_params = {
     "filopodia_wall_affinity": 6400.,
     "filopodia_finger_length": 5. * um,
     "filopodia_min_number": 30,
-    "persistence_length" : 500. * um, #600
+    "persistence_length": 500. * um, #600
     "taper_rate": 1./2000.,
     'B': 10. * cpm,
     'T': 10000. * minute,
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # ds.set_kernel_status({"interactions": False})
 
     gids, culture = None, None
-    print(ds.get_kernel_status("num_local_threads"))
+    print("Number of threads: ".format(ds.get_kernel_status("num_local_threads")))
 
     if kernel["environment_required"]:
         culture = ds.set_environment(culture_file, min_x=min_x, max_x=max_x)

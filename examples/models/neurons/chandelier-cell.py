@@ -129,12 +129,14 @@ axon_vp = {
     "T": 3*day,
 }
 
-axon_params.update(axon_vp)
-dend_params.update(dend_vp)
-dend_params.pop("initial_diameter")
-axon_params.pop("initial_diameter")
-dend_params.pop("taper_rate")
-axon_params.pop("taper_rate")
+neurite_params = {"axon": axon_vp, "dendrites": dend_vp}
+
+# axon_params.update(axon_vp)
+# dend_params.update(dend_vp)
+# dend_params.pop("initial_diameter")
+# axon_params.pop("initial_diameter")
+# dend_params.pop("taper_rate")
+# axon_params.pop("taper_rate")
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
@@ -159,9 +161,9 @@ lb = {
     "lateral_branching_angle_mean": 45.*deg
 }
 
-# neurite_params = {"axon": lb_a, "dendrites": lb}
-axon_params.update(lb_a)
-dend_params.update(lb)
+neurite_params = {"axon": lb_a, "dendrites": lb}
+# axon_params.update(lb_a)
+# dend_params.update(lb)
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 

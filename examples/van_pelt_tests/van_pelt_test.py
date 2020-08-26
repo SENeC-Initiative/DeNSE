@@ -61,7 +61,10 @@ def run_axon_only(B, E, S, T, seed):
     neurite_params = {"axon": axon_params}
     n = ds.create_neurons(n=1, params=neuron_params,
                           neurite_params=neurite_params, num_neurites=1)
+
+    print("start simulation")
     ds.simulate(21*day)
+
     return n
 
 def make_plot(n):
@@ -99,27 +102,41 @@ def get_ngcs():
 
 def test_vanpelt(B,E,S,T):
     n_gcs = []
-    for i in range(1000):
+    for i in range(10):
         run_axon_only(B,E,S,T,np.random.randint(5000))
         n_gc , _ = get_ngcs()
         n_gcs.append(n_gc)
     return n_gcs
 
+print("got there")
 
-gcs={}
+gcs = {}
+
+Es = [1., 0.75, 0.5, 0.25, 0.]
+
 if len(sys.argv) >1:
-    Es =[1., 0.75, 0.5, 0.25, 0.]
-    B  = np.float(sys.argv[1])
-    T  = np.float(sys.argv[2])
+    B = np.float(sys.argv[1])
+    T = np.float(sys.argv[2])
+
     for E in Es:
         print("B {}, E: {}".format(B,E))
         n_gcs = test_vanpelt(B, E, 0., T)
         gcs[E] = n_gcs
+
     with open("vp_gcs_B{}_T{}.json".format(B,T),"w") as fp:
         json.dump(gcs, fp)
+else:
+    B = 10.
+    T = 500.
+
+    for E in Es:
+        print("start test")
+        n_gcs = test_vanpelt(B, E, 0., T)
+        print(E, n_gcs)
+        gcs[E] = n_gcs
 
 Es =[1., 0.75, 0.5, 0.25, 0.]
-max_bin = int(max(gcs['0.0']))
+max_bin = int(max(gcs[0.]))
 print(max_bin)
 hist = plt.hist(gcs.values(),density=True, bins = max_bin)
 fig, ax = plt.subplots(1,1)

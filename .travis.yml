@@ -39,7 +39,7 @@ before_install:
     fi
   # update brew and pip on mac (note that mac is without nngt)
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew install gcc cmake python3 geos doxygen boost@1.72 libomp;
+      brew install gcc@10 cmake python3 geos doxygen boost@1.72 libomp;
       pip3 install setuptools;
       pip3 install cython;
       pip3 install numpy scipy pint pyneuroml pytest;
@@ -71,9 +71,9 @@ install:
   # on mac, set gcc as compiler
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       mkdir build && cd build;
-      CC=gcc CXX=g++ cmake .. -Dwith-python=3;
+      CC=gcc-10 CXX=g++-10 cmake .. -Dwith-python=3;
       make;
-      CC=gcc CXX=g++ make install;
+      CC=gcc-10 CXX=g++-10 make install;
     fi
   # on windows, installer works fine
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then

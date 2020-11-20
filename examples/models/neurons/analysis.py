@@ -34,9 +34,6 @@ from scipy.special import digamma
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import neurom as nm
-from neurom import viewer
-
 
 def max_asym(n):
     return 1. - (digamma(n) - digamma(1.))/(n-1.)
@@ -83,13 +80,18 @@ ax.set_xlabel("Sholl radius ($\mu$m)")
 ax.set_ylabel("Intersections")
 plt.tight_layout()
 
-fig, _ = viewer.draw(nrn)
-for i, nrt in enumerate(nrn.neurites):
-    fig, _ = viewer.draw(nrn.neurites[i])
+try:
+    import neurom as nm
+    from neurom import viewer
 
-for ax in fig.axes:
-    ax.set_title("")
+    fig, _ = viewer.draw(nrn)
+    for i, nrt in enumerate(nrn.neurites):
+        fig, _ = viewer.draw(nrn.neurites[i])
 
+    for ax in fig.axes:
+        ax.set_title("")
+except ImportError:
+    pass
 
 plt.axis('off')
 fig.suptitle("")

@@ -20,7 +20,7 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 """
-Generate the morphology of a bipolar cell (spindle neuron) 
+Generate the morphology of a bipolar cell (spindle neuron)
 Also illustrates generation of dendogram
 """
 

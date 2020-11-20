@@ -64,13 +64,10 @@ dendrite_params = {
     "speed_growth_cone": 0.1 * um / minute,
     "filopodia_wall_affinity": 0.01,
     "persistence_length" : 100. * um,
-    "initial_diameter": 2.*um,
 }
 
 neurite_params = {
     "axon": {"initial_diameter": 2.*um}, "dendrites": dendrite_params}
-
-
 
 neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
 

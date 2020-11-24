@@ -34,9 +34,22 @@ The file will be saved in the current working directory in the path:
 `<SimulationID>/record.dat`
 
 The `static_data` are the `morphology.swc` and `info.json`, both are produced at the end of the simulation, they can be placed where the user prefer, since we do expect these are the data usually required.
-For an insight on the SWC format you're pleased to read the apposite section.
 
+For an insight on the SWC format please refer to the `reference page <http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html>`_. The SWC format is one of the most widely used  neuron morphology formats (in particular, a standardized version of this format is used by the `neuromorpho <http://www.neuromorpho.org>`_ archive).
+
+
+DeNSE can also store neuron morphologies in the `NeuroML <https://neuroml.org/>`_ format, an alternative data format for defining and
+    exchanging models in computational neuroscience focused on
+    biophysical and anatomical detailed models.
+
+The `info.json` file is meant to store the simulation configuration.    
 
 The functions to deal with data storage are written under the name DataIO.
 
-In order to save data you need to set the
+In order to save data you need to use the function of class "io".
+
+ex.:
+
+* :func:`dense.io.save_to_swc`
+* :func:`dense.io.save_json_info`
+* :func:`dense.io.save_to_neuroml`

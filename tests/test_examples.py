@@ -24,56 +24,88 @@
 
 import os
 import matplotlib
-matplotlib.use('Agg')
+do_plot = int(os.environ.get("DO_PLOT", True))
+
+if not do_plot:
+    matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
-
 import dense as ds
 
 folder = os.path.dirname(__file__)
 folder = folder if folder else "."
 
-root   = os.path.abspath(folder + "/..")
-tuto   = root + "/examples/tutorials"
+root = os.path.abspath(folder + "/..")
+neuron_models = root + "/examples/models/neurons"
+branching_dir = root + "/examples/models/branching"
 
 
 def mock_show():
     pass
 
 
-def test_1_first_steps(monkeypatch):
+def test_1_bipolar_cell(monkeypatch):
     '''
     Run first example.
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(tuto + "/1_first-steps.py").read())
+    exec(open(neuron_models + "/bipolar_cell.py").read())
 
 
-def test_2_interacting_neurons(monkeypatch):
+def test_2_chandelier_cell(monkeypatch):
     '''
-    Run second example.
-    '''
-    monkeypatch.setattr(plt, "show", mock_show)
-    ds.reset_kernel()
-    exec(open(tuto + "/2_interacting-neurons.py").read())
-
-
-def test_3_space_embedded_neurons(monkeypatch):
-    '''
-    Run second example.
+    Run first example.
     '''
     monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(tuto + "/3_space-embedding.py").read())
+    exec(open(neuron_models + "/chandelier-cell.py").read())
 
 
-def test_named_neurites():
+def test_3_granule_cell(monkeypatch):
     '''
-    Run second example.
+    Run first example.
     '''
+    monkeypatch.setattr(plt, "show", mock_show)
     ds.reset_kernel()
-    exec(open(tuto + "/named_neurites.py").read())
+    exec(open(neuron_models + "/granule_cell.py").read())
+
+
+def test_4_purkinje(monkeypatch):
+    '''
+    Run first example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(neuron_models + "/purkinje.py").read())
+
+
+def test_5_pyramidal(monkeypatch):
+    '''
+    Run first example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(neuron_models + "/pyramidal_cell.py").read())
+
+
+def test_6_starbust_amacrine_cell(monkeypatch):
+    '''
+    Run first example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(neuron_models + "/starbust_amacrine_cell.py").read())
+
+
+def test_7_several_step_growth(monkeypatch):
+    '''
+    Run first example.
+    '''
+    monkeypatch.setattr(plt, "show", mock_show)
+    ds.reset_kernel()
+    exec(open(branching_dir +
+              "/several_step_growth_and_on_and_off_branching.py").read())
 
 
 if __name__ == "__main__":
@@ -83,7 +115,10 @@ if __name__ == "__main__":
 
     mp = mptch()
 
-    test_1_first_steps(mp)
-    test_2_interacting_neurons(mp)
-    test_3_space_embedded_neurons(mp)
-    test_named_neurites()
+    # test_1_bipolar_cell(mp)
+    test_2_chandelier_cell(mp)
+    # test_3_granule_cell(mp)
+    # test_4_purkinje(mp)
+    # test_5_pyramidal(mp)
+    # test_6_starbust_amacrine_cell(mp)
+    # test_7_several_step_growth(mp)

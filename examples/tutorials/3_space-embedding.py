@@ -23,11 +23,6 @@
 This file shows how to grow space-embedded neurons with DeNSE.
 """
 
-import numpy as np
-
-np.random.seed(0)
-
-
 ''' Importing DeNSE '''
 
 import dense as ds
@@ -36,10 +31,10 @@ from dense.units import *
 
 ''' Configuring the simulator and the neuronal properties '''
 
-num_omp       = 5
-num_neurons   = 50
+num_omp = 5
+num_neurons = 50
 
-simu_params   = {
+simu_params = {
     "resolution": 10.*minute,
     "num_local_threads": num_omp,
     "seeds": [i for i in range(num_omp)],
@@ -73,12 +68,14 @@ neuron_params = {
 }
 
 axon_params = {
+    "initial_diameter": 4.*um,
     "max_arbor_length": 1.*cm,
     "taper_rate": 1./400.,
     "initial_diameter": 4.*um,
 }
 
 dend_params = {
+    "initial_diameter": 3.*um,
     "max_arbor_length": 500.*um,
     "taper_rate": 1./200.,
     "initial_diameter": 3.*um,

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #
+# -*- coding: utf-8 -*-
 # plot_structures.py
 #
 # This file is part of DeNSE.
@@ -49,7 +49,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
                  dendrite_color="royalblue", subsample=1, save_path=None,
                  title=None, axis=None, show_density=False, dstep=20.,
                  dmin=None, dmax=None, colorbar=True, show_neuron_id=False,
-                 show=True, **kwargs):
+                 show=True, xy_steps=None, x_min=None, x_max=None, y_min=None,
+                 y_max=None, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -104,6 +105,11 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         Whether the GID of the neuron should be displayed inside the soma.
     show : bool, optional (default: True)
         Whether the plot should be displayed immediately or not.
+    dstep : number of bins for density level histogram
+    dmin : minimal density for density  histogram
+    dmax : maximal scale for density
+    xy_steps : number of spatial bins for density plot
+    x_min, x_max, y_min, y_max : bounding bix for spatial density map
     **kwargs : optional arguments
         Details on how to plot the environment, see :func:`plot_environment`.
 
@@ -112,6 +118,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     axes : axis or tuple of axes if `density` is True.
     '''
     import matplotlib.pyplot as plt
+
+    from shapely.geometry import (Polygon, MultiPolygon)
 
     assert mode in ("lines", "sticks", "mixed"),\
         "Unknown `mode` '" + mode + "'. Accepted values are 'lines', " +\
@@ -135,7 +143,7 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     soma_alpha = kwargs.get("soma_alpha", 0.8)
     axon_alpha = kwargs.get("axon_alpha", 0.6)
     dend_alpha = kwargs.get("dend_alpha", 0.6)
-    gc_color   = kwargs.get("gc_color", "g")
+    gc_color = kwargs.get("gc_color", "g")
 
     # get the objects describing the neurons
     if gid is None:
@@ -144,8 +152,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         gid = [gid]
 
     somas, growth_cones, nodes = None, None, None
-    axon_lines, dend_lines     = None, None
-    axons, dendrites           = None, None
+    axon_lines, dend_lines = None, None
+    axons, dendrites = None, None
 
     if mode in ("lines", "mixed"):
         somas, axon_lines, dend_lines, growth_cones, nodes = \
@@ -197,8 +205,8 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     r_max = np.max(radii)
     r_min = np.min(radii)
 
-    size  = (1.5*r_min if len(gid) <= 10
-             else (r_min if len(gid) <= 100 else 0.7*r_min))
+    size = (1.5*r_min if len(gid) <= 10
+            else (r_min if len(gid) <= 100 else 0.7*r_min))
 
     for i, x, y, r in zip(gid, somas[0], somas[1], radii):
         circle = plt.Circle(
@@ -206,11 +214,11 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
         artist = ax.add_artist(circle)
         artist.set_zorder(5)
         if show_neuron_id:
-            str_id    = str(i)
-            xoffset   = len(str_id)*0.35*size
-            text      = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
+            str_id = str(i)
+            xoffset = len(str_id)*0.35*size
+            text = TextPath((x-xoffset, y-0.35*size), str_id, size=size)
             textpatch = PathPatch(text, edgecolor="w", facecolor="w",
-                                   linewidth=0.01*size)
+                                  linewidth=0.01*size)
             ax.add_artist(textpatch)
             textpatch.set_zorder(6)
 
@@ -248,19 +256,84 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 
     if show_density:
         from matplotlib.colors import LogNorm
+
         fig, ax2 = plt.subplots()
-        x = np.concatenate(
-            (np.array(axons[0])[~np.isnan(axons[0])],
-             np.array(dendrites[0])[~np.isnan(dendrites[0])]))
-        y = np.concatenate(
-            (np.array(axons[1])[~np.isnan(axons[1])],
-             np.array(dendrites[1])[~np.isnan(dendrites[1])]))
+
+        # https://stackoverflow.com/questions/20474549/extract-points-coordinates-from-a-polygon-in-shapely#20476150
+        # x,y= axons[].exterior.coords.xy
+
+        def extract_neurites_coordinate(neurites):
+            '''
+            from a neurite defined as polynom extract the coordinates of each
+            segment
+            input : p neuron or dendrite, as shapely polygon
+                    x_neurites, y_neurites : numpy arrays of x and y coordinates of
+                                       axons segments
+                    y_dendrites, y_dendrites : numpy arrays of x and y
+                                               coordinates of dendrites
+            outputs : updates lists of coordinates
+            '''
+            x_neurites = np.array([])
+            y_neurites = np.array([])
+            if isinstance(neurites, MultiPolygon):
+                for p in neurites:
+                    x_neurite, y_neurite = extract_neurites_coordinate(p)
+                    x_neurites = np.concatenate((x_neurites, x_neurite))
+                    y_neurites = np.concatenate((y_neurites, y_neurite))
+            elif isinstance(neurites, Polygon):
+                x_neurite, y_neurite = neurites.exterior.coords.xy
+                x_neurites = np.concatenate((x_neurites, x_neurite))
+                y_neurites = np.concatenate((y_neurites, y_neurite))
+            else:
+                for index in range(len(neurites)):
+                    x_neurite, y_neurite = extract_neurites_coordinate(
+                                           neurites[index])
+                    x_neurites = np.concatenate((x_neurites, x_neurite))
+                    y_neurites = np.concatenate((y_neurites, y_neurite))
+
+            return x_neurites, y_neurites
+
+        # extract axons segments
+        # if isinstance(axons, MultiPolygon):
+        #     for p in axons:
+        #         x_axons, y_axons = extract_neurites_coordinate(p)
+        # else:
+        x, y = extract_neurites_coordinate(axons)
+
+        # x = x_axons
+        # y = y_axons
+
+        # extract dendrites segments
+        if len(dendrites) > 0:  # this depends if dendrites present
+            # if isinstance(dendrites, MultiPolygon):
+            #     for p in dendrites:
+            #         x_dendrites, y_dendrites = extract_neurites_coordinate(p)
+            # else:
+            #     x_dendrites, y_dendrites = extract_neurites_coordinate(
+            #                             dendrites)
+            x_dendrites, y_dendrites = extract_neurites_coordinate(
+                                        dendrites)
+
+            x = np.concatenate((x, x_dendrites))
+            y = np.concatenate((y, y_dendrites))
+
+        # Scaling density levels
         xbins = int((np.max(x) - np.min(x)) / dstep)
         ybins = int((np.max(y) - np.min(y)) / dstep)
+
+        dstep = int(dstep)
+        counts, xbins, ybins = np.histogram2d(
+                                              x, y, bins=(dstep, dstep),
+                                              range=[[x_min, x_max],
+                                                     [y_min, y_max]])
+        lims = [xbins[0], xbins[-1], ybins[0], ybins[-1]]
+        counts[counts == 0] = np.NaN
 
         cmap = get_cmap(kwargs.get("cmap", "viridis"))
         cmap.set_bad((0, 0, 0, 1))
         norm = None
+        dmax = np.nanmax(counts)
+        print("Maximal density : {}".format(dmax))
 
         if dmin is not None and dmax is not None:
             n = int(dmax-dmin)
@@ -271,12 +344,12 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
             norm = matplotlib.colors.BoundaryNorm(
                 np.arange(0, dmax+1, 1), cmap.N)
 
-        counts, xbins, ybins = np.histogram2d(x, y, bins=(xbins, ybins))
-        lims = [xbins[0], xbins[-1], ybins[0], ybins[-1]]
-        counts[counts == 0] = np.NaN
+        # data = ax2.imshow(counts.T, extent=lims, origin="lower",
+        #                   vmin=0 if dmin is None else dmin, vmax=dmax,
+        #                   cmap=cmap)
 
         data = ax2.imshow(counts.T, extent=lims, origin="lower",
-                          vmin=0 if dmin is None else dmin, vmax=dmax,
+                          norm=norm,
                           cmap=cmap)
 
         if colorbar:
@@ -596,14 +669,13 @@ def plot_dendrogram(neurite, axis=None, show_node_id=False,
     return axis
 
 
-
 # ---------------- #
 # Plot environment #
 # ---------------- #
 
 def plot_environment(culture=None, title='Environment', ax=None, m='',
-                    mc="#999999", fc="#ccccff", ec="#444444", alpha=0.5,
-                    brightness="height", show=True, **kwargs):
+                     mc="#999999", fc="#ccccff", ec="#444444", alpha=0.5,
+                     brightness="height", show=True, **kwargs):
     '''
     Plot the environment in which the neurons grow.
 

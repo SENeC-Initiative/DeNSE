@@ -10,16 +10,9 @@ env:
 
 matrix:
   include:
-  - env: PYTHON_VERSION=2.7
-    os: linux
-    python: "2.7"
-  - env: PYTHON_VERSION=3.6
+  - env: PYTHON_VERSION=3.8
     os: linux
     python: "3.6"
-  - env: PYTHON_VERSION=3
-    os: osx
-    osx_image: xcode10
-    language: generic
   - env: PYTHON_VERSION=3
     os: windows
     language: shell
@@ -37,18 +30,18 @@ before_install:
       sudo apt-get autoremove;
       sudo apt-get install -y cmake libboost-dev libgeos++-dev g++;
       pip install setuptools cython;
-      pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib;
+      pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib neurom;
       pip install --no-binary shapely, shapely;
     fi
-  # update brew and pip on mac (note that mac is without nngt)
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      brew install gcc@8 cmake python3 geos doxygen boost libomp;
-      pip3 install setuptools;
-      pip3 install cython;
-      pip3 install numpy scipy pint pyneuroml pytest;
-      pip3 install --no-binary shapely, shapely;
-      pip3 install matplotlib networkx svg.path dxfgrabber PyOpenGL;
-    fi
+  # # update brew and pip on mac (note that mac is without nngt)
+  # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+  #     brew install gcc@9 cmake python3 geos doxygen boost@1.72 libomp;
+  #     pip3 install setuptools;
+  #     pip3 install cython;
+  #     pip3 install numpy scipy pint pyneuroml pytest;
+  #     pip3 install --no-binary shapely, shapely;
+  #     pip3 install matplotlib networkx svg.path dxfgrabber PyOpenGL neurom;
+  #   fi
   # use miniconda on windows
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       choco install openssl.light;
@@ -60,7 +53,7 @@ before_install:
       conda install python cmake geos boost;
       conda --version ; python --version ; pip --version;
       pip install cython;
-      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml;
+      pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom;
       pip install nngt;
     fi
 
@@ -71,13 +64,13 @@ install:
       cmake .. -DCMAKE_INSTALL_PREFIX=$VIRTUAL_ENV;
       make && make install;
     fi
-  # on mac, set gcc as compiler
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      mkdir build && cd build;
-      CC=gcc-8 CXX=g++-8 cmake .. -Dwith-python=3;
-      make;
-      CC=gcc-8 CXX=g++-8 make install;
-    fi
+  # # on mac, set gcc as compiler
+  # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+  #     mkdir build && cd build;
+  #     CC=gcc-9 CXX=g++-9 cmake .. -Dwith-python=3;
+  #     make;
+  #     CC=gcc-9 CXX=g++-9 make install;
+  #   fi
   # on windows, installer works fine
   - if [ "$TRAVIS_OS_NAME" = "windows" ]; then
       mkdir build && cd build;
@@ -90,8 +83,9 @@ script:
   # we were in extra for WINDOWS, and in build for MAC and LINUX, so swith back to root folder
   - cd ..
   # run tests
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-      python3 -m pytest tests --ignore=tests/todo;
-    else
-      python -m pytest tests --ignore=tests/todo;
-    fi;
+  # - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+  #     python3 -m pytest tests --ignore=tests/todo;
+  #   else
+  #     python -m pytest tests --ignore=tests/todo;
+  #   fi;
+  - python -m pytest tests --ignore=tests/todo;

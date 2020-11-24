@@ -88,4 +88,4 @@ script:
   #   else
   #     python -m pytest tests --ignore=tests/todo;
   #   fi;
-    python -m pytest tests --ignore=tests/todo;
+  - python -m pytest tests --ignore=tests/todo;

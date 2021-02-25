@@ -104,11 +104,6 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
     set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
     set( PYTHON_INSTALL_DIR "$CACHE{PYTHON_INSTALL_DIR}" )
-ELSEIF ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" )
-  # /usr/local is forbidden because it is the default CMAKE value and it makes
-  # configuration too complex
-    message( FATAL_ERROR "Do not install into '/usr/local'. "
-             "Please change CMAKE_INSTALL_PREFIX." )
 ELSE ()
   # make sure we get the absolute path
   get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)

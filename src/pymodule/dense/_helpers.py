@@ -250,12 +250,6 @@ def nonstring_container(obj):
     '''
     if not isinstance(obj, _container):
         return False
-
-    try:
-        if isinstance(obj, unicode):
-            return False
-    except NameError:
-        pass
     
     if isinstance(obj, bytes):
         return False
@@ -460,10 +454,7 @@ def to_cppunit(val, valname):
 # ----------------- #
 
 def is_string(value):
-    try:
-        return isinstance(value, (str, bytes, unicode))
-    except:
-        return isinstance(value, (str, bytes))
+    return isinstance(value, (str, bytes))
 
 
 def is_scalar(value):

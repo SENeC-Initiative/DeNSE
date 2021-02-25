@@ -28,7 +28,7 @@ Before installation, several tools must be pre-installed, including
 
 1. A set of software and libraries
     * CMake
-    * A C and C++11-compliant compiler such as GCC (4.8.1+)
+    * A C and C++14-compliant compiler such as GCC (6.1+)
     * Python (2.7 or 3.3+) and its header/development files
     * GEOS (3.5+) and its header/development files
     * Boost Geometry and Range (Boost 1.62 or higher)

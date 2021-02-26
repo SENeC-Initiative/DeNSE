@@ -1,5 +1,5 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required( VERSION 2.6 )
+cmake_minimum_required( VERSION 2.9 )
 
 # add cmake modules: for all `include(...)` first look here
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
@@ -44,10 +44,10 @@ get_target_triple( CGROWTH_TARGET_TRIPLE CGROWTH_TARGET_ARCH CGROWTH_TARGET_VEND
 
 # process compiler and options
 if (MSVC)
-   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase- /Ox" )
+   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:twoPhase- /Ox /std:c++14" )
    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /bigobj")
 else ()
-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14" )
 
     if (CYGWIN AND CMAKE_COMPILER_IS_GNUCC)
        set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -U__STRICT_ANSI__" )
@@ -104,11 +104,6 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
     set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
     set( PYTHON_INSTALL_DIR "$CACHE{PYTHON_INSTALL_DIR}" )
-ELSEIF ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local" )
-  # /usr/local is forbidden because it is the default CMAKE value and it makes
-  # configuration too complex
-    message( FATAL_ERROR "Do not install into '/usr/local'. "
-             "Please change CMAKE_INSTALL_PREFIX." )
 ELSE ()
   # make sure we get the absolute path
   get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)

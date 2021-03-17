@@ -48,7 +48,7 @@ def generate_network(source_neurons=None, target_neurons=None,
                      connection_probability=0.2, default_synaptic_strength=1.,
                      only_new_connections=False, autapse_allowed=False,
                      multigraph=False, **kwargs):
-    """
+    r"""
     Create the graph based on the neuron shapes, the spine density, and a
     connection probability.
 
@@ -84,7 +84,7 @@ def generate_network(source_neurons=None, target_neurons=None,
         can be generated only when neurites overlap) or "spines" (neurites can
         be connected if they are closer than a certain distance
         `max_spine_length`).
-    spine_density : float (quantity), optional (default: :math:`0.5 \mu m^{-2}`)
+    spine_density : float (quantity), optional (default: :math:`0.5 \\mu m^{-2}`)
         Number of spines per unit area, determines how many synapses are
         possible given an area of interaction.
     connection_probability : float, optional (default: 0.2)
@@ -108,9 +108,9 @@ def generate_network(source_neurons=None, target_neurons=None,
         merged into one equivalent connection with an increased synaptic
         strength and the average properties of the real connections (e.g. from
         three synapses of strength 1. and soma-to-soma distances
-        :math:`120 \mu m`, :math:`140 \mu m`, and :math:`160 \mu m`, one will
+        :math:`120 \\mu m`, :math:`140 \\mu m`, and :math:`160 \\mu m`, one will
         get a single connection of strength 3. and of average length
-        :math:`140 \mu m`).
+        :math:`140 \\mu m`).
     **kwargs : optional arguments
         When using the "spines" `method`, an additional argument
         `max_spine_length` must be passed, specifying the maximum length

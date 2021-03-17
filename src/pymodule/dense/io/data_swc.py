@@ -45,6 +45,15 @@ def save_to_swc(filename, gid=None, resolution=10):
     '''
     Save neurons to SWC file.
 
+    SWC files are a common format used  to store neuron morphologies,
+    and are especially used to share digitally reconstructed neurons
+    using NeuroMorpho.org. The format was designed to store trees as
+    connected cylindrical segments to form the basis of compartmental
+    models.
+
+    (Alternatively DENsE is able to store neuron morphologies in
+    the *neuroml* format using the dense.io.save_to_neuroml() method.)
+
     Parameters
     ----------
     filename : str
@@ -69,7 +78,14 @@ def load_swc(swc_folder=None, swc_file=None, info=None):
         or for single neurons files.
         the format style of SWC files is the standard
 
-    @todo: redo this
+        NB :
+            Currently if swc_file is given, the code assumes the file
+            contains only one neuron !
+            If both swc_folder and swc_file are given, it assumes the file
+            contains only one neuron.
+            If the swc file contains more thant one neurone, give only
+            the swc_folder path.
+        (Issue reported !)
 
     Parameters
     ----------
@@ -104,7 +120,7 @@ def NeuronsFromSimulation(simulation_path):
     A list of dense_format = {"gid":gid,"data":file_,"info":json.load(open(simulation_path+".json"))}
     """
 
-    neurons         = {}
+    neurons = {}
     simulation_path = simulation_path
 
     try:
@@ -128,25 +144,25 @@ def NeuronsFromSimulation(simulation_path):
             return line[1].rstrip()
 
     for file_ in imported_list:
-        gid          = parse_gid(file_)
+        gid = parse_gid(file_)
         dense_format = {"gid": gid, "data":file_}
         neurons[gid] = dense_format
     try:
-        info = json.load(open(os.path.join(simulation_path,"info.json")))
+        info = json.load(open(os.path.join(simulation_path, "info.json")))
     except:
         raise ValueError("ERROR: {} not found".format(
             os.path.join(simulation_path,"info.json")))
 
     info["gids"] = gids
-    neurons      = {"neurons": neurons, "info": info}
+    neurons = {"neurons": neurons, "info": info}
 
     return neurons
 
 
 def NeuronFromSwcFile(filename, info=None):
     dense_format = {"gid": 0, "data": filename}
-    neurons ={0: dense_format}
-    return  {"neurons": neurons, "info": info}
+    neurons = {0: dense_format}
+    return {"neurons": neurons, "info": info}
 
 
 ############
@@ -210,7 +226,6 @@ def SplitSwcFile(input_file):
             stored_data = False
 
     return gid
-
 
 
 def SegmentsToDeNSE(paths, name, info):

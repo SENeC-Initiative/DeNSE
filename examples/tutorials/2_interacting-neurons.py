@@ -29,14 +29,14 @@ This file shows how to grow two interacting neurons with DeNSE.
 import dense as ds
 from dense.units import *
 
-
 ''' Configuring the simulator and the neuronal properties '''
 
-num_omp       = 2
-num_neurons   = 2
+num_omp = 2
+num_neurons = 2
 
-simu_params   = {
-    "resolution": 15.*minute,
+simu_params = {
+
+    "resolution": 1.*minute,
     "num_local_threads": num_omp,
     "seeds": [0, 1],
     "environment_required": False,
@@ -56,7 +56,6 @@ neurite_params = {
     "axon": {"initial_diameter": 4.*um},
     "dendrites": {"taper_rate": 1./200., "initial_diameter": 3.*um}
 }
-
 # configure DeNSE
 ds.set_kernel_status(simu_params)
 
@@ -97,8 +96,9 @@ ds.set_object_properties(n, neurite_params=neurite_params)
 ds.simulate(7*day)
 ds.plot.plot_neurons()
 
-
 ''' Save neuronal morphologies '''
 
-ds.io.save_to_swc("neurons.swc", n) 
+# In the swc format
+ds.io.save_to_swc("neurons.swc", n)
+# In the Neurom format
 ds.io.save_to_neuroml("neurons.nml", n)

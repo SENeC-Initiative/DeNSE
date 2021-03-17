@@ -115,6 +115,8 @@ class Neuron(object):
 
             if attribute in ndict:
                 return ndict[attribute]
+            elif attribute in ndict.get("observables", {}):
+                return self.get_state(attribute)
 
         raise AttributeError(
             "{!r} has not attribute '{}'".format(self, attribute))
@@ -1019,15 +1021,19 @@ class Population(list):
     def __getitem__(self, key):
         if isinstance(key, slice):
             pop = Population(name="subpop_" + self.name)
+
             for i in range(self._idx[key.start], self._idx[key.stop]):
                 super(Population, pop).append(
                     super(Population, self).__getitem__(i))
+
             return pop
         elif _nsc(key):
             pop = Population(name="subpop_" + self.name)
+
             for i in key:
                 super(Population, pop).append(
                     super(Population, self).__getitem__(self._idx[i]))
+
             return pop
         else:
             return super(Population, self).__getitem__(self._idx[key])
@@ -1158,8 +1164,9 @@ class Population(list):
             Properties of the objects' status: a single value if
             `property_name` was specified, the full status ``dict`` otherwise.
         '''
-        return _pg.get_object_properties(self, property_name=property_name,
-                                         level=level, neurite=neurite)
+        return _pg.get_object_properties(
+            list(self), property_name=property_name, level=level,
+            neurite=neurite)
 
     def set_properties(self, params=None, axon_params=None,
                        dendrites_params=None):

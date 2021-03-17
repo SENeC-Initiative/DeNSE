@@ -30,15 +30,20 @@ import dense as ds
 from dense.units import *
 
 
-def test_branching():
-    do_plot = int(os.environ.get("DO_PLOT", True))
-    num_omp = 4
-    res = 10.
+# parameters
 
-    # seed
-    initial_state = np.random.get_state()
-    seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
-                             replace=False)
+do_plot = int(os.environ.get("DO_PLOT", True))
+num_omp = 4
+res = 10.
+
+# seed
+initial_state = np.random.get_state()
+seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
+                         replace=False)
+
+
+def test_flpl_branching():
+    ''' Test FLPL branching rate '''
     num_neurons = 10
 
     gc_model = 'gf_po_nm'
@@ -131,5 +136,67 @@ def test_branching():
         "Failed test with state " + str(initial_state)
 
 
+def test_vp_branching():
+    ''' Test van Pelt branching '''
+    num_neurons = 100
+
+    gc_model = 'gf_po_nm'
+
+    neuron_params = {
+        "position" : np.random.uniform(
+            -1000, 1000, (num_neurons, 2)) * um,
+
+        "growth_cone_model": gc_model,
+        "sensing_angle": 45.*deg,
+        "speed_growth_cone": .1 * um / minute,
+        "persistence_length": 100. * um,
+
+        "filopodia_finger_length": 10. * um,
+        "filopodia_min_number": 30,
+
+        "taper_rate": 0.,
+        "diameter_fraction_lb": 1.,
+
+        "use_van_pelt": True,
+        "B": 1.26,
+        "T": 1*day,
+        "S": 0.,
+        "E": 0.106,
+
+        "retraction_probability": 0.
+    }
+
+    # (re)set kernel parameters
+    ds.reset_kernel()
+
+    kernel = {
+    "resolution": res*minute,
+    "seeds": seeds,
+    "environment_required": False,
+    "interactions": False,
+    "num_local_threads": num_omp,
+    }
+
+    ds.set_kernel_status(kernel)
+
+    # create neurons
+    pop = ds.create_neurons(n=num_neurons, params=neuron_params,
+                            num_neurites=1)
+
+    print(pop.get_properties("retraction_probability"))
+
+    ds.simulate(30*neuron_params["T"])
+
+    num_tips = [n.get_state("num_growth_cones") for n in pop]
+
+    print(np.mean(num_tips))
+
+    if do_plot:
+        import matplotlib.pyplot as plt
+        plt.hist(num_tips)
+        plt.show()
+
+
 if __name__ == '__main__':
-    test_branching()
+    # ~ test_flpl_branching()
+    test_vp_branching()

@@ -72,11 +72,14 @@ Branching::Branching(NeuritePtr neurite)
     , uniform_split_rate_(UNIFORM_BRANCHING_RATE)
     , next_usplit_event_(invalid_ev)
 {
-    dt_exp = exp(kernel().simulation_manager.get_resolution()/T_) -1;
+    dt_exp_ = std::expm1(kernel().simulation_manager.get_resolution() / T_);
+
     exponential_uniform_ =
         std::exponential_distribution<double>(uniform_branching_rate_);
+
     exponential_flpl_ =
         std::exponential_distribution<double>(flpl_branching_rate_);
+
     exponential_usplit_ =
         std::exponential_distribution<double>(uniform_split_rate_);
 }
@@ -161,25 +164,24 @@ void Branching::set_branching_event(Event &ev, signed char ev_type,
  */
 bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
 {
-    // This events have GC ID = -1
-    // uniform_branching_event
-    bool uniform_occurence =
-        std::get<edata::TIME>(next_uniform_event_) == std::get<edata::TIME>(ev);
-    bool flpl_occurence =
-        std::get<edata::TIME>(next_flpl_event_) == std::get<edata::TIME>(ev);
-    bool usplit_occurence =
-        std::get<edata::TIME>(next_usplit_event_) == std::get<edata::TIME>(ev);
-//    bool van_pelt_occurence =
-//        std::get<edata::TIME>(next_vanpelt_event_) == std::get<edata::TIME>(ev);
-
-
-    // These events are discriminated on the base of the gc_id to be distinguished by the GC id.
-    // Res_occurence events have a GC id > -1
-    bool res_occurence = std::get<edata::GC>(ev) > -1;
-    // Van Pelt events computed with density have GC id ==-2
+    // Time-based events have GC ID < 0
+    // Branching node will be chosen algorithmically
     bool van_pelt_occurence = std::get<edata::GC>(ev) == -2;
 
-        // prepare pointers to nodes and branching_point
+    bool uniform_occurence =
+        std::get<edata::TIME>(next_uniform_event_) == std::get<edata::TIME>(ev);
+
+    bool flpl_occurence =
+        std::get<edata::TIME>(next_flpl_event_) == std::get<edata::TIME>(ev);
+
+    bool usplit_occurence =
+        std::get<edata::TIME>(next_usplit_event_) == std::get<edata::TIME>(ev);
+
+    // Resource-based splits are provided by the growth-cones themselves and are
+    // thus discriminated on the basis of the gc_id
+    bool res_occurence = std::get<edata::GC>(ev) > -1;
+
+    // prepare pointers to nodes and branching_point
     TNodePtr branching_node(nullptr);
     GCPtr second_cone(nullptr);
     NodePtr new_node = nullptr;
@@ -200,6 +202,26 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
             std::throw_with_nested(std::runtime_error(
                 "Passed from `Branching::branching_event` during "
                 "resource-based split."));
+        }
+    }
+    // verify vanpelt event
+    else if (use_van_pelt_ and van_pelt_occurence)
+    {
+        try
+        {
+            success =
+                vanpelt_new_branch(branching_node, new_node, branching_point,
+                                   rnd_engine, second_cone);
+#ifndef  NDEBUG
+            printf("VP: branching accomplished");
+#endif
+
+        }
+        catch (...)
+        {
+            std::throw_with_nested(std::runtime_error(
+                "Passed from `Branching::branching_event` during "
+                "van Pelt split."));
         }
     }
     // check uniform event
@@ -246,26 +268,6 @@ bool Branching::branching_event(mtPtr rnd_engine, const Event &ev)
             std::throw_with_nested(std::runtime_error(
                 "Passed from `Branching::branching_event` during "
                 "uniform split."));
-        }
-    }
-    // verify vanpelt event
-    else if (use_van_pelt_ and van_pelt_occurence)
-    {
-        try
-        {
-            success =
-                vanpelt_new_branch(branching_node, new_node, branching_point,
-                                   rnd_engine, second_cone);
-#ifndef  NDEBUG
-            printf("VP: branching accomplished");
-#endif
-
-        }
-        catch (...)
-        {
-            std::throw_with_nested(std::runtime_error(
-                "Passed from `Branching::branching_event` during "
-                "van Pelt split."));
         }
     }
 
@@ -830,71 +832,33 @@ void Branching::compute_usplit_event(mtPtr rnd_engine)
 //###################################################
 
 /**
- * @brief Compute the next vanpelt branching event [DEPRECATED]
- * @details
- * The time of branching is computed with the statistical branching algorithm
- * from Van Pelt
- * (see article for details) the relevant parameters are B, E, T
- * The growth cone who is going to branch is computed with a reservoir
- * sample algorithm; the weight are defined in the Van Pelt model and
- * the model parameter S is set in the Branching::set_status
+ * @brief Checks occurrence of van Pelt branching event.
  *
- * This distribution is verified to reproduce the Van Pelt results.
+ * This function computes the branching probability based on the BEST model,
+ * according to the formula: ::
  *
- * @param rnd_engine
+ *     p = \frac{B}{T} N^{-E} e^{-t / T} \int_0^{\Delta t} e^{-u / T} du
  */
-void Branching::compute_vanpelt_event(mtPtr rnd_engine)
-{
-//    if (not neurite_->growth_cones_.empty())
-//    {
-//        // get the current second to compute the time-dependent
-//        // exponential decreasing probability of having a branch.
-//        double t_0    = kernel().simulation_manager.get_current_minutes();
-//        stype num_gcs = neurite_->growth_cones_.size() +
-//                        neurite_->growth_cones_inactive_.size();
-//
-//        double delta = exp((t_0 + 1) / T_) * T_ / B_ * powf(num_gcs, E_);
-//
-//        //-t_0 - log(exp(-T_ * t_0) -
-//        // powf(neurite_->growth_cones_.size(), E_ - 1) / B_) /T_;
-//        exponential_ = std::exponential_distribution<double>(1. / delta);
-//
-//        double duration = exponential_(*(rnd_engine).get());
-//
-//        if (duration > std::numeric_limits<stype>::max())
-//        {
-//            next_vanpelt_event_ = invalid_ev;
-//        }
-//        else
-//        {
-//            set_branching_event(next_vanpelt_event_, names::gc_splitting,
-//                                duration);
-//
-//            // send it to the simulation and recorder managers
-//            kernel().simulation_manager.new_branching_event(
-//                next_vanpelt_event_);
-//        }
-//    }
-}
+bool Branching::van_pelt_branching_occurence(mtPtr rnd_engine) {
+    double t_0 = kernel().simulation_manager.get_current_minutes();
 
-bool Branching::is_vanpelt_branch(mtPtr rnd_engine) {
-    double t_0    = kernel().simulation_manager.get_current_minutes();
     stype num_gcs = neurite_->growth_cones_.size() +
                     neurite_->growth_cones_inactive_.size();
-    double p = B_ * pow(num_gcs,-E_)*exp(-t_0/T_)*dt_exp;
+
+    double p = B_ * pow(num_gcs, -E_) * exp(-t_0 / T_) * dt_exp_;
+
     if (p > uniform_(*(rnd_engine).get()))
     {
-#ifndef NDEBUG
-        printf("Branch, p: %f \n",p);
-#endif
-         return true;}
+        return true;
+    }
 
-    else {return false;}
+    return false;
 }
 
 
 /**
  * @brief Compute the Van Pelt normalization factor and update GrowthCones
+ * 
  * This function will be run every time a branching happen if the
  * 'use_van_pelt' flag is set True.
  * This function implement the branchin throught
@@ -939,21 +903,20 @@ bool Branching::vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
         branching_node  = nex_vanpelt_cone;
         branching_point = branching_node->get_branch()->size() - 1;
 
-        //@TODO define new legth for van pelt
-        double new_length = nex_vanpelt_cone->get_max_speed()*kernel().simulation_manager.get_resolution();
+        // initial length is zero since the GC splits at the beginning of a step
+        double new_length = 0.;
+
         double new_angle, old_angle;
         double old_diameter = nex_vanpelt_cone->get_diameter();
         double new_diameter = old_diameter;
 
         neurite_->gc_split_angles_diameter(rnd_engine, new_angle, old_angle,
                                            new_diameter, old_diameter);
+
         bool success = neurite_->growth_cone_split(
             nex_vanpelt_cone, new_length, new_angle, old_angle, new_diameter,
             old_diameter, new_node, second_cone);
 
-#ifndef  NDEBUG
-        printf("VP: branching accomplished");
-#endif
         return success;
     }
 
@@ -1025,7 +988,9 @@ void Branching::set_status(const statusMap &status)
     }
 
     T_ = t;
-    dt_exp = exp(kernel().simulation_manager.get_resolution()/T_) -1;
+
+    dt_exp_ = std::expm1(kernel().simulation_manager.get_resolution() / T_);
+
     if (not use_van_pelt_)
     {
         next_vanpelt_event_ = invalid_ev;

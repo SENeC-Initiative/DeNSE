@@ -352,7 +352,7 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
 void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
 {
     if (branching_model_->use_van_pelt_){
-        if (branching_model_->is_vanpelt_branch(rnd_engine))
+        if (branching_model_->van_pelt_branching_occurence(rnd_engine))
         {
             // create an event so the growth cone will split at the next
             // step

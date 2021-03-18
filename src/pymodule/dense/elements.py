@@ -524,6 +524,8 @@ class Neurite(object):
 
         if attribute in ndict:
             return ndict[attribute]
+        elif attribute in ndict.get("observables", {}):
+            return self.get_state(attribute)
 
         super(Neurite, self).__getattribute__(attribute)
 
@@ -1037,6 +1039,14 @@ class Population(list):
             return pop
         else:
             return super(Population, self).__getitem__(self._idx[key])
+
+    def __getattr__(self, attribute):
+        ''' Access neuronal properties directly '''
+        return {int(n): getattr(n, attribute) for n in self}
+
+    def __setattr__(self, attribute, value):
+        ''' Set neuronal properties directly '''
+        [setattr(n, attribute, value) for n in self]
 
     @property
     def size(self):

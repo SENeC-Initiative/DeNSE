@@ -1756,8 +1756,23 @@ cdef _create_neurons(dict params, dict neurite_params,
     dod = (neurite_params
            and isinstance(next(iter(neurite_params.values())), dict))
 
+    # check that neurite names and neurite_params entries correspond
+    all_neurite_names = set()
+
+    for entry in neurite_names:
+        if nonstring_container(entry):
+            all_neurite_names.update(entry)
+        else:
+            all_neurite_names.add(entry)
+
     if not dod:
-        neurite_params = {k: neurite_params for k in neurite_names}
+        neurite_params = {
+            name: neurite_params.copy() for name in all_neurite_names
+        }
+    elif "dendrites" not in neurite_params:
+        if not all_neurite_names.issuperset(neurite_params):
+            raise ValueError("There are entries in `neurite_params` that do "
+                             "not correspond to an existing neurite.")
 
     for key, value in neurite_params.items():
         base_neurite_statuses[_to_bytes(key)] = \

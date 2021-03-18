@@ -1009,14 +1009,17 @@ class Population(list):
         return pop
 
     def __init__(self, population=None, info=None, name="no_name"):
-        self.info     = info
-        self.name     = name
+        self.info = info
+        self.name = name
+
         if population is not None:
             super(Population, self).__init__(population)
         else:
             super(Population, self).__init__()
+
         self.sort()
         self._idx = {}  # converter from gid to idx
+
         for i, n in enumerate(self):
             self._idx[int(n)] = i
 
@@ -1042,10 +1045,16 @@ class Population(list):
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
+        if attribute.startswith("_"):
+            return self.__getattribute__(attribute)
+
         return {int(n): getattr(n, attribute) for n in self}
 
     def __setattr__(self, attribute, value):
         ''' Set neuronal properties directly '''
+        if attribute.startswith("_"):
+            return super().__setattr__(attribute, value)
+
         [setattr(n, attribute, value) for n in self]
 
     @property

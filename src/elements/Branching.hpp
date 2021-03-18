@@ -61,7 +61,6 @@ class Branching
     double E_;
     double S_;
     double T_;
-    double dt_exp_;
 
     bool use_critical_resource_;
 
@@ -98,7 +97,7 @@ class Branching
                             stype &branching_point, mtPtr rnd_engine,
                             GCPtr &second_cone);
 
-    bool van_pelt_branching_occurence(mtPtr rnd_engine);
+    bool van_pelt_branching_occurence(mtPtr rnd_engine, double substep);
 
     // uniform split functions
     bool usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,

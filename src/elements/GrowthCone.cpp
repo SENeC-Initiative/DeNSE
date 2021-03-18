@@ -463,7 +463,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
         current_time += local_substep;
 
         // update retraction time if necessary
-        if (retraction_time_ > 0.)
+        if (not std::isinf(retraction_time_) and retraction_time_ > 0.)
         {
             retraction_time_ -= local_substep;
         }
@@ -494,7 +494,9 @@ double GrowthCone::check_retraction(double substep, mtPtr rnd_engine)
 {
     if (retraction_time_ < 0)
     {
-        retraction_time_ = 1. + exponential_(*rnd_engine.get());
+        retraction_time_ = proba_retraction_ > 0
+                           ? 1. + exponential_(*rnd_engine.get())
+                           : std::numeric_limits<double>::infinity();
     }
 
     if (retraction_time_ <= substep)

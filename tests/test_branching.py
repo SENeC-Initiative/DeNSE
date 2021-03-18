@@ -34,7 +34,7 @@ from dense.units import *
 
 do_plot = int(os.environ.get("DO_PLOT", True))
 num_omp = 4
-res = 10.
+res = 30.
 
 # seed
 initial_state = np.random.get_state()
@@ -46,7 +46,7 @@ def test_flpl_branching():
     ''' Test FLPL branching rate '''
     num_neurons = 10
 
-    gc_model = 'gf_po_nm'
+    gc_model = 'cst_po_nm'
     btype = 'flpl'
     branching_rate = btype + '_branching_rate'
     branching_type = 'use_' + btype + '_branching'
@@ -138,9 +138,9 @@ def test_flpl_branching():
 
 def test_vp_branching():
     ''' Test van Pelt branching '''
-    num_neurons = 100
+    num_neurons = 500
 
-    gc_model = 'gf_po_nm'
+    gc_model = 'cst_po_nm'
 
     neuron_params = {
         "position" : np.random.uniform(
@@ -162,8 +162,6 @@ def test_vp_branching():
         "T": 1*day,
         "S": 0.,
         "E": 0.106,
-
-        "retraction_probability": 0.
     }
 
     # (re)set kernel parameters
@@ -183,9 +181,7 @@ def test_vp_branching():
     pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                             num_neurites=1)
 
-    print(pop.get_properties("retraction_probability"))
-
-    ds.simulate(30*neuron_params["T"])
+    ds.simulate(20*neuron_params["T"])
 
     num_tips = [n.get_state("num_growth_cones") for n in pop]
 

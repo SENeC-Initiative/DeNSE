@@ -72,8 +72,6 @@ Branching::Branching(NeuritePtr neurite)
     , uniform_split_rate_(UNIFORM_BRANCHING_RATE)
     , next_usplit_event_(invalid_ev)
 {
-    dt_exp_ = std::expm1(kernel().simulation_manager.get_resolution() / T_);
-
     exponential_uniform_ =
         std::exponential_distribution<double>(uniform_branching_rate_);
 
@@ -839,13 +837,16 @@ void Branching::compute_usplit_event(mtPtr rnd_engine)
  *
  *     p = \frac{B}{T} N^{-E} e^{-t / T} \int_0^{\Delta t} e^{-u / T} du
  */
-bool Branching::van_pelt_branching_occurence(mtPtr rnd_engine) {
-    double t_0 = kernel().simulation_manager.get_current_minutes();
+bool Branching::van_pelt_branching_occurence(mtPtr rnd_engine, double substep)
+{
+    double t_0 = kernel().simulation_manager.get_current_minutes() + substep;
+
+    double dt_exp = std::expm1(substep / T_);
 
     stype num_gcs = neurite_->growth_cones_.size() +
                     neurite_->growth_cones_inactive_.size();
 
-    double p = B_ * pow(num_gcs, -E_) * exp(-t_0 / T_) * dt_exp_;
+    double p = B_ * pow(num_gcs, -E_) * exp(-t_0 / T_) * dt_exp;
 
     if (p > uniform_(*(rnd_engine).get()))
     {
@@ -988,8 +989,6 @@ void Branching::set_status(const statusMap &status)
     }
 
     T_ = t;
-
-    dt_exp_ = std::expm1(kernel().simulation_manager.get_resolution() / T_);
 
     if (not use_van_pelt_)
     {

@@ -160,20 +160,6 @@ void Neuron::init_status(
                                    "False.", __FUNCTION__, __FILE__,
                                    __LINE__);
         }
-
-        if (neurite_statuses.find("dendrites") == neurite_statuses.end())
-        {
-            for (auto p : neurite_statuses)
-            {
-                if (neurite_names.find(p.first) == neurite_names.end())
-                {
-                    throw InvalidParameter(
-                        "`neurite_names` and the parameters contain "
-                        "different  neurite names.", __FUNCTION__,
-                        __FILE__, __LINE__);
-                }
-            }
-        }
     }
 
     std::unordered_map<std::string, double> nas;

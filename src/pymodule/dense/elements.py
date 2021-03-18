@@ -53,9 +53,9 @@ class Neuron(object):
             Optional arguments used when loading neurons that do not exist
             in the simulator.
         '''
-        self._axon       = None
-        self._dendrites  = {}
-        self.__gid       = int(gid)
+        self._axon      = None
+        self._dendrites = {}
+        self.__gid      = int(gid)
 
         self._in_simulator = True
 
@@ -68,6 +68,9 @@ class Neuron(object):
 
             for k, v in kwargs.items():
                 setattr(self, k, v)
+
+        # necessary for initial setting of attributes due to __setattr__
+        self.__initialized = True
 
     # GID (integer) functions
 
@@ -123,17 +126,16 @@ class Neuron(object):
 
     def __setattr__(self, attribute, value):
         ''' Set neuronal properties directly '''
-        if attribute.startswith("_"):
-            return super(Neuron, self).__setattr__(attribute, value)
+        uninit = "_Neuron__initialized" not in self.__dict__
 
-        if self._in_simulator:
+        if uninit or attribute in self.__dict__:
+            # set attributes declared in __init__
+            super().__setattr__(attribute, value)
+        elif self._in_simulator:
             ndict = _pg.get_object_properties(
                 self, level="neuron", settables_only=True)
 
-            if attribute in ndict:
-                _pg.set_object_properties(self, {attribute: value})
-            else:
-                super(Neuron, self).__setattr__(attribute, value)
+            _pg.set_object_properties(self, {attribute: value})
         else:
             raise AttributeError(
                 "{!r} has not attribute '{}'".format(self, attribute))
@@ -1023,6 +1025,9 @@ class Population(list):
         for i, n in enumerate(self):
             self._idx[int(n)] = i
 
+        # necessary for initial setting of attributes due to __setattr__
+        self.__initialized = True
+
     def __getitem__(self, key):
         if isinstance(key, slice):
             pop = Population(name="subpop_" + self.name)
@@ -1045,17 +1050,21 @@ class Population(list):
 
     def __getattr__(self, attribute):
         ''' Access neuronal properties directly '''
-        if attribute.startswith("_"):
-            return self.__getattribute__(attribute)
-
-        return {int(n): getattr(n, attribute) for n in self}
+        try:
+            return super().__getattribute__(attribute)
+        except AttributeError as e:
+            return {int(n): getattr(n, attribute) for n in self}
 
     def __setattr__(self, attribute, value):
         ''' Set neuronal properties directly '''
-        if attribute.startswith("_"):
-            return super().__setattr__(attribute, value)
+        uninit = "_Population__initialized" not in self.__dict__
 
-        [setattr(n, attribute, value) for n in self]
+        if uninit or attribute in self.__dict__:
+            # set attributes declared in __init__
+            super().__setattr__(attribute, value)
+        else:
+            # set attributes of the neurons
+            [setattr(n, attribute, value) for n in self]
 
     @property
     def size(self):

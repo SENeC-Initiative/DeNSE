@@ -121,18 +121,17 @@ try:
 
     for ax in fig.axes:
         ax.set_title("")
+
+    tree2 = n.axon.get_tree()
+
+    print(tree2.neuron, tree2.neurite)
+
+    plt.axis('off')
+
+    fig.suptitle("")
+
+    plt.tight_layout()
+
+    plt.show()
 except ImportError:
     pass
-
-
-tree2 = n.axon.get_tree()
-
-print(tree2.neuron, tree2.neurite)
-
-plt.axis('off')
-
-fig.suptitle("")
-
-plt.tight_layout()
-
-plt.show()

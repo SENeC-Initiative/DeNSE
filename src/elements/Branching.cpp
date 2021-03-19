@@ -841,14 +841,14 @@ bool Branching::van_pelt_branching_occurence(mtPtr rnd_engine, double substep)
 {
     double t_0 = kernel().simulation_manager.get_current_minutes() + substep;
 
-    double dt_exp = std::expm1(substep / T_);
+    double dt_exp = -std::expm1(-substep / T_);
 
     stype num_gcs = neurite_->growth_cones_.size() +
                     neurite_->growth_cones_inactive_.size();
 
     double p = B_ * pow(num_gcs, -E_) * exp(-t_0 / T_) * dt_exp;
 
-    if (p > uniform_(*(rnd_engine).get()))
+    if (p*num_gcs > uniform_(*(rnd_engine).get()))
     {
         return true;
     }

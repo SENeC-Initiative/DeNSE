@@ -34,7 +34,7 @@ from dense.units import *
 
 do_plot = int(os.environ.get("DO_PLOT", True))
 num_omp = 4
-res = 30.
+res = 10.
 
 # seed
 initial_state = np.random.get_state()
@@ -44,7 +44,7 @@ seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
 
 def test_flpl_branching():
     ''' Test FLPL branching rate '''
-    num_neurons = 10
+    num_neurons = 20
 
     gc_model = 'cst_po_nm'
     btype = 'flpl'
@@ -138,9 +138,13 @@ def test_flpl_branching():
 
 def test_vp_branching():
     ''' Test van Pelt branching '''
-    num_neurons = 500
+    num_neurons = 200
 
     gc_model = 'cst_po_nm'
+
+    B = 1.26
+    E = 0.106
+    T = 1*day
 
     neuron_params = {
         "position" : np.random.uniform(
@@ -158,21 +162,21 @@ def test_vp_branching():
         "diameter_fraction_lb": 1.,
 
         "use_van_pelt": True,
-        "B": 1.26,
-        "T": 1*day,
+        "B": B,
+        "T": T,
         "S": 0.,
-        "E": 0.106,
+        "E": E,
     }
 
     # (re)set kernel parameters
     ds.reset_kernel()
 
     kernel = {
-    "resolution": res*minute,
-    "seeds": seeds,
-    "environment_required": False,
-    "interactions": False,
-    "num_local_threads": num_omp,
+        "resolution": res*minute,
+        "seeds": seeds,
+        "environment_required": False,
+        "interactions": False,
+        "num_local_threads": num_omp,
     }
 
     ds.set_kernel_status(kernel)
@@ -181,11 +185,13 @@ def test_vp_branching():
     pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                             num_neurites=1)
 
-    ds.simulate(20*neuron_params["T"])
+    ds.simulate(50*day)
 
     num_tips = [n.get_state("num_growth_cones") for n in pop]
 
+    # expected average number is around 3.26 but we should be in |2.9, 3.5]
     print(np.mean(num_tips))
+    assert 2.9 < np.mean(num_tips) < 3.5
 
     if do_plot:
         import matplotlib.pyplot as plt
@@ -194,5 +200,5 @@ def test_vp_branching():
 
 
 if __name__ == '__main__':
-    # ~ test_flpl_branching()
+    test_flpl_branching()
     test_vp_branching()

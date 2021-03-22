@@ -84,6 +84,7 @@ class Branching
     Branching(NeuritePtr neurite);
     Branching();
     Branching(const Branching &cpy);
+
     // event handlers functions
     void compute_next_event(mtPtr rnd_engine);
     void set_branching_event(Event &ev, signed char ev_type, double duration);
@@ -95,22 +96,26 @@ class Branching
     bool vanpelt_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                             stype &branching_point, mtPtr rnd_engine,
                             GCPtr &second_cone);
-    void compute_vanpelt_event(mtPtr rnd_engine);
+
+    bool van_pelt_branching_occurence(mtPtr rnd_engine, double substep);
 
     // uniform split functions
     bool usplit_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                            stype &branching_point, mtPtr rnd_engine,
                            GCPtr &second_cone);
+
     void compute_usplit_event(mtPtr rnd_engine);
 
     // uniform branching functions
     bool uniform_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                             stype &branching_point, mtPtr rnd_engine);
+
     void compute_uniform_event(mtPtr rnd_engine);
 
     // powerlaw branching functions
     bool flpl_new_branch(TNodePtr &branching_node, NodePtr &new_node,
                          stype &branching_point, mtPtr rnd_engine);
+
     void compute_flpl_event(mtPtr rnd_engine);
 
     // critical_resource functions
@@ -122,8 +127,9 @@ class Branching
 
     // Get/set functions
     void set_status(const statusMap &);
-    //~ void get_status(statusMap &) const;
     void get_status(statusMap &) const;
 };
+
 } // namespace growth
+
 #endif /* BRANCHING_H */

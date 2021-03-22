@@ -46,11 +46,12 @@ axon_params = {
     "speed_growth_cone": 0.04 * um / minute,
     # diameter
     "taper_rate": 1.1/300.,
-    "diameter_ratio_avg": 0.5,
+    "diameter_ratio_avg": 1.,
     # branching
     "use_van_pelt": True,
-    "B": 0.9 * cpm,
-    "T": 5000. * minute,
+    "B": 200.,
+    "E": 0.1,
+    "T": 5. * day,
     "gc_split_angle_mean": 30. * deg,
 
 }
@@ -83,6 +84,8 @@ ds.set_kernel_status(kernel)
 
 n = ds.create_neurons(n=num_neurons, params=neuron_params,
                       neurite_params=neurite_params, num_neurites=6)
+
+print(n.axon.get_properties())
 
 ds.simulate(2 * day)
 

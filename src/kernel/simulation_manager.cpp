@@ -602,8 +602,9 @@ void SimulationManager::get_status(statusMap &status) const
 double SimulationManager::get_current_minutes() const
 {
     int omp_id = kernel().parallelism_manager.get_thread_local_id();
+    
     return (step_.at(omp_id)) * Time::RESOLUTION +
-           initial_time_.get_total_minutes();
+            initial_time_.get_total_minutes();
 }
 
 

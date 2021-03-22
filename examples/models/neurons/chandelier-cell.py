@@ -113,7 +113,7 @@ dend_vp = {
     "use_van_pelt": True,
     # Best model
     "gc_split_angle_mean": 30.*deg,
-    "B": 2.*cpm,
+    "B": 4.,
     "E": 0.,
     "S": 1.,
     "T": 3*day,
@@ -123,7 +123,7 @@ axon_vp = {
     "use_van_pelt": True,
     # Best model
     "gc_split_angle_mean": 30.*deg,
-    "B": 5.*cpm,
+    "B": 10.,
     "E": 0.,
     "S": 1.,
     "T": 3*day,

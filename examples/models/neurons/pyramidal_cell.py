@@ -81,9 +81,8 @@ dend_params = {
     "taper_rate": 1./150.,
     # branching choice and parameters
     "use_uniform_branching": False,
-    "use_van_pelt": False,
-    "B": 1.*cpm,
-    "T": 1000.*minute,
+    "use_uniform_split": True,
+    "uniform_split_rate": 1.*cpd,
     "gc_split_angle_mean": 25.*deg,
 }
 
@@ -127,7 +126,7 @@ lb_axon = {
     # extension parameters
     "speed_growth_cone": 0.02*um/minute,
     # branching choice and parameters
-    "use_van_pelt": False,
+    "use_uniform_split": False,
     "use_flpl_branching": True,
     "flpl_branching_rate": 0.04*cph,
     "lateral_branching_angle_mean": 40.*deg,
@@ -137,7 +136,7 @@ dend_params = {
     # extension parameters
     "speed_growth_cone": 0.01*um/minute,
     # branching choice and parameters
-    "use_van_pelt": False,
+    "use_uniform_split": False,
     "use_flpl_branching": True,
     "flpl_branching_rate": 0.01*cph,
     "persistence_length": 100.*um,
@@ -161,10 +160,9 @@ vp_axon = {
 }
 
 dend_params = {
-    "use_van_pelt": True,
+    "use_uniform_split": True,
     "use_uniform_branching": False,
-    "B": 5.*cpm,
-    "T": 17*day,
+    "uniform_split_rate": 1.*cpd,
     "gc_split_angle_mean": 25.*deg,
 }
 

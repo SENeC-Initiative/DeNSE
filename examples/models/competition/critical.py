@@ -98,7 +98,7 @@ if use_critical_resource:
 if use_vp:
     vp_params = {
         "gc_split_angle_mean": 20. *deg,
-        "B": 40. * cpm,
+        "B": 100.,
         "E": E,
         "S": S,
         "T": 10000. * minute,
@@ -137,8 +137,7 @@ def run_dense(neuron_params):
                             params=neuron_params,
                             neurite_params=neurite_params,
                             num_neurites=3,
-                            position=[]
-                            )
+                            position=[])
 
     axon_params['use_van_pelt'] = False
     dend_params['use_van_pelt'] = False
@@ -159,7 +158,7 @@ def run_dense(neuron_params):
     step(1000./resolution * minute, 1, False, True)
     step(1000./resolution * minute, 1, False, True)
 
-    ds.io.save_to_swc(resolution=5)
+    ds.io.save_to_swc("critical.swc", resolution=5)
     ds.io.save_json_info()
 
     swc_file = ds.get_simulation_id()

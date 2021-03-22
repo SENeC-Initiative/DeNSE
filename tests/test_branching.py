@@ -30,18 +30,23 @@ import dense as ds
 from dense.units import *
 
 
-def test_branching():
-    do_plot = int(os.environ.get("DO_PLOT", True))
-    num_omp = 4
+# parameters
+
+do_plot = int(os.environ.get("DO_PLOT", True))
+num_omp = 4
+
+# seed
+initial_state = np.random.get_state()
+seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
+                         replace=False)
+
+
+def test_flpl_branching():
+    ''' Test FLPL branching rate '''
     res = 10.
+    num_neurons = 20
 
-    # seed
-    initial_state = np.random.get_state()
-    seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
-                             replace=False)
-    num_neurons = 10
-
-    gc_model = 'gf_po_nm'
+    gc_model = 'cst_po_nm'
     btype = 'flpl'
     branching_rate = btype + '_branching_rate'
     branching_type = 'use_' + btype + '_branching'
@@ -131,5 +136,69 @@ def test_branching():
         "Failed test with state " + str(initial_state)
 
 
+def test_vp_branching():
+    ''' Test van Pelt branching '''
+    num_neurons = 200
+
+    gc_model = 'cst_po_nm'
+
+    B = 1.26
+    E = 0.106
+    T = 1*day
+
+    neuron_params = {
+        "position" : np.random.uniform(
+            -1000, 1000, (num_neurons, 2)) * um,
+
+        "growth_cone_model": gc_model,
+        "sensing_angle": 45.*deg,
+        "speed_growth_cone": .1 * um / minute,
+        "persistence_length": 100. * um,
+
+        "filopodia_finger_length": 10. * um,
+        "filopodia_min_number": 30,
+
+        "taper_rate": 0.,
+        "diameter_fraction_lb": 1.,
+
+        "use_van_pelt": True,
+        "B": B,
+        "T": T,
+        "S": 0.,
+        "E": E,
+    }
+
+    # (re)set kernel parameters
+    for res in (10., 20., 30.):
+        ds.reset_kernel()
+
+        kernel = {
+            "resolution": res*minute,
+            "seeds": seeds,
+            "environment_required": False,
+            "interactions": False,
+            "num_local_threads": num_omp,
+        }
+
+        ds.set_kernel_status(kernel)
+
+        # create neurons
+        pop = ds.create_neurons(n=num_neurons, params=neuron_params,
+                                num_neurites=1)
+
+        ds.simulate(50*day)
+
+        num_tips = [n.get_state("num_growth_cones") for n in pop]
+
+        # expected average number is around 3.26 but we should be in |2.9, 3.5]
+        assert 2.9 < np.mean(num_tips) < 3.5
+
+        if do_plot:
+            import matplotlib.pyplot as plt
+            plt.hist(num_tips)
+            plt.show()
+
+
 if __name__ == '__main__':
-    test_branching()
+    test_flpl_branching()
+    test_vp_branching()

@@ -71,7 +71,7 @@ axon_params = {
     "persistence_length": 300. * um,
     "taper_rate": 1./4000., 
 
-    'B': 3. * cpm,
+    'B': 10.,
     'T': 1000. * minute,
     'E': 1.,
 }
@@ -84,7 +84,7 @@ dendrite_params = {
     "filopodia_wall_affinity": 10. ,
     "persistence_length" : 200. * um,
     "taper_rate": 3./250.,
-    "B": 6. * cpm,
+    "B": 16.,
     "T": 1000. * minute,
     'E': 1.,
 }

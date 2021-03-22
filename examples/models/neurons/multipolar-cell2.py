@@ -54,10 +54,10 @@ dend_params = {
 
     # Best model
     "gc_split_angle_mean": 30.*deg,
-    "B": 2.*cpm,
+    "B": 10.,
     "E": 0.,
     "S": 1.,
-    "T": 3.5.*day,
+    "T": 3.5*day,
 
 }
 
@@ -76,7 +76,7 @@ axon_params = {
 
     # Best model
     "gc_split_angle_mean": 1.2 * rad,
-    "B": 5.*cpm,
+    "B": 20.,
     "E": 0.,
     "S": 1.,
     "T": 14.*day,
@@ -157,16 +157,15 @@ try:
 
     for ax in fig.axes:
         ax.set_title("")
+
+    plt.axis('off')
+    fig.suptitle("")
+    plt.tight_layout()
+    plt.show()
+
+    tree = n.axon.get_tree()
+    print(tree.neuron, tree.neurite)
+
+    n.axon.plot_dendrogram(show=True)
 except ImportError:
     pass
-
-plt.axis('off')
-fig.suptitle("")
-plt.tight_layout()
-plt.show()
-
-
-tree = n.axon.get_tree()
-print(tree.neuron, tree.neurite)
-
-n.axon.plot_dendrogram(show=True)

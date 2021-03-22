@@ -121,13 +121,13 @@ if __name__ == '__main__':
     step(3*day, 1, False, True)
 
     axon_params['use_van_pelt'] = True
-    axon_params["B"] = 90. * cpm
+    axon_params["B"] = 200.
     axon_params["E"] = 0.2
     axon_params["S"] = 1.
     axon_params["T"] = 10000. * minute
 
     dendrite_params['use_van_pelt'] = True
-    dendrite_params["B"] = 90. * cpm
+    dendrite_params["B"] = 200.
     dendrite_params["E"] = 0.2
     dendrite_params["S"] = 1.
     dendrite_params["T"] = 10000. * minute

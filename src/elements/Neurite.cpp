@@ -351,6 +351,26 @@ void Neurite::grow(mtPtr rnd_engine, stype current_step, double substep)
  */
 void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
 {
+    if (branching_model_->use_van_pelt_){
+        if (branching_model_->van_pelt_branching_occurence(rnd_engine, substep))
+        {
+            // create an event so the growth cone will split at the next
+            // step
+            Time ev_time = kernel().simulation_manager.get_time();
+            ev_time.update(1UL, 0.);
+
+            auto neuron         = get_parent_neuron().lock();
+            stype neuron_gid    = neuron->get_gid();
+            std::string neurite = get_name();
+
+            Event ev = std::make_tuple(ev_time, neuron_gid, neurite,
+                                       -2, names::gc_splitting);
+
+            kernel().simulation_manager.new_branching_event(ev);
+        }
+    }
+
+
     // if using critical_resource model it's necessary to recompute the amount
     // of critical_resource required from each growth cone.
     //~ if (use_critical_resource_)
@@ -629,6 +649,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     // overlap with another branch from the same element.
     BPoint p(cos(new_cone_angle) * dist_to_parent,
              sin(new_cone_angle) * dist_to_parent);
+
     bg::add_point(p, xy);
 
     if (new_diameter - taper_rate_ * dist_to_parent <= 0)
@@ -643,6 +664,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 
     if (kernel().space_manager.interactions_on())
     {
+
         if (std::isnan(growth_cones_.begin()->second->get_self_affinity()))
         {
             // check that the target point is not inside its own neurite
@@ -886,6 +908,8 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 {
     if (not branching_cone->is_dead() and active_)
     {
+
+
         double direction = branching_cone->move_.angle;
 
         // prepare growth cone variables for split
@@ -929,7 +953,9 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 
             assert(sibling->get_centrifugal_order() ==
                    branching_cone->get_centrifugal_order());
+
             assert(new_node->get_child(0) == branching_cone);
+
             assert(nodes_[new_node->get_node_id()]->has_child() == true);
 
             return true;

@@ -217,7 +217,7 @@ def create_neurons(n=1, params=None, num_neurites=0, neurite_params=None,
             warnings.simplefilter('default', RuntimeWarning)
 
     # check `num_neurites` and other neurite entries are compatible
-    if not num_neurites:
+    if not nonstring_container(num_neurites) and not num_neurites:
         if neurite_names:
             raise ValueError(
                 "`num_neurites` is 0 but `neurite_names` were provided.")
@@ -2118,7 +2118,7 @@ cdef Property _to_property(key, value) except *:
     if value is True or value is False:
         cprop.data_type = BOOL
         cprop.b = value
-    elif isinstance(value, int):
+    elif is_integer(value):
         if value < 0:
             cprop.data_type = INT
             cprop.i = value

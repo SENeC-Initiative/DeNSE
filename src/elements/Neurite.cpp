@@ -573,11 +573,6 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
     double branching_angle = gc_split_angle_mean_ +
                              gc_split_angle_std_ * normal_(*(rnd_engine).get());
 
-#ifndef NDEBUG
-        printf("branching angle: %f \n", branching_angle);
-        printf("branching mean angle: %f \n", gc_split_angle_mean_);
-#endif
-
         // ratio between the diameters of the two neurites,
     // it's a gaussian distributed value arround 1.
     double ratio;
@@ -658,17 +653,11 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
 
     if (new_diameter - taper_rate_ * dist_to_parent <= 0)
     {
-    #ifndef NDEBUG
-        printf("No branching: Diameter too small\n");
-    #endif
         return nullptr;
     }
 
     if (not kernel().space_manager.env_contains(p))
     {
-#ifndef NDEBUG
-            printf("No branching: Out of environment \n");
-#endif
         return nullptr;
     }
 
@@ -971,17 +960,13 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 
             assert(sibling->get_centrifugal_order() ==
                    branching_cone->get_centrifugal_order());
+
             assert(new_node->get_child(0) == branching_cone);
+
             assert(nodes_[new_node->get_node_id()]->has_child() == true);
-    #ifndef NDEBUG
-            printf("VP occurrence success");
-            printf("Details: ID origin: %i, ID sibling %i\n",branching_cone->get_node_id(), sibling->get_node_id());
-    #endif
+
             return true;
         }
-#ifndef NDEBUG
-        printf("Null pointer sibling created \n");
-#endif
     }
 
     return false;

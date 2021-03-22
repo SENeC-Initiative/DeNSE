@@ -103,18 +103,16 @@ void Branching::initialize_next_event(mtPtr rnd_engine)
     {
         compute_uniform_event(rnd_engine);
     }
+
     if (use_flpl_branching_ and next_flpl_event_ == invalid_ev)
     {
         compute_flpl_event(rnd_engine);
     }
+
     if (use_uniform_split_ and next_usplit_event_ == invalid_ev)
     {
         compute_usplit_event(rnd_engine);
     }
-//    if (use_van_pelt_ and next_vanpelt_event_ == invalid_ev)
-//    {
-//        compute_vanpelt_event(rnd_engine);
-//    }
 }
 
 
@@ -1085,7 +1083,6 @@ void Branching::get_status(statusMap &status) const
     set_param(status, names::use_van_pelt, use_van_pelt_, "");
     if (use_van_pelt_)
     {
-//      set_param(status, names::B, B_, "count / minute");
         set_param(status, names::B, B_, "");
         set_param(status, names::E, E_, "");
         set_param(status, names::S, S_, "");

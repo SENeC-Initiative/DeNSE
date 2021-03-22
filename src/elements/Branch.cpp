@@ -279,22 +279,6 @@ void Branch::append_branch(BranchPtr appended_branch)
 }
 
 
-// double Branch::get_normal_direction() const
-// {
-//     // normal direction to the
-//     double x1, x2, y1, y2;
-
-//     x1 = new_branch->last_points_.first.x();
-//     y1 = new_branch->last_points_.first.y();
-
-//     x2 = new_branch->last_points_.second.x();
-//     y2 = new_branch->last_points_.second.y();
-
-//     double theta = atan2(-(x2-x1), y2-y1);
-//     double current_dir = atan2();
-// }
-
-
 PointArray Branch::get_last_point() const
 {
     return {{points_[0].back(), points_[1].back(), points_[2].back()}};

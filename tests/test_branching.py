@@ -34,7 +34,6 @@ from dense.units import *
 
 do_plot = int(os.environ.get("DO_PLOT", True))
 num_omp = 4
-res = 10.
 
 # seed
 initial_state = np.random.get_state()
@@ -44,6 +43,7 @@ seeds = np.random.choice(np.arange(0, 1000), size=num_omp,
 
 def test_flpl_branching():
     ''' Test FLPL branching rate '''
+    res = 10.
     num_neurons = 20
 
     gc_model = 'cst_po_nm'
@@ -169,34 +169,34 @@ def test_vp_branching():
     }
 
     # (re)set kernel parameters
-    ds.reset_kernel()
+    for res in (10., 20., 30.):
+        ds.reset_kernel()
 
-    kernel = {
-        "resolution": res*minute,
-        "seeds": seeds,
-        "environment_required": False,
-        "interactions": False,
-        "num_local_threads": num_omp,
-    }
+        kernel = {
+            "resolution": res*minute,
+            "seeds": seeds,
+            "environment_required": False,
+            "interactions": False,
+            "num_local_threads": num_omp,
+        }
 
-    ds.set_kernel_status(kernel)
+        ds.set_kernel_status(kernel)
 
-    # create neurons
-    pop = ds.create_neurons(n=num_neurons, params=neuron_params,
-                            num_neurites=1)
+        # create neurons
+        pop = ds.create_neurons(n=num_neurons, params=neuron_params,
+                                num_neurites=1)
 
-    ds.simulate(50*day)
+        ds.simulate(50*day)
 
-    num_tips = [n.get_state("num_growth_cones") for n in pop]
+        num_tips = [n.get_state("num_growth_cones") for n in pop]
 
-    # expected average number is around 3.26 but we should be in |2.9, 3.5]
-    print(np.mean(num_tips))
-    assert 2.9 < np.mean(num_tips) < 3.5
+        # expected average number is around 3.26 but we should be in |2.9, 3.5]
+        assert 2.9 < np.mean(num_tips) < 3.5
 
-    if do_plot:
-        import matplotlib.pyplot as plt
-        plt.hist(num_tips)
-        plt.show()
+        if do_plot:
+            import matplotlib.pyplot as plt
+            plt.hist(num_tips)
+            plt.show()
 
 
 if __name__ == '__main__':

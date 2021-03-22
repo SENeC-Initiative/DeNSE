@@ -136,7 +136,7 @@ if __name__ == '__main__':
         "use_van_pelt": True,
         "gc_split_angle_mean": 30.*deg,
         "gc_split_angle_std": 5.*deg,
-        "B": 5.* cpm,
+        "B": 100.,
         "E": 0.1,
         "S": 1.5, # large S leads to core dump
         "T": 7*day,

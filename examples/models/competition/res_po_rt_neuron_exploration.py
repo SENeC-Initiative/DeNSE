@@ -51,7 +51,7 @@ axon_params = {
     "res_use_ratio": 1. * cpm,
 
     # Best model
-    "B": 40. * cpm,
+    "B": 100.,
     "E": 0.6,
     "S": 1.,
     "T": 1000. * minute,
@@ -73,16 +73,18 @@ dendrite_params = {
     "res_use_ratio": 1. * cpm,
 
     # Best model
-    "B": 40. * cpm,
+    "B": 100.,
     "E": 0.6,
     "S": 1.,
     "T": 1000. * minute,
 }
+
 neurite_params = {"axon": axon_params, "dendrite": dendrite_params}
+
+
 '''
 Analysis
 '''
-
 
 def step(n, loop_n, save_path, plot=True):
     ds.simulate(n)
@@ -103,8 +105,7 @@ def run_dense(neuron_params, neurite_params):
     gid = ds.create_neurons(n=1,
                             params=neuron_params,
                             neurite_params=neurite_params,
-                            num_neurites=2,
-                            )
+                            num_neurites=2)
 
     rec = ds.create_recorders(gid, ["speed"], levels="growth_cone")
 

@@ -45,7 +45,7 @@ neuron_params = {
     "sensing_angle": 0.1495 * rad,
     "position": (0., 0.)*um,
     "max_arbor_length": 20000.*um,
-    "diameter_eta_exp":1.,
+    "diameter_eta_exp": 2.,
     "diameter_ratio_avg": 1.,
 }
 
@@ -75,11 +75,11 @@ dendrite_params = {
     "self_avoidance_scale": 6.*um,
 
     # Best model
-    "gc_split_angle_mean": 60.*deg,
-    "B": 2.*cpm,
+    "gc_split_angle_mean": 75.*deg,
+    "B": 1100.,
     "E": 2.0,
     "S": 3.0,
-    "T": 1.*hour,
+    "T": 10.*day,
 }
 
 neurite_params = {"axon": axon_params, "dendrites": dendrite_params}
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     ds.plot.plot_neurons(scale=None)
 
     neuron.dendrites["dendrite_1"].set_properties({
-        "B": 6.*cpm, "T": 5.*hour,
+        "B": 50., "T": 5.*hour,
         # "somatropic_scale": 200.*um, "somatropic_factor": 1.
     })
 

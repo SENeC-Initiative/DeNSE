@@ -74,7 +74,7 @@ dendrite_params = {
     "speed_growth_cone": 0.06 * um / minute,
     "filopodia_wall_affinity": 0.01,
     "persistence_length": 200. * um,
-    "B": 6. * cph,
+    "B": 16.,
     "T": 1000. * minute,
     "E": 1.,
 }

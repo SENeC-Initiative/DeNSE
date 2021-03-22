@@ -53,7 +53,7 @@ axon_params = {
     "initial_diameter": 3.*um,
     # branching
     "use_van_pelt": True,
-    "B": 0.2*cpm,
+    "B": 5.,
     "T": 3.5*day,
     "gc_split_angle_mean": 35.*deg,
 }
@@ -66,7 +66,7 @@ dend_params = {
     "initial_diameter": 2.*um,
     "use_uniform_branching": False,
     "use_van_pelt": True,
-    "B": 1.*cpm,
+    "B": 15.,
     "T": 3.5 * day,
     "gc_split_angle_mean": 35.*deg,
 }

@@ -649,6 +649,7 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
     // overlap with another branch from the same element.
     BPoint p(cos(new_cone_angle) * dist_to_parent,
              sin(new_cone_angle) * dist_to_parent);
+
     bg::add_point(p, xy);
 
     if (new_diameter - taper_rate_ * dist_to_parent <= 0)

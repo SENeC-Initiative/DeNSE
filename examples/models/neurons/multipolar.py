@@ -53,9 +53,9 @@ dendrite_params = {
     "res_elongation_factor": 0.10 * um/minute,
     "res_leakage": 0.05,
     "res_retraction_threshold": 0.01*uM,
-    "res_elongation_threshold": 0.3*uM,
+    "res_elongation_threshold": 0.2*uM,
     "res_leakage": 10.*minute,
-    "res_neurite_generated": 2500.*uM,
+    "res_neurite_generated": 2.5*mM,
     "res_correlation": 0.2,
     "res_variance": 0.01 * uM / minute**0.5,
     "res_use_ratio": 0.16 * cpm
@@ -70,9 +70,9 @@ axon_params = {
     # Cr model for branching
     "res_retraction_factor": 0.010 * um / minute,
     "res_elongation_factor": 0.10 * um / minute,
-    "res_retraction_threshold": 0.10 * uM,
-    "res_elongation_threshold": 0.3 * uM,
-    "res_neurite_generated": 2500. * uM,
+    "res_retraction_threshold": 0.05 * uM,
+    "res_elongation_threshold": 0.1 * uM,
+    "res_neurite_generated": 5. * mM,
     "res_neurite_delivery_tau": 50. * minute,
     "res_correlation": 0.4,
     "res_variance": 0.04 * uM / minute**0.5,
@@ -100,8 +100,8 @@ def step(n, loop_n, save_path, plot=True):
 
 if __name__ == '__main__':
     kernel = {
-        "seeds": [33, 345, 17, 193, 177],
-        "num_local_threads": 5,
+        "seeds": [33, 345],
+        "num_local_threads": 2,
         "environment_required": False,
         "resolution": 30.*minute
     }
@@ -118,17 +118,15 @@ if __name__ == '__main__':
                             neurite_params=neurite_params,
                             num_neurites=4)
 
-    # ds.set_object_properties(gid, params=neuron_params,
-    # axon_params=neuron_params)
     step(3*day, 1, False, True)
 
     axon_params['use_van_pelt'] = True
-    axon_params["B"] = 90. * cpm
+    axon_params["B"] = 200.
     axon_params["E"] = 0.2
     axon_params["S"] = 1.
     axon_params["T"] = 10000. * minute
     dendrite_params['use_van_pelt'] = True
-    dendrite_params["B"] = 90. * cpm
+    dendrite_params["B"] = 200.
     dendrite_params["E"] = 0.2
     dendrite_params["S"] = 1.
     dendrite_params["T"] = 10000. * minute
@@ -147,13 +145,13 @@ if __name__ == '__main__':
         'use_van_pelt': True,
         "res_retraction_factor": 0.010 * um / minute,
         "res_elongation_factor": 0.20 * um / minute,
-        "res_retraction_threshold": 0.10 * uM,
-        "res_elongation_threshold": 0.3 * uM,
-        "res_neurite_generated": 2500. * uM,
+        "res_retraction_threshold": 0.05 * uM,
+        "res_elongation_threshold": 0.2 * uM,
+        "res_neurite_generated": 5. * mM,
         "res_neurite_delivery_tau": 50. * minute,
         "res_correlation": 0.4,
         "res_variance": 0.04 * uM / minute**0.5,
-        "res_use_ratio": 0.1 * cpm,
+        "res_use_ratio": 0.2 * cpm,
     }
 
     axon_params.update(axon_migated)

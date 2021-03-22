@@ -47,7 +47,7 @@ dend_params = {
     "growth_cone_model": gc_model,
     "use_van_pelt": False,
     "initial_diameter": 2.*um,
-    "persistence_length": 150.*um,
+    "persistence_length": 300.*um,
     "taper_rate": 1./130.,
     "initial_diameter": 2.*um,
 
@@ -65,7 +65,7 @@ dend_params = {
 
     # Best model
     "gc_split_angle_mean": 20.*deg,
-    "B": 3.*cpm,
+    "B": 15.,
     "E": 0.,
     "S": 1.,
     "T": 3.5*day,
@@ -82,7 +82,7 @@ axon_params = {
     "taper_rate": 1./300.,
     "initial_diameter": 3.5*um,
 
-    "persistence_length": 250.*um,
+    "persistence_length": 500.*um,
 
     # Cr model
     "res_retraction_factor": 0.10 * um/minute,
@@ -98,10 +98,10 @@ axon_params = {
 
     # Best model
     "gc_split_angle_mean": 20.*deg,
-    "B": 9.*cpm,
+    "B": 45.,
     "E": 0.,
     "S": 1.,
-    "T": 3.5.*day,
+    "T": 3.5*day,
 }
 
 neurite_params = {"axon": axon_params, "dendrites": dend_params}

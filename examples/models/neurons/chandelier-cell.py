@@ -162,8 +162,6 @@ lb = {
 }
 
 neurite_params = {"axon": lb_a, "dendrites": lb}
-# axon_params.update(lb_a)
-# dend_params.update(lb)
 
 ds.set_object_properties(n, neurite_params=neurite_params)
 
@@ -189,7 +187,11 @@ ds.io.save_to_swc("chandelier-cell.swc", gid=n, resolution=50)
 
 ds.plot.plot_dendrogram(n.axon)
 
-print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
+try:
+    import neurom
+    print("Asymmetry of the axon:", ds.morphology.tree_asymmetry(n.axon))
 
-print("Asymmetry of a dendrite:",
-      ds.morphology.tree_asymmetry(n.dendrites["dendrite_2"]))
+    print("Asymmetry of a dendrite:",
+          ds.morphology.tree_asymmetry(n.dendrites["dendrite_2"]))
+except ImportError:
+    pass

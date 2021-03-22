@@ -148,7 +148,12 @@ ds.plot.plot_neurons(show=True)
 # I/O of morphology files
 
 n.to_swc("bipolar_cell.swc")
-n.to_neuroml("bipolar_cell.nml")
+
+try:
+    import neuroml
+    n.to_neuroml("bipolar_cell.nml")
+except ImportError:
+    pass
 
 
 # Example of analysis, loading into neuroml for visualization and analysis

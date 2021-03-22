@@ -100,5 +100,10 @@ ds.plot.plot_neurons()
 
 # In the swc format
 ds.io.save_to_swc("neurons.swc", n)
+
 # In the Neurom format
-ds.io.save_to_neuroml("neurons.nml", n)
+try:
+    import neuroml
+    ds.io.save_to_neuroml("neurons.nml", n)
+except ImportError:
+    pass

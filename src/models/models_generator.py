@@ -80,10 +80,6 @@ steering_methods = [
                    filename="steering_pull_only.hpp",
                    classname="PullOnlySteeringModel"),
 
-    ModelComponent(method="memory-based",
-                   filename="steering_memory_based.hpp",
-                   classname="MemBasedSteeringModel"),
-
     ModelComponent(method="self-referential-forces",
                    filename="steering_srf.hpp",
                    classname="SrfSteeringModel"),
@@ -112,7 +108,6 @@ abbrev = {
     "resource-based": "res",
     # steering
     "pull-only": "po",
-    "memory-based": "mem",
     "self-referential-forces": "srf",
     # direction selection
     "noisy-maximum": "nm",

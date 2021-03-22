@@ -573,7 +573,7 @@ void Neurite::gc_split_angles_diameter(mtPtr rnd_engine, double &old_angle,
     double branching_angle = gc_split_angle_mean_ +
                              gc_split_angle_std_ * normal_(*(rnd_engine).get());
 
-        // ratio between the diameters of the two neurites,
+    // ratio between the diameters of the two neurites,
     // it's a gaussian distributed value arround 1.
     double ratio;
 
@@ -673,14 +673,6 @@ GCPtr Neurite::create_branching_cone(const TNodePtr branching_node,
                     p, parent_.lock()->get_gid(), name_,
                     0.5 * nodes_[0]->get_diameter(), poly))
             {
-#ifndef NDEBUG
-                printf("No branching: self intersection \n");
-                printf("Branching point, dist to parent: %f \n", dist_to_parent );
-                printf("Branching point, x: %f, y: %f \n", p.x(), p.y());
-                double x_ = branching_node->get_position().x();
-                double y_ = branching_node->get_position().y();
-                printf("Parent point, x: %f, y: %f \n", x_, y_);
-#endif
                 return nullptr;
             }
         }

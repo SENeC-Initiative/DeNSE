@@ -171,6 +171,7 @@ class GrowthCone : public TopologicalNode,
     virtual double get_state(const std::string &observable,
                              std::string &unit) const;
     virtual double get_growth_cone_speed() const;
+    double get_taper_rate() const;
     bool just_retracted() const;
     stype get_neuron_id() const;
     const std::string &get_neurite_name() const;

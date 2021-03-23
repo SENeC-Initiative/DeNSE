@@ -108,6 +108,7 @@ class TopologicalNode : public BaseNode
     {
         return dist_to_soma_;
     }
+
     inline double get_distance_parent() const override
     {
         return dist_to_parent_;
@@ -115,11 +116,14 @@ class TopologicalNode : public BaseNode
 
     // topology getter functions
     inline BaseWeakNodePtr get_parent() const { return parent_; }
+
     inline int get_centrifugal_order() const override
     {
         return centrifugal_order_;
     }
+
     inline bool has_child() const { return has_child_; }
+
     inline stype get_node_id() const override { return node_id_; }
 
     seg_range segment_range() const;

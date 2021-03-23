@@ -151,7 +151,9 @@ extern const std::string speed_growth_cone;
 extern const std::string speed_variance;
 
 // memory-based steering
-extern const std::string memory_decay_factor;
+extern const std::string memory_dist_cut;
+extern const std::string memory_dist_exp;
+extern const std::string memory_influence;
 
 // SRF steering
 extern const std::string somatropic_factor;

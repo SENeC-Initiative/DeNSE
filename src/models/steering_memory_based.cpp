@@ -62,7 +62,7 @@ void MemBasedSteeringModel::compute_direction_probabilities(
     // get branch data
     BranchPtr branch = gc_weakptr_.lock()->get_branch();
 
-    stype start = branch->size() - 1;
+    stype start = branch->size() == 0 ? 0 : branch->size() - 1;
 
     double dmax = branch->final_distance_to_soma();
     double dmin = branch->initial_distance_to_soma();
@@ -163,14 +163,17 @@ void MemBasedSteeringModel::compute_direction_probabilities(
         }
     }
 
-    // then: find the closest angle
-    unsigned int idx = 
-        std::min_element(distances.begin(), distances.end())
-        - distances.begin();
+    // then: find the closest angle (if not stuck)
+    if (not stuck)
+    {
+        unsigned int idx = 
+            std::min_element(distances.begin(), distances.end())
+            - distances.begin();
 
-    unsigned int chosen = valid_directions[idx];
+        unsigned int chosen = valid_directions[idx];
 
-    directions_weights[chosen] += memory_influence_;
+        directions_weights[chosen] += memory_influence_;
+    }
 }
 
 

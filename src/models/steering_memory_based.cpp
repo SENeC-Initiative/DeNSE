@@ -59,6 +59,8 @@ void MemBasedSteeringModel::compute_direction_probabilities(
     double current_angle =
         fmod(gc_weakptr_.lock()->get_state("angle"), 2 * M_PI);
 
+    stuck = true;
+
     // get branch data
     BranchPtr branch = gc_weakptr_.lock()->get_branch();
 

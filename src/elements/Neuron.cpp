@@ -167,28 +167,29 @@ void Neuron::init_status(
 
     if (angles_set)
     {
-        if (nas.size() < num_neurites)
+        if (not names_set)
         {
-            throw InvalidParameter("`neurite_angles` must contain at least one "
-                                   "entry per neurite, got " +
-                                   std::to_string(nas.size()) + ".",
-                                   __FUNCTION__, __FILE__, __LINE__);
+            InvalidParameter("`neurite_names` must be set to use "
+                             "`neurite_angles`.", __FUNCTION__, __FILE__,
+                             __LINE__);
         }
 
-        if (neurite_statuses.find("dendrites") == neurite_statuses.end())
+        for (std::string name : neurite_names)
         {
-            for (auto p : neurite_statuses)
+            if (nas.find(name) == nas.end())
             {
-                if (nas.find(p.first) == nas.end())
-                {
-                    throw InvalidParameter(
-                        "`neurite_angles` contain invalid neurite names.",
-                        __FUNCTION__, __FILE__, __LINE__);
-                }
+                throw InvalidParameter(
+                    "`neurite_angles` must contain one entry for each neurite "
+                    "name.", __FUNCTION__, __FILE__, __LINE__);
             }
         }
 
-        neurite_angles_ = nas;
+        neurite_angles_.clear();
+
+        for (std::string name : neurite_names)
+        {
+            neurite_angles_[name] = nas[name];
+        }
     }
 
     GCPtr gc_model;

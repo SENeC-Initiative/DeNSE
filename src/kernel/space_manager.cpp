@@ -409,10 +409,8 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                     }
                 }
 
-                if (failure == bg::failure_wrong_orientation)
-                {
-                    bg::correct(*(poly.get()));
-                }
+                // correct polygon in case orientation is wrong
+                bg::correct(*(poly.get()));
 
                 success = bg::is_valid(*(poly.get()), message);
 

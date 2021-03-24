@@ -167,9 +167,9 @@ void Neuron::init_status(
 
     if (angles_set)
     {
-        if (nas.size() != num_neurites)
+        if (nas.size() < num_neurites)
         {
-            throw InvalidParameter("`neurite_angles` must contain one "
+            throw InvalidParameter("`neurite_angles` must contain at least one "
                                    "entry per neurite, got " +
                                    std::to_string(nas.size()) + ".",
                                    __FUNCTION__, __FILE__, __LINE__);

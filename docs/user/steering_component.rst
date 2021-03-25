@@ -44,20 +44,34 @@ For the detailed implementation, see
 Memory-based
 ============
 
-This algorithm is a variant of the one used by NETMORPH [Koene2009]_.
+This algorithm is a reimplementation of the one used by NETMORPH [Koene2009]_.
 In this model, the previous direction of the growth cone is stored in a memory
-variable :math:`\theta^{(m)}` and the rigidity of the microtubule shaft in that
-direction imposes a bias towards it.
+variable :math:`\theta_m` and increases the probability of choosing the
+filopodia :math:`f` such that :math:`\forall i \neq f, \vert \theta_i - \theta_m
+\vert \geq \vert \theta_f - \theta_m \vert`.
 
-Thus, the probability of stepping into each of the filopodia is modified into
+:math:`\theta_m` is the angle associated to the memory vector
+:math:`\mathbf{e_m} = (x_m, y_m)`, defined as:
 
 .. math::
 
-    P(\theta_i) = \frac{a_i + r_f \cos\left(\theta_i - \theta^{(m)}\right)}
-                  {\sum_j a_j + r_f \cos\left(\theta_i - \theta^{(m)}\right)}
+    \mathbf{e_m} = \sum_{i=0}^{n_{cut}} \frac{V_i}{d_i^p} \mathbf{u}_i
 
-where :math:`r_f` is the rigidity factor modeling the effect of the microtubule
-shaft, which can be changed in |name| using the ``rigidity_factor`` argument.
+where :math:`V_i` is the admimensionned volume of the :math:`i`th element of the
+branch starting from the growth cone (tip), :math:`d_i` is the adimensionned
+distance from the tip to the center of the element, :math:`\mathbf{u}_i` is the
+unit vector associated to the element and going towards the tip, and
+:math:`n_{cut}` is the number of the element that is at a distance greater than
+:math:`d_{cut}` (either user-defined, or, by default, such that
+:math:`d_{cut}^{-p} = 10^{-4}`).
+
+The affinity for the chosen filopodia :math:`f` is modified into
+
+.. math::
+
+    P(\theta_f) \leftarrow P(\theta_f) + I_m
+
+where :math:`I_m` is the memory influence.
 
 For the detailed implementation, see
 :cpp:class:`growth::MemBasedSteeringModel`.

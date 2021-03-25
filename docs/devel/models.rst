@@ -84,6 +84,8 @@ To add a new model the, you must:
 1. include it in the associated methods list (here ``steering_methods``) as
    ``ModelComponent(method="great-model", filename="steering_great_model.hpp", classname="GreatSteeringModel")``
 2. add an associated abbreviation in ``abbrev``, for instance ``"great-model": "gm"``
+3. add ``steering_great_model.hpp`` and ``steering_great_model.cpp`` to the list
+   of files in ``src/CMakeLists.txt``
 
 And that's it, you're done!
 Your new model is now available in |name| and should appear in the list returned

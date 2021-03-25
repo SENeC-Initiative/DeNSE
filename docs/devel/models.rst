@@ -82,7 +82,7 @@ This is performed by the python file ``src/models/models_generator.py``.
 To add a new model the, you must:
 
 1. include it in the associated methods list (here ``steering_methods``) as
-   ``ModelComponent(method="great-model", filename="steering_grat_model.hpp", classname="GreatSteeringModel")``
+   ``ModelComponent(method="great-model", filename="steering_great_model.hpp", classname="GreatSteeringModel")``
 2. add an associated abbreviation in ``abbrev``, for instance ``"great-model": "gm"``
 
 And that's it, you're done!

@@ -38,11 +38,12 @@ To add a new model to |name|, you need to decide on two things:
 
 * a name, for instance "great model"
 * the type of feature it implements among:
-  - deciding how much the growth cone will grow (extension)
-  - setting the probability of going into each of the filopodial direction
-    (steering)
-  - selecting the actual direction in which the growth cone will go next
-    (direction selection).
+
+   - deciding how much the growth cone will grow (extension)
+   - setting the probability of going into each of the filopodial direction
+     (steering)
+   - selecting the actual direction in which the growth cone will go next
+     (direction selection).
 
 For this example, our "great model" will implement a new way of *steering* the
 growth cone.
@@ -79,8 +80,9 @@ into a extention/steering/direction-selection triplets.
 This is performed by the python file ``src/models/models_generator.py``.
 
 To add a new model the, you must:
+
 1. include it in the associated methods list (here ``steering_methods``) as
-  ``ModelComponent(method="great-model", filename="steering_grat_model.hpp", classname="GreatSteeringModel")``
+   ``ModelComponent(method="great-model", filename="steering_grat_model.hpp", classname="GreatSteeringModel")``
 2. add an associated abbreviation in ``abbrev``, for instance ``"great-model": "gm"``
 
 And that's it, you're done!

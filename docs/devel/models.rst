@@ -39,11 +39,11 @@ To add a new model to |name|, you need to decide on two things:
 * a name, for instance "great model"
 * the type of feature it implements among:
 
-   - deciding how much the growth cone will grow (extension)
-   - setting the probability of going into each of the filopodial direction
-     (steering)
-   - selecting the actual direction in which the growth cone will go next
-     (direction selection).
+  - deciding how much the growth cone will grow (extension)
+  - setting the probability of going into each of the filopodial direction
+    (steering)
+  - selecting the actual direction in which the growth cone will go next
+    (direction selection).
 
 For this example, our "great model" will implement a new way of *steering* the
 growth cone.
@@ -85,7 +85,7 @@ To add a new model the, you must:
    ``ModelComponent(method="great-model", filename="steering_great_model.hpp", classname="GreatSteeringModel")``
 2. add an associated abbreviation in ``abbrev``, for instance ``"great-model": "gm"``
 3. add ``steering_great_model.hpp`` and ``steering_great_model.cpp`` to the list
-   of files in ``src/CMakeLists.txt``
+   of files in ``src/models/CMakeLists.txt``
 
 And that's it, you're done!
 Your new model is now available in |name| and should appear in the list returned

@@ -1313,12 +1313,6 @@ const std::string &GrowthCone::get_neurite_name() const
 }
 
 
-double GrowthCone::get_taper_rate() const
-{
-    return own_neurite_->get_taper_rate();
-}
-
-
 const std::string &GrowthCone::get_model_name() const { return model_; }
 
 

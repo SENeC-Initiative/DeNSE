@@ -101,26 +101,17 @@ The model implemented in |name| is equivalent to the "BEST" model from
 
 .. math::
 
-    \begin{gather}
-    \frac{dn}{dt} = n(t)p_i(t|n(t))                        \\
-    p_{i}(t|n(t)) = \mathcal{N} n^{-E} 2^{-\gamma_i S} D(t)
-    \end{gather}
+    \begin{gathered}
+        \frac{dn}{dt} = n(t)p(n, t) \\
+        p(n, t) = \frac{B}{T} e^{-t/T} n^{-E}
+    \end{gathered}
 
-where `n` is the average number of Growth cone in the neurite, :math:`p_i(t|n(t))` is the branching rate, and `D(t)` a baseline branching distribution, that is assumed to be a decaying exponential.
-
-In Dense the branching rate does not translate in a directly implemented probability of branching per unit time.
-
-In order to reduce the computational cost, we draw the expected time between two branching events given this rate, which corresponds to :
-
-.. math::
-
-    e^{\frac{t + 1}{T}} \frac{T}{B}  n^E
-
+where `n` is the average number of growth cones in the neurite and
+:math:`p(n, t)` is the branching rate.
 
 The parameters have the following meaning:
 
-
-* :math:`B` the number of expected branching events at the end of the process (number, no unit)
+* :math:`B` the number of expected branching events at a given segment (number, no unit)
 
 * :math:`E` the competition among growth cones in the neurite (number, no unit)
 
@@ -129,7 +120,22 @@ The parameters have the following meaning:
 * :math:`S` the competition among growth cones by centrifugal order  (number, no unit)
 
 
-@TODO A REVOIR The previous equations define the probability of branching for a neuron without selection a branching cone. The dividing cone is selected in a second time, actually at the branching time. The parameter :math:`S` is a competition factor and sets the branching cone by the centrifugal order:
+The previous equations define the probability of branching for a neurite without
+selection a branching cone. The each cone :math:`i` can be selected based on
+parameter :math:`S` (the competition factor) and its centrifugal order
+:math:`\gamma_i`,
+according to the probability:
+
+.. math::
+
+    p_i = \frac{2^{-\gamma_i S}}{\sum_j 2^{-\gamma_j S}}
+
+After a duration :math:`\Delta t \gg T`, the expected number of growth cones in
+the neurite, if none have been destroyed by other processes, is:
+
+.. math::
+
+    n_{final} = (1 + BE)^{1/E}
 
 This model can be activated by setting ``"use_van_pelt"`` to ``True`` in the
 neurite parameters.

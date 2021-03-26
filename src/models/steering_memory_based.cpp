@@ -69,7 +69,7 @@ void MemBasedSteeringModel::compute_direction_probabilities(
     double dmax = branch->final_distance_to_soma();
     double dmin = branch->initial_distance_to_soma();
 
-    double taper = gc_weakptr_.lock()->get_taper_rate();
+    double taper = neurite_ptr_->get_taper_rate();
     double rinit = 0.5*gc_weakptr_.lock()->get_diameter();
 
     double dcumul = 0.;

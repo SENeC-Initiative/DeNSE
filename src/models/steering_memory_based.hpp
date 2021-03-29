@@ -32,9 +32,11 @@ namespace growth
 class MemBasedSteeringModel : public virtual SteeringModel
 {
   private:
-    double memory_angle_;    // priviledged direction
-    double rigidity_factor_; // "strength" of the memory's influence
-    double memory_decay_factor_;    // decay of a segment's influence after 1 um
+    double memory_angle_;      // priviledged direction
+    double memory_influence_;  // "strength" of the memory's influence
+    double memory_dist_exp_;   // exponent for the distance-based decay
+    double memory_dist_cut_;   // cut for distance-based decay
+    bool dist_cut_set_;        // whether distance cut was set by user
 
   public:
     MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite);

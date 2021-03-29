@@ -152,12 +152,25 @@ void SpaceManager::add_object(BMultiPolygonPtr geom, const ObjectInfo &info,
 void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
                      const BPoint &stop, BPoint &lp_1, BPoint &lp_2,
                      const BPoint &old_p1, const BPoint &old_p2, BRing &outer,
-                     BPolygonPtr last_segment, double diam)
+                     BPolygonPtr last_segment, double diam, bool right_order)
 {
-    // lp1 is on the wrong side of old_p1->old_p2 so it disappears
-    lp_1 = old_p1;
-    outer.push_back(old_p1);
-    outer.push_back(old_p2);
+    // invert old_p1 and old_p2 if necessary
+    BPoint olp1, olp2;
+
+    if (right_order)
+    {
+        olp1 = old_p1;
+        olp2 = old_p2;
+
+    }
+    else
+    {
+        olp1 = old_p2;
+        olp2 = old_p1;
+    }
+
+    // lp1 is on the wrong side of olp1->olp2 so it disappears
+    lp_1 = olp1;
 
     // now, we don't want to recompute "stop" because it's position was
     // computed through the model's algorithms, i.e. it IS where we want to
@@ -165,15 +178,15 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
     // lp_2 must also be modified.
 
     // compute angle direction of side
-    double side_angle = atan2(lp_2.y() - old_p2.y(), lp_2.x() - old_p2.x());
+    double side_angle = atan2(lp_2.y() - olp2.y(), lp_2.x() - olp2.x());
 
-    // compute the intersection between the previous side (old_p2, lp2) and the
+    // compute the intersection between the previous side (olp2, lp2) and the
     // new front line going through lp_1 and stop.
     // Both segments are made `2*diameter`-long to be sure they intersect.
-    lp_2 = BPoint(old_p2.x() + cos(side_angle) * 2 * diam,
-                  old_p2.y() + sin(side_angle) * 2 * diam);
+    lp_2 = BPoint(olp2.x() + cos(side_angle) * 2 * diam,
+                  olp2.y() + sin(side_angle) * 2 * diam);
 
-    BLineString side({old_p2, lp_2});
+    BLineString side({olp2, lp_2});
 
     // compute angle direction of new front
     double front_angle = atan2(stop.y() - lp_1.y(), stop.x() - lp_1.x());
@@ -219,8 +232,21 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
 
     lp_2 = mp[0];
 
-    outer.push_back(lp_2);
-    outer.push_back(old_p1);
+    // add points
+    outer.push_back(olp1);
+
+    if (right_order)
+    {
+        outer.push_back(lp_2);
+        outer.push_back(olp2);
+    }
+    else
+    {
+        outer.push_back(olp2);
+        outer.push_back(lp_2);
+    }
+
+    outer.push_back(olp1);
 }
 
 
@@ -279,8 +305,16 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
             double r_new(0.5 * (diam - length * taper));
 
             // orthogonal vector
-            double norm = sqrt(l_vec.x() * l_vec.x() + l_vec.y() * l_vec.y());
-            BPoint r_vec(-r_new * l_vec.y() / norm, r_new * l_vec.x() / norm);
+            double inv_norm =
+                1. / sqrt(l_vec.x() * l_vec.x() + l_vec.y() * l_vec.y());
+
+            BPoint r_vec(-r_new * l_vec.y() * inv_norm,
+                         r_new * l_vec.x() * inv_norm);
+
+            // step vector (l_vec) and orthogonal vector r_vec are related as
+            // follow:
+            //          - l_vec:   ↖  |  ↗  |  ↘  |  ↙
+            //          - r_vec:   ↙  |  ↖  |  ↗  |  ↘
 
             // get the last segment and prepare new last points
             BPolygonPtr last_segment = b->get_last_segment();
@@ -316,12 +350,12 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
 
             // check whether this did not create a self-crossing
             unsigned int count = 0;
-            bool checked_order = false;
 
             while (not bg::is_valid(*(poly.get()), failure))
             {
                 if (failure == bg::failure_self_intersections)
                 {
+                    printf("self intersection - OMP %i\n", omp_id);
                     if (bg::covered_by(stop, *(last_segment.get())))
                     {
                         std::cout
@@ -359,44 +393,41 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         // otherwise it means that lp_1 and lp_2 are inverted
                         if (mp.empty())
                         {
+                            printf("correcting lp2 <-> lp1 - OMP %i\n", omp_id);
                             // lp_1 and lp_2 are inverted
                             outer.push_back(old_lp1);
-                            outer.push_back(lp_2);
-                            outer.push_back(lp_1);
                             outer.push_back(old_lp2);
+                            outer.push_back(lp_1);
+                            outer.push_back(lp_2);
                             outer.push_back(old_lp1);
                         }
                         else
                         {
+                            printf("intersecting lines - OMP %i\n", omp_id);
+                            std::cout << bg::wkt(ls_new) << " " << bg::wkt(ls_old) << std::endl;
                             // get which old point is closest to the
                             // intersection (in correct polygon, lp_1 is the
                             // one which will disappear)
                             double d1, d2, d1new, d2new;
+                            bool right_order(true);
 
-                            d1    = bg::distance(mp[0], old_lp1);
-                            d2    = bg::distance(mp[0], old_lp2);
-                            d1new = bg::distance(mp[0], lp_1);
-                            d2new = bg::distance(mp[0], lp_2);
+                            d1 = bg::distance(mp[0], old_lp1);
+                            d2 = bg::distance(mp[0], old_lp2);
 
                             // check new polygon will start from closest point,
                             // go through stop, and finish someplace (computed)
                             // that way
-                            if (d1 < d2)
+                            if (d1 > d2)
                             {
-                                if (d1new > d2new)
-                                {
-                                    std::swap(lp_1, lp_2);
-                                }
-                            }
-                            else
-                            {
-                                std::swap(old_lp1, old_lp2);
+                                // p2 should disappear, so we must swap both
+                                // points (correct_polygon always removes p1)
+                                // and correct the point order
+                                std::swap(lp_1, lp_2);
 
-                                if (d2new < d1new)
-                                {
-                                    std::swap(lp_1, lp_2);
-                                }
+                                right_order = false;
                             }
+
+                            printf("right order is %i\n", right_order);
 
                             double dist =
                                 std::max(bg::distance(old_lp2, old_lp1),
@@ -404,31 +435,54 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
 
                             correct_polygon(l_vec, r_vec, stop, lp_1, lp_2,
                                             old_lp1, old_lp2, outer,
-                                            last_segment, dist);
+                                            last_segment, dist, right_order);
                         }
                     }
                 }
-
-                if (failure == bg::failure_wrong_orientation)
+                else if (failure == bg::failure_wrong_orientation)
                 {
+                    printf("wrong orientation\n");
+                    //~ std::cout << bg::wkt(BPoint(stop.x() + r_vec.x(), stop.y() + r_vec.y())) << std::endl
+                              //~ << bg::wkt(BPoint(stop.x() - r_vec.x(), stop.y() - r_vec.y())) << std::endl
+                              //~ << bg::wkt(lp_1) << std::endl
+                              //~ << bg::wkt(lp_2) << std::endl
+                              //~ << bg::wkt(old_lp1) << std::endl
+                              //~ << bg::wkt(old_lp2) << std::endl
+                              //~ << bg::wkt(stop) << std::endl
+                              //~ << bg::wkt(*(poly.get())) << std::endl;
+
                     bg::correct(*(poly.get()));
+
+                    //~ std::cout << bg::wkt(*(poly.get())) << std::endl;
                 }
 
                 success = bg::is_valid(*(poly.get()), message);
+
+                count++;
 
                 if (success or count > 5)
                 {
                     break;
                 }
+            }
 
-                count++;
+            if (count == 0)
+            {
+                //~ printf("valid initial polygon - OMP %i\n", omp_id);
+            }
+            else if (success)
+            {
+                printf("corrected polygon on pass %u - OMP %i\n", count, omp_id);
             }
 
             if (not bg::is_valid(*(poly.get()), message))
             {
+                printf("here\n");
                 std::cout << "last points: " << bg::wkt(old_lp1) << " "
                           << bg::wkt(old_lp2) << std::endl
                           << bg::wkt(*(poly.get())) << std::endl;
+
+                printf("\n");
 
                 if (last_segment != nullptr)
                 {
@@ -677,22 +731,25 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                          Affinities aff_values, double substep, double radius,
                          GCPtr gc_ptr, space_tree_map &neighbors)
 {
+    
+    int omp_id = kernel().parallelism_manager.get_thread_local_id();
+
     // Useful values
     double subs_afty    = filopodia.substrate_affinity;
     double len_filo     = filopodia.finger_length;
     double wall_afty    = filopodia.wall_affinity;
     double lamel_factor = 2.;
 
-    stype neuron_id                 = gc_ptr->get_neuron_id();
-    const std::string &neurite_name = gc_ptr->get_neurite_name();
-    BPolygonPtr last_segment        = gc_ptr->get_branch()->get_last_segment();
+    stype neuron_id                  = gc_ptr->get_neuron_id();
+    const std::string &neurite_name  = gc_ptr->get_neurite_name();
+    BPolygonPtr last_segment         = gc_ptr->get_branch()->get_last_segment();
 
-    double aff_self                 = aff_values.affinity_self;
-    double aff_axon_same_neuron     = aff_values.affinity_axon_same_neuron;
-    double aff_axon_other_neuron    = aff_values.affinity_axon_other_neuron;
-    double aff_dendrite_same_neuron = aff_values.affinity_dendrite_same_neuron;
-    double aff_soma_same_neuron     = aff_values.affinity_soma_same_neuron;
-    double aff_soma_other_neuron    = aff_values.affinity_soma_other_neuron;
+    double aff_self                  = aff_values.affinity_self;
+    double aff_axon_same_neuron      = aff_values.affinity_axon_same_neuron;
+    double aff_axon_other_neuron     = aff_values.affinity_axon_other_neuron;
+    double aff_dendrite_same_neuron  = aff_values.affinity_dendrite_same_neuron;
+    double aff_soma_same_neuron      = aff_values.affinity_soma_same_neuron;
+    double aff_soma_other_neuron     = aff_values.affinity_soma_other_neuron;
     double aff_dendrite_other_neuron =
         aff_values.affinity_dendrite_other_neuron;
 
@@ -700,12 +757,13 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     double angle, distance, distance1, min_wall_dist;
     bool filo_wall, interacting(false), keep_point, intsct;
     BPoint filo_pos, tmp_pos;
+
     // intersections of the filopodia
     double x0(position.x()), y0(position.y()), x, y, x1, y1, point_angle;
     std::unordered_map<std::string, AreaPtr> tested_areas;
     std::vector<double> distances, affinities;
     BMultiPoint intersections;
-    //~ std::vector<AreaPtr> new_areas;
+
     BLineString filo_line, tmp_line;
     std::vector<stype> indices;
     std::vector<bool> is_wall;
@@ -713,11 +771,14 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
     stype n_intersect;
     AreaPtr new_area;
     GEOSGeom border;
+
     // recursive loop
     std::deque<AreaPtr> area_deque;
     std::deque<BPoint> area_points;
+
     // computation of the affinity
     double affinity, old_dist, current_dist;
+
     // loop indices
     unsigned int i, n_angle, s_i;
 
@@ -780,6 +841,27 @@ bool SpaceManager::sense(std::vector<double> &directions_weights,
                 other_node    = std::get<2>(info);
                 other_segment = std::get<3>(info);
 
+                // store information about potential synapses
+                //~ if (neurite_name == "axon")
+                //~ {
+                    //~ if (other_neurite != "axon")
+                    //~ {
+                        //~ add_putative_synapse(
+                            //~ omp_id, neuron_id, neurite_name, other_neuron,
+                            //~ other_neurite);
+                    //~ }
+                //~ }
+                //~ else
+                //~ {
+                    //~ if (other_neurite == "axon")
+                    //~ {
+                        //~ add_putative_synapse(
+                            //~ omp_id, other_neuron, other_neurite, neuron_id,
+                            //~ neurite_name);
+                    //~ }
+                //~ }
+
+                // check intersections
                 bool other_intersects = false;
 
                 // check for intersections
@@ -1171,6 +1253,13 @@ void SpaceManager::check_accessibility(std::vector<double> &directions_weights,
             directions_weights[n_angle] = std::nan(""); // cannot cross oneself
         }
     }
+}
+
+
+void SpaceManager::add_putative_synapse(
+    int omp_id, stype other_neuron, const std::string& other_neurite,
+    stype neuron_id, const std::string& neurite_name)
+{
 }
 
 

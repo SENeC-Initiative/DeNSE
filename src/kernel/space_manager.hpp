@@ -121,6 +121,10 @@ class SpaceManager : public ManagerInterface
                              const Filopodia &filopodia, const BPoint &position,
                              const Move &move, const BPolygonPtr last_segment);
 
+    void add_putative_synapse(
+        int omp_id, stype other_neuron, const std::string& other_neurite,
+        stype neuron_id, const std::string& neurite_name);
+
     void check_synaptic_site(const BPoint &position, double distance,
                              stype neuron_id, const std::string &neurite_name,
                              stype other_neuron,

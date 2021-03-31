@@ -1737,10 +1737,13 @@ cdef _create_neurons(dict params, dict neurite_params,
             for ha, nneur in zip(has_axon, neurites):
                 neurite_names.append(
                     _set_neurite_names(ha, nneur, neurite_params))
+        elif is_string(next(iter(neurite_names))):
+            neurite_names = [set(neurite_names)]*n
         else:
-            for nnames, nneur in zip(neurite_names, neurites):
-                assert len(nnames) == nneur, "Mismatch between " +\
-                    " number of neurites and number of names."
+            for i, (nnames, nneur) in enumerate(zip(neurite_names, neurites)):
+                assert len(nnames) >= nneur, "Too few names given maximum " +\
+                    "number of neurites."
+                neurite_names[i] = set(nnames)
 
     # add them to the parameters
     params["num_neurites"]  = neurites

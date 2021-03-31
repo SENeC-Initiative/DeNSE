@@ -128,7 +128,7 @@ Note that the ``neuroml`` python module is necessary to use :func:`~dense.io.sav
 .. literalinclude:: ../../examples/tutorials/2_interacting-neurons.py
     :linenos:
     :language: python
-    :lines: 103-104
+    :lines: 102-103
 
 
 Multiprocessing and random number generation
@@ -189,20 +189,20 @@ One of the original aims for DeNSE was the study of neuronal cultures and device
 can be embedded in more or less complex structures.
 In the simulator, simple spatial structures such as disks or rectangles can be generated directly
 from the :class:`~dense.environment.Shape` object.
-For more complex shapes, pre-constructed images in SVG or DXF formats using the
-:func:`~dense.environment.culture_from_file` function.
+For more complex shapes, pre-constructed images in SVG or DXF formats can be
+imported using the :func:`~dense.environment.culture_from_file` function.
 
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 33-58
+    :lines: 32-54
 
 Once the environment is created, we can seed randomly the neurons inside it.
 
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 61-62
+    :lines: 56-58
 
 .. warning::
     Setting the soma radius correctly is critical, otherwise the soma might "protrude" out of
@@ -213,7 +213,7 @@ We can then create the neurons:
 .. literalinclude:: ../../examples/tutorials/3_space-embedding.py
     :linenos:
     :language: python
-    :lines: 65-92
+    :lines: 60-89
 
 And simulate:
 
@@ -224,85 +224,146 @@ And simulate:
 
 Which leads to the following structure:
 
-.. image:: ./images/neurons_in_square.png
+.. image:: ./images/neurons_in_square.webp
+
+
+Complex neurons and parameters (Acimovic2011)
+=============================================
+
+If you want to make a full neuronal network, you will probably want to specify
+specific neuronal shapes that can vary depending on the neurons.
+In `this tutorial file`_, we show how to reproduce a study [Acimovic2011]_ using
+DeNSE.
+
+This focuses especially on reproducing the shape of pyramidal neurons, with
+their specific neurite orientations and having varying number of neurites.
+
+To do so, we start by defining the orientations for all possible neurites
+(between 4 and 6, with always at least an axon, an apical, and 2 basal
+dendrites) as well as their names.
+
+.. literalinclude:: ../../examples/tutorials/4_complex_neuron_params.py
+    :linenos:
+    :language: python
+    :lines: 51-83
+
+The combination of ``"random_rotation_angles": True`` and the specific angles
+means that all neurites will be randomly rotated "as a block" for each neuron.
+
+Then we generate a random number of neurites for each neuron and generate the
+associated names:
+
+.. literalinclude:: ../../examples/tutorials/4_complex_neuron_params.py
+    :linenos:
+    :language: python
+    :lines: 118-120
+
+Finally we set the parameters and create the neurons:
+
+.. literalinclude:: ../../examples/tutorials/4_complex_neuron_params.py
+    :linenos:
+    :language: python
+    :lines: 164-169
+
+If you run the whole file, you will get the following structure (scale bar is
+50 :math:`\mu m`):
+
+.. image:: ./images/acimovic.webp
 
 
 Other Examples
 ==============
 
-The ../examples folder contains a collections of different applications cases illustrating DeNSE functions.
+The |examples|_ folder contains a collections of different applications cases
+illustrating DeNSE functions.
 
 Models
 ------
 
-../../examples/models
-Contains examples concerning growth models
+|examples.models|_ contains examples concerning growth models.
 
-../../examples/models/neurons
-Contains a collections of DeNSE models built to generate various neuronal shapes : pyramidal cells, Purkinje cells, multipolar cells, chandelier cells, starbus amacrine, etc... The models were hand tuned for a qualitative resemblance with the corresponding cell types.
+|examples.models.neurons|_  contains a collections of DeNSE models built to
+generate various neuronal shapes : pyramidal cells, Purkinje cells, multipolar
+cells, chandelier cells, starbus amacrine, etc... The models were hand tuned for
+a qualitative resemblance with the corresponding cell types.
 
-analysis.py is an example code for importing and displaying a morphology file in neurom format
-
-
-../../examples/models/competition
-Illustrates competition based elongation models
-
-../../examples/models/branching
-Shows codes to explore the branching models
+|examples.models.neurons.analysis|_ is an example code for importing and
+displaying a morphology file in neurom format.
 
 
-../../examples/models/random_walks
+|examples.models.competition|_ illustrates resource-based elongation models.
+
+|examples.models.branching|_ shows codes to explore the branching models.
+
+|examples.models.random_walks|_
 Contains a code to run successively different simulations with different persistence lengths for a random walk base growth cone model.
 
 
 Space Embedding
 ---------------
 
-../../space_embedding
-Contains examples to make neurons grow in spatially bounded regions
+|examples.space_embedding|_
+contains examples to make neurons grow in spatially bounded regions:
 
-../../examples/space_embedding/polygons
-Shows an example of multiple neurons growing in a space limited region containing obstacles. The connectivity network is generated at the end of the simulation.
+* ``polygons/`` shows an example of multiple neurons growing in a space limited
+  region containing obstacles. The connectivity network is generated at the end
+  of the simulation.
+* ``patterns/`` illustrates growing of neurons in a complex geometry.
+* ``ordered_neurons/`` shows a code to generate neurons placed at precise
+  locations and with controlled initial orientation of dendrites.
+* ``droplets/`` shows a code to generate a neuronal network in a complex
+  geometry.
 
-../../examples/space_embedding/patterns
-Illustrates growing of neurons in a complex geometry.
-
-../../examples/space_embedding/ordered_neurons
-Shows a code to generate neurons placed at precise locations and with controlled initial orientation of dendrites
-
-../../examples/space_embedding/droplets
-Shows a code to generate a neuronal network in a complex geometry
-
-
-Multiple chambers
------------------
-Special case of Space Embedding, here the culture is made of different growth chambers in communication through channels of different shapes
-
+|examples.multi_chambers|_
+is a special case of space embedding, where the culture is made of different
+chambers that communicate through channels of different shapes.
 
 
 Growth Studies
 --------------
 
-Different applications how to study network growth
+|examples.growth_studies|_
+contants different applications how to study network growth:
 
-../../examples/growth_studies/turning_angles
-Neurons arrive on an obstacle with different inclination
-
-../../examples/growth_studies/turning_walls_exp
-Neurons arrive in a chamber with different angles of the opening funnel
-
-../../examples/growth_studies/recorders
-Shows the usage of recorders
+* ``turning_angles/``, where neurons arrive on an obstacle with different
+  inclination
+* ``turning_walls_exp/``, where neurons arrive in a chamber with different
+  angles of the opening funnel
+* ``recorders/`` shows the usage of recorders
 
 
-Complex structures
-==================
+References
+==========
+
+.. [Acimovic2011] J. Aćimović, T. Mäki-Marttunen, R. Havela, H. Teppola,
+   and M.-L. Linne (2011). Modeling of Neuronal Growth In Vitro: Comparison of
+   Simulation Tools NETMORPH and CX3D. EURASIP Journal on Bioinformatics &
+   Systems Biology, 616382.
 
 
-Generating neuronal networks
-============================
-
+.. Links
 
 .. _NeuroML: https://www.neuroml.org
 .. _SWC: http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html
 .. _OpenMP: www.openmp.org
+.. |examples| replace:: ``examples/``
+.. _examples: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples
+.. |examples.space_embedding| replace:: ``examples/space_embedding/``
+.. _examples.space_embedding: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/space_embedding
+.. |examples.multi_chambers| replace:: ``examples/multi_chambers/``
+.. _examples.multi_chambers: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/multi_chambers
+.. |examples.growth_studies| replace:: ``examples/growth_studies/``
+.. _examples.growth_studies: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/growth_studies
+.. |examples.models| replace:: ``examples/models/``
+.. _examples.models: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models
+.. |examples.models.neurons| replace:: ``examples/models/neurons/``
+.. _examples.models.neurons: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models/neurons
+.. |examples.models.neurons.analysis| replace:: ``examples/models/neurons/``
+.. _examples.models.neurons.analysis: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models/neurons/analysis.py
+.. |examples.models.competition| replace:: ``examples/models/competition/``
+.. _examples.models.competition: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models/competition
+.. |examples.models.branching| replace:: ``examples/models/branching/``
+.. _examples.models.branching: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models/branching
+.. |examples.models.random_walks| replace:: ``examples/models/random_walks/``
+.. _examples.models.random_walks: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/models/random_walks
+.. _`this tutorial file`: https://github.com/SENeC-Initiative/DeNSE/tree/master/examples/tutorials/4_complex_neuron_params.py

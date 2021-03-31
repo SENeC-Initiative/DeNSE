@@ -34,162 +34,202 @@ namespace growth
 MemBasedSteeringModel::MemBasedSteeringModel(GCPtr gc, NeuritePtr neurite)
     : SteeringModel(gc, neurite)
     , memory_angle_(fmod(gc->get_state("angle"), 2 * M_PI))
-    , rigidity_factor_(1.)
-    , memory_decay_factor_(0.9)
-{
-    if (memory_angle_ < -M_PI)
-    {
-        memory_angle_ += 2 * M_PI;
-    }
-    else if (memory_angle_ > M_PI)
-    {
-        memory_angle_ -= 2 * M_PI;
-    }
-}
+    , memory_influence_(1.)
+    , memory_dist_exp_(2.)
+    , memory_dist_cut_(100.)
+    , dist_cut_set_(false)
+{}
 
 
 MemBasedSteeringModel::MemBasedSteeringModel(const MemBasedSteeringModel &copy,
                                              GCPtr gc, NeuritePtr neurite)
     : SteeringModel(copy, gc, neurite)
     , memory_angle_(fmod(gc->get_state("angle"), 2 * M_PI))
-    , rigidity_factor_(copy.rigidity_factor_)
-    , memory_decay_factor_(copy.memory_decay_factor_)
-{
-    if (memory_angle_ < -M_PI)
-    {
-        memory_angle_ += 2 * M_PI;
-    }
-    else if (memory_angle_ > M_PI)
-    {
-        memory_angle_ -= 2 * M_PI;
-    }
-}
+    , memory_influence_(copy.memory_influence_)
+    , memory_dist_exp_(copy.memory_dist_exp_)
+    , memory_dist_cut_(copy.memory_dist_cut_)
+    , dist_cut_set_(false)
+{}
 
 
 void MemBasedSteeringModel::compute_direction_probabilities(
     std::vector<double> &directions_weights, const Filopodia &filo,
     double substep, double &total_proba, bool &stuck)
 {
-    double weight, angle, previous_angle, da, previous_da;
-
-    stuck       = true;
-    total_proba = 0.;
-
     double current_angle =
         fmod(gc_weakptr_.lock()->get_state("angle"), 2 * M_PI);
 
-    // update memory angle:
-    // - first get the last segment's length
-    double rodlen = gc_weakptr_.lock()->get_branch()->get_last_segment_length();
-    // - second, get mean radius from taper rate (current radius is smaller end)
-    double taper = neurite_ptr_->get_taper_rate();
-    double radius =
-        0.5 * (gc_weakptr_.lock()->get_diameter() + 0.5 * rodlen * taper);
-    // - third, compute segment volume
-    double volume = M_PI * radius * radius * rodlen;
-    // - then update through volume-weighted algorithm
-    double decay = pow(memory_decay_factor_, rodlen);
-    memory_angle_ =
-        (volume * current_angle + decay * memory_angle_) / (volume + decay);
+    stuck = true;
 
-    // loop over the angles, get total probability, and add memory contribution
-    stype n_max  = filo.directions.size() - 1;
-    bool do_test = true;
+    // get branch data
+    BranchPtr branch = gc_weakptr_.lock()->get_branch();
+
+    stype start = branch->size() == 0 ? 0 : branch->size() - 1;
+
+    double dmax = branch->final_distance_to_soma();
+    double dmin = branch->initial_distance_to_soma();
+
+    double taper = neurite_ptr_->get_taper_rate();
+    double rinit = 0.5*gc_weakptr_.lock()->get_diameter();
+
+    double dcumul = 0.;
+
+    BPoint pos = gc_weakptr_.lock()->get_position();
+    double x(pos.x()), y(pos.y());
+
+    // compute the memory vector
+    PointArray p;
+    double radius, dist, volume, inv_norm, dx, dy;
+    double xdir(0.), ydir(0.), old_dist(0.);
+
+    if (start > 1)
+    {
+        for (stype i=start - 1; i > 0; i--)
+        {
+            p = branch->at(i);
+
+            dist = dmax - p[2];
+
+            radius = rinit + 0.25*taper*(dist + old_dist);
+            volume = M_PI*radius*radius*(dist - old_dist);
+
+            dx = (p[0] - x);
+            dy = (p[1] - y);
+
+            inv_norm = 1. / sqrt(dx*dx + dy*dy);
+
+            xdir += volume / pow(0.5*(dist + old_dist), memory_dist_exp_)
+                    * dx * inv_norm;
+
+            ydir += volume / pow(0.5*(dist + old_dist), memory_dist_exp_)
+                    * dy * inv_norm;
+
+            if (dist > memory_dist_cut_)
+            {
+                break;
+            }
+
+            x = p[0];
+            y = p[1];
+
+            old_dist = dist;
+        }
+    
+
+        // compute the angle (from target to source since the vector was
+        // computed from the tip to the rear)
+        memory_angle_ = std::atan2(-ydir, -xdir);
+
+        if (memory_angle_ < 0)
+        {
+            memory_angle_ += 2*M_PI;
+        }
+    }
+    else
+    {
+        memory_angle_ = current_angle;
+    }
+
+    // get all angles that are not NaN
+    std::vector<unsigned int> valid_directions;
+    std::vector<double> distances;
+
+    double angle, adist, weight;
 
     for (unsigned int n = 0; n < filo.directions.size(); n++)
     {
-        angle = filo.directions[n] + current_angle;
-
-        // check for the direction of the memory angle
-        if (do_test and n == 0 and angle > memory_angle_)
-        {
-            da                    = angle - memory_angle_;
-            directions_weights[0] = std::max(
-                directions_weights[0] + cos(da) * rigidity_factor_, 0.);
-
-            do_test = false;
-        }
-        else if (do_test and angle > memory_angle_)
-        {
-            previous_angle = filo.directions[n - 1];
-            da             = angle - memory_angle_;
-            previous_da    = previous_angle - memory_angle_;
-
-            directions_weights[n] = std::max(
-                directions_weights[n] + da / std::max(-previous_da, da) *
-                                            cos(da) * rigidity_factor_,
-                0.);
-
-            directions_weights[n - 1] =
-                std::max(directions_weights[n - 1] -
-                             previous_da / std::max(-previous_da, da) *
-                                 cos(previous_da) * rigidity_factor_,
-                         0.);
-
-            do_test = false;
-        }
-        else if (n == n_max and angle < memory_angle_)
-        {
-            da                        = memory_angle_ - angle;
-            directions_weights[n_max] = std::max(
-                directions_weights[n_max] + cos(da) * rigidity_factor_, 0.);
-        }
-
         weight = directions_weights[n];
 
         if (not std::isnan(weight))
         {
             total_proba += weight;
             stuck = false;
+
+            // store index and compute angluar distance to memory angle
+            valid_directions.push_back(n);
+
+            angle = fmod(filo.directions[n] + current_angle, 2*M_PI);
+
+            adist = angle - memory_angle_;
+
+            if (adist < - M_PI)
+            {
+                adist += 2*M_PI;
+            }
+            else if (adist > M_PI)
+            {
+                adist -= 2*M_PI;
+            }
+
+            distances.push_back(std::abs(adist));
         }
     }
 
-    if (memory_angle_ < -2 * M_PI)
+    // then: find the closest angle (if not stuck)
+    if (not stuck)
     {
-        memory_angle_ += 2 * M_PI;
-    }
-    else if (memory_angle_ > 2 * M_PI)
-    {
-        memory_angle_ -= 2 * M_PI;
+        unsigned int idx = 
+            std::min_element(distances.begin(), distances.end())
+            - distances.begin();
+
+        unsigned int chosen = valid_directions[idx];
+
+        directions_weights[chosen] += memory_influence_;
     }
 }
 
 
 void MemBasedSteeringModel::set_status(const statusMap &status)
 {
-    double rf, md;
+    double minfl, dexp, dcut;
     bool b;
 
-    b = get_param(status, names::rigidity_factor, rf);
+    b = get_param(status, names::memory_influence, minfl);
     if (b)
     {
-        if (rf < 0)
+        if (minfl <= 0)
         {
-            throw std::invalid_argument("`" + names::rigidity_factor +
-                                        "` must be positive.");
+            throw std::invalid_argument("`" + names::memory_influence +
+                                        "` must be strictly positive.");
         }
 
-        rigidity_factor_ = rf;
+        memory_influence_ = minfl;
     }
 
-    b = get_param(status, names::memory_decay_factor, md);
+    b = get_param(status, names::memory_dist_exp, dexp);
     if (b)
     {
-        if (md < 0)
+        memory_dist_exp_ = dexp;
+    }
+
+    b = get_param(status, names::memory_dist_cut, dcut);
+    if (b)
+    {
+        if (dcut <= 0)
         {
-            throw std::invalid_argument("`" + names::memory_decay_factor +
-                                        "` must be positive.");
+            throw std::invalid_argument("`" + names::memory_dist_cut +
+                                        "` must be strictly positive.");
         }
 
-        memory_decay_factor_ = md;
+        memory_dist_cut_ = dcut;
+
+        dist_cut_set_ = true;
+    }
+
+    if (not dist_cut_set_)
+    {
+        // if distance cut has not been set it default to 10^4/p
+        memory_dist_cut_ = pow(10, 4/memory_dist_exp_);
     }
 }
 
 
 void MemBasedSteeringModel::get_status(statusMap &status) const
 {
-    set_param(status, names::rigidity_factor, rigidity_factor_, "");
-    set_param(status, names::memory_decay_factor, memory_decay_factor_, "");
+    set_param(status, names::memory_influence, memory_influence_, "");
+    set_param(status, names::memory_dist_exp, memory_dist_exp_, "");
+    set_param(status, names::memory_dist_cut, memory_dist_cut_,
+              "micrometer");
 }
 
 } // namespace growth

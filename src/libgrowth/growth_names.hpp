@@ -315,6 +315,7 @@ extern const std::string num_growth_cones;
 extern const std::string interactions;
 extern const std::string max_allowed_resolution;
 extern const std::string max_synaptic_distance;
+extern const std::string print_time;
 extern const std::string resolution;
 
 #define DEFAULT_MAX_RESOL 30.

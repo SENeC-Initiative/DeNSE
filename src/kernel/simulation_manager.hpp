@@ -74,6 +74,7 @@ class SimulationManager : public ManagerInterface
     void finalize_simulation_();
 
     bool simulating_;
+    bool print_time_;
     double previous_resolution_;
     std::vector<Time::timeStep> step_;
     std::vector<double> substep_;

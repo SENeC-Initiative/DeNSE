@@ -112,6 +112,7 @@ const std::string num_growth_cones("num_growth_cones");
 const std::string persistence_length("persistence_length");
 const std::string points_per_circle("points_per_circle");
 const std::string polarization_strength("polarization_strength");
+const std::string print_time("print_time");
 const std::string proba_down_move("proba_down_move");
 const std::string proba_retraction("retraction_probability");
 

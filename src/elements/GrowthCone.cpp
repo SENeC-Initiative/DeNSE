@@ -344,7 +344,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
             // Assess current situation and decide on following move base on
             // that. Check and change the sensing_angle if necessary
             // update current_time and set next local_substep
-            if (move_.module > 1e-4)
+            if (move_.module > 0)
             {
                 // ======== //
                 // Forward! //

@@ -165,6 +165,8 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
     BPoint vec, tmp;
     BLineString side, front;
 
+    double factor;  // factor to make sure lines cross
+
     if (right_order)
     {
         // p1 disappears and becomes old_p1
@@ -174,8 +176,10 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
         vec = stop;
         bg::subtract_point(vec, old_p1);
 
-        tmp = BPoint(stop.x() + 2 * vec.x(),
-                     stop.y() + 2 * vec.y());
+        factor = 2 * diam / sqrt(vec.x()*vec.x() + vec.y()*vec.y());
+
+        tmp = BPoint(stop.x() + factor * vec.x(),
+                     stop.y() + factor * vec.y());
 
         front = BLineString({old_p1, tmp});
     }
@@ -188,8 +192,10 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
         vec = stop;
         bg::subtract_point(vec, old_p2);
 
-        tmp = BPoint(stop.x() + 2 * vec.x(),
-                     stop.y() + 2 * vec.y());
+        factor = 2 * diam / sqrt(vec.x()*vec.x() + vec.y()*vec.y());
+
+        tmp = BPoint(stop.x() + factor * vec.x(),
+                     stop.y() + factor * vec.y());
 
         front = BLineString({old_p2, tmp});
     }
@@ -396,7 +402,6 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         // otherwise it means that lp_1 and lp_2 are inverted
                         if (mp.empty())
                         {
-                            printf("empty intersection\n");
                             if (not inverted)
                             {
                                 // lp_1 and lp_2 are inverted
@@ -420,24 +425,17 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         }
                         else
                         {
-                            if (count > 0)
-                            {
-                                printf("intersecting lines - OMP %i\n", omp_id);
-                            }
-                            //~ std::cout << bg::wkt(ls_new) << " " << bg::wkt(ls_old) << std::endl;
-                            // get which old point is closest to the
-                            // intersection (in correct polygon, lp_1 is the
-                            // one which will disappear)
-                            double d1, d2;
+                            // get which new point should disappear (the one
+                            // for which the segment from stop intersects the
+                            // old frontline)
                             bool right_order(true);
 
-                            d1 = bg::distance(mp[0], old_lp1);
-                            d2 = bg::distance(mp[0], old_lp2);
+                            ls_new = BLineString({stop, lp_2});
 
                             // check new polygon will start from closest point,
                             // go through stop, and finish someplace (computed)
                             // that way
-                            if (d1 > d2)
+                            if (bg::intersects(ls_new, ls_old))
                             {
                                 // p2 should disappear, so we must swap both
                                 // points in correct_polygon
@@ -453,17 +451,11 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                                             last_segment, dist, right_order);
 
                             corrected = true;
-
-                            if (count > 0)
-                            {
-                                printf("right order is %i\n", right_order);
-                            }
                         }
                     }
                 }
                 else if (failure == bg::failure_wrong_orientation)
                 {
-                    printf("wrong orientation\n");
                     bg::correct(*(poly.get()));
 
                 }
@@ -487,7 +479,8 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                           << bg::wkt(lp_1) << std::endl
                           << bg::wkt(lp_2) << std::endl
                           << bg::wkt(stop) << std::endl
-                          << bg::wkt(*(poly.get())) << std::endl;
+                          << bg::wkt(*(poly.get())) << std::endl
+                          << bg::wkt(*(last_segment.get())) << std::endl;
 
                 printf("\n");
 

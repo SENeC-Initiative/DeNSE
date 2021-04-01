@@ -171,7 +171,15 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
     {
         // p1 disappears and becomes old_p1
         p1 = old_p1;
-        side = BLineString({old_p2, p2});
+
+        // make segment longer for edge case where, since disappearing point
+        // is not behind the front line, intersection could be after p2
+        vec = p2;
+        bg::subtract_point(vec, old_p2);
+
+        tmp = BPoint(p2.x() + vec.x(), p2.y() + vec.y());
+        side = BLineString({old_p2, tmp});
+
         // compute segment associated to (new_p1 = old_p1, stop)
         vec = stop;
         bg::subtract_point(vec, old_p1);
@@ -187,7 +195,15 @@ void correct_polygon(const BPoint &vec_step, const BPoint &vec_ortho,
     {
         // p2 disappears and becomes old_p2
         p2 = old_p2;
-        side = BLineString({old_p1, p1});
+
+        // make segment longer for edge case where, since disappearing point
+        // is not behind the front line, intersection could be after p1
+        vec = p1;
+        bg::subtract_point(vec, old_p1);
+
+        tmp = BPoint(p1.x() + vec.x(), p1.y() + vec.y());
+        side = BLineString({old_p1, tmp});
+
         // compute segment associated to (new_p2 = old_p2, stop)
         vec = stop;
         bg::subtract_point(vec, old_p2);
@@ -358,7 +374,7 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
             outer.push_back(old_lp1);
 
             // check whether this did not create a self-crossing
-            unsigned int count = 0;
+            unsigned int count(0);
             bool corrected(false), inverted(false);
 
             while (not bg::is_valid(*(poly.get()), failure))
@@ -394,42 +410,16 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         BLineString ls_new({lp_1, lp_2});
                         BLineString ls_old({old_lp1, old_lp2});
 
-                        BMultiPoint mp;
-                        bg::intersection(ls_new, ls_old, mp);
+                        bool right_order(true);
 
                         // if they intersect, then the GC turned to much and
                         // we need to change the polygon,
                         // otherwise it means that lp_1 and lp_2 are inverted
-                        if (mp.empty())
-                        {
-                            if (not inverted)
-                            {
-                                // lp_1 and lp_2 are inverted
-                                outer.push_back(old_lp1);
-                                outer.push_back(old_lp2);
-                                outer.push_back(lp_1);
-                                outer.push_back(lp_2);
-                                outer.push_back(old_lp1);
-
-                                inverted = true;
-                            }
-                            else
-                            {
-                                // lp_1 and lp_2 are inverted the other way
-                                outer.push_back(old_lp1);
-                                outer.push_back(old_lp2);
-                                outer.push_back(lp_2);
-                                outer.push_back(lp_1);
-                                outer.push_back(old_lp1);
-                            }
-                        }
-                        else
+                        if (bg::intersects(ls_new, ls_old))
                         {
                             // get which new point should disappear (the one
                             // for which the segment from stop intersects the
                             // old frontline)
-                            bool right_order(true);
-
                             ls_new = BLineString({stop, lp_2});
 
                             // check new polygon will start from closest point,
@@ -451,6 +441,32 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                                             last_segment, dist, right_order);
 
                             corrected = true;
+                        }
+                        else
+                        {
+                            // these cases occur very seldom but are usually
+                            // weird, to simplify, we treat them the same way as
+                            // actual intersections and get rid of the closest
+                            // point
+                            double d1, d2;
+
+                            d1 = bg::distance(lp_1, old_lp1);
+                            d2 = bg::distance(lp_2, old_lp2);
+                            
+                            if (d2 < d1)
+                            {
+                                // p2 should disappear, so we must swap both
+                                // points in correct_polygon
+                                right_order = false;
+                            }
+
+                            double dist =
+                                std::max(bg::distance(old_lp2, old_lp1),
+                                         bg::distance(lp_2, lp_1));
+
+                            correct_polygon(l_vec, r_vec, stop, lp_1, lp_2,
+                                            old_lp1, old_lp2, outer,
+                                            last_segment, dist, right_order);
                         }
                     }
                 }
@@ -474,20 +490,30 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
             {
                 printf("here after %i\n", count);
                 std::cout << "last points: " << std::endl
-                          << bg::wkt(old_lp1) << std::endl
-                          << bg::wkt(old_lp2) << std::endl
-                          << bg::wkt(lp_1) << std::endl
-                          << bg::wkt(lp_2) << std::endl
-                          << bg::wkt(stop) << std::endl
-                          << bg::wkt(*(poly.get())) << std::endl
-                          << bg::wkt(*(last_segment.get())) << std::endl;
+                          << std::setprecision(12) << bg::wkt(old_lp1) << std::endl
+                          << std::setprecision(12) << bg::wkt(old_lp2) << std::endl
+                          << std::setprecision(12) << bg::wkt(lp_1) << std::endl
+                          << std::setprecision(12) << bg::wkt(lp_2) << std::endl
+                          << std::setprecision(12) << bg::wkt(stop) << std::endl
+                          << std::setprecision(12) << bg::wkt(*(poly.get())) << std::endl;
 
-                printf("\n");
+                outer.clear();
+
+                outer.push_back(old_lp1);
+                outer.push_back(lp_1);
+                outer.push_back(lp_2);
+                outer.push_back(old_lp2);
+                outer.push_back(old_lp1);
+
+                std::cout << std::setprecision(12) << bg::wkt(*(poly.get())) << std::endl;
 
                 if (last_segment != nullptr)
                 {
-                    std::cout << bg::wkt(*(last_segment.get())) << std::endl;
+                    std::cout << std::setprecision(12) << bg::wkt(*(last_segment.get())) << std::endl;
                 }
+
+                success = bg::is_valid(*(poly.get()), message);
+                std::cout << "poly is valid " << success << ": " << message;
 
                 throw std::runtime_error("Invalid polygon: " + message);
             }

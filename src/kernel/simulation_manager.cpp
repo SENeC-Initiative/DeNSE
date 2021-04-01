@@ -387,18 +387,6 @@ void SimulationManager::simulate(const Time &t)
                     std::sort(branching_ev_.begin(), branching_ev_.end(),
                               ev_greater);
                 }
-
-                if (print_time_)
-                {
-                    std::cout << "\r";
-                    std::cout << "Simulating: "
-                              << (int)(100 * current_step / final_step_) << "%";
-
-                    if (current_step == final_step_)
-                    {
-                        std::cout << std::endl;
-                    }
-                }
             }
 
 #pragma omp barrier
@@ -531,6 +519,22 @@ void SimulationManager::simulate(const Time &t)
                 kernel().record_manager.record(omp_id);
                 substep_[omp_id] = 0.;
                 step_[omp_id]++;
+            }
+
+            if (print_time_)
+            {
+#pragma omp single
+                {
+                    std::cout << "\r";
+                    std::cout << "Simulating: "
+                              << (int)(100 * step_[omp_id] / final_step_)
+                              << "%";
+
+                    if (step_[omp_id] == final_step_)
+                    {
+                        std::cout << std::endl;
+                    }
+                }
             }
 
 #pragma omp barrier

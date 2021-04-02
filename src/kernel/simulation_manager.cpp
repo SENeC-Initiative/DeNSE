@@ -62,6 +62,7 @@ SimulationManager::SimulationManager()
     , previous_resolution_(Time::RESOLUTION)
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
     , max_resol_(DEFAULT_MAX_RESOL)
+    , print_time_(false)
 {
 }
 
@@ -76,6 +77,8 @@ void SimulationManager::initialize()
     initial_time_  = Time();
     final_time_    = Time();
     max_resol_     = DEFAULT_MAX_RESOL;
+
+    print_time_ = false;
 }
 
 
@@ -451,10 +454,8 @@ void SimulationManager::simulate(const Time &t)
             {
                 try
                 {
-                    //~ printf("growing neuron %lu\n", neuron.first);
                     neuron.second->grow(rnd_engine, current_step,
                                         substep_[omp_id] - previous_substep);
-                    //~ printf("neuron %lu grown\n", neuron.first);
                 }
                 catch (...)
                 {
@@ -520,6 +521,22 @@ void SimulationManager::simulate(const Time &t)
                 step_[omp_id]++;
             }
 
+            if (print_time_)
+            {
+#pragma omp single
+                {
+                    std::cout << "\r";
+                    std::cout << "Simulating: "
+                              << (int)(100 * step_[omp_id] / final_step_)
+                              << "%";
+
+                    if (step_[omp_id] == final_step_)
+                    {
+                        std::cout << std::endl;
+                    }
+                }
+            }
+
 #pragma omp barrier
             if (not exceptions.empty())
             {
@@ -545,6 +562,7 @@ void SimulationManager::simulate(const Time &t)
         }
 
         // rethrow first exception which occured
+        printf("Terminated at step %lu\n", step_[0]);
         std::rethrow_exception(exceptions.at(0));
     }
 
@@ -580,6 +598,13 @@ void SimulationManager::set_status(const statusMap &status)
 
         Time::set_resolution(resolution);
     }
+
+    bool print_time;
+
+    if (get_param(status, names::print_time, print_time))
+    {
+        print_time_ = print_time;
+    }
 }
 
 
@@ -587,6 +612,7 @@ void SimulationManager::get_status(statusMap &status) const
 {
     set_param(status, names::resolution, Time::RESOLUTION, "minute");
     set_param(status, names::max_allowed_resolution, max_resol_, "minute");
+    set_param(status, names::print_time, print_time_, "");
 
     // initial time is always up to date
     set_param(status, "second", initial_time_.get_sec(), "second");

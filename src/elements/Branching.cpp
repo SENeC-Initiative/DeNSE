@@ -366,7 +366,8 @@ void Branching::update_splitting_cones(TNodePtr branching_cone,
         catch (...)
         {
             std::throw_with_nested(std::runtime_error(
-                "Passed from `Branching::update_splitting_cones`."));
+                "Passed from `Branching::update_splitting_cones` "
+                "(second cone)."));
         }
     }
 
@@ -390,7 +391,8 @@ void Branching::update_splitting_cones(TNodePtr branching_cone,
         catch (...)
         {
             std::throw_with_nested(std::runtime_error(
-                "Passed from `Branching::update_splitting_cones`."));
+                "Passed from `Branching::update_splitting_cones` "
+                "(branching cone)."));
         }
     }
 }

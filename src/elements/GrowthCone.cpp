@@ -400,7 +400,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
                 // we elongated so we did not just get out of a retraction
                 just_retracted_ = false;
             }
-            else
+            else if (move_.module < 0)
             {
                 // =========== //
                 // Back we go! //
@@ -588,7 +588,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
                 {
                     std::throw_with_nested(std::runtime_error(
                         "Passed from `GrowthCone::retract` coming from "
-                        "space_manager::add_object."));
+                        "space_manager::add_object (after retraction)."));
                 }
             }
 

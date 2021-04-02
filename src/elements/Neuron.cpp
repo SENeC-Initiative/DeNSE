@@ -134,7 +134,8 @@ void Neuron::init_status(
     catch (...)
     {
         std::throw_with_nested(
-            std::runtime_error("Passed from `Neuron::init_status`."));
+            std::runtime_error(
+                "Passed from `Neuron::init_status` (adding soma)."));
     }
 
     // prepare the neurites

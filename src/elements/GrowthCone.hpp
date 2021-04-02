@@ -96,8 +96,9 @@ class GrowthCone : public TopologicalNode,
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
     double old_angle_;
-    double cumul_dist_;  // cumulative distance since last call to add_object
-    double threshold_;   // threshold above which add_object is called
+    double cumul_angle_;  // cumulative angle since last call to add_object
+    double cumul_dist_;   // cumulative distance since last call to add_object
+    double threshold_;    // threshold above which add_object is called
 
     space_tree_map current_neighbors_;
 

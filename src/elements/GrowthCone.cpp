@@ -107,6 +107,7 @@ GrowthCone::GrowthCone(const std::string &model)
     , max_sensing_angle_(MAX_SENSING_ANGLE)
     , scale_up_move_(SCALE_UP_MOVE)
     , old_angle_(0.)
+    , cumul_angle_(0.)
     , cumul_dist_(0.)
     , threshold_(0.)
 {
@@ -155,6 +156,7 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
     , old_angle_(copy.old_angle_)
+    , cumul_angle_(0.)
     , cumul_dist_(0.)
     , threshold_(copy.threshold_)
 {
@@ -863,9 +865,12 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     move_.angle  = new_angle;
 
                     cumul_dist_ += move_.module;
+                    cumul_angle_ += delta_angle_;
 
                     // send the new segment to the space manager
-                    if (cumul_dist_ > threshold_)
+                    // this happens either if we cross the distance threshold
+                    // of if it looks like the GC is about to turn too far
+                    if (cumul_dist_ > threshold_ or cumul_angle_ > 0.5*M_PI)
                     {
                         try
                         {
@@ -901,6 +906,7 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                             }
 
                             cumul_dist_ = 0.;
+                            cumul_angle_ = 0.;
                         }
                         catch (...)
                         {

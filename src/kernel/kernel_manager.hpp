@@ -104,9 +104,11 @@ class KernelManager
 
     std::string simulation_ID_;
     double get_adaptive_timestep() const;
+    double get_add_object_threshold() const;
     bool using_environment() const;
     //! Returns true if kernel is initialized
     bool is_initialized() const;
+
     //! Space manager instance
     ParallelismManager parallelism_manager;
     RNGManager rng_manager;
@@ -126,6 +128,7 @@ class KernelManager
     stype num_objects_;         //!< current number of objects
     std::string version_;
     double adaptive_timestep_; //! if > 1, step divider when interacting
+    double add_object_threshold_;
 };
 
 KernelManager &kernel();

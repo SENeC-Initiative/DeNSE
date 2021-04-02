@@ -93,6 +93,7 @@ KernelManager::KernelManager()
     , num_objects_(0)
     , num_created_objects_(0)
     , adaptive_timestep_(-1.)
+    , add_object_threshold_(0.1)
     , version_("0.1.0")
 {
 }
@@ -163,6 +164,8 @@ const statusMap KernelManager::get_status() const
     set_param(status, "environment_required", env_required_, "");
     set_param(status, "record_enabled", record_enabled_, "");
     set_param(status, "adaptive_timestep", adaptive_timestep_, "");
+    set_param(status, "growth_threshold_polygon", add_object_threshold_,
+              "micrometer");
 
     // set_param(status, "simulation_ID", simulation_ID_);
     /*
@@ -232,6 +235,9 @@ void KernelManager::set_status(const statusMap &status)
     bool env_required_old = env_required_;
     bool env_updated = get_param(status, "environment_required", env_required_);
 
+    bool threshupdate = get_param(status, "growth_threshold_polygon",
+                                  add_object_threshold_);
+
     /*
      * delegate the rest; no set_status for:
      * - rng_manager
@@ -247,9 +253,15 @@ void KernelManager::set_status(const statusMap &status)
     env_updated *= (env_required_old != env_required_);
     at_updated  *= (at_old != adaptive_timestep_);
 
-    if (env_updated or at_updated)
+    if (env_updated or at_updated or threshupdate)
     {
         neuron_manager.update_kernel_variables();
     }
 }
+
+double KernelManager::get_add_object_threshold() const
+{
+    return add_object_threshold_;
+}
+
 } // namespace growth

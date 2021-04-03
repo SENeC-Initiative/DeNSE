@@ -55,18 +55,14 @@ auto ev_greater = [](const Event &lhs, const Event &rhs) {
 
 /*
  * Instantiate SimulationManager
+ * WARNING: This function must be called by create_kernel_manager ONLY
  */
 void SimulationManager::create_simulation_manager()
 {
-// only one thread at a time must enter this, which means only one
-// will indeed be created (prevents race condition)
-#pragma omp critical(create_simulation_manager)
+    if (simulation_manager_instance_ == 0)
     {
-        if (simulation_manager_instance_ == 0)
-        {
-            simulation_manager_instance_ = new SimulationManager();
-            assert(simulation_manager_instance_);
-        }
+        simulation_manager_instance_ = new SimulationManager();
+        assert(simulation_manager_instance_);
     }
 }
 
@@ -217,9 +213,6 @@ void SimulationManager::test_random_generator(Random_vecs &values, stype size)
 void SimulationManager::num_threads_changed(int num_omp)
 {
     Time::timeStep old_step = (step_.size() > 0) ? step_.front() : 0L;
-
-    step_.clear();
-    substep_.clear();
 
     step_    = std::vector<Time::timeStep>(num_omp, old_step);
     substep_ = std::vector<double>(num_omp, 0.);

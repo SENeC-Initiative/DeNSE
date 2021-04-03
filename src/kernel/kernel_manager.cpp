@@ -55,11 +55,12 @@ void KernelManager::create_kernel_manager()
     {
         if (kernel_manager_instance_ == 0)
         {
+            // FIRST create the simulation manager
+            SimulationManager::create_simulation_manager();
+
+            // create the kernel that will then get the simulation manager
             kernel_manager_instance_ = new KernelManager();
             assert(kernel_manager_instance_);
-
-            // create the simulation manager
-            SimulationManager::create_simulation_manager();
         }
     }
 }

@@ -247,7 +247,7 @@ double ResourceBasedExtensionModel::compute_CR(mtPtr rnd_engine, double substep,
             {
                 // create an event so the growth cone will split at the next
                 // step
-                Time ev_time = kernel().simulation_manager.get_time();
+                Time ev_time = kernel().simulation_manager->get_time();
                 ev_time.update(1UL, 0.);
 
                 auto neuron         = neurite_ptr_->get_parent_neuron().lock();
@@ -258,7 +258,7 @@ double ResourceBasedExtensionModel::compute_CR(mtPtr rnd_engine, double substep,
                 Event ev = std::make_tuple(ev_time, neuron_gid, neurite,
                                            cone_id, names::gc_splitting);
 
-                kernel().simulation_manager.new_branching_event(ev);
+                kernel().simulation_manager->new_branching_event(ev);
             }
         }
     }

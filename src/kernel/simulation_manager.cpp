@@ -26,6 +26,7 @@
 #include <cmath>
 #include <limits>
 #include <mutex>
+#include <csignal>
 
 // Includes from kernel
 #include "GrowthCone.hpp"
@@ -41,12 +42,43 @@
 namespace growth
 {
 
+SimulationManager *SimulationManager::simulation_manager_instance_ = 0;
+
+
 /**
  * @brief compare the times of Events
  */
 auto ev_greater = [](const Event &lhs, const Event &rhs) {
     return std::get<edata::TIME>(lhs) > std::get<edata::TIME>(rhs);
 };
+
+
+/*
+ * Instantiate SimulationManager
+ */
+void SimulationManager::create_simulation_manager()
+{
+// only one thread at a time must enter this, which means only one
+// will indeed be created (prevents race condition)
+#pragma omp critical(create_simulation_manager)
+    {
+        if (simulation_manager_instance_ == 0)
+        {
+            simulation_manager_instance_ = new SimulationManager();
+            assert(simulation_manager_instance_);
+        }
+    }
+}
+
+
+/*
+ * Remove KernelManager
+ */
+void SimulationManager::destroy_simulation_manager()
+{
+    simulation_manager_instance_->finalize();
+    delete simulation_manager_instance_;
+}
 
 
 SimulationManager::SimulationManager()
@@ -63,8 +95,25 @@ SimulationManager::SimulationManager()
     , resolution_scale_factor_(1) //! rescale step size respct to old resolution
     , max_resol_(DEFAULT_MAX_RESOL)
     , print_time_(false)
+    , flag_interrupt_(false)
 {
+    signal(SIGINT, SimulationManager::interrupt);
 }
+
+
+/**
+ * Getter for the singleton instance
+ */
+SimulationManager *SimulationManager::get_simulation_manager()
+{
+    return simulation_manager_instance_;
+}
+
+
+/**
+ * Terminate the simulation after the time-slice is finished.
+ */
+void SimulationManager::terminate() { terminate_ = true; }
 
 
 void SimulationManager::initialize()
@@ -79,6 +128,7 @@ void SimulationManager::initialize()
     max_resol_     = DEFAULT_MAX_RESOL;
 
     print_time_ = false;
+    flag_interrupt_ = false;
 }
 
 
@@ -93,6 +143,25 @@ void SimulationManager::finalize()
  * Reset the SimulationManager to the state at T = 0.
  */
 void SimulationManager::reset_culture() {}
+
+
+/**
+ * Handle signal interruption
+ */
+void SimulationManager::interrupt(int signum)
+{
+    simulation_manager_instance_->interrupt_instance(signum);
+}
+
+
+/**
+ * Signal handler
+ */
+void SimulationManager::interrupt_instance(int signum)
+{
+    flag_interrupt_ = true;
+    terminate_ = true;
+}
 
 
 void SimulationManager::test_random_generator(Random_vecs &values, stype size)
@@ -538,7 +607,7 @@ void SimulationManager::simulate(const Time &t)
             }
 
 #pragma omp barrier
-            if (not exceptions.empty())
+            if (not exceptions.empty() )
             {
                 terminate_ = true;
             }
@@ -551,7 +620,12 @@ void SimulationManager::simulate(const Time &t)
         // set terminate back to false
         terminate_ = false;
 
-        if (exceptions.empty())
+        if (flag_interrupt_)
+        {
+            flag_interrupt_ = false;
+            throw std::runtime_error("Received user interrupt.");
+        }
+        else if (exceptions.empty())
         {
             throw std::runtime_error(
                 "Internal error: terminate was set to true, probably "

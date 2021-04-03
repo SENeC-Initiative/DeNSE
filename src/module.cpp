@@ -97,7 +97,7 @@ stype create_neurons_(
                                                                neurite_params);
 
     // update max_resolution
-    kernel().simulation_manager.set_max_resolution();
+    kernel().simulation_manager->set_max_resolution();
 
     return num_created;
 }
@@ -260,7 +260,7 @@ void simulate_(const Time &simtime)
 {
     try
     {
-        kernel().simulation_manager.simulate(simtime);
+        kernel().simulation_manager->simulate(simtime);
     }
     catch (...)
     {
@@ -347,7 +347,7 @@ void set_status_(stype gid, statusMap neuron_status,
     }
 
     // update max_resolution for simulation
-    kernel().simulation_manager.set_max_resolution();
+    kernel().simulation_manager->set_max_resolution();
 }
 
 
@@ -425,7 +425,7 @@ void set_status_(std::vector<stype> gids, std::vector<statusMap> status,
     }
 
     // update max_resolution for simulation
-    kernel().simulation_manager.set_max_resolution();
+    kernel().simulation_manager->set_max_resolution();
 }
 
 
@@ -473,7 +473,7 @@ std::vector<std::string> get_direction_selection_methods_()
 
 const Time get_current_time_()
 {
-    return kernel().simulation_manager.get_time();
+    return kernel().simulation_manager->get_time();
 }
 
 
@@ -1047,7 +1047,7 @@ void get_backtrace_(std::string &msg, int depth = 0)
 
 void test_random_generator_(Random_vecs &values, stype size)
 {
-    kernel().simulation_manager.test_random_generator(values, size);
+    kernel().simulation_manager->test_random_generator(values, size);
     printf("%lu number generated from rng\n", values[0].size());
 }
 

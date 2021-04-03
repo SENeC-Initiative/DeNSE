@@ -57,6 +57,9 @@ void KernelManager::create_kernel_manager()
         {
             kernel_manager_instance_ = new KernelManager();
             assert(kernel_manager_instance_);
+
+            // create the simulation manager
+            SimulationManager::create_simulation_manager();
         }
     }
 }
@@ -68,6 +71,7 @@ void KernelManager::create_kernel_manager()
 void KernelManager::destroy_kernel_manager()
 {
     kernel_manager_instance_->finalize();
+    SimulationManager::destroy_simulation_manager();
     delete kernel_manager_instance_;
 }
 
@@ -79,7 +83,6 @@ KernelManager::KernelManager()
     // managers
     : parallelism_manager()
     , rng_manager()
-    , simulation_manager()
     , space_manager()
     , record_manager()
     , model_manager()
@@ -95,6 +98,7 @@ KernelManager::KernelManager()
     , adaptive_timestep_(-1.)
     , version_("0.1.0")
 {
+    simulation_manager = SimulationManager::get_simulation_manager();
 }
 
 
@@ -113,7 +117,7 @@ void KernelManager::initialize()
     rng_manager.initialize();
 
     // then the rest
-    simulation_manager.initialize();
+    simulation_manager->initialize();
     space_manager.initialize();
     record_manager.initialize();
 
@@ -132,7 +136,7 @@ void KernelManager::finalize()
     neuron_manager.finalize();
     record_manager.finalize();
     space_manager.finalize();
-    simulation_manager.finalize();
+    simulation_manager->finalize();
     rng_manager.finalize();
     parallelism_manager.finalize();
 
@@ -171,7 +175,7 @@ const statusMap KernelManager::get_status() const
     parallelism_manager.get_status(status);
     rng_manager.get_status(status);
     space_manager.get_status(status);
-    simulation_manager.get_status(status);
+    simulation_manager->get_status(status);
 
     return status;
 }
@@ -240,8 +244,8 @@ void KernelManager::set_status(const statusMap &status)
      */
     parallelism_manager.set_status(status);
     space_manager.set_status(status);
-    double old_resol = simulation_manager.get_resolution();
-    simulation_manager.set_status(status);
+    double old_resol = simulation_manager->get_resolution();
+    simulation_manager->set_status(status);
 
     // update the objects
     env_updated *= (env_required_old != env_required_);

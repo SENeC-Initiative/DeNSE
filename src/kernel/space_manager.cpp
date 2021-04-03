@@ -397,7 +397,7 @@ void SpaceManager::add_object(const BPoint &start, const BPoint &stop,
                         std::cout << bg::wkt(stop) << std::endl;
                         printf(
                             "At %f min\n",
-                            kernel().simulation_manager.get_current_minutes());
+                            kernel().simulation_manager->get_current_minutes());
                         throw std::runtime_error(
                             "stop covered by last segment");
                     }
@@ -2238,7 +2238,7 @@ void SpaceManager::set_status(const statusMap &config)
                                     "must be smaller than " +
                                     std::to_string(MAX_MAX_SYN_DIST) + ".");
     }
-    if (kernel().simulation_manager.get_time() != Time())
+    if (kernel().simulation_manager->get_time() != Time())
     {
         throw std::invalid_argument("Cannot change `" +
                                     names::max_synaptic_distance +

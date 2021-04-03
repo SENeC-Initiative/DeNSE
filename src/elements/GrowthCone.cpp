@@ -938,7 +938,7 @@ void GrowthCone::init_filopodia()
 {
     double dtheta, std_norm, proba_norm, bin, angle, P;
 
-    double resol = kernel().simulation_manager.get_resolution();
+    double resol = kernel().simulation_manager->get_resolution();
 
     // move sensing angle must have been updated by previous call to
     // update_growth_properties
@@ -1241,7 +1241,7 @@ void GrowthCone::update_kernel_variables()
 
     // check change in resolution
     double old_resol = resol_;
-    resol_           = kernel().simulation_manager.get_resolution();
+    resol_           = kernel().simulation_manager->get_resolution();
 
     // check adaptive timestep
     adaptive_timestep_ = kernel().get_adaptive_timestep();

@@ -157,7 +157,7 @@ you can seed the random number generators used during the simulation through: ::
     ds.set_kernel_status({"seeds": [1, 5, 3, 6]})
 
 Note that one seed must be given for each thread.
-The result of a simulation should alawys be the same provided the number of threads and seeds used are
+The result of a simulation should always be the same provided the number of threads and seeds used are
 identical.
 
 
@@ -174,10 +174,19 @@ To increase speed, several approaches may or may not be attractive to you.
   advantage because it increases the size of the compartments composing the neuron, thus
   reducing their number and speeding up the interactions. However, this will obviously make the
   final results more "crude", as you subsample the real path of the neurites.
+* Increase the value of the ``"growth_threshold_polygon"`` kernel parameter; this parameter is
+  related to the distance the growth cone must move away from its previous position for a polygon
+  to be generated, at which point other growth cones will be able to interact with this new part
+  of the branch. This brings speedups that are similar to increasing time resolution for the same
+  reason mentioned previously: fewer geometric operations and polygons to deal with.
+  Note that increasing this value could lead to approximations: growth cones that should
+  have interacted may miss one another if you increase this value too far (over a few microns,
+  for instance), though it remains very low for values below a micron.
 * Switch the interactions off using ``ds.set_kernel_status({"interactions": False})``.
   Neuron-neuron interactions are currently the main source of CPU requirement and, though we know
-  how we could reduce it, it is a non-trivial task for which we currently do not have the
-  necessary time. If you are interested an would like to help on that, feel free to contact us.
+  how we could reduce them further, it is a non-trivial task for which we currently do not have
+  the necessary time. If you are interested an would like to help on that, feel free to contact
+  us.
 * Do not use a spatial environment. Though this leads to lower speed gains compared to the other
   solutions, it might also help in specific cases.
 
@@ -258,12 +267,21 @@ associated names:
     :language: python
     :lines: 118-120
 
+Because simulating many neurons can take time, in this example we set the
+kernel parameters so that neuron-neuron interactions are ignored and the
+progress of the simulation is printed:
+
+.. literalinclude:: ../../examples/tutorials/4_complex_neuron_params.py
+    :linenos:
+    :language: python
+    :lines: 153-160
+
 Finally we set the parameters and create the neurons:
 
 .. literalinclude:: ../../examples/tutorials/4_complex_neuron_params.py
     :linenos:
     :language: python
-    :lines: 164-169
+    :lines: 165-169
 
 If you run the whole file, you will get the following structure (scale bar is
 50 :math:`\mu m`):

@@ -107,6 +107,9 @@ GrowthCone::GrowthCone(const std::string &model)
     , max_sensing_angle_(MAX_SENSING_ANGLE)
     , scale_up_move_(SCALE_UP_MOVE)
     , old_angle_(0.)
+    , cumul_angle_(0.)
+    , cumul_dist_(0.)
+    , threshold_(0.)
 {
     // random distributions
     normal_      = std::normal_distribution<double>(0, 1);
@@ -153,6 +156,9 @@ GrowthCone::GrowthCone(const GrowthCone &copy)
     , min_filopodia_(copy.min_filopodia_)
     , num_filopodia_(copy.num_filopodia_)
     , old_angle_(copy.old_angle_)
+    , cumul_angle_(0.)
+    , cumul_dist_(0.)
+    , threshold_(copy.threshold_)
 {
     normal_  = std::normal_distribution<double>(0, 1);
     uniform_ = std::uniform_real_distribution<double>(0., 1.);
@@ -375,7 +381,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
                     catch (...)
                     {
                         std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::grow`."));
+                            "Passed from `GrowthCone::grow` (make_move)."));
                     }
 
                     // assess stopped state (computed in make_move)
@@ -400,7 +406,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
                 // we elongated so we did not just get out of a retraction
                 just_retracted_ = false;
             }
-            else if (move_.module < 0)
+            else
             {
                 // =========== //
                 // Back we go! //
@@ -520,116 +526,152 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // remove the points
     double distance_done;
 
-    while (distance > 0 and branch_->size() > 1)
+    // start with the steps that did not yet lead to a polygon
+    BPoint old_pos = branch_->get_last_xy();
+    double free_distance = bg::distance(position_, old_pos);
+
+    if (free_distance >= distance)
     {
-        distance_done    = branch_->get_last_segment_length();
-        BPolygonPtr poly = branch_->get_last_segment();
-        BBox box;
-        ObjectInfo info;
+        // we are still away from the last polygon, in the "free" zone
+        // update cumul_dist and set new position 
+        cumul_dist_ = free_distance - distance;
 
-        if (poly != nullptr)
+        set_position(BPoint(
+            (distance*old_pos.x() + (free_distance - distance)*position_.x())
+            / free_distance,
+            (distance*old_pos.y() + (free_distance - distance)*position_.y())
+            / free_distance));
+
+        // set angle
+        cumul_angle_ = atan2(position_.y() - old_pos.y(),
+                            position_.x() - old_pos.x());
+
+        move_.angle = cumul_angle_;
+        old_angle_  = cumul_angle_;
+
+        distance = 0.;
+    }
+    else
+    {
+        // we go back the whole distance to the last point on the branch
+        position_ = old_pos;
+        cumul_dist_ = 0.;
+        cumul_angle_ = 0.;
+        distance -= free_distance;
+
+        // continue with the polygons
+        while (distance > 0 and branch_->size() > 1)
         {
-            box = bg::return_envelope<BBox>(*(poly.get()));
-            // there is one less segment than point, so size - 2 for segment
-            info = std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
-                                   branch_->size() - 2);
-        }
+            distance_done    = branch_->get_last_segment_length();
+            BPolygonPtr poly = branch_->get_last_segment();
+            BBox box;
+            ObjectInfo info;
 
-        double remaining = distance_done - distance;
-
-        if (remaining < 1e-6) // distance is greater than what we just did
-        {
-            distance -= distance_done;
-            branch_->retract();
-
-            // we also remove the tree box
             if (poly != nullptr)
             {
-                kernel().space_manager.remove_object(box, info, omp_id);
+                box = bg::return_envelope<BBox>(*(poly.get()));
+                // there is one less segment than point, so size - 2 for segment
+                info = std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
+                                       branch_->size() - 2);
             }
-        }
-        else
-        {
-            BPoint p1 = branch_->xy_at(branch_->size() - 2);
-            BPoint p2 = branch_->get_last_xy();
 
-            double new_x =
-                (p2.x() * remaining + p1.x() * (distance_done - remaining)) /
-                distance_done;
-            double new_y =
-                (p2.y() * remaining + p1.y() * (distance_done - remaining)) /
-                distance_done;
+            double remaining = distance_done - distance;
 
-            BPoint new_p = BPoint(new_x, new_y);
-
-            branch_->retract();
-
-            // we remove the previous object and add the new, shorter one
-            if (poly != nullptr)
+            if (remaining < 1e-6) // distance is greater than what we just did
             {
-                try
+                distance -= distance_done;
+                branch_->retract();
+
+                // we also remove the tree box
+                if (poly != nullptr)
                 {
                     kernel().space_manager.remove_object(box, info, omp_id);
                 }
-                catch (...)
+            }
+            else
+            {
+                BPoint p1 = branch_->xy_at(branch_->size() - 2);
+                BPoint p2 = branch_->get_last_xy();
+
+                double new_x =
+                    (p2.x() * remaining + p1.x() * (distance_done - remaining))
+                    / distance_done;
+                double new_y =
+                    (p2.y() * remaining + p1.y() * (distance_done - remaining))
+                    / distance_done;
+
+                BPoint new_p = BPoint(new_x, new_y);
+
+                branch_->retract();
+
+                // we remove the previous object and add the new, shorter one
+                if (poly != nullptr)
                 {
-                    std::throw_with_nested(std::runtime_error(
-                        "Passed from `GrowthCone::retract`, coming from "
-                        "space_manager::remove_object."));
+                    try
+                    {
+                        kernel().space_manager.remove_object(box, info, omp_id);
+                    }
+                    catch (...)
+                    {
+                        std::throw_with_nested(std::runtime_error(
+                            "Passed from `GrowthCone::retract`, coming from "
+                            "space_manager::remove_object."));
+                    }
+
+                    try
+                    {
+                        kernel().space_manager.add_object(
+                            p1, new_p, get_diameter(), remaining,
+                            own_neurite_->get_taper_rate(), info, branch_,
+                            omp_id);
+                    }
+                    catch (...)
+                    {
+                        std::throw_with_nested(std::runtime_error(
+                            "Passed from `GrowthCone::retract` coming from "
+                            "space_manager::add_object (after retraction)."));
+                    }
                 }
 
-                try
-                {
-                    kernel().space_manager.add_object(
-                        p1, new_p, get_diameter(), remaining,
-                        own_neurite_->get_taper_rate(), info, branch_, omp_id);
-                }
-                catch (...)
-                {
-                    std::throw_with_nested(std::runtime_error(
-                        "Passed from `GrowthCone::retract` coming from "
-                        "space_manager::add_object (after retraction)."));
-                }
+                distance = 0.;
+            }
+        }
+
+        // set the new growth cone angle
+        stype last = branch_->size();
+        double x0, y0, x1, y1;
+        BPoint p;
+
+        if (last > 0)
+        {
+            p  = branch_->xy_at(last - 1);
+            x1 = p.x();
+            y1 = p.y();
+
+            if (last > 1)
+            {
+                p  = branch_->xy_at(last - 2);
+                x0 = p.x();
+                y0 = p.y();
+            }
+            else
+            {
+                p  = TopologicalNode::get_position();
+                x0 = p.x();
+                y0 = p.y();
             }
 
-            distance = 0.;
+            move_.angle = atan2(y1 - y0, x1 - x0);
+            old_angle_  = move_.angle;
         }
-    }
 
-    // set the new growth cone angle
-    stype last = branch_->size();
-    double x0, y0, x1, y1;
-    BPoint p;
+        set_position(branch_->get_last_xy());
 
-    if (last > 0)
-    {
-        p  = branch_->xy_at(last - 1);
-        x1 = p.x();
-        y1 = p.y();
-
-        if (last > 1)
+        // prune growth cone if necessary
+        if (branch_->size() == 1)
         {
-            p  = branch_->xy_at(last - 2);
-            x0 = p.x();
-            y0 = p.y();
+            prune(cone_n);
         }
-        else
-        {
-            p  = TopologicalNode::get_position();
-            x0 = p.x();
-            y0 = p.y();
-        }
-
-        move_.angle = atan2(y1 - y0, x1 - x0);
-        old_angle_  = move_.angle;
-    }
-
-    set_position(branch_->get_last_xy());
-
-    // prune growth cone if necessary
-    if (branch_->size() == 1)
-    {
-        prune(cone_n);
     }
 
     // check if we changed area
@@ -858,43 +900,75 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     delta_angle_ = new_angle - move_.angle;
                     move_.angle  = new_angle;
 
+                    cumul_dist_ += move_.module;
+                    cumul_angle_ += delta_angle_;
+
                     // send the new segment to the space manager
-                    // note the size - 1 in the tuple because there is always
-                    // one less segment than the number of points
-                    try
+                    // this happens either if we cross the distance threshold
+                    // of if it looks like the GC is about to turn too far
+                    if (cumul_dist_ > threshold_ or cumul_angle_ > 0.5*M_PI)
                     {
-                        kernel().space_manager.add_object(
-                            position_, p, get_diameter(), move_.module,
-                            own_neurite_->get_taper_rate(),
-                            std::make_tuple(neuron_id_, neurite_name_,
-                                            get_node_id(), branch_->size() - 1),
-                            branch_, omp_id);
-                    }
-                    catch (...)
-                    {
-                        printf("module %f - delta angle: %f - old angle %f - "
-                               "new angle %f on OMP %i\n",
-                               move_.module, delta_angle_, old_angle_,
-                               new_angle, omp_id);
-
-                        std::cout << "p " << bg::wkt(p) << std::endl;
-
-                        BPoint p2 = branch_->get_last_xy();
-                        std::cout << "p2 " << bg::wkt(p2) << std::endl;
-
-                        if (branch_->size() > 1)
+                        try
                         {
-                            BPoint p1 = branch_->xy_at(branch_->size() - 2);
-                            std::cout << "p1 " << bg::wkt(p1) << std::endl;
+                            // note the size - 1 in the tuple because there is
+                            // always one less segment than the number of points
+                            if (cumul_dist_ == move_.module)
+                            {
+                                // direct move from previous step
+                                kernel().space_manager.add_object(
+                                    position_, p, get_diameter(), move_.module,
+                                    own_neurite_->get_taper_rate(),
+                                    std::make_tuple(
+                                        neuron_id_, neurite_name_,
+                                        get_node_id(), branch_->size() - 1),
+                                    branch_, omp_id);
+                            }
+                            else
+                            {
+                                // move took several step, query old position
+                                // and compute distance
+                                BPoint old_pos = branch_->get_last_xy();
 
-                            double old_angle =
-                                std::atan2(p2.y() - p1.y(), p2.x() - p1.x());
-                            printf("old angle 2: %f on OMP %i\n", old_angle, omp_id);
+                                double step_size = bg::distance(old_pos, p);
+
+                                kernel().space_manager.add_object(
+                                    old_pos, p, get_diameter(), step_size,
+                                    own_neurite_->get_taper_rate(),
+                                    std::make_tuple(
+                                        neuron_id_, neurite_name_,
+                                        get_node_id(), branch_->size() - 1),
+                                    branch_, omp_id);
+                            }
+
+                            cumul_dist_ = 0.;
+                            cumul_angle_ = 0.;
                         }
+                        catch (...)
+                        {
+                            printf("module %f - delta angle: %f - old angle %f - "
+                                   "new angle %f on OMP %i\n",
+                                   move_.module, delta_angle_, old_angle_,
+                                   new_angle, omp_id);
 
-                        std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::make_move` on "
-                            "OMP " + std::to_string(omp_id) + "."));
+                            std::cout << "p " << bg::wkt(p) << std::endl;
+
+                            BPoint p2 = branch_->get_last_xy();
+                            std::cout << "p2 " << bg::wkt(p2) << std::endl;
+
+                            if (branch_->size() > 1)
+                            {
+                                BPoint p1 = branch_->xy_at(branch_->size() - 2);
+                                std::cout << "p1 " << bg::wkt(p1) << std::endl;
+
+                                double old_angle =
+                                    std::atan2(p2.y() - p1.y(), p2.x() - p1.x());
+                                printf("old angle 2: %f on OMP %i\n", old_angle, omp_id);
+                            }
+
+                            std::throw_with_nested(std::runtime_error(
+                                "Passed from `GrowthCone::make_move` on "
+                                "OMP " + std::to_string(omp_id) + "."));
+                        }
                     }
 
                     // store new position and angle
@@ -924,8 +998,9 @@ void GrowthCone::set_position(const BPoint &pos)
 {
     position_ = pos;
 
-    dist_to_parent_ = branch_->get_length();
-    dist_to_soma_   = branch_->final_distance_to_soma();
+    // if add_object has been called, cumul_dist_ is zero
+    dist_to_parent_ = branch_->get_length() + cumul_dist_;
+    dist_to_soma_   = branch_->final_distance_to_soma() + cumul_dist_;
 }
 
 
@@ -1246,6 +1321,9 @@ void GrowthCone::update_kernel_variables()
     // check adaptive timestep
     adaptive_timestep_ = kernel().get_adaptive_timestep();
     timestep_divider_  = 1. / adaptive_timestep_;
+
+    // check threshold for add_object
+    threshold_ = kernel().get_add_object_threshold();
 }
 
 

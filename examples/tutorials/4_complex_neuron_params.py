@@ -153,7 +153,8 @@ start = time.time()
 kernel_params = {
     "resolution": resolution,
     "num_local_threads": num_omp,
-    "interactions": False
+    "interactions": False,
+    "print_progress": True
 }
 
 ds.set_kernel_status(kernel_params)

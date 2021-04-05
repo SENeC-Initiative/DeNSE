@@ -96,6 +96,9 @@ class GrowthCone : public TopologicalNode,
     double scale_up_move_;   // maximal height that GC can cross upwards
     double retraction_time_;
     double old_angle_;
+    double cumul_angle_;  // cumulative angle since last call to add_object
+    double cumul_dist_;   // cumulative distance since last call to add_object
+    double threshold_;    // threshold above which add_object is called
 
     space_tree_map current_neighbors_;
 
@@ -140,15 +143,18 @@ class GrowthCone : public TopologicalNode,
     virtual void
     compute_direction_probabilities(std::vector<double> &directions_weights,
                                     double substep) = 0;
+    
     void make_move(const std::vector<double> &directions_weights,
                    const std::vector<std::string> &new_pos_area,
                    double &substep, mtPtr rnd_engine, int omp_id);
+
     virtual void select_direction(const std::vector<double> &directions_weights,
                                   mtPtr rnd_engine, double &substep,
                                   double &new_angle,
                                   stype &default_direction) = 0;
 
     double check_retraction(double substep, mtPtr rnd_engine);
+
     void change_sensing_angle(double angle);
 
     // extension

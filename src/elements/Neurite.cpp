@@ -908,11 +908,9 @@ bool Neurite::growth_cone_split(GCPtr branching_cone, double new_length,
 {
     if (not branching_cone->is_dead() and active_)
     {
-
-
         double direction = branching_cone->move_.angle;
 
-        // prepare growth cone variables for split
+        // prepare growth cone for split
         branching_cone->prepare_for_split();
 
         // create new node as branching point

@@ -707,7 +707,7 @@ void Neuron::set_status(const statusMap &status)
     bool bsr, bad, bdd, baa;
 
     bool has_neurites = neurites_.size() > 0;
-    bool sim_started  = (kernel().simulation_manager.get_time() != Time());
+    bool sim_started  = (kernel().simulation_manager->get_time() != Time());
 
     bsr = get_param(status, names::soma_radius, sr);
     if (bsr and sr != soma_radius_)

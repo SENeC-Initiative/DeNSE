@@ -112,7 +112,7 @@ class KernelManager
     //! Space manager instance
     ParallelismManager parallelism_manager;
     RNGManager rng_manager;
-    SimulationManager simulation_manager;
+    SimulationManager *simulation_manager;
     SpaceManager space_manager;
     RecordManager record_manager;
     ModelManager model_manager;

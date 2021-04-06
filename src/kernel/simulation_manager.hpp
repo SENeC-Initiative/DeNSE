@@ -38,7 +38,10 @@ class Neuron;
 class SimulationManager : public ManagerInterface
 {
   public:
-    SimulationManager();
+    // Create/destroy and access the KernelManager singleton.
+    static void create_simulation_manager();
+    static void destroy_simulation_manager();
+    static SimulationManager *get_simulation_manager();
 
     // Init/finalize functions
     virtual void initialize();
@@ -67,14 +70,24 @@ class SimulationManager : public ManagerInterface
     void push_max_resolution(int omp_id, double max_resol,
                              double old_max_resol);
 
+    void interrupt_instance(int signum);
+    static void interrupt(int signum);
+
     void test_random_generator(Random_vecs &values, stype size);
 
   private:
+    static SimulationManager *simulation_manager_instance_;
+
+    SimulationManager();
+    SimulationManager(SimulationManager const &);  // do not implement
+    void operator=(SimulationManager const &); // do not implement
+
     void initialize_simulation_(const Time &t);
     void finalize_simulation_();
 
     bool simulating_;
     bool print_time_;
+    bool flag_interrupt_;
     double previous_resolution_;
     std::vector<Time::timeStep> step_;
     std::vector<double> substep_;
@@ -89,12 +102,6 @@ class SimulationManager : public ManagerInterface
     double resolution_scale_factor_;
     double max_resol_; // maximum allowed resolution
 };
-
-
-/**
- * Terminate the simulation after the time-slice is finished.
- */
-inline void SimulationManager::terminate() { terminate_ = true; }
 
 } // namespace growth
 

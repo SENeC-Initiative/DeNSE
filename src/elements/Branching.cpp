@@ -123,7 +123,7 @@ void Branching::initialize_next_event(mtPtr rnd_engine)
 void Branching::set_branching_event(Event &ev, signed char ev_type,
                                     double duration)
 {
-    Time ev_time = kernel().simulation_manager.get_time();
+    Time ev_time = kernel().simulation_manager->get_time();
 
     // separate duration into days, hours, minutes, seconds
     double total_hours = std::floor(duration / 60.);
@@ -464,7 +464,7 @@ void Branching::compute_uniform_event(mtPtr rnd_engine)
                             duration);
 
         // send it to the simulation and recorder managers
-        kernel().simulation_manager.new_branching_event(next_uniform_event_);
+        kernel().simulation_manager->new_branching_event(next_uniform_event_);
     }
 }
 
@@ -618,7 +618,7 @@ void Branching::compute_flpl_event(mtPtr rnd_engine)
                             duration);
 
         // send it to the simulation and recorder managers
-        kernel().simulation_manager.new_branching_event(next_flpl_event_);
+        kernel().simulation_manager->new_branching_event(next_flpl_event_);
     }
 }
 
@@ -857,7 +857,7 @@ void Branching::compute_usplit_event(mtPtr rnd_engine)
         set_branching_event(next_usplit_event_, names::gc_splitting, duration);
 
         // send it to the simulation and recorder managers
-        kernel().simulation_manager.new_branching_event(next_usplit_event_);
+        kernel().simulation_manager->new_branching_event(next_usplit_event_);
     }
 }
 
@@ -876,7 +876,7 @@ void Branching::compute_usplit_event(mtPtr rnd_engine)
  */
 bool Branching::van_pelt_branching_occurence(mtPtr rnd_engine, double substep)
 {
-    double t_0 = kernel().simulation_manager.get_current_minutes() + substep;
+    double t_0 = kernel().simulation_manager->get_current_minutes() + substep;
 
     double dt_exp = -std::expm1(-substep / T_);
 

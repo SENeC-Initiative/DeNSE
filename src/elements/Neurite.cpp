@@ -356,7 +356,7 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
         {
             // create an event so the growth cone will split at the next
             // step
-            Time ev_time = kernel().simulation_manager.get_time();
+            Time ev_time = kernel().simulation_manager->get_time();
             ev_time.update(1UL, 0.);
 
             auto neuron         = get_parent_neuron().lock();
@@ -366,7 +366,7 @@ void Neurite::update_growth_cones(mtPtr rnd_engine, double substep)
             Event ev = std::make_tuple(ev_time, neuron_gid, neurite,
                                        -2, names::gc_splitting);
 
-            kernel().simulation_manager.new_branching_event(ev);
+            kernel().simulation_manager->new_branching_event(ev);
         }
     }
 
@@ -1277,7 +1277,7 @@ void Neurite::update_initial_diameter(double diameter)
 
 void Neurite::set_status(const statusMap &status)
 {
-    bool sim_started  = (kernel().simulation_manager.get_time() != Time());
+    bool sim_started  = (kernel().simulation_manager->get_time() != Time());
 
     get_param(status, names::max_gc_number, max_gc_num_);
     get_param(status, names::max_arbor_length, max_arbor_len_);
@@ -1315,7 +1315,7 @@ void Neurite::set_status(const statusMap &status)
 
     if (tr_set and tr != taper_rate_)
     {
-        if (kernel().simulation_manager.get_current_minutes() > 0.)
+        if (kernel().simulation_manager->get_current_minutes() > 0.)
         {
             throw std::invalid_argument("Cannot change `taper_rate` after "
                                         "simulation start.");

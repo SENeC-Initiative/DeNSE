@@ -3,6 +3,12 @@ name: DeNSE CI
 env:
   DO_PLOT: 0
 
+on:
+  push:
+    branches:
+      - master
+  pull_request
+
 jobs:
   build:
      runs-on: ${{ matrix.os }}

@@ -4,7 +4,7 @@
 
 brew tap homebrew/core
 
-brew install gcc@8 cmake python3 geos doxygen boost libomp
+brew install gcc@10 cmake python3 geos doxygen boost libomp
 
 pip3 install setuptools
 pip3 install cython
@@ -16,8 +16,8 @@ pip3 install matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
 cd ..
 mkdir build
 cd build
-CC=gcc-8 CXX=g++-8 cmake .. -Dwith-docs=ON -Dwith-python=3
+CC=gcc-10 CXX=g++-10 cmake .. -Dwith-docs=ON -Dwith-python=3
 
 make
-CC=gcc-8 CXX=g++-8 make install
+CC=gcc-10 CXX=g++-10 make install
 make doc

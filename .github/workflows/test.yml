@@ -65,9 +65,12 @@ jobs:
            cd extra
            ./install_debian.sh
 
-       - name: Build Windows
+       - name: Activate Conda Windows
          if: ${{ matrix.os == 'windows-latest' }}
          uses: s-weigand/setup-conda@v1
+
+       - name: Build Windows
+         if: ${{ matrix.os == 'windows-latest' }}
          run: |
            conda install python cmake geos boost
            pip install cython

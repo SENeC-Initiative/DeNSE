@@ -45,13 +45,13 @@ jobs:
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
            conda install python cmake geos boost
-           pip install cython
-           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
-           pip install nngt
+           pip3 install cython
+           pip3 install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
+           pip3 install nngt
            cd extra
            ./install_windows.cmd
 
        - name: Test
          run: |
-           pip install pytest
-           python -m pytest tests --ignore=tests/todo
+           pip3 install pytest
+           python3 -m pytest tests --ignore=tests/todo

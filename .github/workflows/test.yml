@@ -20,12 +20,8 @@ jobs:
      steps:
        - name: Checkout repo content 
          uses: actions/checkout@master
-
-       - name: Check path
-         run: |
-           echo $PATH
-           echo $PWD
-         shell: bash
+         with:
+            submodules: recursive
 
        #~ - name: Dependencies MacOS
          #~ if: ${{ matrix.os == 'macos-latest' }}
@@ -71,15 +67,16 @@ jobs:
 
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
          run: |
-           conda install python cmake geos boost;
-           pip install cython;
-           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom;
-           pip install nngt;
+           conda install python cmake geos boost
+           pip install cython
+           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
+           pip install nngt
            cd extra
            install_windows.cmd
 
        - name: Test
          run: |
            cd ..
-           python -m pytest tests --ignore=tests/todo;
+           python -m pytest tests --ignore=tests/todo

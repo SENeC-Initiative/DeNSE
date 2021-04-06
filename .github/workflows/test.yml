@@ -23,34 +23,6 @@ jobs:
          with:
             submodules: recursive
 
-       #~ - name: Dependencies MacOS
-         #~ if: ${{ matrix.os == 'macos-latest' }}
-         #~ run: |
-           #~ brew install gcc@10 cmake python3 geos doxygen boost libomp;
-
-       #~ - name: Dependencies Linux
-         #~ if: ${{ matrix.os == 'ubuntu-latest' }}
-         #~ run: |
-           #~ sudo apt-get install -y python3-dev cmake libboost-dev libgeos++-dev g++;
-
-       #~ - name: Dependencies Windows
-         #~ if: ${{ matrix.os == 'windows-latest' }}
-         #~ run: |
-           #~ choco install openssl.light;
-           #~ choco install miniconda3 --params="'/AddToPath:1'";
-           #~ export PATH="/c/tools/miniconda3:/c/tools/miniconda3/Scripts:/c/tools/miniconda3/Library/bin:/c/tools/miniconda3/bin:$PATH";
-           #~ hash -r;
-           #~ conda config --set always_yes yes --set changeps1 no;
-           #~ conda update -q conda;
-           #~ conda install python cmake geos boost;
-           #~ conda --version ; python --version ; pip --version;
-
-       #~ - name: Install python dependencies
-         #~ run: |
-           #~ pip install setuptools cython;
-           #~ pip install numpy scipy pint pytest nngt networkx pyneuroml svg.path dxfgrabber PyOpenGL matplotlib neurom;
-           #~ pip install --no-binary shapely, shapely;
-
        - name: Build MacOS
          if: ${{ matrix.os == 'macos-latest' }}
          run: |
@@ -77,9 +49,10 @@ jobs:
            pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
            pip install nngt
            cd extra
-           install_windows.cmd
+           ./install_windows.cmd
 
        - name: Test
          run: |
+           pip install pytest
            cd ..
            python -m pytest tests --ignore=tests/todo

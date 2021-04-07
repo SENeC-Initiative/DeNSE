@@ -52,7 +52,9 @@ jobs:
            ./install_windows.cmd
            Set-Alias -Name python3 -Value python
            Get-Content ../src/pymodule/setup.py
-           Get-ChildItem c:\miniconda\lib\site-packages\dense
+           Get-ChildItem C:/Miniconda/lib/
+           Get-ChildItem C:/Miniconda/bin
+           Get-ChildItem C:/miniconda/lib/site-packages/dense-0.1.0-py3.8-win-amd64.egg
 
        - name: Test
          run: |

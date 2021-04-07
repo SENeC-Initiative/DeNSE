@@ -1,0 +1,64 @@
+name: DeNSE CI
+
+env:
+  DO_PLOT: 0
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+     runs-on: ${{ matrix.os }}
+     strategy:
+       fail-fast: false
+       matrix:
+         os: [ubuntu-latest, windows-latest, macos-latest]
+                                                 
+     steps:
+       - name: Checkout repo content 
+         uses: actions/checkout@master
+         with:
+            submodules: recursive
+
+       - name: Build MacOS
+         if: ${{ matrix.os == 'macos-latest' }}
+         run: |
+           chmod +x extra/install_macos.sh
+           cd extra
+           ./install_macos.sh
+
+       - name: Build Ubuntu
+         if: ${{ matrix.os == 'ubuntu-latest' }}
+         run: |
+           chmod +x extra/install_debian.sh
+           cd extra
+           ./install_debian.sh
+
+       - name: Activate Conda Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
+
+       - name: Build Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         run: |
+           conda install python cmake geos boost
+           pip install cython
+           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
+           pip install nngt
+           cd extra
+           ./install_windows.cmd
+
+       - name: Test Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         run: |
+           pip install pytest
+           python -m pytest tests --ignore=tests/todo
+
+       - name: Test Unix
+         if: ${{ matrix.os != 'windows-latest' }}
+         run: |
+           pip3 install pytest
+           python3 -m pytest tests --ignore=tests/todo

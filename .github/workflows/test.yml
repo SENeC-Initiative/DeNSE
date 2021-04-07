@@ -52,6 +52,7 @@ jobs:
            ./install_windows.cmd
            Get-ChildItem C:/Miniconda/bin
            Get-ChildItem C:/miniconda/lib/site-packages/dense-0.1.0-py3.8-win-amd64.egg/dense
+           Get-Content C:/miniconda/lib/site-packages/dense-0.1.0-py3.8-win-amd64.egg/dense/_pygrowth.cp38-win_amd64.pyd
 
        - name: Test Windows
          if: ${{ matrix.os == 'windows-latest' }}

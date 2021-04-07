@@ -50,13 +50,17 @@ jobs:
            pip install nngt
            cd extra
            ./install_windows.cmd
-           Set-Alias -Name python3 -Value python
-           Get-Content ../src/pymodule/setup.py
-           Get-ChildItem C:/Miniconda/lib/
            Get-ChildItem C:/Miniconda/bin
-           Get-ChildItem C:/miniconda/lib/site-packages/dense-0.1.0-py3.8-win-amd64.egg
+           Get-ChildItem C:/miniconda/lib/site-packages/dense-0.1.0-py3.8-win-amd64.egg/dense
 
-       - name: Test
+       - name: Test Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         run: |
+           pip install pytest
+           python -m pytest tests --ignore=tests/todo
+
+       - name: Test Unix
+         if: ${{ matrix.os != 'windows-latest' }}
          run: |
            pip3 install pytest
            python3 -m pytest tests --ignore=tests/todo

@@ -159,7 +159,7 @@ setup(
         exclude=['dist', '_*', 'build', '*.egg-info']),
 
     # Include the non python files (c++ library):
-    package_data = {mod_name: ['*.so', '*.dll', '*.lib', '*.exp', '*.pyd', '*.a', '*.dylib', '*.pxd']},
+    package_data = {mod_name: ['*.so', '*.dll', '*.pyd', '*.a', '*.dylib', '*.pxd']},
 	include_package_data=False,
 
     ext_modules = extensions,

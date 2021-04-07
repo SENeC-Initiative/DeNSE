@@ -51,15 +51,10 @@ jobs:
            cd extra
            ./install_windows.cmd
            Set-Alias -Name python3 -Value python
+           Get-Content ../src/pymodule/setup.py
+           Get-ChildItem c:\miniconda\lib\site-packages\dense
 
-       - name: Test Windows
-         if: ${{ matrix.os == 'windows-latest' }}
-         run: |
-           pip install pytest
-           python -m pytest tests --ignore=tests/todo
-
-       - name: Test Unix
-         if: ${{ matrix.os != 'windows-latest' }}
+       - name: Test
          run: |
            pip3 install pytest
            python3 -m pytest tests --ignore=tests/todo

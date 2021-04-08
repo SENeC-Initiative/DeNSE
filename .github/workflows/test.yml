@@ -48,28 +48,32 @@ jobs:
            restore-keys: |
              ${{ matrix.os }}-pip-
 
+       - name: Cache APT
+         if: ${{ matrix.os == 'ubuntu-latest' }}
+         uses: actions/cache@v2
+         with:
+           path: /var/cache/apt/archives
+           key: apt-cache
+           restore-keys: |
+             apt-cache
+
        - name: Cache Homebrew
+         if: ${{ matrix.os == 'macos-latest' }}
          uses: actions/cache@v2
          with:
            path: ~/Library/Caches/Homebrew
            key: homebrew-cache
            restore-keys: |
-             ${{ matrix.os }}-homebrew
+             homebrew-cache
 
        - name: Cache Chocolatey
+         if: ${{ matrix.os == 'windows-latest' }}
          uses: actions/cache@v2
          with:
              path: c:/ProgramData/chocolatey/lib
              key: choco-cache
              restore-keys: |
-               choco-cache-
-
-       - name: Build MacOS
-         if: ${{ matrix.os == 'macos-latest' }}
-         run: |
-           chmod +x extra/install_macos.sh
-           cd extra
-           ./install_macos.sh
+               choco-cache
 
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -79,6 +83,13 @@ jobs:
            chmod +x extra/install_debian.sh
            cd extra
            ./install_debian.sh
+
+       - name: Build MacOS
+         if: ${{ matrix.os == 'macos-latest' }}
+         run: |
+           chmod +x extra/install_macos.sh
+           cd extra
+           ./install_macos.sh
 
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}

@@ -2,7 +2,7 @@
 
 <img align="left" style="padding-top: 5px; margin-right: 15px;" width="25%" src="docs/_static/dense_logo.png" />
 
-[![Build Status](https://travis-ci.com/SENeC-Initiative/DeNSE.svg?branch=master)](https://travis-ci.com/SENeC-Initiative/DeNSE)
+[![CI status](https://github.com/SENeC-Initiative/DeNSE/actions/workflows/test.yml/badge.svg)](https://github.com/SENeC-Initiative/DeNSE/actions/workflows/test.yml)
 [![License](http://img.shields.io/:license-GPLv2+-green.svg)](http://www.gnu.org/licenses/gpl-2.0.html)
 [![Documentation Status](https://readthedocs.org/projects/dense/badge/?version=latest)](http://dense.readthedocs.io/en/latest/)
 <!-- [Current version](https://img.shields.io/github/release/SENeC-Initiative/dense.svg) -->

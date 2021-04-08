@@ -23,18 +23,12 @@ jobs:
          with:
             submodules: recursive
 
-       - name: Get pip cache dir
-         id: pip-cache
+       - name: Build MacOS
+         if: ${{ matrix.os == 'macos-latest' }}
          run: |
-           echo "::set-output name=dir1::$(pip cache dir)"
-           echo "::set-output name=dir2::$(pip3 cache dir)"
-
-       #~ - name: Build MacOS
-         #~ if: ${{ matrix.os == 'macos-latest' }}
-         #~ run: |
-           #~ chmod +x extra/install_macos.sh
-           #~ cd extra
-           #~ ./install_macos.sh
+           chmod +x extra/install_macos.sh
+           cd extra
+           ./install_macos.sh
 
        #~ - name: Build Ubuntu
          #~ if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -43,9 +37,15 @@ jobs:
            #~ cd extra
            #~ ./install_debian.sh
 
-       #~ - name: Activate Conda Windows
-         #~ if: ${{ matrix.os == 'windows-latest' }}
-         #~ uses: s-weigand/setup-conda@v1
+       - name: Activate Conda Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
+
+       - name: Get pip cache dir
+         id: pip-cache
+         run: |
+           pip cache dir
+           pip3 cache dir
 
        #~ - name: Build Windows
          #~ if: ${{ matrix.os == 'windows-latest' }}

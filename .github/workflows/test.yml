@@ -15,7 +15,7 @@ jobs:
      strategy:
        fail-fast: false
        matrix:
-         os: [ubuntu-latest, windows-latest, macos-latest]
+         os: [ubuntu-latest, macos-latest, windows-latest]
          include:
          - os: ubuntu-latest
            path: ~/.cache/pip
@@ -36,18 +36,6 @@ jobs:
          with:
             submodules: recursive
 
-       - name: Activate Conda Windows
-         if: ${{ matrix.os == 'windows-latest' }}
-         uses: s-weigand/setup-conda@v1
-
-       - name: Cache pip
-         uses: actions/cache@v2
-         with:
-           path: ${{ matrix.path }}
-           key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-           restore-keys: |
-             ${{ matrix.os }}-pip-
-
        - name: Cache Homebrew
          if: ${{ matrix.os == 'macos-latest' }}
          uses: actions/cache@v2
@@ -57,14 +45,17 @@ jobs:
            restore-keys: |
              homebrew-cache
 
-       - name: Cache Chocolatey
-         if: ${{ matrix.os == 'windows-latest' }}
+       - name: Cache pip
          uses: actions/cache@v2
          with:
-             path: c:/ProgramData/chocolatey/lib
-             key: choco-cache
-             restore-keys: |
-               choco-cache
+           path: ${{ matrix.path }}
+           key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+           restore-keys: |
+             ${{ matrix.os }}-pip-
+
+       - name: Activate Conda Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
 
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}

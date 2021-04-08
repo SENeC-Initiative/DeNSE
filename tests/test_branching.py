@@ -25,6 +25,7 @@
 import os
 
 import numpy as np
+from scipy.stats import kstest
 
 import dense as ds
 from dense.units import *
@@ -103,37 +104,32 @@ def test_flpl_branching():
         pop = ds.create_neurons(n=num_neurons, params=neuron_params,
                                 num_neurites=1)
         
-        rec = ds.create_recorders(pop, 'num_growth_cones',
-                                  levels='neuron')
+        rec = ds.create_recorders(pop, 'num_growth_cones', levels='neuron')
 
         ds.simulate(sim_time)
 
         branch_times = ds.get_recording(rec)['num_growth_cones']['times']
+
         Dt = []
         for bn in branch_times.values():
             if len(bn) > 1:
                 Dt.extend(np.diff(bn))
 
         mean.append(np.mean(Dt))
+        
+        # use KS test versus exponential distribution
+        _, pval = kstest(Dt, "expon", args=[1./rate])
 
-        # 99% confidence interval for a Poisson distribution gives 2.576
-        er.append(2.576/rate/np.sqrt(len(Dt)))
-        Nb.append(len(Dt))
-
-    mean_merr = np.subtract(mean, er)
-    mean_perr = np.add(mean, er)
-    test1 = (1/rates > mean_merr)
-    test2 = (1/rates < mean_perr)
+        assert pval < 1e-5
 
     if do_plot:
         import matplotlib.pyplot as plt
-        plt.plot(rates, mean)
-        plt.plot(rates, 1/rates, ls=":")
-        plt.fill_between(rates, mean_merr, mean_perr, alpha=0.5)
+        plt.plot(rates, mean, label="simu")
+        plt.plot(rates, 1/rates, ls=":", label="ref")
+        plt.xlabel("Rates (count per minute)")
+        plt.ylabel("Mean branching interval (minute)")
+        plt.legend()
         plt.show()
-    
-    assert test1.all() and test2.all(), \
-        "Failed test with state " + str(initial_state)
 
 
 def test_vp_branching():

@@ -15,7 +15,20 @@ jobs:
      strategy:
        fail-fast: false
        matrix:
-         os: [ubuntu-latest, windows-latest, macos-latest]
+         os: [ubuntu-latest, macos-latest, windows-latest]
+         include:
+         - os: ubuntu-latest
+           path: ~/.cache/pip
+           python: python3
+           pip: pip3
+         - os: macos-latest
+           path: ~/Library/Caches/pip
+           python: python3
+           pip: pip3
+         - os: windows-latest
+           path: ~\AppData\Local\pip\Cache
+           python: python
+           pip: pip
                                                  
      steps:
        - name: Checkout repo content 
@@ -23,12 +36,26 @@ jobs:
          with:
             submodules: recursive
 
-       - name: Build MacOS
+       - name: Cache Homebrew
          if: ${{ matrix.os == 'macos-latest' }}
-         run: |
-           chmod +x extra/install_macos.sh
-           cd extra
-           ./install_macos.sh
+         uses: actions/cache@v2
+         with:
+           path: ~/Library/Caches/Homebrew
+           key: homebrew-cache
+           restore-keys: |
+             homebrew-cache
+
+       - name: Cache pip
+         uses: actions/cache@v2
+         with:
+           path: ${{ matrix.path }}
+           key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+           restore-keys: |
+             ${{ matrix.os }}-pip-
+
+       - name: Activate Conda Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
 
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -37,9 +64,12 @@ jobs:
            cd extra
            ./install_debian.sh
 
-       - name: Activate Conda Windows
-         if: ${{ matrix.os == 'windows-latest' }}
-         uses: s-weigand/setup-conda@v1
+       - name: Build MacOS
+         if: ${{ matrix.os == 'macos-latest' }}
+         run: |
+           chmod +x extra/install_macos.sh
+           cd extra
+           ./install_macos.sh
 
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
@@ -51,14 +81,7 @@ jobs:
            cd extra
            ./install_windows.cmd
 
-       - name: Test Windows
-         if: ${{ matrix.os == 'windows-latest' }}
+       - name: Test
          run: |
-           pip install pytest
-           python -m pytest tests --ignore=tests/todo
-
-       - name: Test Unix
-         if: ${{ matrix.os != 'windows-latest' }}
-         run: |
-           pip3 install pytest
-           python3 -m pytest tests --ignore=tests/todo
+           ${{ matrix.pip }} install pytest
+           ${{ matrix.python }} -m pytest tests --ignore=tests/todo

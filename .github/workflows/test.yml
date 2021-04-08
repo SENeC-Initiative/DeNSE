@@ -16,12 +16,37 @@ jobs:
        fail-fast: false
        matrix:
          os: [ubuntu-latest, windows-latest, macos-latest]
+         include:
+         - os: ubuntu-latest
+           path: ~/.cache/pip
+           python: python3
+           pip: pip3
+         - os: macos-latest
+           path: ~/Library/Caches/pip
+           python: python3
+           pip: pip3
+         - os: windows-latest
+           path: ~\AppData\Local\pip\Cache
+           python: python
+           pip: pip
                                                  
      steps:
        - name: Checkout repo content 
          uses: actions/checkout@master
          with:
             submodules: recursive
+
+       - name: Activate Conda Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: s-weigand/setup-conda@v1
+
+       - name: Cache pip
+         uses: actions/cache@v2
+         with:
+           path: ${{ matrix.path }}
+           key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+           restore-keys: |
+             ${{ matrix.os }}-pip-
 
        - name: Build MacOS
          if: ${{ matrix.os == 'macos-latest' }}
@@ -30,41 +55,24 @@ jobs:
            cd extra
            ./install_macos.sh
 
-       #~ - name: Build Ubuntu
-         #~ if: ${{ matrix.os == 'ubuntu-latest' }}
-         #~ run: |
-           #~ chmod +x extra/install_debian.sh
-           #~ cd extra
-           #~ ./install_debian.sh
-
-       - name: Activate Conda Windows
-         if: ${{ matrix.os == 'windows-latest' }}
-         uses: s-weigand/setup-conda@v1
-
-       - name: Get pip cache dir
-         id: pip-cache
+       - name: Build Ubuntu
+         if: ${{ matrix.os == 'ubuntu-latest' }}
          run: |
-           pip cache dir
-           pip3 cache dir
+           chmod +x extra/install_debian.sh
+           cd extra
+           ./install_debian.sh
 
-       #~ - name: Build Windows
-         #~ if: ${{ matrix.os == 'windows-latest' }}
-         #~ run: |
-           #~ conda install python cmake geos boost
-           #~ pip install cython
-           #~ pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
-           #~ pip install nngt
-           #~ cd extra
-           #~ ./install_windows.cmd
+       - name: Build Windows
+         if: ${{ matrix.os == 'windows-latest' }}
+         run: |
+           conda install python cmake geos boost
+           pip install cython
+           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
+           pip install nngt
+           cd extra
+           ./install_windows.cmd
 
-       #~ - name: Test Windows
-         #~ if: ${{ matrix.os == 'windows-latest' }}
-         #~ run: |
-           #~ pip install pytest
-           #~ python -m pytest tests --ignore=tests/todo
-
-       #~ - name: Test Unix
-         #~ if: ${{ matrix.os != 'windows-latest' }}
-         #~ run: |
-           #~ pip3 install pytest
-           #~ python3 -m pytest tests --ignore=tests/todo
+       - name: Test
+         run: |
+           ${{ matrix.pip }} install pytest
+           ${{ matrix.python }} -m pytest tests --ignore=tests/todo

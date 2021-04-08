@@ -48,6 +48,22 @@ jobs:
            restore-keys: |
              ${{ matrix.os }}-pip-
 
+       - name: Cache Homebrew
+         uses: actions/cache@v2
+         with:
+           path: ~/Library/Caches/Homebrew
+           key: homebrew-cache
+           restore-keys: |
+             ${{ matrix.os }}-homebrew
+
+       - name: Cache Chocolatey
+         uses: actions/cache@v2
+         with:
+             path: c:/ProgramData/chocolatey/lib
+             key: choco-cache
+             restore-keys: |
+               choco-cache-
+
        - name: Build MacOS
          if: ${{ matrix.os == 'macos-latest' }}
          run: |
@@ -58,6 +74,8 @@ jobs:
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}
          run: |
+           apt-config shell Cache Dir::Cache
+           apt-config shell Cache Dir::Cache::Archives
            chmod +x extra/install_debian.sh
            cd extra
            ./install_debian.sh

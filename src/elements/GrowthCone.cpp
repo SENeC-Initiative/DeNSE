@@ -599,15 +599,12 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             }
             else  // we'll be done with this step
             {
-                BPoint p1 = branch_->xy_at(branch_->size() - 2);
-                BPoint p2 = branch_->get_last_xy();
-
                 double new_x =
-                    (p2.x() * remaining + p1.x() * (distance_done - remaining))
-                    / distance_done;
+                    (current_pos.x() * remaining +
+                     old_pos.x() * (distance_done - remaining)) / distance_done;
                 double new_y =
-                    (p2.y() * remaining + p1.y() * (distance_done - remaining))
-                    / distance_done;
+                    (current_pos.y() * remaining +
+                     old_pos.y() * (distance_done - remaining)) / distance_done;
 
                 current_pos = BPoint(new_x, new_y);
 

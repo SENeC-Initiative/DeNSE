@@ -201,7 +201,6 @@ void SimulationManager::test_random_generator(Random_vecs &values, stype size)
     // check if an exception was thrown there
     if (captured_exception != nullptr)
     {
-        // rethrowing nullptr is illegal
         std::rethrow_exception(captured_exception);
     }
 }
@@ -305,7 +304,6 @@ void SimulationManager::initialize_simulation_(const Time &t)
     // check if an exception was thrown there
     if (captured_exception != nullptr)
     {
-        // rethrowing nullptr is illegal
         std::rethrow_exception(captured_exception);
     }
 
@@ -357,7 +355,6 @@ void SimulationManager::finalize_simulation_()
     // check if an exception was thrown there
     if (captured_exception != nullptr)
     {
-        // rethrowing nullptr is illegal
         std::rethrow_exception(captured_exception);
     }
 

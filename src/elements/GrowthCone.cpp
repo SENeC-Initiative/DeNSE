@@ -544,7 +544,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             (distance*old_pos.x() + (free_distance - distance)*position_.x())
             / free_distance,
             (distance*old_pos.y() + (free_distance - distance)*position_.y())
-            / free_distance));
+            / free_distance);
     }
     else
     {

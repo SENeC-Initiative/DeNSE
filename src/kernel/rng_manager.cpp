@@ -64,7 +64,7 @@ void growth::RNGManager::get_status(statusMap &status) const
 void growth::RNGManager::create_rngs_()
 {
 #ifndef NDEBUG
-    printf("creating the random generators\n");
+    printf("setting the random generators\n");
 #endif
 
     if (!rng_.empty())

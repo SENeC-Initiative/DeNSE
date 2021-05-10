@@ -524,40 +524,31 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     assert(distance >= 0.);
 
     // remove the points
-    double distance_done;
+    double distance_done, inv_dist;
 
     // start with the steps that did not yet lead to a polygon
-    BPoint old_pos = branch_->get_last_xy();
-    double free_distance = bg::distance(position_, old_pos);
+    BPoint current_pos, old_pos(branch_->get_last_xy());
 
-    if (free_distance >= distance)
+    if (cumul_dist_ > distance)
     {
         // we are still away from the last polygon, in the "free" zone
-        // update cumul_dist and set new position 
-        cumul_dist_ = free_distance - distance;
+        // update cumul_dist and set new position
+        inv_dist = 1. / cumul_dist_;
 
-        set_position(BPoint(
-            (distance*old_pos.x() + (free_distance - distance)*position_.x())
-            / free_distance,
-            (distance*old_pos.y() + (free_distance - distance)*position_.y())
-            / free_distance));
+        cumul_dist_ -= distance;
 
-        // set angle
-        cumul_angle_ = atan2(position_.y() - old_pos.y(),
-                            position_.x() - old_pos.x());
-
-        move_.angle = cumul_angle_;
-        old_angle_  = cumul_angle_;
-
-        distance = 0.;
+        current_pos = BPoint(
+            (distance*old_pos.x() + cumul_dist_*position_.x()) * inv_dist,
+            (distance*old_pos.y() + cumul_dist_*position_.y()) * inv_dist);
     }
     else
     {
         // we go back the whole distance to the last point on the branch
-        position_ = old_pos;
+        distance -= cumul_dist_;
+
+        // reset cumulative values
         cumul_dist_ = 0.;
         cumul_angle_ = 0.;
-        distance -= free_distance;
 
         // continue with the polygons
         while (distance > 0 and branch_->size() > 1)
@@ -575,97 +566,57 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
                                        branch_->size() - 2);
             }
 
-            double remaining = distance_done - distance;
+            current_pos = branch_->get_last_xy();
 
-            if (remaining < 1e-6) // distance is greater than what we just did
+            // remove previous polygon
+            branch_->retract();
+
+            old_pos = branch_->get_last_xy();
+
+            // update angle
+            old_angle_ = atan2(current_pos.y() - old_pos.y(),
+                               current_pos.x() - old_pos.x());
+
+            // we also remove the tree box
+            try
+            {
+                kernel().space_manager.remove_object(box, info, omp_id);
+            }
+            catch (...)
+            {
+                std::throw_with_nested(std::runtime_error(
+                    "Passed from `GrowthCone::retract`, coming from "
+                    "space_manager::remove_object."));
+            }
+
+            // update distance and position
+            double remaining = distance - distance_done;
+
+            if (remaining > 1e-4)  // distance is greater than what we just did
             {
                 distance -= distance_done;
-                branch_->retract();
-
-                // we also remove the tree box
-                if (poly != nullptr)
-                {
-                    kernel().space_manager.remove_object(box, info, omp_id);
-                }
             }
-            else
+            else  // we'll be done with this step, remaining is negative
             {
-                BPoint p1 = branch_->xy_at(branch_->size() - 2);
-                BPoint p2 = branch_->get_last_xy();
-
                 double new_x =
-                    (p2.x() * remaining + p1.x() * (distance_done - remaining))
-                    / distance_done;
+                    (current_pos.x() * (distance_done - distance) +
+                     old_pos.x() * distance) / distance_done;
                 double new_y =
-                    (p2.y() * remaining + p1.y() * (distance_done - remaining))
-                    / distance_done;
+                    (current_pos.y() * (distance_done - distance) +
+                     old_pos.y() * distance) / distance_done;
 
-                BPoint new_p = BPoint(new_x, new_y);
+                current_pos = BPoint(new_x, new_y);
 
-                branch_->retract();
-
-                // we remove the previous object and add the new, shorter one
-                if (poly != nullptr)
-                {
-                    try
-                    {
-                        kernel().space_manager.remove_object(box, info, omp_id);
-                    }
-                    catch (...)
-                    {
-                        std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::retract`, coming from "
-                            "space_manager::remove_object."));
-                    }
-
-                    try
-                    {
-                        kernel().space_manager.add_object(
-                            p1, new_p, get_diameter(), remaining,
-                            own_neurite_->get_taper_rate(), info, branch_,
-                            omp_id);
-                    }
-                    catch (...)
-                    {
-                        std::throw_with_nested(std::runtime_error(
-                            "Passed from `GrowthCone::retract` coming from "
-                            "space_manager::add_object (after retraction)."));
-                    }
-                }
+                cumul_dist_ = bg::distance(current_pos, old_pos);
 
                 distance = 0.;
             }
         }
 
         // set the new growth cone angle
-        stype last = branch_->size();
-        double x0, y0, x1, y1;
-        BPoint p;
+        move_.angle = old_angle_;
 
-        if (last > 0)
-        {
-            p  = branch_->xy_at(last - 1);
-            x1 = p.x();
-            y1 = p.y();
-
-            if (last > 1)
-            {
-                p  = branch_->xy_at(last - 2);
-                x0 = p.x();
-                y0 = p.y();
-            }
-            else
-            {
-                p  = TopologicalNode::get_position();
-                x0 = p.x();
-                y0 = p.y();
-            }
-
-            move_.angle = atan2(y1 - y0, x1 - x0);
-            old_angle_  = move_.angle;
-        }
-
-        set_position(branch_->get_last_xy());
+        set_position(current_pos);
 
         // prune growth cone if necessary
         if (branch_->size() == 1)
@@ -695,6 +646,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // cannot be stuck_ or on low proba mode when retracting, so reset all
     stuck_       = false;
     total_proba_ = 1.;
+
     // also reset turning
     turning_ = 0;
     turned_  = 0.;
@@ -906,7 +858,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     // send the new segment to the space manager
                     // this happens either if we cross the distance threshold
                     // of if it looks like the GC is about to turn too far
-                    if (cumul_dist_ > threshold_ or cumul_angle_ > 0.5*M_PI)
+                    if (cumul_dist_ > threshold_ or
+                        std::abs(cumul_angle_) > 0.5*M_PI)
                     {
                         try
                         {

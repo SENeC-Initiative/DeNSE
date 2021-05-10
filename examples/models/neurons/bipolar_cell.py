@@ -75,7 +75,7 @@ neurite_params = {"axon": axon_params, "dendrite": dend_params}
 
 kernel = {
     "resolution": 30.*minute,
-    "seeds": [8],
+    "seeds": [2],
     "environment_required": False,
     "num_local_threads": num_omp,
 }

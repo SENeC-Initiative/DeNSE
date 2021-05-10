@@ -523,33 +523,32 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
 {
     assert(distance >= 0.);
 
-    // reset cumulative values
-    cumul_dist_ = 0.;
-    cumul_angle_ = 0.;
-
     // remove the points
-    double distance_done;
+    double distance_done, inv_dist;
 
     // start with the steps that did not yet lead to a polygon
     BPoint current_pos, old_pos(branch_->get_last_xy());
-    double free_distance = bg::distance(position_, old_pos);
 
-    if (free_distance > distance)
+    if (cumul_dist_ > distance)
     {
         // we are still away from the last polygon, in the "free" zone
-        // update cumul_dist and set new position 
-        cumul_dist_ = free_distance - distance;
+        // update cumul_dist and set new position
+        inv_dist = 1. / cumul_dist_;
+
+        cumul_dist_ -= distance;
 
         current_pos = BPoint(
-            (distance*old_pos.x() + (free_distance - distance)*position_.x())
-            / free_distance,
-            (distance*old_pos.y() + (free_distance - distance)*position_.y())
-            / free_distance);
+            (distance*old_pos.x() + cumul_dist_*position_.x()) * inv_dist,
+            (distance*old_pos.y() + cumul_dist_*position_.y()) * inv_dist);
     }
     else
     {
         // we go back the whole distance to the last point on the branch
-        distance -= free_distance;
+        distance -= cumul_dist_;
+
+        // reset cumulative values
+        cumul_dist_ = 0.;
+        cumul_angle_ = 0.;
 
         // continue with the polygons
         while (distance > 0 and branch_->size() > 1)
@@ -565,9 +564,9 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
                 // there is one less segment than point, so size - 2 for segment
                 info = std::make_tuple(neuron_id_, neurite_name_, get_node_id(),
                                        branch_->size() - 2);
-
-                current_pos = branch_->get_last_xy();
             }
+
+            current_pos = branch_->get_last_xy();
 
             // remove previous polygon
             branch_->retract();
@@ -593,18 +592,18 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
             // update distance and position
             double remaining = distance - distance_done;
 
-            if (remaining > 1e-3)  // distance is greater than what we just did
+            if (remaining > 1e-4)  // distance is greater than what we just did
             {
                 distance -= distance_done;
             }
-            else  // we'll be done with this step
+            else  // we'll be done with this step, remaining is negative
             {
                 double new_x =
-                    (current_pos.x() * remaining +
-                     old_pos.x() * (distance_done - remaining)) / distance_done;
+                    (current_pos.x() * (distance_done - distance) +
+                     old_pos.x() * distance) / distance_done;
                 double new_y =
-                    (current_pos.y() * remaining +
-                     old_pos.y() * (distance_done - remaining)) / distance_done;
+                    (current_pos.y() * (distance_done - distance) +
+                     old_pos.y() * distance) / distance_done;
 
                 current_pos = BPoint(new_x, new_y);
 
@@ -647,6 +646,7 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // cannot be stuck_ or on low proba mode when retracting, so reset all
     stuck_       = false;
     total_proba_ = 1.;
+
     // also reset turning
     turning_ = 0;
     turned_  = 0.;
@@ -858,7 +858,8 @@ void GrowthCone::make_move(const std::vector<double> &directions_weights,
                     // send the new segment to the space manager
                     // this happens either if we cross the distance threshold
                     // of if it looks like the GC is about to turn too far
-                    if (cumul_dist_ > threshold_ or cumul_angle_ > 0.5*M_PI)
+                    if (cumul_dist_ > threshold_ or
+                        std::abs(cumul_angle_) > 0.5*M_PI)
                     {
                         try
                         {

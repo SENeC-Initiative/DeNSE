@@ -6,6 +6,8 @@ brew tap homebrew/core
 
 brew install gcc@10 cmake python3 geos doxygen boost libomp
 
+brew link gcc@10
+
 pip3 install setuptools
 pip3 install cython
 pip3 install numpy scipy pint pyneuroml

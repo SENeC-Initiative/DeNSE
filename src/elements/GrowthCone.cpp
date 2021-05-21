@@ -406,7 +406,7 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
                 // we elongated so we did not just get out of a retraction
                 just_retracted_ = false;
             }
-            else
+            else if (move_.module < 0)
             {
                 // =========== //
                 // Back we go! //
@@ -414,6 +414,11 @@ void GrowthCone::grow(mtPtr rnd_engine, stype cone_n, double substep)
 
                 // retracting distance is the opposite of the (negative module)
                 retraction(-move_.module, cone_n, omp_id);
+            }
+            else
+            {
+                // either the local substep was zero or we stopped
+                stopped_ = local_substep == 0 ? stopped_ : true;
             }
         }
 
@@ -526,9 +531,10 @@ void GrowthCone::retraction(double distance, stype cone_n, int omp_id)
     // remove the points
     double distance_done, inv_dist;
 
-    // start with the steps that did not yet lead to a polygon
-    BPoint current_pos, old_pos(branch_->get_last_xy());
+    // initialize current_pos and old_pos
+    BPoint current_pos(position_), old_pos(branch_->get_last_xy());
 
+    // start with the steps that did not yet lead to a polygon
     if (cumul_dist_ > distance)
     {
         // we are still away from the last polygon, in the "free" zone

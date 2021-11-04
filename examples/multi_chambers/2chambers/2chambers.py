@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import dense as ds
 from dense.units import *
 import nngt
-nngt.set_config("palette", "Spectral")
+nngt.set_config("palette_continuous", "Spectral")
 
 try:
     import seaborn as sns
@@ -124,7 +124,7 @@ def step(time, loop_n, plot=True):
 
 
 if __name__ == '__main__':
-    number_of_threads = 10
+    number_of_threads = 4
     kernel = {"seeds": range(number_of_threads),
               "num_local_threads": number_of_threads,
               "resolution": 10. * minute,

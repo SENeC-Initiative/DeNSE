@@ -262,6 +262,7 @@ def nonstring_container(obj):
 
 def is_integer(obj):
     ''' Return whether the object is an integer '''
+    obj = obj.magnitude if is_quantity(obj) else obj
     return isinstance(obj, (int, np.integer))
 
 
@@ -417,7 +418,7 @@ except NameError:
 
 def to_cppunit(val, valname):
     ''' Convert a value to the correct cppunit '''
-    if isinstance(val, ureg.Quantity):
+    if is_quantity(val):
         correct_unit  = 1
         dimdict       = val.dimensionality
         unitcontainer = val.units.dimensionality
@@ -458,7 +459,7 @@ def is_string(value):
 
 
 def is_scalar(value):
-    value = value.magnitude if isinstance(value, ureg.Quantity) else value
+    value = value.magnitude if is_quantity(value) else value
 
     return (is_string(value)
             or isinstance(value, dict)
@@ -466,7 +467,7 @@ def is_scalar(value):
 
 
 def is_quantity(value):
-    return isinstance(value, ureg.Quantity)
+    return issubclass(ureg.Quantity, type(value))
 
 
 def is_iterable(obj):

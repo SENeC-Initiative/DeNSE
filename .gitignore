@@ -64,22 +64,6 @@ src/pymodule/dense/rw_in_env/ve
 src/pymodule/dense/ve
 *.el
 
-# Files Alessio
+# IDEs
 
-**/tags
-*.swo
-.idea/
-*.swp
-*.swn
-.ycm_extra_conf.py
-cython_debug
-compile_commands.json
-reset_env.sh
-test.swc
-*cscope*
-phd_tracking/tests
-phd_tracking/phd
-phd_tracking/vess
-image_analysis
-
-restats
+*.kdev4

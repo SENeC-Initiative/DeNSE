@@ -46,6 +46,9 @@ class SpatialMultiNetwork(object):
 
     ''' Backup class to store network information '''
 
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
+
     def __init__(self, population, name="Graph", weighted=True, directed=True,
                  shape=None, positions=None, multigraph=False, **kwargs):
         self.name        = name
@@ -364,6 +367,9 @@ class SpatialNetwork(_BaseNetwork):
     the connections between two neurons).
     '''
 
+    def __new__(cls, *args, **kwargs):
+        return super().__new__(cls)
+
     def __init__(self, population, name="SpatialNetwork", weighted=True,
                  directed=True, shape=None, from_graph=None, positions=None,
                  equivalent_multigraph=True, **kwargs):
@@ -402,14 +408,14 @@ class SpatialNetwork(_BaseNetwork):
         if _with_nngt:
             population = nngt.NeuralPop.uniform(len(population))
             # don't pass population to nngt
-            super(SpatialNetwork, self).__init__(
-                nodes=num_nodes, name=name, weighted=weighted, directed=directed,
-                shape=shape, positions=positions, from_graph=from_graph,
-                **kwargs)
+            super().__init__(
+                nodes=num_nodes, name=name, weighted=weighted,
+                directed=directed, shape=shape, positions=positions,
+                from_graph=from_graph, **kwargs)
             self._population = population
             self.new_edge_attribute("multiplicity", "int", val=1)
         else:
-            super(SpatialNetwork, self).__init__(
+            super().__init__(
                 population, nodes=num_nodes, name=name, weighted=weighted,
                 directed=directed, shape=shape, positions=positions,
                 from_graph=from_graph, **kwargs)
@@ -454,7 +460,7 @@ class SpatialNetwork(_BaseNetwork):
             raise ValueError("There is no node {}.".format(target))
 
         if edge not in self._edges:
-            super(SpatialNetwork, self).new_edge(
+            super().new_edge(
                 self, source, target, attributes=attributes, **kwargs)
         else:
             if not self._multigraph:
@@ -487,8 +493,7 @@ class SpatialNetwork(_BaseNetwork):
 
         return edge
 
-    def new_edges(self, edge_list, attributes=None, unit_strength=1.,
-                  **kwargs):
+    def new_edges(self, edge_list, attributes=None, unit_strength=1., **kwargs):
         '''
         Add a list of edges to the network.
 
@@ -652,4 +657,4 @@ class SpatialNetwork(_BaseNetwork):
 
             final_elist = list(edges.keys())
 
-            super(SpatialNetwork, self).new_edges(final_elist, final_attrs)
+            super().new_edges(final_elist, final_attrs)

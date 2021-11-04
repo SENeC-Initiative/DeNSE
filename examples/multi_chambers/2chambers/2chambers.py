@@ -173,20 +173,20 @@ if __name__ == '__main__':
 
     # prepare the plot
 
-    print("Starting plot")
-    ds.plot.plot_neurons(gid=range(int(num_neurons/2)), culture=culture,
-                         soma_alpha=0.8,
-                         axon_color='g', gc_color="r", axis=ax, show=False)
-    ds.plot.plot_neurons(gid=range(int(num_neurons/2), num_neurons), 
-                         show_culture=False, axis=ax,
-                         soma_alpha=0.8, axon_color='darkorange', gc_color="r",
-                         show=False)
-    plt.tight_layout()
-    ax.set_xlabel("x ($\mu$m)")
-    ax.set_ylabel("y ($\mu$m)")
-    ax.grid(False)
-    plt.show()
-    print("plot done")
+    #print("Starting plot")
+    #ds.plot.plot_neurons(gid=range(int(num_neurons/2)), culture=culture,
+                         #soma_alpha=0.8,
+                         #axon_color='g', gc_color="r", axis=ax, show=False)
+    #ds.plot.plot_neurons(gid=range(int(num_neurons/2), num_neurons),
+                         #show_culture=False, axis=ax,
+                         #soma_alpha=0.8, axon_color='darkorange', gc_color="r",
+                         #show=False)
+    #plt.tight_layout()
+    #ax.set_xlabel("x ($\mu$m)")
+    #ax.set_ylabel("y ($\mu$m)")
+    #ax.grid(False)
+    #plt.show()
+    #print("plot done")
 
     # save
     save_path = CleanFolder(os.path.join(os.getcwd(), "2culture_swc"))

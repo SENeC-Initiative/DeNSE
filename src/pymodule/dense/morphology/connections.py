@@ -157,7 +157,7 @@ def generate_network(source_neurons=None, target_neurons=None,
 
     shape = _pg.get_environment()
     unit = "micrometer" if shape is None else shape.unit
-    positions     = np.array(
+    positions = np.array(
         [neuron.position.to(unit).magnitude for neuron in population])
 
     # test if there is a network to create

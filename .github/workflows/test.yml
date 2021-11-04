@@ -68,7 +68,7 @@ jobs:
          if: ${{ matrix.os == 'macos-latest' }}
          run: |
            rm -rf /usr/local/bin/2to3
-           brew unlink gcc gcc@8 gcc@9
+           brew unlink gcc gcc@9
            chmod +x extra/install_macos.sh
            cd extra
            ./install_macos.sh
@@ -78,7 +78,7 @@ jobs:
          run: |
            conda install python cmake geos boost
            pip install cython
-           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml neurom
+           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
            pip install nngt
            cd extra
            ./install_windows.cmd

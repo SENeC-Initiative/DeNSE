@@ -1459,7 +1459,7 @@ def set_kernel_status(status, value=None, simulation_id=None):
             raise KeyError(
                 "`{}` is not a valid option.".format(key))
 
-        if isinstance(value, ureg.Quantity):
+        if is_quantity(value):
             value = value.m_as(old_status[key].u)
 
         key    = _to_bytes(key)
@@ -2727,15 +2727,15 @@ def _check_params(params, object_name, gc_model=None):
                     "'{}' should be a (list of) dict.".format(key)
                 for k, v in val.items():
                     assert is_string(k), "dict keys must be strings."
-                    if isinstance(v, ureg.Quantity):
+                    if is_quantity(v):
                         v = v.magnitude
                     assert isinstance(v, (float, np.floating)), \
                         "dict values must be floats."
             else:
                 # check dimension
                 dim = ""
-                if isinstance(val, ureg.Quantity):
-                    if isinstance(py_value, ureg.Quantity):
+                if is_quantity(val):
+                    if is_quantity(py_value):
                         assert val.dimensionality == py_value.dimensionality, \
                             "Expected unit compatible with " +\
                             "{} but got {} for {}.".format(
@@ -2746,13 +2746,12 @@ def _check_params(params, object_name, gc_model=None):
                         assert val.dimensionless, \
                             "'{}' should be dimensionless.".format(key)
                         val = val.m
-                elif isinstance(py_value, ureg.Quantity):
-                        assert not py_value.units in (ureg.deg, ureg.rad), \
-                            "`" + key + \
-                            "` unit must be provided ('deg' or 'rad')."
-                        assert py_value.dimensionless, \
-                            "Expected {}, not ".format(py_value.units) + \
-                            "dimensionless number for {}.".format(key)
+                elif is_quantity(py_value):
+                    assert not py_value.units in (ureg.deg, ureg.rad), \
+                        "`" + key + "` unit must be provided ('deg' or 'rad')."
+                    assert py_value.dimensionless, \
+                        "Expected {}, not ".format(py_value.units) + \
+                        "dimensionless number for {}.".format(key)
 
                 if prop.data_type == DOUBLE:
                     if nonstring_container(val):
@@ -2784,7 +2783,7 @@ def _check_params(params, object_name, gc_model=None):
                         "'{}' should be a dict.".format(key)
                     for k, v in val.items():
                         assert is_string(k), "dict keys must be strings."
-                        if isinstance(v, ureg.Quantity):
+                        if is_quantity(v):
                             v = v.magnitude
                         assert isinstance(v, (float, np.floating)), \
                             "dict values must be floats."

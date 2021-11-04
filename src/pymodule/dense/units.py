@@ -24,14 +24,15 @@ import warnings
 
 
 import pint
-from pint import UnitRegistry, set_application_registry
+from pint import UnitRegistry
+from pint import get_application_registry, set_application_registry
 
 import dense
 
 
 # check for the registry
 
-ureg = pint._APP_REGISTRY
+ureg = get_application_registry()
 
 if ureg == pint._DEFAULT_REGISTRY:
     ureg = UnitRegistry()

@@ -2029,7 +2029,7 @@ def _get_parent_and_soma_distances(neuron, neurite, node, segment):
     return distance_to_parent, distance_to_soma
 
 
-def _neuron_to_swc(filename, gid=None, resolution=10):
+def _neuron_to_swc(filename, gid=None, resolution=10, split=False):
     '''
     Save neurons to SWC file.
 
@@ -2042,10 +2042,13 @@ def _neuron_to_swc(filename, gid=None, resolution=10):
     resolution : int, optional (default: 10)
         Coarse-graining factor of the structure: only one point every
         `resolution` will be kept.
+    split : bool
+        Split neurons among files if there are more than one neuron.
     '''
     cdef:
-        string cfname = _to_bytes(filename)
+        string cfname = _to_bytes(filename.rstrip(".swc"))
         vector[stype] gids
+
     if gid is None:
         gids = get_neurons_()
     elif isinstance(gid, int):
@@ -2053,7 +2056,10 @@ def _neuron_to_swc(filename, gid=None, resolution=10):
     else:
         for n in gid:
             gids.push_back(<stype>n)
-    get_swc_(cfname, gids, resolution)
+
+    split *= (gids.size() > 1)
+
+    get_swc_(cfname, gids, resolution, split)
 
 
 def _get_tree(neuron, neurite):

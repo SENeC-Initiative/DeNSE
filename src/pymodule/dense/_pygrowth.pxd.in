@@ -161,7 +161,7 @@ cdef extern from "../module.hpp" namespace "growth":
                              double &dist_to_soma) except +
 
     cdef void get_swc_(string output_file,
-        vector[stype] gids, unsigned int resolution) except +
+        vector[stype] gids, unsigned int resolution, bool split) except +
 
     cdef statusMap get_status_(stype gid) except +
 

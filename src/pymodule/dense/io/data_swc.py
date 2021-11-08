@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-
+from io import StringIO
+import json
 import os
 from os.path import join, isfile
 
@@ -32,16 +33,20 @@ from ..elements import Neuron, Population
 __all__ = [
     "save_to_swc",
     "load_swc"
-    # ~ "SplitSwcFile",
-    # ~ "ImportSwc",
-    # ~ "SwcToSegments",
-    # ~ "SegmentsToDeNSE",
-    # ~ "GetSWCStructure",
-    # ~ "GetProperties",
 ]
 
 
-def save_to_swc(filename, gid=None, resolution=10):
+# SWC ids for soma, axon and dendrites
+
+_SOMA_ID = 1
+_AXON_ID = 2
+_BASAL_ID = 3
+_APICAL_ID = 4
+
+
+# save and load functions
+
+def save_to_swc(filename, gid=None, resolution=10, split=False):
     '''
     Save neurons to SWC file.
 
@@ -50,9 +55,6 @@ def save_to_swc(filename, gid=None, resolution=10):
     using NeuroMorpho.org. The format was designed to store trees as
     connected cylindrical segments to form the basis of compartmental
     models.
-
-    (Alternatively DENsE is able to store neuron morphologies in
-    the *neuroml* format using the dense.io.save_to_neuroml() method.)
 
     Parameters
     ----------
@@ -63,34 +65,31 @@ def save_to_swc(filename, gid=None, resolution=10):
     resolution : int, optional (default: 10)
         Coarse-graining factor of the structure: only one point every
         `resolution` will be kept.
+    split : bool, optional (default: False)
+        Whether the neurons should be stored into a single SWC file or each into
+        its own SWC file (ignored if `gid` contains only one neuron).
+
+    See also
+    --------
+    :func:`~dense.io.save_to_neuroml`` for NeuroML format.
     '''
     if isinstance(gid, (int, Neuron)):
         gid = [gid]
-    _pg._neuron_to_swc(filename=filename, gid=gid, resolution=resolution)
+
+    _pg._neuron_to_swc(
+        filename=filename, gid=gid, resolution=resolution, split=split)
 
 
-def load_swc(swc_folder=None, swc_file=None, info=None):
+def load_swc(swc_path=None, info=None):
     """
-    Import SWC files in DeNSE Population:
-        the Population container retrieves all possible data
-        frome the swc file.
-        The import tool will look in the folder for the morphology file,
-        or for single neurons files.
-        the format style of SWC files is the standard
-
-        NB :
-            Currently if swc_file is given, the code assumes the file
-            contains only one neuron !
-            If both swc_folder and swc_file are given, it assumes the file
-            contains only one neuron.
-            If the swc file contains more thant one neurone, give only
-            the swc_folder path.
-        (Issue reported !)
+    Import SWC files as a DeNSE :class:`~dense.elements.Population`.
 
     Parameters
     ----------
-    swc_folder: str
-        Folder containing morphology.swc or single neurons file
+    swc_path: str, optional
+        Path to a file or folder containing SWC information to load.
+    info : str, optional (default: None)
+        JSON file containing additional information about the neurons.
 
     Returns
     -------
@@ -98,79 +97,34 @@ def load_swc(swc_folder=None, swc_file=None, info=None):
         The container can be used to post process the neuron  generated with
         DeNSE or other neurons in general.
     """
-    if swc_file is not None:
-        return Population.from_swc(
-            NeuronFromSwcFile(swc_file, info))
-    if swc_folder is not None:
-        return Population.from_swc(
-            NeuronsFromSimulation(swc_folder))
+    data = None
+
+    info = {} if info is None else json.loads(info)
+
+    if swc_path.lower().endswith(".swc"):
+        data = neuron_from_swc(swc_path, info=info)
+    else:
+        data = neurons_from_swc_folder(swc_path, info=info)
+
+    return Population.from_swc(data, info)
 
 
-def NeuronsFromSimulation(simulation_path):
-    """
-    Return a list of dense_format neurons for all the neurons in the simulation path.
-    The simulations are expected to be a pair of morphology.swc and info.json files with same name.
-    The .json file will contain information on the neurons.
-    In case the swc file contain more than a neuron, let'say N,
-    it will be splitted in N .swc files inside a folder with same name and path.
-    This is done for compatibility with btmorph2.
+def neurons_from_swc_folder(path, info):
+    data = {}
 
-    Returns
-    -------
-    A list of dense_format = {"gid":gid,"data":file_,"info":json.load(open(simulation_path+".json"))}
-    """
+    for elt in os.listdir(path):
+        if elt.lower().endswith(".swc"):
+            data.update(neuron_from_swc(join(path, elt), info))
 
-    neurons = {}
-    simulation_path = simulation_path
-
-    try:
-        imported_list, gids = ImportSwc(os.path.join(
-            simulation_path,"morphology.swc"))
-    except:
-        print("WARNING: {} not found: Neurons have already been "
-              "split".format(os.path.join(simulation_path,"morphology.swc")))
-        imported_list = [
-            os.path.join(simulation_path, f) for f in os.listdir(simulation_path)
-            if f.endswith(".swc") and f != "morphology.swc"
-        ]
-
-    gids = len(imported_list)
-
-    def parse_gid(_file):
-        with open(file_,'r') as fp:
-            line = fp.readline()
-            line = line.split()
-            assert(line[0] == "#gid")
-            return line[1].rstrip()
-
-    for file_ in imported_list:
-        gid = parse_gid(file_)
-        dense_format = {"gid": gid, "data":file_}
-        neurons[gid] = dense_format
-    try:
-        info = json.load(open(os.path.join(simulation_path, "info.json")))
-    except:
-        raise ValueError("ERROR: {} not found".format(
-            os.path.join(simulation_path,"info.json")))
-
-    info["gids"] = gids
-    neurons = {"neurons": neurons, "info": info}
-
-    return neurons
-
-
-def NeuronFromSwcFile(filename, info=None):
-    dense_format = {"gid": 0, "data": filename}
-    neurons = {0: dense_format}
-    return {"neurons": neurons, "info": info}
+    return data
 
 
 ############
 # OLD
 
-def ImportSwc(swc_file):
+def neuron_from_swc(swc_file, info):
     """
-    Import the "morphology.swc" file and return a list of non equal two-dimensional array.
+    Import the SWC file and return a list of non equal two-dimensional array.
     First dimension is the neurons space, as many as number of neurons in the file.
     Second dimension is the swc params space, see SWC specifications
     Third dimension is the data space.
@@ -180,193 +134,62 @@ def ImportSwc(swc_file):
     neurons: list np array from .swc file.
     gids: number of this files
     """
-    gids = SplitSwcFile(swc_file)
-    neurons = []
-    hash_path = swc_file.split(".")[0]
-    for gid in range(1, gids + 1):
-        # print("read {}/neuron_{}.swc".format(swc_file, gid))
-        neurons.append(np.loadtxt(
-            join(hash_path, "neuron_" + str(gid) + ".swc")))
-    return neurons, gids
+    neurons, data = {}, {}
 
+    with open(swc_file, "r") as f:
+        filecontent = f.readlines()
 
-def SplitSwcFile(input_file):
-    """
-    Write single neurons .swc files from many neurons .swc file
-    DeNSE write multiple neurons swc file, but single neuron files are easier to process.
+    last_gid = None
 
-    """
+    for i, l in enumerate(filecontent):
+        if l.startswith("#start_neuron"):
+            gid = int(l.split(" ")[1])
 
-    f = open(input_file, 'r')
+            neurons[gid] = [i]
 
-    if not input_file.endswith("morphology.swc"):
-        raise ValueError("SwcFile: morphology.swc expected  instead "
-                         "{} got".format(input_file))
-    filename = input_file[:-14]
+            if last_gid is not None:
+                neurons[last_gid].append(i)
 
-    if not os.path.exists(filename):
-        raise ValueError("DeNSE simulation folder not found")
-        os.makedirs(filename)
+            last_gid = gid
 
-    neuron = []
-    gid = None
-    stored_data = False
+    neurons[last_gid].append(i)
 
-    for line in f:
-        if line.startswith('#start_neuron'):
-            line = line.split(" ")
-            gid = line[2].rstrip()
-            neuron = ["#gid "+gid+"\n"]
-        elif not line.startswith('#') and line.strip():
-            stored_data = True
-            neuron.append(line)
-        elif stored_data and line.startswith('#end_neuron'):
-            _lines_to_file(neuron, os.path.join(
-                filename, "neuron_"+gid.zfill(6)+".swc"))
-            stored_data = False
+    for gid, (start, stop) in neurons.items():
+        s = StringIO("".join(filecontent[start:stop]))
+        data[gid] = swc_to_segments(s)
 
-    return gid
-
-
-def SegmentsToDeNSE(paths, name, info):
-    """
-    Convert a list of segments to an equivalent set of Neuron in DeNSE format
-    DeNSE_data:
-    {"neurons":
-        {
-        1:{"1":neuronID, "data":swc array}
-        2:{"2":neuronID, "data":swc array}
-
-        n:{"3":neuronID, "data":swc array}
-        }
-    , "info":simulation_parameters}
-    """
-    neurons = {}
-    DeNSE_data = {
-        "info": {"name": name, "description": info}
-    }
-
-    for n, path in enumerate(paths):
-        neurons[n] = {"gid": n, "data": path.transpose()}
-
-    DeNSE_data["neurons"] = neurons
-
-    return DeNSE_data
-
-
-def GetSWCStructure(neuron, plot=False, neuron_gid=1, axon_ID=2, dendrite_ID=3):
-    """
-    Import Neuron from SWC structure:
-    recognizes the input format for neuron:
-    * file path to swc file
-    * btmorph NeuronMorphology object
-    * np.ndarray
-    and converts xy lists to xy and polar coordinates
-    """
-    if isinstance(neuron, np.ndarray):
-        if neuron.shape[1] == 2:
-            xy = neuron[:, :].transpose()
-            return (xy, _module_from_xy(xy), None, None), None
-        elif neuron.shape[1] == 6:
-            # xy = neuron[:, 2:4].transpose()
-            neuron = np.loadtxt(neuron)
-            axon = np.where(neuron[:, 1] == axon_ID)[0]
-            dendrite = np.where(neuron[:, 1] == dendrite_ID)[0]
-            axon_xy = neuron[axon, 2:4].transpose()
-            dendrite_xy = neuron[dendrite, 2:4].transpose()
-            axon_diam = neuron[axon, 5]
-            dendrite_diam = neuron[dendrite, 5]
-            return (axon_xy, _module_from_xy(axon_xy), None, axon_diam),\
-                (dendrite_xy, _module_from_xy(dendrite_xy), None, dendrite_diam)
-        else:
-            raise ValueError("Data type not understood, number neuron "
-                             "parameters: {}".format(neuron.shape[1]))
-
-    elif isfile(neuron) and neuron.endswith(".swc"):
-        print("import neuron from swc file")
-        data = np.loadtxt(neuron)
-        axon, dendrites = SwcToSegments(data)
-        return axon, dendrites
-
-    # (axon_xy, _module_from_xy(axon_xy), None, axon_diam),\
-            # (dendrite_xy, _module_from_xy(dendrite_xy), None, dendrite_diam)
-
-        # @TODO fix the angles
-        # angles_axon = False
-        # angles_dendrite = False
-        # try:
-        # angles_axon=_angles_from_xy(axon_xy)
-        # angles_dendrite = _angles_from_xy(dendrite_xy)
-        # except:
-        # warnings.warn("angles were not acquired")
-        # if angles_dendrite & angles_axon:
-        # return (axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam),\
-        # (dendrite_xy, _module_from_xy(dendrite_xy), None, dendrite_diam)
-        # elif angles_axon:
-        # return (axon_xy, _module_from_xy(axon_xy), angles_axon, axon_diam),\
-        # None
-
+    if "gids" in info:
+        info["gids"] += len(neurons)
     else:
-        import btmorph2
-        if isinstance(neuron, btmorph2.NeuronMorphology):
-            if plot:
-                neuron.plot_1D()
-            xy = btmorph2.get_neuron_path(neuron)[:, 5:]
-        try:
-            angles = _angles_from_xy(xy)
-        except:
-            raise ValueError(
-                "xy neuron data ar ill formed. xy is {}", xy.shape)
+        info["gids"] = len(neurons)
 
-        modules = _module_from_xy(xy)
-        return xy, np.array([modules, angles])
+    return data
 
-def SwcToSegments(data,
-                  angle_thresh=None, length_thresh=None,
-                  clean_angle=False,
-                  axon_ID=2, dendrite_ID=3):
+
+def swc_to_segments(path):
     """
     Import a single neuron SWC file, and create a new segments for each branching point.
     Return:
     ======
     Paths: an array of same length (length_thresh) paths (xy)
-
     """
+    data = np.loadtxt(path)
 
-    dendrites = segment_from_swc(data, dendrite_ID)
-    axon = segment_from_swc(data, axon_ID)
-    def clean_path_angles(segments):
-        for key in segments:
-            segments[key]["xy"], segments[key]["theta"] = SegmentFromAngularThresh(
-                SegmentToPath(segments[key]["neurite"]),
-                angle_thresh)
-    def clean_path_length(segments):
-        popper = []
-        for key in segments:
-            if segments[key]["length"] < length_thresh:
-                popper.append(key)
-        for key in popper:
-            segments.pop(key)
-    if angle_thresh is not None:
-        clean_path_angles(axon)
-        clean_path_angles(dendrites)
-    if length_thresh is not None:
-        clean_path_length(axon)
-        clean_path_length(dendrites)
-    # import pdb; pdb.set_trace()  # XXX BREAKPOINT
+    neuron_data = {}
 
-    return \
-        [(axon[key]["xy"], axon[key]["distance_from_soma"], \
-          axon[key]["theta"],axon[key]["diameter"]) for key in axon if
-         axon[key]["length"]>0],\
-        [(dendrites[key]["xy"], dendrites[key]["distance_from_soma"], \
-          dendrites[key]["theta"],dendrites[key]["diameter"]) for key in
-         dendrites if dendrites[key]["length"]>0]\
+    pos_idx = np.where(data[:, 1] == _SOMA_ID)[0][0]
+    neuron_data["position"] = data[pos_idx, 2:4]
+    neuron_data["soma_radius"] = data[pos_idx, 5]
 
-    # paths.extend((segment,angle_thresh))
-    # paths =np.array(omologate(paths, length_thresh))
-    # if paths.shape[0] ==0:
-    # raise ValueError("Segments list is empty")
+    basal = segment_from_swc(data, _BASAL_ID)
+    apical = segment_from_swc(data, _APICAL_ID)
+    axon = segment_from_swc(data, _AXON_ID)
+
+    neuron_data["basal"] = basal
+    neuron_data["apical"] = apical
+    neuron_data["axon"] = axon
+
+    return neuron_data
 
 
 def GetProperties(info):
@@ -393,27 +216,28 @@ def segment_from_swc(data, element_type):
     cut the tree in a set of segments without branching.
     Returns them in a list
     """
-    segments = {}
-    n = -1
-    parent_sample = -10
+    segments = []
 
+    parent_sample = -10
     FORK_ID = 5
-    has_forked = -1
+    has_forked = False
+
     for line in data:
         if line[1] == element_type:
             sample_number = int(line[0])
             parent_sample = int(line[-1])
-            if parent_sample == sample_number-1 and\
-                    not has_forked:
-                segments[n]["xy"].append(line[2:4])
-                segments[n]["diameter"].append(line[5])
-                segments[n]["last_id"] = sample_number
-                segments[n]["length"] += 1
+
+            if parent_sample == _SOMA_ID:
+                segments.append([])
+
+            if parent_sample == sample_number - 1 and not has_forked:
+                segments[-1][-1]["xy"].append(line[2:4])
+                segments[-1][-1]["diameter"].append(line[5])
+                segments[-1][-1]["last_id"] = sample_number
+                segments[-1][-1]["length"] += 1
             else:
-                # segments[n]["last_id"]=sample_number
-                n += 1
                 first_sample = sample_number
-                segments[n] = {
+                segments[-1].append({
                     "length": 0,
                     "distance_from_soma":None,
                     "first_id": first_sample,
@@ -422,14 +246,21 @@ def segment_from_swc(data, element_type):
                     "theta": None,
                     "last_id": first_sample,
                     "diameter": [],
-                }
-                has_forked = False
+                })
 
+            has_forked = False
         elif int(line[1]) == FORK_ID:
             has_forked = True
-    for key in segments:
-        segments[key]["xy"] = np.array(segments[key]["xy"])
-        segments[key]["diameter"] = np.array(segments[key]["diameter"])
+            parent_sample = int(line[-1])
+
+            if parent_sample == _SOMA_ID:
+                segments.append([])
+
+    for seg in segments:
+        for entry in seg:
+            entry["xy"] = np.array(entry["xy"])
+            entry["diameter"] = np.array(entry["diameter"])
+
     return segments
 
 

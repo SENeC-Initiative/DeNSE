@@ -53,15 +53,21 @@ class Neuron(object):
             Optional arguments used when loading neurons that do not exist
             in the simulator.
         '''
+        kwargs = kwargs.copy()
+
         self._axon      = None
         self._dendrites = {}
         self.__gid      = int(gid)
 
-        self._in_simulator = True
+        self._in_simulator = kwargs.get("in_simulator", True)
+
+        if "in_simulator" in kwargs:
+            del kwargs["in_simulator"]
 
         # check if object exists
         try:
-            _pg.get_object_type(gid)
+            if self._in_simulator:
+                _pg.get_object_type(gid)
         except RuntimeError:
             # object does not exist, use kwargs for some information
             self._in_simulator = False
@@ -960,15 +966,15 @@ class Population(list):
 
     @classmethod
     def from_swc(cls, population, info=None):
-        if info is not None:
-            ensemble = cls(info=population['info'])
-        else:
-            ensemble = cls(info=population['info'])
-        ensemble._add_swc_population(population['neurons'])
+        ensemble = cls(info=info)
+
+        ensemble._add_swc_population(population)
         ensemble.sort()
         ensemble._idx = {}  # converter from gid to idx
+
         for i, n in enumerate(ensemble):
             ensemble._idx[int(n)] = i
+
         return ensemble
 
     @classmethod
@@ -1072,7 +1078,14 @@ class Population(list):
         return len(self)
 
     def append(self, val):
-        super(Population, self).append(val)
+        super().append(val)
+        self.sort()
+        self._idx = {}  # converter from gid to idx
+        for i, n in enumerate(self):
+            self._idx[int(n)] = i
+
+    def extend(self, values):
+        super().extend(values)
         self.sort()
         self._idx = {}  # converter from gid to idx
         for i, n in enumerate(self):
@@ -1128,45 +1141,42 @@ class Population(list):
 
     def _add_swc_population(self, neurons):
         '''
-        add population
+        Build population from SWC files
         '''
-        from .io.data_swc import GetSWCStructure as _get_swc_struct
+        # add neurons first
+        self.extend((
+            Neuron(gid, position=neuron["position"],
+                   soma_radius=neuron["soma_radius"],
+                   in_simulator=False)
+            for gid, neuron in neurons.items()
+        ))
 
-        for neuron in neurons:
-            gid = neurons[neuron]['gid']
-            axon, dendrites = _get_swc_struct(neuron=neurons[neuron]['data'])
-            try:
-                position = self.info["neurons"][str(
-                    neurons[neuron]['gid'])]['position']
-            except KeyError:
-                _warn.warn("Cannot retrieve `position` from info.json file "
-                              "setting default position to [0, 0].")
-                position = [0, 0]
-            try:
-                soma_radius = self.info["neurons"][str(
-                    neurons[neuron]['gid'])]['soma_radius']
-            except KeyError:
-                _warn.warn("Cannot retrieve `soma_radius` from info.json file "
-                              "setting default radius to 8.")
-                soma_radius = 8.
+        # then add neurites
+        for gid, neuron in neurons.items():
+            if len(neuron["axon"]):
+                axon = neuron["axon"][0]
+                self[gid]._axon = Neurite(
+                    [Branch((ax["xy"], None, None, ax["diameter"]),
+                            parent=ax["parent_id"], node_id=ax["first_id"])
+                    for ax in axon], neurite_type="axon", name="axon")
 
-            super(Population, self).append(
-                Neuron(gid, position=position, soma_radius=soma_radius))
+            for i, basal in enumerate(neuron["basal"]):
+                dendrite = Neurite(
+                    [Branch((dend["xy"], None, None, dend["diameter"]),
+                            parent=dend["parent_id"], node_id=dend["first_id"])
+                     for dend in basal],
+                    neurite_type="dendrite", name="dendrite_{}".format(i))
 
-            if isinstance(axon, list):
-                self[gid].axon = Neurite([Branch(ax) for ax in axon],
-                                         neurite_type="axon", name="axon")
-            else:
-                raise Exception("Axon is expected to be a list of segments.")
-            if dendrites is not None:
-                if isinstance(dendrites, list):
-                    dendrite = Neurite(
-                        [Branch(dend) for dend in dendrites],
-                        neurite_type="dendrite", name="dendrite")
-                    self[gid].dendrites[str(dendrite)] = dendrite
-                else:
-                    raise Exception(
-                        "Dendrites are expected to be a list of segments.")
+                self[gid]._dendrites[str(dendrite)] = dendrite
+
+            for j, apical in enumerate(neuron["apical"]):
+                dendrite = Neurite(
+                    [Branch((dend["xy"], None, None, dend["diameter"]),
+                            parent=dend["parent_id"], node_id=dend["first_id"])
+                     for dend in apical], neurite_type="dendrite",
+                    name="dendrite_{}".format(i + j))
+
+                self[gid]._dendrites[str(dendrite)] = dendrite
 
     def get_properties(self, property_name=None, level=None, neurite=None):
         '''

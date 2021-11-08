@@ -2045,8 +2045,10 @@ def _neuron_to_swc(filename, gid=None, resolution=10, split=False):
     split : bool
         Split neurons among files if there are more than one neuron.
     '''
+    filename = filename[:-4] if filename.endswith(".swc") else filename
+
     cdef:
-        string cfname = _to_bytes(filename.rstrip(".swc"))
+        string cfname = _to_bytes(filename)
         vector[stype] gids
 
     if gid is None:

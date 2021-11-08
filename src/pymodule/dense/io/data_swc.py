@@ -28,6 +28,7 @@ import numpy as np
 
 from .. import _pygrowth as _pg
 from ..elements import Neuron, Population
+from ..units import *
 
 
 __all__ = [
@@ -80,59 +81,77 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
         filename=filename, gid=gid, resolution=resolution, split=split)
 
 
-def load_swc(swc_path=None, info=None):
+def load_swc(swc_path, info=None):
     """
-    Import SWC files as a DeNSE :class:`~dense.elements.Population`.
+    Import SWC files as a :class:`~dense.elements.Population`.
+    SWC data will be automatically loading from the file given by `swc_path`
+    or from all SWC file inside `swc_path` if it is a folder.
 
     Parameters
     ----------
-    swc_path: str, optional
+    swc_path: str
         Path to a file or folder containing SWC information to load.
     info : str, optional (default: None)
         JSON file containing additional information about the neurons.
 
     Returns
     -------
-    Population: Population container
-        The container can be used to post process the neuron  generated with
-        DeNSE or other neurons in general.
+    A :class:`~dense.Neuron` if a single neuron is concerned or a
+    :class:`~dense.Population` object if several neurons are involved.
     """
     data = None
 
     info = {} if info is None else json.loads(info)
 
     if swc_path.lower().endswith(".swc"):
-        data = neuron_from_swc(swc_path, info=info)
+        data = _neuron_from_swc(swc_path, info=info)
     else:
-        data = neurons_from_swc_folder(swc_path, info=info)
+        data = _neurons_from_swc_folder(swc_path, info=info)
+
+    if len(data) == 1:
+        gid = next(iter(data))
+        neuron = data[gid]
+
+        return Neuron(gid, position=neuron["position"],
+                      soma_radius=neuron["soma_radius"],
+                      in_simulator=False)
 
     return Population.from_swc(data, info)
 
 
-def neurons_from_swc_folder(path, info):
+def _neurons_from_swc_folder(path, info):
     data = {}
 
     for elt in os.listdir(path):
         if elt.lower().endswith(".swc"):
-            data.update(neuron_from_swc(join(path, elt), info))
+            data.update(_neuron_from_swc(join(path, elt), info))
 
     return data
 
 
-############
-# OLD
+'''
+Tool functions
+'''
 
-def neuron_from_swc(swc_file, info):
+def _neuron_from_swc(swc_file, info):
     """
-    Import the SWC file and return a list of non equal two-dimensional array.
-    First dimension is the neurons space, as many as number of neurons in the file.
-    Second dimension is the swc params space, see SWC specifications
-    Third dimension is the data space.
+    Parameters
+    ----------
+    swc_file : str
+        Address of the file.
+    info : dict
+        Dictionary containing additional information which will be updated by
+        the function.
 
     Returns
     -------
-    neurons: list np array from .swc file.
-    gids: number of this files
+    data : dict
+        Morphology dict containing one entry by neuron, with the following
+        information:
+        * position
+        * soma_radius
+        * axon
+        * one entry per dendrite
     """
     neurons, data = {}, {}
 
@@ -155,8 +174,9 @@ def neuron_from_swc(swc_file, info):
     neurons[last_gid].append(i)
 
     for gid, (start, stop) in neurons.items():
-        s = StringIO("".join(filecontent[start:stop]))
-        data[gid] = swc_to_segments(s)
+        str_data = "".join(filecontent[start:stop])
+        s = StringIO(str_data)
+        data[gid] = _swc_to_segments(s)
 
     if "gids" in info:
         info["gids"] += len(neurons)
@@ -166,7 +186,7 @@ def neuron_from_swc(swc_file, info):
     return data
 
 
-def swc_to_segments(path):
+def _swc_to_segments(path):
     """
     Import a single neuron SWC file, and create a new segments for each branching point.
     Return:
@@ -178,12 +198,12 @@ def swc_to_segments(path):
     neuron_data = {}
 
     pos_idx = np.where(data[:, 1] == _SOMA_ID)[0][0]
-    neuron_data["position"] = data[pos_idx, 2:4]
-    neuron_data["soma_radius"] = data[pos_idx, 5]
+    neuron_data["position"] = data[pos_idx, 2:4] * um
+    neuron_data["soma_radius"] = data[pos_idx, 5] * um
 
-    basal = segment_from_swc(data, _BASAL_ID)
-    apical = segment_from_swc(data, _APICAL_ID)
-    axon = segment_from_swc(data, _AXON_ID)
+    basal = _segment_from_swc(data, _BASAL_ID)
+    apical = _segment_from_swc(data, _APICAL_ID)
+    axon = _segment_from_swc(data, _AXON_ID)
 
     neuron_data["basal"] = basal
     neuron_data["apical"] = apical
@@ -192,29 +212,12 @@ def swc_to_segments(path):
     return neuron_data
 
 
-def GetProperties(info):
-    props = info['neurons']['0']['axon_params']
-    name = "lp_{} mem_{} var_{}".format(props['rw_delta_corr'],
-                                        props['rw_memory_tau'],
-                                        props['rw_sensing_angle'])
-    return name, info
-
-
-def _angles_from_xy(path):
-    angles = []
-    for n in range(1, len(path[0])):
-        deltax = path[0][n] - path[0][n - 1]
-        deltay = path[1][n] - path[1][n - 1]
-        rad = np.arctan2(deltay, deltax)
-        angles.append(rad)
-    return _demodularize(np.array(angles) - angles[0])
-
-
-def segment_from_swc(data, element_type):
+def _segment_from_swc(data, element_type):
     """
     From a single neuron swc file select one element type and
     cut the tree in a set of segments without branching.
-    Returns them in a list
+
+    Returns the segments in a list if the element exist else None. 
     """
     segments = []
 
@@ -256,107 +259,26 @@ def segment_from_swc(data, element_type):
             if parent_sample == _SOMA_ID:
                 segments.append([])
 
-    for seg in segments:
+    lengths = []
+
+    remove = []
+
+    for i, seg in enumerate(segments):
+        size = len(seg)
+
+        lengths.append(size)
+
+        if size == 0:
+            remove.append(i)
+
         for entry in seg:
             entry["xy"] = np.array(entry["xy"])
             entry["diameter"] = np.array(entry["diameter"])
 
-    return segments
+    for i in remove[::-1]:
+        del segments[i]
 
+    if np.sum(lengths):
+        return segments
 
-def SegmentToPath(segment):
-    """
-    Convert the segment from SWC file into path,
-    The enriched information will contain the angle difference between two
-    consecutive pieces, the angle is required to clean the path from sudden
-    curves.
-    """
-    import matplotlib.pyplot as plt
-    matrix = np.ndarray((3, len(segment)))
-    x_0 = float(segment[0].split()[2])
-    y_0 = float(segment[0].split()[3])
-    x = float(segment[1].split()[2])
-    y = float(segment[1].split()[3])
-    theta_0 = np.arctan2(-(y - y_0), -(x - x_0))
-    for n, line in enumerate(segment):
-        x = float(line.split()[2])
-        y = float(line.split()[3])
-        theta = np.arctan2(-(y - y_0), -(x - x_0))
-        matrix[0][n] = x
-        matrix[1][n] = y
-        matrix[2][n] = theta - theta_0
-        x_0 = x
-        y_0 = y
-        theta_0 = theta
-    # plt.plot(matrix[0,:],matrix[1,:], c ='k')
-    # print(matrix[2,matrix[2,:]>1])
-    # print(matrix[2,:])
-    # plt.scatter(matrix[0,matrix[2,:]>1],matrix[1,matrix[2,:]>1], c='g')
-        # if matrix[2][n] > 0.5:
-        # return matrix, segment[n:]
-    return matrix[0:2], matrix[2]
-
-
-def SegmentFromAngularThresh(segment, thresh):
-    """
-    Cut the segment into subsegments when the angle is bigger
-    than threshold
-    """
-
-    breakpoints = list(np.where(np.abs(segment[2, :]) > thresh)[0][1:])
-    if breakpoints:
-        stop = 0
-        # for stop in breakpoints:
-        # broken.append(segment[:,start:stop])
-        # start=stop
-        stop = breakpoints[-1]
-        if not segment[:, stop:].shape[1] > 40:
-            segment = segment[:, :stop]
-            # broken.append(segment[:,stop:])
-        return segment
-
-        # longest = max(broken, key=lambda x: x.shape[1])
-        # import pdb; pdb.set_trace()  # XXX BREAKPOINT
-
-    else:
-        return segment
-
-
-def omologate(segments, thresh):
-    """
-    cut all the segments to 'thresh' length and move each one to start in (0,0)
-    remove angle information too
-    """
-    paths = []
-
-    for n, segment in enumerate(segments):
-        if segment.shape[1] > thresh:
-            paths.append((np.subtract(segment.transpose(),
-                                      segment[:, 0]).transpose())[:2, :thresh])
-    return paths
-
-
-def _demodularize(angles):
-    shift = 0
-    demodule = np.zeros((len(angles)))
-    for n, theta in enumerate(angles):
-        if abs(theta - angles[n - 1]) > 3.14:
-            shift += np.sign(angles[n - 1]) * 2 * np.pi
-        demodule[n] = theta + shift
-    return demodule
-
-
-def _module_from_xy(path):
-    modules = []
-    for n in range(1, len(path[0])):
-        deltax = path[0][n] - path[0][n - 1]
-        deltay = path[1][n] - path[1][n - 1]
-        module = np.sqrt(deltay**2 + deltax**2)
-        modules.append(module)
-    return modules
-
-
-def _lines_to_file(neuron, _file):
-    w = open(_file, 'w')
-    for z in neuron:
-        w.write(z)
+    return None

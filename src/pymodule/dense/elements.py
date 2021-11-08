@@ -66,14 +66,18 @@ class Neuron(object):
 
         # check if object exists
         try:
-            if self._in_simulator:
-                _pg.get_object_type(gid)
+            _pg.get_object_type(gid)
+            self._in_simulator *= True
         except RuntimeError:
-            # object does not exist, use kwargs for some information
             self._in_simulator = False
 
+        if not self._in_simulator:
+            # object does not exist, use kwargs for some information
             for k, v in kwargs.items():
                 setattr(self, k, v)
+
+            if "axon" not in kwargs:
+                self._axon = None
 
         # necessary for initial setting of attributes due to __setattr__
         self.__initialized = True
@@ -1153,30 +1157,34 @@ class Population(list):
 
         # then add neurites
         for gid, neuron in neurons.items():
-            if len(neuron["axon"]):
+            if neuron["axon"] is not None:
                 axon = neuron["axon"][0]
                 self[gid]._axon = Neurite(
                     [Branch((ax["xy"], None, None, ax["diameter"]),
                             parent=ax["parent_id"], node_id=ax["first_id"])
                     for ax in axon], neurite_type="axon", name="axon")
 
-            for i, basal in enumerate(neuron["basal"]):
-                dendrite = Neurite(
-                    [Branch((dend["xy"], None, None, dend["diameter"]),
-                            parent=dend["parent_id"], node_id=dend["first_id"])
-                     for dend in basal],
-                    neurite_type="dendrite", name="dendrite_{}".format(i))
+            if neuron["basal"] is not None:
+                for i, basal in enumerate(neuron["basal"]):
+                    dendrite = Neurite(
+                        [Branch((dend["xy"], None, None, dend["diameter"]),
+                                parent=dend["parent_id"],
+                                node_id=dend["first_id"])
+                         for dend in basal],
+                        neurite_type="dendrite", name="dendrite_{}".format(i))
 
-                self[gid]._dendrites[str(dendrite)] = dendrite
+                    self[gid]._dendrites[str(dendrite)] = dendrite
 
-            for j, apical in enumerate(neuron["apical"]):
-                dendrite = Neurite(
-                    [Branch((dend["xy"], None, None, dend["diameter"]),
-                            parent=dend["parent_id"], node_id=dend["first_id"])
-                     for dend in apical], neurite_type="dendrite",
-                    name="dendrite_{}".format(i + j))
+            if neuron["apical"] is not None:
+                for j, apical in enumerate(neuron["apical"]):
+                    dendrite = Neurite(
+                        [Branch((dend["xy"], None, None, dend["diameter"]),
+                                parent=dend["parent_id"],
+                                node_id=dend["first_id"])
+                         for dend in apical], neurite_type="dendrite",
+                        name="dendrite_{}".format(i + j))
 
-                self[gid]._dendrites[str(dendrite)] = dendrite
+                    self[gid]._dendrites[str(dendrite)] = dendrite
 
     def get_properties(self, property_name=None, level=None, neurite=None):
         '''

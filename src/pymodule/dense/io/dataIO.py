@@ -79,7 +79,7 @@ def save_to_neuroml(filename, gid=None, resolution=10):
     '''
     Save the morphology of each neuron to a single NeuroML file.
 
-    NeuroML is an XML (Extensible Markup Language) based model description
+    NeuroML is an XML (eXtensible Markup Language) based model description
     language that aims to provide a common data format for defining and
     exchanging models in computational neuroscience.  It is focused on
     biophysical and anatomical detailed models.
@@ -94,6 +94,10 @@ def save_to_neuroml(filename, gid=None, resolution=10):
     resolution : int, optional (default: 10)
         Subsampling coefficient for points on a neurite (sample on point every
         `resolution`).
+
+    See also
+    --------
+    :func:`~dense.io.save_to_swc`
     '''
     import neuroml
     import neuroml.writers as writers

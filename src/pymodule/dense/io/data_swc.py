@@ -60,7 +60,9 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
     Parameters
     ----------
     filename : str
-        Name of the SWC to write.
+        Name of the SWC file to write.
+        If `split` is True, it will be combined with the neurons' gids to form
+        each final filename.
     gid : int or list of ints
         Neurons to save.
     resolution : int, optional (default: 10)
@@ -69,10 +71,13 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
     split : bool, optional (default: False)
         Whether the neurons should be stored into a single SWC file or each into
         its own SWC file (ignored if `gid` contains only one neuron).
+        If `split` is True, the gid of the neurons will automatically be
+        appended to `filename` to make each idenpendent SWC file.
 
     See also
     --------
-    :func:`~dense.io.save_to_neuroml`` for NeuroML format.
+    :func:`~dense.io.load_swc` to load SWC data.
+    :func:`~dense.io.save_to_neuroml` for NeuroML format.
     '''
     if isinstance(gid, (int, Neuron)):
         gid = [gid]
@@ -83,8 +88,9 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
 
 def load_swc(swc_path, info=None):
     """
-    Import SWC files as a :class:`~dense.elements.Population`.
-    SWC data will be automatically loading from the file given by `swc_path`
+    Import SWC files as a :class:`~dense.elements.Neuron` or a
+    :class:`~dense.elements.Population`.
+    SWC data will be automatically loaded from the file given by `swc_path`
     or from all SWC file inside `swc_path` if it is a folder.
 
     Parameters
@@ -92,12 +98,16 @@ def load_swc(swc_path, info=None):
     swc_path: str
         Path to a file or folder containing SWC information to load.
     info : str, optional (default: None)
-        JSON file containing additional information about the neurons.
+        Optional JSON file containing additional information about the neurons.
 
     Returns
     -------
-    A :class:`~dense.Neuron` if a single neuron is concerned or a
-    :class:`~dense.Population` object if several neurons are involved.
+    a :class:`~dense.element.Neuron` if a single neuron is concerned or
+    a :class:`~dense.Population` object if several neurons are involved.
+
+    See also
+    --------
+    :func:`~dense.io.save_to_swc` to neurons as SWC data.
     """
     data = None
 
@@ -108,15 +118,12 @@ def load_swc(swc_path, info=None):
     else:
         data = _neurons_from_swc_folder(swc_path, info=info)
 
+    pop = Population.from_swc(data, info)
+
     if len(data) == 1:
-        gid = next(iter(data))
-        neuron = data[gid]
+        return next(iter(pop))
 
-        return Neuron(gid, position=neuron["position"],
-                      soma_radius=neuron["soma_radius"],
-                      in_simulator=False)
-
-    return Population.from_swc(data, info)
+    return pop
 
 
 def _neurons_from_swc_folder(path, info):

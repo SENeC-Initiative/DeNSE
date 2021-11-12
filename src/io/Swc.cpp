@@ -31,6 +31,10 @@ namespace growth
 
 typedef std::array<std::vector<double>, 3> PointsArray;
 
+
+Swc::Swc()
+{}
+
 /**
  * @brief Create a file with neuron in SWC format
  *
@@ -48,6 +52,21 @@ Swc::Swc(std::string output_file, unsigned int resolution)
     swc_file_.open(output_file);
     swc_file_ << "#SWC file properties\n";
     swc_file_ << "#sample element_ID X Y Z radius parent\n";
+}
+
+Swc::Swc(Swc&& rhs) :
+    resolution_(std::move(rhs.resolution_))
+{
+    swc_file_.swap(rhs.swc_file_);
+}
+
+
+Swc& Swc::operator=(Swc &&rhs)
+{
+    resolution_ = rhs.resolution_;
+    swc_file_.swap(rhs.swc_file_);
+
+    return *this;
 }
 
 

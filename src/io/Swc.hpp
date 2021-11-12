@@ -49,7 +49,10 @@ class Swc
     unsigned int resolution_;
 
   public:
+    Swc();
     Swc(std::string output_file, unsigned int resolution);
+    Swc(Swc&& rhs);
+    Swc& operator=(Swc &&rhs);
     void to_swc(const Neuron *, stype gid);
     void close_file();
     ~Swc();

@@ -136,7 +136,7 @@ void get_skeleton_(SkelNeurite &axon, SkelNeurite &dendrites,
 
 
 void get_swc_(std::string output_file, std::vector<stype> gids,
-              unsigned int resolution);
+              unsigned int resolution, bool split);
 
 
 statusMap get_kernel_status_();

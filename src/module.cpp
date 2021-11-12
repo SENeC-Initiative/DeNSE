@@ -914,19 +914,40 @@ void get_distances_(stype gid, const std::string &neurite_name, stype node,
 
 
 void get_swc_(std::string output_file, std::vector<stype> gids,
-              unsigned int resolution)
+              unsigned int resolution, bool split)
 {
     std::sort(gids.begin(), gids.end());
-    Swc swc(output_file, resolution);
+    Swc swc;
+
+    if (not split)
+    {
+        Swc tmp(output_file + ".swc", resolution);
+        swc = std::move(tmp);
+    }
 
     for (const auto &neuron_gid : gids)
     {
+        if (split)
+        {
+            Swc tmp(output_file + "_" + std::to_string(neuron_gid) + ".swc",
+                    resolution);
+            swc = std::move(tmp);
+        }
+
         const NeuronPtr neuron = kernel().neuron_manager.get_neuron(neuron_gid);
-        // @todo: pass non default arguments
+
         swc.to_swc(neuron.get(), neuron_gid);
+
+        if (split)
+        {
+            swc.close_file();
+        }
     }
 
-    swc.close_file();
+    if (not split)
+    {
+        swc.close_file();
+    }
 }
 
 

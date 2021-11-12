@@ -21,7 +21,7 @@ script which should provide a convenient multiplatform experience, made even
 easier by the automatic install scripts available on most platforms.
 
 **NB** if you run against some bugs after the installation, please first have
-a look at the `Known errors`_ section, in case it is not already listed there.
+a look at the "Known errors" section, in case it is not already listed there.
 
 
 .. contents:: :depth: 2

@@ -20,7 +20,10 @@
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
 
-""" IO functions """
+"""
+IO functions
+============
+"""
 
 import hashlib
 import json

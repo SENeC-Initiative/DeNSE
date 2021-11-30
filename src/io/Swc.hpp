@@ -53,6 +53,8 @@ class Swc
     Swc(std::string output_file, unsigned int resolution);
     Swc(Swc&& rhs);
     Swc& operator=(Swc &&rhs);
+    stype write_data(BranchPtr b, stype idx, stype &sample, stype last_sample,
+                     int ID, double final_diam, double tap_r, double final_dts);
     void to_swc(const Neuron *, stype gid);
     void close_file();
     ~Swc();

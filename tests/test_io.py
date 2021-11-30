@@ -46,11 +46,11 @@ def test_swc():
     # create one neuron
     neurons = ds.create_neurons(num_neurons, neuron_params, num_neurites=2)
 
-    ds.simulate(10.*day)
+    ds.simulate(1.*day)
 
     # save all neurons into a single file
     filename = "all_neurons.swc"
-    ds.io.save_to_swc(filename)
+    ds.io.save_to_swc(filename, split=False)
 
     assert isfile(filename)
 
@@ -72,7 +72,7 @@ def test_swc():
     except FileExistsError:
         pass
 
-    ds.io.save_to_swc(join(dirname, "neuron"), split=True)
+    ds.io.save_to_swc(join(dirname, "neuron.swc"), resolution=1)
 
     for i in range(num_neurons):
         fname = join(dirname, "neuron_{}.swc".format(i))
@@ -84,13 +84,14 @@ def test_swc():
         assert np.isclose(neurons[i].position, n.position).all()
         assert n.axon is not None
         assert len(n.dendrites) == 1
+        assert np.all(np.isclose(n.axon.xy.m, neurons[i].axon.xy.m))
 
     # save two neurons
     filename = "two_neurons.swc"
 
     gids = (1, 3)
 
-    ds.io.save_to_swc(filename, gid=gids)
+    ds.io.save_to_swc(filename, gid=gids, resolution=1, split=False)
 
     # save two neurons into separate files
     dirname = "two_neurons"
@@ -100,7 +101,7 @@ def test_swc():
     except FileExistsError:
         pass
 
-    ds.io.save_to_swc(join(dirname, "neuron"), gid=gids, split=True)
+    ds.io.save_to_swc(join(dirname, "neuron.swc"), gid=gids, resolution=1)
 
     assert len(os.listdir(dirname)) == len(gids)
 
@@ -115,6 +116,7 @@ def test_swc():
             assert np.isclose(neurons[gid].position, n.position).all()
             assert n.axon is not None
             assert len(n.dendrites) == 1
+            assert np.all(np.isclose(neurons[gid].axon.xy.m, n.axon.xy.m))
 
 
 if __name__ == "__main__":

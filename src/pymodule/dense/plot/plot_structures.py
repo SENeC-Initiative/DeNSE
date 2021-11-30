@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-""" Plot recording """
+""" Plot structures (neurons, dendrograms...) """
 
 from collections import deque
 
@@ -34,6 +34,7 @@ import numpy as np
 from .. import _pygrowth as _pg
 from .._helpers import is_iterable
 from ..environment import plot_shape
+from ..elements import Population, Neuron
 from ..units import *
 from .plot_utils import *
 
@@ -155,14 +156,45 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     axon_lines, dend_lines = None, None
     axons, dendrites = None, None
 
-    if mode in ("lines", "mixed"):
-        somas, axon_lines, dend_lines, growth_cones, nodes = \
-            _pg._get_pyskeleton(gid, subsample)
-    if mode in ("sticks", "mixed"):
-        axons, dendrites, somas = _pg._get_geom_skeleton(gid)
+    if isinstance(gid, Population) and not list(gid._in_simulator.values())[0]:
+        somas = np.array([v.m for v in gid.position.values()]).T
+
+        somas = np.vstack((somas, [v.m for v in gid.soma_radius.values()]))
+
+        axon_lines, dend_lines = [[], []], [[], []]
+        for n in gid:
+            points = n.axon.xy.m
+
+            for i in (0, 1):
+                axon_lines[i].extend(points[:, i])
+                axon_lines[i].append(np.NaN)
+
+            for d in n.dendrites.values():
+                points = d.xy.m
+
+                for i in (0, 1):
+                    dend_lines[i].extend(points[:, i])
+                    dend_lines[i].append(np.NaN)
+
+        show_active_gc = False
+    elif isinstance(gid[0], Neuron) and not gid[0]._in_simulator:
+        somas = [n.soma_radius for n in gid]
+        
+        axon_lines = np.concatenate([n.axon.xy.m.T for n in gid]).T
+        dend_lines = np.concatenate(
+            [d.xy.m.T for n in gid for d in n.dendrites.values()]).T
+
+        show_active_gc = False
+    else:
+        if mode in ("lines", "mixed"):
+            somas, axon_lines, dend_lines, growth_cones, nodes = \
+                _pg._get_pyskeleton(gid, subsample)
+        if mode in ("sticks", "mixed"):
+            axons, dendrites, somas = _pg._get_geom_skeleton(gid)
 
     # get the culture if necessary
     env_required = _pg.get_kernel_status('environment_required')
+
     if show_culture and env_required:
         if culture is None:
             culture = _pg.get_environment()
@@ -211,8 +243,10 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     for i, x, y, r in zip(gid, somas[0], somas[1], radii):
         circle = plt.Circle(
             (x, y), r, color=soma_color, alpha=soma_alpha)
+
         artist = ax.add_artist(circle)
         artist.set_zorder(5)
+
         if show_neuron_id:
             str_id = str(i)
             xoffset = len(str_id)*0.35*size
@@ -224,9 +258,18 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 
     # set the axis limits
     if (not show_culture or not env_required) and len(ax.lines) == new_lines:
+        xs, ys = [], []
+
+        if axon_lines is not None:
+            xs.extend(axon_lines[0])
+            ys.extend(axon_lines[1])
+
+        if dend_lines is not None:
+            xs.extend(dend_lines[0])
+            ys.extend(dend_lines[1])
+
         if mode in ("lines", "mixed"):
-            _set_ax_lim(ax, axon_lines[0] + dend_lines[0],
-                        axon_lines[1] + dend_lines[1], offset=2*r_max)
+            _set_ax_lim(ax, xs, ys, offset=2*r_max)
         else:
             xx = []
             yy = []

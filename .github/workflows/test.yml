@@ -68,6 +68,7 @@ jobs:
          if: ${{ matrix.os == 'macos-latest' }}
          run: |
            rm -rf /usr/local/bin/2to3
+           sudo chown -R $(whoami) /usr/local/*
            brew unlink gcc gcc@9
            chmod +x extra/install_macos.sh
            cd extra

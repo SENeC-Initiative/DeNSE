@@ -6,6 +6,10 @@ brew tap homebrew/core
 
 PYVERSION="3.9"
 
+echo 'export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"' >> ~/.bash_profile
+
+export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"
+
 brew install gcc@10 cmake "python@$PYVERSION" geos doxygen boost libomp
 
 brew link gcc@10
@@ -16,8 +20,6 @@ pip3 install --user numpy scipy pint pyneuroml
 pip3 install --user sphinx breathe sphinx-bootstrap-theme
 pip3 install --user --no-binary shapely, shapely
 pip3 install --user matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
-
-echo 'export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"' >> ~/.bash_profile
 
 cd ..
 mkdir build

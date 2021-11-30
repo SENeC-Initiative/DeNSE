@@ -43,7 +43,7 @@ from .plot_utils import *
 # Plot neurons #
 # ------------ #
 
-def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
+def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
                  culture=None, show_culture=True, aspect=1., soma_radius=None,
                  active_gc="d", gc_size=2., soma_color='k', scale=50*um,
                  scale_text=True, axon_color="indianred",
@@ -122,7 +122,7 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
 
     from shapely.geometry import (Polygon, MultiPolygon)
 
-    assert mode in ("lines", "sticks", "mixed"),\
+    assert mode in (None, "lines", "sticks", "mixed"),\
         "Unknown `mode` '" + mode + "'. Accepted values are 'lines', " +\
         "'sticks' or 'mixed'."
 
@@ -156,12 +156,26 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
     axon_lines, dend_lines = None, None
     axons, dendrites = None, None
 
-    if isinstance(gid, Population) and not list(gid._in_simulator.values())[0]:
-        somas = np.array([v.m for v in gid.position.values()]).T
+    # check for loaded neurons
+    loaded_neurons = False
+    first_neuron = next(iter(gid))
+
+    if isinstance(first_neuron, Neuron):
+        for n in gid:
+            loaded_neurons += (not n._in_simulator)
+
+    if loaded_neurons:
+        mode = "lines" if mode is None else mode
+
+        if mode != "lines":
+            raise ValueError("`mode` must be 'lines' to plot loaded neurons.")
+
+        somas = np.array([n.position.m for n in gid]).T
 
         somas = np.vstack((somas, [v.m for v in gid.soma_radius.values()]))
 
         axon_lines, dend_lines = [[], []], [[], []]
+
         for n in gid:
             points = n.axon.xy.m
 
@@ -177,15 +191,9 @@ def plot_neurons(gid=None, mode="sticks", show_nodes=False, show_active_gc=True,
                     dend_lines[i].append(np.NaN)
 
         show_active_gc = False
-    elif isinstance(gid[0], Neuron) and not gid[0]._in_simulator:
-        somas = [n.soma_radius for n in gid]
-        
-        axon_lines = np.concatenate([n.axon.xy.m.T for n in gid]).T
-        dend_lines = np.concatenate(
-            [d.xy.m.T for n in gid for d in n.dendrites.values()]).T
-
-        show_active_gc = False
     else:
+        mode = "sticks" if mode is None else mode
+
         if mode in ("lines", "mixed"):
             somas, axon_lines, dend_lines, growth_cones, nodes = \
                 _pg._get_pyskeleton(gid, subsample)

@@ -27,12 +27,15 @@ Each unit has different kind of "observables" that can be recorded via a
 recorder.
 To find out what observables are available, you can use:
 
-```python
-neuron.observables                                                    # for a neuron
-neuron.axon.observables                                               # for the axon
-neuron.dendrites["dendrite_1"].observables                            # for a dendrite
-ds.get_object_properties(neuron, "observables", level="growth_cone")  # for a growth cone
-```
+.. code-block:: python
+
+    neuron.observables                                                    # for a neuron
+    neuron.axon.observables                                               # for the axon
+    neuron.dendrites["dendrite_1"].observables                            # for a dendrite
+    ds.get_object_properties(neuron, "observables", level="growth_cone")  # for a growth cone
+
+To be able to plot the recorded information, use the
+:func:`~dense.plot.plot_recording`.
 
 
 Saving neuronal morphologies
@@ -62,4 +65,23 @@ anatomical models.
 Finally :func:`dense.io.save_json_info` is used to save an `info.json` file
 meant to store the simulation configuration.
 
+
+Working with saved data
+=======================
+
+After the data has been saved to disk, you can either load it in other libraries
+reading SWC or NeuroML formats, or reload it in DeNSE.
+
+.. note::
+
+    Apart from DeNSE, most other libraries require the neurons to be split
+    into separate SWC files, so make sure *not* to set `split` to True if you
+    want external compatibility.
+
+You can reload the neurons in DeNSE, then plot them directly via:
+
+.. code-block:: python
+
+    neurons = ds.io.load_swc("file.swc")
+    ds.plot.plot_neurons(neurons, show=True)
 

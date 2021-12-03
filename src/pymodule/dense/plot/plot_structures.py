@@ -24,6 +24,7 @@
 from collections import deque
 
 import matplotlib
+from matplotlib.colors import BoundaryNorm
 from matplotlib.cm import get_cmap
 from matplotlib.patches import Rectangle
 from matplotlib.patches import PathPatch
@@ -32,7 +33,7 @@ from matplotlib.textpath import TextPath
 import numpy as np
 
 from .. import _pygrowth as _pg
-from .._helpers import is_iterable
+from .._helpers import is_iterable, is_integer
 from ..environment import plot_shape
 from ..elements import Population, Neuron
 from ..units import *
@@ -48,10 +49,8 @@ def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
                  active_gc="d", gc_size=2., soma_color='k', scale=50*um,
                  scale_text=True, axon_color="indianred",
                  dendrite_color="royalblue", subsample=1, save_path=None,
-                 title=None, axis=None, show_density=False, dstep=20.,
-                 dmin=None, dmax=None, colorbar=True, show_neuron_id=False,
-                 show=True, xy_steps=None, x_min=None, x_max=None, y_min=None,
-                 y_max=None, **kwargs):
+                 title=None, axis=None, colorbar=True, show_neuron_id=False,
+                 show=True, **kwargs):
     '''
     Plot neurons in the network.
 
@@ -106,17 +105,11 @@ def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
         Whether the GID of the neuron should be displayed inside the soma.
     show : bool, optional (default: True)
         Whether the plot should be displayed immediately or not.
-    dstep : number of bins for density level histogram
-    dmin : minimal density for density  histogram
-    dmax : maximal scale for density
-    xy_steps : number of spatial bins for density plot
-    x_min, x_max, y_min, y_max : bounding bix for spatial density map
     **kwargs : optional arguments
         Details on how to plot the environment, see :func:`plot_environment`.
 
     Returns
     -------
-    axes : axis or tuple of axes if `density` is True.
     '''
     import matplotlib.pyplot as plt
 
@@ -305,117 +298,317 @@ def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
             save_path += ".pdf"
         plt.savefig(save_path, format="pdf", dpi=300)
 
-    if show_density:
+    if show:
+        plt.show()
+
+    return ax
+
+
+def plot_density(gid=None, mode=None, num_bins=20, vmin=None, vmax=None,
+                 num_levels=None, x_min=None, x_max=None, y_min=None,
+                 y_max=None, culture=None, show_culture=True, aspect=1.,
+                 soma_radius=None, scale=50*um, scale_text=True, subsample=1,
+                 save_path=None, title=None, axis=None, colorbar=True,
+                 show=True, **kwargs):
+    '''
+    Plot the density of neurons and neurites in the network as a histogram-like
+    map.
+
+    Parameters
+    ----------
+    gid : int or list, optional (default: all neurons)
+        Id(s) of the neuron(s) to plot.
+    mode : str, optional (default: "histogram")
+        How the density should be shown. Either via a "histogram", where the
+        neuron path are binarized, or via a "density" map that mimicks
+        a signal from fluorescence microscopy (i.e. without binarization).
+    num_bins : int or 2-tuple of ints, optional (default: 20)
+        Number of bins along the x and y axes. It can be either a single integer
+        to have the same number of bins along both axis, or a tuple of the form
+        (num_xbins, num_ybins).
+    vmin : minimal density for density  histogram
+    vmax : maximal scale for density
+    num_levels : int, optional (default: minimum between max count and 10)
+        Number of levels used to discretize the number branches in each bin.
+    x_min, x_max, y_min, y_max : bounding bix for spatial density map.
+    culture :  :class:`~dense.environment.Shape`, optional (default: None)
+        Shape of the environment; if the environment was already set using
+        :func:`~dense.CreateEnvironment`.
+    show_culture : bool, optional (default: True)
+        If True, displays the culture in which the neurons are embedded.
+    aspect : float, optional (default: 1.)
+        Set the aspect ratio between the `x` and `y` axes.
+    soma_radius : float, optional (default: real neuron radius)
+        Size of the soma marker.
+    scale : length, optional (default: 50 microns)
+        Whether a scale bar should be displayed, with axes hidden. If ``None``,
+        then spatial measurements will be given through standard axes.
+    subsample : int, optional (default: 1)
+        Subsample the neurites to save memory.
+    save_path : str, optional (default: not saved)
+        Path where the plot should be saved, including the filename, pdf only.
+    title : str, optional (default: no title)
+        Title of the plot.
+    axis : :class:`matplotlib.pyplot.Axes`, optional (default: None)
+        Axis on which the plot should be drawn, otherwise a new one will be
+        created.
+    show_neuron_id : bool, optional (default: False)
+        Whether the GID of the neuron should be displayed inside the soma.
+    show : bool, optional (default: True)
+        Whether the plot should be displayed immediately or not.
+    **kwargs : optional arguments
+        Details on how to plot the environment, see :func:`plot_environment`.
+
+    Returns
+    -------
+    axes : axis or tuple of axes if `density` is True.
+    '''
+    import matplotlib.pyplot as plt
+
+    from shapely.geometry import (Polygon, MultiPolygon)
+
+    assert mode in (None, "histogram", "fluorescence"),\
+        "Unknown `mode` '" + mode + "'. Accepted values are 'histogram' " +\
+        "and 'fluorescence'."
+
+    mode = "histogram" if mode is None else mode
+
+    if mode == "histogram":
+        subsample = 1
+
+    # plot
+    fig, ax, ax2 = None, None, None
+    if axis is None:
+        fig, ax = plt.subplots()
+    else:
+        ax = axis
+        fig = axis.get_figure()
+
+    fig.patch.set_alpha(0.)
+    new_lines = 0
+
+    # get the objects describing the neurons
+    if gid is None:
+        gid = _pg.get_neurons(as_ints=True)
+    elif not is_iterable(gid):
+        gid = [gid]
+
+    somas, growth_cones, nodes = None, None, None
+    axon_lines, dend_lines = None, None
+    axons, dendrites = None, None
+
+    # check for loaded neurons
+    loaded_neurons = False
+    first_neuron = next(iter(gid))
+
+    if isinstance(first_neuron, Neuron):
+        for n in gid:
+            loaded_neurons += (not n._in_simulator)
+
+    if loaded_neurons:
+        if mode != "histogram":
+            raise ValueError(
+                "`mode` must be 'histogram' to plot loaded neurons.")
+
+        somas = np.array([n.position.m for n in gid]).T
+
+        somas = np.vstack((somas, [v.m for v in gid.soma_radius.values()]))
+
+        axon_lines, dend_lines = [[], []], [[], []]
+
+        for n in gid:
+            points = n.axon.xy.m
+
+            for i in (0, 1):
+                axon_lines[i].extend(points[:, i])
+                axon_lines[i].append(np.NaN)
+
+            for d in n.dendrites.values():
+                points = d.xy.m
+
+                for i in (0, 1):
+                    dend_lines[i].extend(points[:, i])
+                    dend_lines[i].append(np.NaN)
+
+        show_active_gc = False
+    else:
+        if mode == "histogram":
+            somas, axon_lines, dend_lines, growth_cones, nodes = \
+                _pg._get_pyskeleton(gid, subsample)
+        else:
+            axons, dendrites, somas = _pg._get_geom_skeleton(gid)
+
+    # get the culture if necessary
+    env_required = _pg.get_kernel_status('environment_required')
+
+    if show_culture and env_required:
+        if culture is None:
+            culture = _pg.get_environment()
+
+        plot_environment(culture, ax=ax, show=False, **kwargs)
+        new_lines += 1
+
+    if mode == "histogram":
         from matplotlib.colors import LogNorm
 
-        fig, ax2 = plt.subplots()
+        x, y = axon_lines
 
-        # https://stackoverflow.com/questions/20474549/extract-points-coordinates-from-a-polygon-in-shapely#20476150
-        # x,y= axons[].exterior.coords.xy
+        x.extend(dend_lines[0])
+        y.extend(dend_lines[1])
 
-        def extract_neurites_coordinate(neurites):
-            '''
-            from a neurite defined as polynom extract the coordinates of each
-            segment
-            input : p neuron or dendrite, as shapely polygon
-                    x_neurites, y_neurites : numpy arrays of x and y coordinates of
-                                       axons segments
-                    y_dendrites, y_dendrites : numpy arrays of x and y
-                                               coordinates of dendrites
-            outputs : updates lists of coordinates
-            '''
-            x_neurites = np.array([])
-            y_neurites = np.array([])
-            if isinstance(neurites, MultiPolygon):
-                for p in neurites:
-                    x_neurite, y_neurite = extract_neurites_coordinate(p)
-                    x_neurites = np.concatenate((x_neurites, x_neurite))
-                    y_neurites = np.concatenate((y_neurites, y_neurite))
-            elif isinstance(neurites, Polygon):
-                x_neurite, y_neurite = neurites.exterior.coords.xy
-                x_neurites = np.concatenate((x_neurites, x_neurite))
-                y_neurites = np.concatenate((y_neurites, y_neurite))
-            else:
-                for index in range(len(neurites)):
-                    x_neurite, y_neurite = extract_neurites_coordinate(
-                                           neurites[index])
-                    x_neurites = np.concatenate((x_neurites, x_neurite))
-                    y_neurites = np.concatenate((y_neurites, y_neurite))
+        x = np.array(x)
+        y = np.array(y)
 
-            return x_neurites, y_neurites
-
-        # extract axons segments
-        # if isinstance(axons, MultiPolygon):
-        #     for p in axons:
-        #         x_axons, y_axons = extract_neurites_coordinate(p)
-        # else:
-        x, y = extract_neurites_coordinate(axons)
-
-        # x = x_axons
-        # y = y_axons
-
-        # extract dendrites segments
-        if len(dendrites) > 0:  # this depends if dendrites present
-            # if isinstance(dendrites, MultiPolygon):
-            #     for p in dendrites:
-            #         x_dendrites, y_dendrites = extract_neurites_coordinate(p)
-            # else:
-            #     x_dendrites, y_dendrites = extract_neurites_coordinate(
-            #                             dendrites)
-            x_dendrites, y_dendrites = extract_neurites_coordinate(
-                                        dendrites)
-
-            x = np.concatenate((x, x_dendrites))
-            y = np.concatenate((y, y_dendrites))
+        limits = np.where(np.isnan(x))[0]
 
         # Scaling density levels
-        xbins = int((np.max(x) - np.min(x)) / dstep)
-        ybins = int((np.max(y) - np.min(y)) / dstep)
+        num_xbins, num_ybins = None, None
 
-        dstep = int(dstep)
-        counts, xbins, ybins = np.histogram2d(
-                                              x, y, bins=(dstep, dstep),
-                                              range=[[x_min, x_max],
-                                                     [y_min, y_max]])
+        if is_integer(num_bins):
+            num_xbins = num_ybins = num_bins
+        elif len(num_bins) == 2:
+            num_xbins, num_ybins = num_bins
+        else:
+            raise ValueError("`num_bins` must be either an integer or a "
+                             "2-tuple (num_xbins, num_ybins).")
+
+        x_max = np.nanmax(x) if x_max is None else x_max
+        x_min = np.nanmin(x) if x_min is None else x_min
+
+        y_max = np.nanmax(y) if y_max is None else y_max
+        y_min = np.nanmin(y) if y_min is None else y_min
+
+        Dx = x_max - x_min
+        Dy = y_max - y_min
+
+        counts = np.zeros((num_xbins - 1, num_ybins - 1))
+
+        xbins = np.linspace(x_min - 0.01*Dx, x_max + 0.01*Dx, num_xbins)
+        ybins = np.linspace(y_min - 0.01*Dy, y_max + 0.01*Dy, num_ybins)
+
+        # count the neurites
+        start = 0
+
+        for stop in limits:
+            tmp, _, _ = np.histogram2d(
+                x[start:stop], y[start:stop], bins=(xbins, ybins),
+                range=((x_min, x_max), (y_min, y_max)))
+
+            start = stop
+
+            tmp[tmp > 0] = 1
+
+            counts += tmp
+
+        # prepare the plot
         lims = [xbins[0], xbins[-1], ybins[0], ybins[-1]]
         counts[counts == 0] = np.NaN
 
         cmap = get_cmap(kwargs.get("cmap", "viridis"))
+
+        if matplotlib.__version__ >= "3.4.0":
+            cmap = matplotlib.cm.get_cmap(cmap).copy()
+
         cmap.set_bad((0, 0, 0, 1))
         norm = None
-        dmax = np.nanmax(counts)
-        print("Maximal density : {}".format(dmax))
 
-        if dmin is not None and dmax is not None:
-            n = int(dmax-dmin)
-            norm = matplotlib.colors.BoundaryNorm(
-                np.arange(dmin-1, dmax+1, 0), cmap.N)
-        elif dmax is not None:
-            n = int(dmax)
-            norm = matplotlib.colors.BoundaryNorm(
-                np.arange(0, dmax+1, 1), cmap.N)
+        max_count = int(np.nanmax(counts))
+        min_count = 1
 
-        # data = ax2.imshow(counts.T, extent=lims, origin="lower",
-        #                   vmin=0 if dmin is None else dmin, vmax=dmax,
-        #                   cmap=cmap)
+        dmax = max_count if vmax is None else vmax
+        dmin = min_count if vmin is None else vmin
 
-        data = ax2.imshow(counts.T, extent=lims, origin="lower",
-                          norm=norm,
-                          cmap=cmap)
+        num_levels = min(
+            dmax - dmin + 1 if num_levels is None else num_levels, cmap.N)
+
+        dcount = (dmax - dmin + 1) / num_levels
+        bounds = np.linspace(dmin - 0.5*dcount, dmax + 0.5*dcount,
+                             num_levels + 1)
+
+        norm = BoundaryNorm(bounds, cmap.N)
+
+        data = ax.imshow(counts.T, extent=lims, origin="lower",
+                         cmap=cmap, norm=norm)
 
         if colorbar:
             extend = "neither"
-            if dmin is not None and dmax is not None:
+
+            extend_max = vmax is not None and vmax < max_count
+
+            ticks = np.linspace(dmin, dmax, num_levels).tolist()
+            ticklabels = [str(int(t)) for t in ticks]
+
+            if vmin is not None and extend_max:
                 extend = "both"
-            elif dmax is not None:
+            elif extend_max:
                 extend = "max"
-            elif dmin is not None:
+            elif vmin is not None:
                 extend = "min"
-            cb = plt.colorbar(data, ax=ax2, extend=extend)
-            cb.set_label("Number of neurites per bin")
-        ax2.set_aspect(aspect)
-        ax2.set_xlabel(r"x ($\mu$ m)")
-        ax2.set_ylabel(r"y ($\mu$ m)")
+
+            cb = plt.colorbar(data, ax=ax, extend=extend, ticks=ticks)
+            cb.set_label("Number of branches per bin")
+            cb.ax.set_yticklabels(ticklabels)
+
+        ax.set_aspect(aspect)
+        ax.set_xlabel(r"x ($\mu$ m)")
+        ax.set_ylabel(r"y ($\mu$ m)")
+    else:
+        # compute the alpha that would saturate for vmax
+        vmax = np.sqrt(len(gid)) if vmax is None else vmax
+
+        alpha = 1 / vmax
+
+        # plot the elements
+        for a in axons.values():
+            plot_shape(a, axis=ax, fc="g", ec="none", show_contour=False,
+                       zorder=2, alpha=alpha, show=False)
+
+        for vd in dendrites.values():
+            for d in vd:
+                plot_shape(d, axis=ax, fc="g", ec="none", show_contour=False,
+                           alpha=alpha, zorder=2, show=False)
+
+        # plot the somas
+        n = len(somas[2])
+        radii = somas[2] if soma_radius is None else np.repeat(soma_radius, n)
+        radii *= 1.05
+
+        r_max = np.max(radii)
+        r_min = np.min(radii)
+
+        size = (1.5*r_min if len(gid) <= 10
+                else (r_min if len(gid) <= 100 else 0.7*r_min))
+
+        for i, x, y, r in zip(gid, somas[0], somas[1], radii):
+            circle = plt.Circle((x, y), r, fc="g", ec="none", alpha=alpha)
+
+            artist = ax.add_artist(circle)
+            artist.set_zorder(5)
+
+        xx, yy = [], []
+
+        for a in axons.values():
+            xmin, ymin, xmax, ymax = a.bounds
+            xx.extend((xmin, xmax))
+            yy.extend((ymin, ymax))
+
+        for vd in dendrites.values():
+            for d in vd:
+                xmin, ymin, xmax, ymax = d.bounds
+                xx.extend((xmin, xmax))
+                yy.extend((ymin, ymax))
+
+        _set_ax_lim(ax, xx, yy, offset=2*r_max)
+
+    ax.set_aspect(aspect)
+
+    if title is not None:
+        fig.suptitle(title)
+
+    if save_path is not None:
+        if not save_path.endswith('pdf'):
+            save_path += ".pdf"
+        plt.savefig(save_path, format="pdf", dpi=300)
 
     if scale is not None:
         xmin, xmax = ax.get_xlim()
@@ -445,10 +638,7 @@ def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
     if show:
         plt.show()
 
-    if show_density:
-        return ax, ax2
-
-    return ax
+    
 
 
 # --------------- #

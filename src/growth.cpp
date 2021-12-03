@@ -65,8 +65,8 @@ int main(int argc, char **argv)
 
     growth::SkelNeurite axon, dendrites, nodes, growth_cones, somas;
     std::vector<growth::stype> gid = {0};
-    // growth::get_skeleton(axon, dendrites, nodes, growth_cones, somas, gid);
-    growth::get_swc_("myswc", gid, 10, false);
+
+    growth::save_swc_("myswc", gid, 10, false);
 
     return 0;
 }

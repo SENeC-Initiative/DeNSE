@@ -2061,7 +2061,7 @@ def _neuron_to_swc(filename, gid=None, resolution=10, split=False):
 
     split *= (gids.size() > 1)
 
-    get_swc_(cfname, gids, resolution, split)
+    save_swc_(cfname, gids, resolution, split)
 
 
 def _get_tree(neuron, neurite):

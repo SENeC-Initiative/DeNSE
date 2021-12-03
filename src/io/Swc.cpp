@@ -73,6 +73,21 @@ Swc& Swc::operator=(Swc &&rhs)
 void Swc::close_file() { swc_file_.close(); }
 
 
+stype Swc::write_data(BranchPtr b, stype idx, stype &sample, stype last_sample,
+                      int ID, double final_diam, double tap_r, double final_dts)
+{
+    PointArray pp(b->at(idx));
+
+    sample++;
+
+    swc_file_ << sample << " " << ID << " " << pp[0] << " " << pp[1] << " "
+              << 0 << " " << 0.5 * (final_diam + tap_r * (final_dts - pp[2]))
+              << " " << last_sample << "\n";
+
+    return sample;
+}
+
+
 /**
  * @brief Write a neuron to swc
  *
@@ -99,9 +114,7 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
               << 0 << " " << neuron->get_soma_radius() << " " << -1 << "\n";
     int neuriteID = -1;
     int ID        = -1;
-    stype idxp;
     double final_dts, tap_r, final_diam;
-    PointArray pp;
     BranchPtr b; // points and lengthof the branch
 
     for (const auto &neurite : neuron->neurites_)
@@ -130,7 +143,6 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
 
         while (not nodes.empty())
         {
-            idxp              = 0;
             auto node         = nodes.back();
             final_diam        = node.second->get_diameter();
             stype branch_size = node.second->get_branch()->size();
@@ -139,19 +151,27 @@ void Swc::to_swc(const Neuron *neuron, stype gid)
             ID                = forkID;
             last_sample       = node.first;
 
-            for (stype idx = 0; idx < branch_size; idx += resolution_)
+            // first point has fork ID
+            stype idx(0);
+
+            last_sample = write_data(b, idx, sample, last_sample, ID,
+                                     final_diam, tap_r, final_dts);
+
+            // others have neurite ID
+            ID = neuriteID;
+
+            for (idx = 0; idx < branch_size; idx += resolution_)
             {
-                pp = b->at(idx);
+                last_sample = write_data(b, idx, sample, last_sample, ID,
+                                         final_diam, tap_r, final_dts);
+            }
 
-                sample++;
-
-                swc_file_ << sample << " " << ID << " " << pp[0] << " " << pp[1]
-                          << " " << 0 << " "
-                          << 0.5 * (final_diam + tap_r * (final_dts - pp[2]))
-                          << " " << last_sample << "\n";
-
-                ID          = neuriteID;
-                last_sample = sample;
+            // add last element if necessary due to resolution
+            if (idx != branch_size + resolution_ - 1)
+            {
+                last_sample = write_data(
+                    b, branch_size - 1, sample, last_sample, ID, final_diam,
+                    tap_r, final_dts);
             }
 
             nodes.pop_back();

@@ -1,5 +1,19 @@
 @import url("bootstrap-sphinx.css");
 
+@media (prefers-color-scheme: dark) {
+    body {
+        filter: invert(100%) hue-rotate(180deg);
+    }
+
+    html {
+        background-color: #222;
+    }
+
+    img {
+        filter: invert(100%) hue-rotate(180deg);
+    }
+}
+
 
 a.headerlink {
     visibility: hidden;

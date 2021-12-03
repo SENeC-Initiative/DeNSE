@@ -194,6 +194,10 @@ class SpatialMultiNetwork(object):
         else:
             raise KeyError("SpatialNetwork has no edge " + str(edge) + ".")
 
+    def has_edge(self, edge):
+        ''' Return True if the edge is in the graph, else False '''
+        return edge in self._edges
+
     @property
     def population(self):
         ''' The neuronal population '''
@@ -459,9 +463,9 @@ class SpatialNetwork(_BaseNetwork):
         if target not in self._nodes:
             raise ValueError("There is no node {}.".format(target))
 
-        if edge not in self._edges:
+        if not self.has_edge(edge):
             super().new_edge(
-                self, source, target, attributes=attributes, **kwargs)
+                source, target, attributes=attributes, **kwargs)
         else:
             if not self._multigraph:
                 raise RuntimeError("Trying to add existing edge.")

@@ -913,8 +913,8 @@ void get_distances_(stype gid, const std::string &neurite_name, stype node,
 }
 
 
-void get_swc_(std::string output_file, std::vector<stype> gids,
-              unsigned int resolution, bool split)
+void save_swc_(std::string output_file, std::vector<stype> gids,
+               unsigned int resolution, bool split)
 {
     std::sort(gids.begin(), gids.end());
     Swc swc;

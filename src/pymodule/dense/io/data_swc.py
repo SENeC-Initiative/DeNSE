@@ -22,7 +22,7 @@
 from io import StringIO
 import json
 import os
-from os.path import join, isfile
+from os.path import join, isfile, isdir
 
 import numpy as np
 
@@ -47,15 +47,15 @@ _APICAL_ID = 4
 
 # save and load functions
 
-def save_to_swc(filename, gid=None, resolution=10, split=False):
+def save_to_swc(filename, gid=None, resolution=10, split=True):
     '''
     Save neurons to SWC file.
 
     SWC files are a common format used  to store neuron morphologies,
     and are especially used to share digitally reconstructed neurons
-    using NeuroMorpho.org. The format was designed to store trees as
-    connected cylindrical segments to form the basis of compartmental
-    models.
+    using `NeuroMorpho.org <https://neuromorpho.org/>`_.
+    The format was designed to store trees as connected cylindrical segments
+    to form the basis of compartmental models.
 
     Parameters
     ----------
@@ -68,11 +68,11 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
     resolution : int, optional (default: 10)
         Coarse-graining factor of the structure: only one point every
         `resolution` will be kept.
-    split : bool, optional (default: False)
+    split : bool, optional (default: True)
         Whether the neurons should be stored into a single SWC file or each into
         its own SWC file (ignored if `gid` contains only one neuron).
         If `split` is True, the gid of the neurons will automatically be
-        appended to `filename` to make each idenpendent SWC file.
+        appended to `filename` to make each independent SWC file.
 
     See also
     --------
@@ -81,6 +81,11 @@ def save_to_swc(filename, gid=None, resolution=10, split=False):
     '''
     if isinstance(gid, (int, Neuron)):
         gid = [gid]
+
+    if not filename.lower().endswith(".swc"):
+        raise ValueError("`filename` should end with '.swc'")
+
+    assert not isdir(filename), "`filename` cannot be a folder."
 
     _pg._neuron_to_swc(
         filename=filename, gid=gid, resolution=resolution, split=split)
@@ -252,10 +257,10 @@ def _segment_from_swc(data, element_type):
                     "distance_from_soma":None,
                     "first_id": first_sample,
                     "parent_id": parent_sample,
-                    "xy": [],
+                    "xy": [line[2:4]],
                     "theta": None,
                     "last_id": first_sample,
-                    "diameter": [],
+                    "diameter": [line[5]],
                 })
 
             has_forked = False
@@ -280,7 +285,7 @@ def _segment_from_swc(data, element_type):
 
         for entry in seg:
             entry["xy"] = np.array(entry["xy"])
-            entry["diameter"] = np.array(entry["diameter"])
+            entry["diameter"] = 2*np.array(entry["diameter"])
 
     for i in remove[::-1]:
         del segments[i]

@@ -1,55 +1,87 @@
-=======================
-Save simulation results
-=======================
+=========================
+Saving simulation results
+=========================
+
+The processes ocurring during a DeNSE simulation can be monitored, to
+understand what happened during the simulation, and be stored on disk to be
+reused afterwards.
+
+There are mainly two kinds of data you can save, those generated during the
+simulation, which we call "runtime data" or those representing the final state
+at the end of the simulation, or "static data".
 
 
-Recording
-=========
+Recording information
+=====================
 
-The data required to record a branching event is:
-* the GID of the branching neuron
-* the neurite on which the branching happen
-* the time at which it happened (timestep + substep)
+DeNSE enables to record "runtime data", i.e. dynamical information about the
+growth process of neurons or their subprocesses, that occured during the
+simulation, via
+:func:`~dense.create_recorders`.
 
+Recorders will save information about neurons, neurites, or growth cones in
+memory so that it can be plotted after the simulation using
+:func:`~dense.plot.plot_recording`.
 
-Data to SWC format
-==================
+Each unit has different kind of "observables" that can be recorded via a
+recorder.
+To find out what observables are available, you can use:
 
-The data generated from a DeNSE simulation can be stored on your machine to be reused after.
+.. code-block:: python
 
-There are mainly two kinds of data you can save, those generated during the simulation, which we call `runtime_data` or those at the end of the simulation `static_data`.
+    neuron.observables                                                    # for a neuron
+    neuron.axon.observables                                               # for the axon
+    neuron.dendrites["dendrite_1"].observables                            # for a dendrite
+    ds.get_object_properties(neuron, "observables", level="growth_cone")  # for a growth cone
 
-DeNSE offers a set of functions to analyze these data too.
-
-All the `runtime_data` will pass by the
-.. doxygenclass::growth::RecordManager
-at this stage a limited set of information can be stored, it's possible to modify and enhance this module. The main idea is to store all the info during the runtime, being the
-.. doxygenclass::growth::SimulationManager
-calling the `Recorder` for the elongation data or the
-.. doxygenclass::growth::Neurite
-calling the `Recorder` for the branching event data.
-
-Each event requires an identifier since everything is saved to the same file.
-The file will be saved in the current working directory in the path:
-`<SimulationID>/record.dat`
-
-The `static_data` are the `morphology.swc` and `info.json`, both are produced at the end of the simulation, they can be placed where the user prefer, since we do expect these are the data usually required.
-
-For an insight on the SWC format please refer to the `reference page <http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html>`_. The SWC format is one of the most widely used  neuron morphology formats (in particular, a standardized version of this format is used by the `neuromorpho <http://www.neuromorpho.org>`_ archive).
+To be able to plot the recorded information, use the
+:func:`~dense.plot.plot_recording`.
 
 
-DeNSE can also store neuron morphologies in the `NeuroML <https://neuroml.org/>`_ format, an alternative data format for defining and
-    exchanging models in computational neuroscience focused on
-    biophysical and anatomical detailed models.
+Saving neuronal morphologies
+============================
 
-The `info.json` file is meant to store the simulation configuration.    
+After a call to :func:`~dense.simulate`, the state of the neuron (its
+morphology) is a static data that can be stored to file to be processed later.
 
-The functions to deal with data storage are written under the name DataIO.
-
-In order to save data you need to use the function of class "io".
-
-ex.:
+To save simulation information to files, you can use the following functions:
 
 * :func:`dense.io.save_to_swc`
-* :func:`dense.io.save_json_info`
 * :func:`dense.io.save_to_neuroml`
+* :func:`dense.io.save_json_info`
+
+The first two aim at saving morphological information about the neurons to
+disk.
+:func:`dense.io.save_to_swc` uses the SWC format as detailed on this
+`reference page <http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html>`_.
+SWC is one of the most widely used neuron morphology formats
+(it is used, in particular, by the `neuromorpho <http://www.neuromorpho.org>`_
+archive).
+DeNSE can also store neuron morphologies in the
+`NeuroML <https://neuroml.org/>`_ format, an alternative data format to define
+and exchange models in computational neuroscience, focused on biophysical and
+anatomical models.
+
+Finally :func:`dense.io.save_json_info` is used to save an `info.json` file
+meant to store the simulation configuration.
+
+
+Working with saved data
+=======================
+
+After the data has been saved to disk, you can either load it in other libraries
+reading SWC or NeuroML formats, or reload it in DeNSE.
+
+.. note::
+
+    Apart from DeNSE, most other libraries require the neurons to be split
+    into separate SWC files, so make sure *not* to set `split` to True if you
+    want external compatibility.
+
+You can reload the neurons in DeNSE, then plot them directly via:
+
+.. code-block:: python
+
+    neurons = ds.io.load_swc("file.swc")
+    ds.plot.plot_neurons(neurons, show=True)
+

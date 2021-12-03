@@ -806,7 +806,7 @@ class Branch(object):
             return self._r
         else:
             assert (isinstance(self._r.m, _np.ndarray)), \
-                "branch's norm is not an array, there is a mistake"
+                "branch's radius is not an array, there is a mistake"
             return self._r
 
     @property

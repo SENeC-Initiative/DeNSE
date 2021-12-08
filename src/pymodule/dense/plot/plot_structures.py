@@ -119,8 +119,7 @@ def plot_neurons(gid=None, mode=None, show_nodes=False, show_active_gc=True,
         "Unknown `mode` '" + mode + "'. Accepted values are 'lines', " +\
         "'sticks' or 'mixed'."
 
-    if show_density:
-        subsample = 1
+    new_lines = 0
 
     # plot
     fig, ax, ax2 = None, None, None
@@ -418,7 +417,6 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
         fig = axis.get_figure()
 
     fig.patch.set_alpha(0.)
-    new_lines = 0
 
     # get the objects describing the neurons
     if gid is None:
@@ -563,17 +561,10 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
         cb.ax.set_yticklabels(ticklabels)
 
     ax.grid(False)
-    ax_histx.grid(False)
-    ax_histy.grid(False)
 
     ax.set_aspect('auto')
     ax.set_xlabel(r"x ($\mu$m)")
     ax.set_ylabel(r"y ($\mu$m)")
-    ax_histy.set_xlabel("Counts")
-    ax_histx.set_ylabel("Counts")
-
-    ax_histy.set_yticks([])
-    ax_histx.set_xticks([])
 
     # marginals
     if show_marginals:
@@ -587,6 +578,15 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
                      align='edge')
         ax_histy.barh(ybins[:-1], ycount, np.diff(ybins), color=histcolor,
                       align='edge')
+
+        ax_histx.grid(False)
+        ax_histy.grid(False)
+
+        ax_histy.set_xlabel("Counts")
+        ax_histx.set_ylabel("Counts")
+
+        ax_histy.set_yticks([])
+        ax_histx.set_xticks([])
 
     if title is not None:
         fig.suptitle(title)

@@ -440,10 +440,16 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
 
         somas = np.vstack((somas, [v.m for v in gid.soma_radius.values()]))
 
-        axon_lines, dend_lines = [[], []], [[], []]
+        axon_lines, dend_lines, nodes = [[], []], [[], []], [[], []]
 
         for n in gid:
             points = n.axon.xy.m
+
+            nodes_tmp = n.branching_points
+
+            if len(nodes_tmp):
+                nodes[0].extend(nodes_tmp[:, 0])
+                nodes[1].extend(nodes_tmp[:, 1])
 
             for i in (0, 1):
                 axon_lines[i].extend(points[:, i])
@@ -461,6 +467,9 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
         somas, axon_lines, dend_lines, growth_cones, nodes = \
             _pg._get_pyskeleton(gid, resolution=1)
 
+        if len(nodes[0]):
+            nodes = [nodes[0][1:], nodes[1][1:]]
+
     # Prepare data points
     x, y = axon_lines
 
@@ -470,6 +479,7 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
     x = np.array(x)
     y = np.array(y)
 
+    # locate the NaN entries that delimitate branches
     limits = np.where(np.isnan(x))[0]
 
     # Scaling density levels
@@ -497,19 +507,36 @@ def plot_density(gid=None, num_bins=20, vmin=None, vmax=None, num_levels=None,
     xbins = np.linspace(x_min - 0.01*Dx, x_max + 0.01*Dx, num_xbins)
     ybins = np.linspace(y_min - 0.01*Dy, y_max + 0.01*Dy, num_ybins)
 
-    # count the neurites
+    # count the neurite branches
     start = 0
 
     for stop in limits:
+        # we want to count individual branches and not each points so we loop
+        # (each `stop` delimitates a branch) over the branches' points and
+        # replace the counts by one for each entry (either a branch goes through
+        # there or it does not).
         tmp, _, _ = np.histogram2d(
             x[start:stop], y[start:stop], bins=(xbins, ybins),
             range=((x_min, x_max), (y_min, y_max)))
 
         start = stop
 
-        tmp[tmp > 0] = 1
+        counts[tmp > 0] += 1
 
-        counts += tmp
+    # count the somas
+    tmp, _, _ = np.histogram2d(
+        somas[0], somas[1], bins=(xbins, ybins),
+        range=((x_min, x_max), (y_min, y_max)))
+
+    counts += tmp
+
+    # remove double count on branching points (we consider one of the two
+    # child branches as the continuity of the parent branch).
+    tmp, _, _ = np.histogram2d(
+        nodes[0], nodes[1], bins=(xbins, ybins),
+        range=((x_min, x_max), (y_min, y_max)))
+
+    counts[tmp > 0] -= 1
 
     # prepare the plot
     lims = [xbins[0], xbins[-1], ybins[0], ybins[-1]]

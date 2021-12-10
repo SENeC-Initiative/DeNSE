@@ -1886,6 +1886,7 @@ def _get_pyskeleton(gid, unsigned int resolution=10):
         SkelNeurite axons, dendrites, nodes, growth_cones
         vector[vector[double]] somas = [[], [], []]
         vector[stype] gids
+
     if gid is None:
         gids = get_neurons()
     elif isinstance(gid, (int, np.integer)):

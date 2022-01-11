@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-from io import StringIO
 import json
 import os
 from os.path import join, isfile, isdir
@@ -165,6 +164,8 @@ def _neuron_from_swc(swc_file, info):
         * axon
         * one entry per dendrite
     """
+    from io import StringIO
+
     neurons, data = {}, {}
 
     with open(swc_file, "r") as f:

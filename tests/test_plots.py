@@ -92,9 +92,9 @@ def test_plot_and_density():
     ds.plot.plot_neurons(gids[2], mode="mixed", show_nodes=True, subsample=10,
                          show=False)
 
-    ds.plot.plot_neurons(show_neuron_id=True, show_culture=False, show=False)
+    ds.plot.plot_neurons(show_neuron_id=True, show_culture=False, show=True)
 
 
 if __name__ == '__main__':
-    test_dendrogram()
+    #  test_dendrogram()
     test_plot_and_density()

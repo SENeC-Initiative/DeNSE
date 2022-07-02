@@ -12,8 +12,8 @@ pip3 install --user networkx nngt svg.path dxfgrabber PyOpenGL
 cd ..
 mkdir build
 cd build
-cmake .. -Dwith-python=3 -Dwith-docs=ON
+cmake .. -Dwith-python=3 -Dwith-docs=OFF
 
 . ../set_dense_vars.sh
 
-make && make install && make doc
+make && make install

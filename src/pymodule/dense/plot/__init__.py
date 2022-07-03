@@ -25,11 +25,13 @@ Plotting module
 """
 
 from .plot_recording import plot_recording
-from .plot_structures import plot_neurons, plot_environment, plot_dendrogram
+from .plot_structures import (plot_density, plot_neurons, plot_environment,
+                              plot_dendrogram)
 
 
 __all__ = [
     "plot_dendrogram",
+    "plot_density",
     "plot_environment",
     "plot_neurons",
     "plot_recording",

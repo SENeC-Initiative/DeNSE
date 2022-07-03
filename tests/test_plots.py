@@ -25,6 +25,8 @@
 import dense as ds
 from dense.units import *
 
+import numpy as np
+
 
 def test_dendrogram():
     '''
@@ -48,5 +50,51 @@ def test_dendrogram():
     gn.dendrites["dendrite_1"].plot_dendrogram(show=False)
 
 
+def test_plot_and_density():
+    '''
+    Check the density plot function.
+    '''
+    ds.reset_kernel()
+
+    num_neurons = 5
+    soma_radius = 5. * um
+    growth_cone_model = "simple-random-walk"
+
+    neuron_params = {
+        "growth_cone_model": growth_cone_model,
+        "soma_radius": soma_radius,
+        "persistence_length": 100. * um,
+        "position": np.random.uniform(-100, 100, (num_neurons, 2)) * um,
+        "use_van_pelt": True,
+    }
+
+    axon_param = {
+        "speed_growth_cone": 45. * um / day,
+        "use_uniform_branching": True,
+    }
+
+    dent_params = {
+        "speed_growth_cone": 9.635 * um / day,
+    }
+
+    neurite_params = {"axon": axon_param, "dendrites": dent_params}
+
+    gids = ds.create_neurons(n=num_neurons, params=neuron_params,
+                             neurite_params=neurite_params,
+                             num_neurites=2)
+    ds.simulate(1 * day)
+
+    ds.plot.plot_density(show_marginals=False, colorbar=True, show=False)
+
+    ax, (count, xbins, ybins) = ds.plot.plot_density(
+        show_marginals=True, return_hist=True, colorbar=False, show=False)
+
+    ds.plot.plot_neurons(gids[2], mode="mixed", show_nodes=True, subsample=10,
+                         show=False)
+
+    ds.plot.plot_neurons(show_neuron_id=True, show_culture=False, show=True)
+
+
 if __name__ == '__main__':
-    test_dendrogram()
+    #  test_dendrogram()
+    test_plot_and_density()

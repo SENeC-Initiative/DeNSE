@@ -609,8 +609,8 @@ class Neurite(object):
         ''' Whether the neurite is composed of a single branch '''
         if not self._has_branches:
             return False
-        else:
-            return (len(self.branches) == 1)
+
+        return (len(self.branches) == 1)
 
     @property
     def xy(self):
@@ -622,7 +622,7 @@ class Neurite(object):
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])*um
+            return _np.array([[], []])*um
 
     @property
     def theta(self):
@@ -632,7 +632,7 @@ class Neurite(object):
         except ValueError as e:
             print("{}\n{}.xy: {} missing".format(
                 e, self.neurite_type, self.name))
-            return _np.array([[]])
+            return _np.array([])
 
     @property
     def diameter(self):
@@ -647,7 +647,10 @@ class Neurite(object):
     @property
     def branching_points(self):
         ''' Return the B locations of the branching points, shape (B, 2) '''
-        return _np.array([branch.xy[0] for branch in self.branches])
+        if self._has_branches and len(self._branches):
+            return _np.array([branch.xy[0] for branch in self.branches[1:]])
+
+        return _np.array([])
 
     @property
     def r(self):

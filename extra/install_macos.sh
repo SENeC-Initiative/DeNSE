@@ -15,7 +15,7 @@ brew install gcc@10 cmake "python@$PYVERSION" geos doxygen boost libomp
 brew link gcc@10
 
 pip3 install --user setuptools
-pip3 install --user cython
+pip3 install --user "cython<3"
 pip3 install --user numpy scipy pint pyneuroml
 pip3 install --user sphinx breathe sphinx-bootstrap-theme
 pip3 install --user --no-binary shapely, shapely

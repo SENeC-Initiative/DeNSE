@@ -35,10 +35,6 @@ IF(WIN32)
       "$ENV{LIB_DIR}/lib"
       $ENV{LIB}
       )
-    # IF ((NOT "${GEOS_C_LIBRARY}" STREQUAL "") AND (NOT "${GEOS_C_LIBRARY}" STREQUAL "${GEOS_LIBRARY}"))
-		# SET(GEOS_LIBRARY "${GEOS_LIBRARY} ${GEOS_C_LIBRARY}")
-		# SET(GEOS_LIBRARY "${GEOS_LIBRARY}" PARENT_SCOPE)
-	# ENDIF ()
   ENDIF (MSVC)
 
 ELSE(WIN32)
@@ -89,9 +85,10 @@ ELSE(WIN32)
 
       IF (GEOS_CONFIG)
 
-        EXEC_PROGRAM(${GEOS_CONFIG}
-            ARGS --version
-            OUTPUT_VARIABLE GEOS_VERSION)
+        execute_process(
+            COMMAND ${GEOS_CONFIG} --version
+            OUTPUT_VARIABLE GEOS_VERSION
+        )
         STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\1" GEOS_VERSION_MAJOR "${GEOS_VERSION}")
         STRING(REGEX REPLACE "([0-9]+)\\.([0-9]+)\\.([0-9]+)" "\\2" GEOS_VERSION_MINOR "${GEOS_VERSION}")
 
@@ -100,9 +97,10 @@ ELSE(WIN32)
         ENDIF (GEOS_VERSION_MAJOR LESS 3 OR (GEOS_VERSION_MAJOR EQUAL 3 AND GEOS_VERSION_MINOR LESS 3) )
 
         # set INCLUDE_DIR to prefix+include
-        EXEC_PROGRAM(${GEOS_CONFIG}
-            ARGS --prefix
-            OUTPUT_VARIABLE GEOS_PREFIX)
+        execute_process(
+            COMMAND ${GEOS_CONFIG} --prefix
+            OUTPUT_VARIABLE GEOS_PREFIX
+        )
 
         FIND_PATH(GEOS_INCLUDE_DIR
             geos_c.h
@@ -112,9 +110,10 @@ ELSE(WIN32)
             )
 
         ## extract link dirs for rpath
-        EXEC_PROGRAM(${GEOS_CONFIG}
-            ARGS --libs
-            OUTPUT_VARIABLE GEOS_CONFIG_LIBS )
+        execute_process(
+            COMMAND ${GEOS_CONFIG} --libs
+            OUTPUT_VARIABLE GEOS_CONFIG_LIBS
+        )
 
         ## split off the link dirs (for rpath)
         ## use regular expression to match wildcard equivalent "-L*<endchar>"

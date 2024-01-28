@@ -11,7 +11,7 @@ if ( HAVE_PYTHON )
     set( cppfile "${PYMODULE_DIR}/dense/_pygrowth.cpp" )
     set( cmakefile "${PYMODULE_DIR}/CMakeLists.txt" )
     file( GLOB_RECURSE files "${PYMODULE_DIR}/*" )
-    file( GLOB_RECURSE dirs "${PYTHON_INSTALL_DIR}/*" )
+    file( GLOB_RECURSE dirs "${Python3_INSTALL_DIR}/*" )
     set( fileschanged 0 )
     
     foreach(f ${files})
@@ -56,7 +56,7 @@ if ( HAVE_PYTHON )
     # reformat path for Windows because it is so annoying it does not recognize
     # slash and backslash, also wrap PYTHON between brackets because, hey,
     # there are whitespaces in "Program Files" (of course)!!
-    string(REPLACE "/" "\\\\" MS_PYTHON_INSTALL_DIR "${PYTHON_INSTALL_DIR}")
+    string(REPLACE "/" "\\\\" MS_PYTHON_INSTALL_DIR "${Python3_INSTALL_DIR}")
     set(STR_CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH};${MS_PYTHON_INSTALL_DIR}\")")
     install( CODE "${STR_CODE}
       execute_process(
@@ -70,24 +70,24 @@ if ( HAVE_PYTHON )
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})"
     )
   else ()
-	  if (PYTHON_DEVELOPER_MODE)
-      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
+	  if (Python3_DEVELOPER_MODE)
+      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${Python3_INSTALL_DIR}:${Python3_INSTALL_DIR}/${PY_NAME}\")
       execute_process(
         COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
           build -b ${CMAKE_CURRENT_BINARY_DIR}
-          develop --prefix=${PYTHON_INSTALL_DIR}
+          develop --prefix=${Python3_INSTALL_DIR}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
       )
 	  else()
-      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${PYTHON_INSTALL_DIR}:${PYTHON_INSTALL_DIR}/${PY_NAME}\")
+      install( CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH}:${Python3_INSTALL_DIR}:${Python3_INSTALL_DIR}/${PY_NAME}\")
       execute_process(
         COMMAND ${PYTHON} ${PYMODULE_DIR}/setup.py
           build -b ${CMAKE_CURRENT_BINARY_DIR}
-          install --prefix=${PYTHON_INSTALL_DIR}
-              --install-scripts=${PYTHON_INSTALL_DIR}
-              --install-data=${PYTHON_INSTALL_DIR}/${PY_NAME}
-              --install-headers=${PYTHON_INSTALL_DIR}
-              --install-lib=${PYTHON_INSTALL_DIR}
+          install --prefix=${Python3_INSTALL_DIR}
+              --install-scripts=${Python3_INSTALL_DIR}
+              --install-data=${Python3_INSTALL_DIR}/${PY_NAME}
+              --install-headers=${Python3_INSTALL_DIR}
+              --install-lib=${Python3_INSTALL_DIR}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
       )
 	  endif()

@@ -12,7 +12,7 @@ add_library( elements STATIC ${elements_sources} )
 set_target_properties(
     elements PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME "elements_py${PYTHON_VERSION}"
+    OUTPUT_NAME "elements_py${Python3_VERSION}"
 )
 
 target_include_directories(

@@ -1,5 +1,5 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required( VERSION 2.9 )
+cmake_minimum_required( VERSION 3.5 )
 
 # add cmake modules: for all `include(...)` first look here
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
@@ -77,21 +77,30 @@ cgrowth_get_color_flags()
 
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     # set discovered python local folder
-    set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" )
-    set( PYTHON_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
+    set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" )
+    set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
+
+    # set CMAKE_INSTALL_LIBDIR based on the python directory
+    string(FIND "${PY_LOCAL_DIR}" "lib64" LIB64)
+
+    if (LIB64 GREATER -1)
+      set (CMAKE_INSTALL_LIBDIR "lib64")
+    else ()
+      set (CMAKE_INSTALL_LIBDIR "lib")
+    endif ()
 
     # get local user library folder as default install prefix ()
-    if (PYTHON_EXECUTABLE MATCHES "conda")
+    if (Python3_EXECUTABLE MATCHES "conda")
       execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
       string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     else ()
-      execute_process(COMMAND ${PYTHON_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
 
     # sometimes the getuserbase command fails
     if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
       if (APPLE)
-        set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/Library/Python/${PYTHON_VERSION}")
+        set(CMAKE_INSTALL_PREFIX "$ENV{HOME}/Library/Python/${Python3_VERSION}")
       elseif (MSVC)
         set(CMAKE_INSTALL_PREFIX "\"$ENV{APPDATA}/Python\"")
       else ()
@@ -103,7 +112,7 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     set( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "install prefix" FORCE)
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
     set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
-    set( PYTHON_INSTALL_DIR "$CACHE{PYTHON_INSTALL_DIR}" )
+    set( Python3_INSTALL_DIR "$CACHE{Python3_INSTALL_DIR}" )
 ELSE ()
   # make sure we get the absolute path
   get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
@@ -114,7 +123,7 @@ ENDIF ()
 if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
   if (UNIX)
     include( GNUInstallDirs )
-  elseif (MSVC AND PYTHON_EXECUTABLE MATCHES "conda")
+  elseif (MSVC AND Python3_EXECUTABLE MATCHES "conda")
     set(CMAKE_INSTALL_LIBDIR "Lib")
   else ()
     set(CMAKE_INSTALL_LIBDIR "lib")
@@ -122,7 +131,7 @@ if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
 endif ()
 
 if (NOT DEFINED CMAKE_INSTALL_BINDIR)
-  if (MSVC AND PYTHON_EXECUTABLE MATCHES "Miniconda")
+  if (MSVC AND Python3_EXECUTABLE MATCHES "Miniconda")
     set(CMAKE_INSTALL_BINDIR "Library/bin")
   else ()
     set(CMAKE_INSTALL_BINDIR "bin")
@@ -131,9 +140,9 @@ endif ()
 
 # check that python install was setup automatically or set it manually
 
-if (NOT DEFINED PYTHON_INSTALL_DIR OR "${PYTHON_INSTALL_DIR}" STREQUAL "")
-  set(PYTHON_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}")
-  file(MAKE_DIRECTORY "${PYTHON_INSTALL_DIR}")
+if (NOT DEFINED Python3_INSTALL_DIR OR "${Python3_INSTALL_DIR}" STREQUAL "")
+  set(Python3_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${PYEXECDIR}")
+  file(MAKE_DIRECTORY "${Python3_INSTALL_DIR}")
 endif()
 
 

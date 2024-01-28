@@ -27,7 +27,7 @@ target_include_directories(
 set_target_properties(
     kernel PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME "kernel_py${PYTHON_VERSION}"
+    OUTPUT_NAME "kernel_py${Python3_VERSION}"
 )
 
 target_link_libraries( kernel elements libgrowth models spatial io ${GEOS_LIBRARY})

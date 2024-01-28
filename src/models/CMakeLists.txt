@@ -5,7 +5,7 @@ set( pyfile "${CMAKE_CURRENT_SOURCE_DIR}/models_generator.py" )
 
 if ((NOT EXISTS ${cppfile}) OR (${pyfile} IS_NEWER_THAN ${cppfile}) OR (${inputfile} IS_NEWER_THAN ${cppfile}))
     execute_process(
-        COMMAND "${PYTHON_EXECUTABLE}" "models_generator.py"
+        COMMAND "${Python3_EXECUTABLE}" "models_generator.py"
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 endif()
@@ -37,7 +37,7 @@ add_library( models STATIC ${models_sources} )
 set_target_properties(
     models PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME "models_py${PYTHON_VERSION}"
+    OUTPUT_NAME "models_py${Python3_VERSION}"
 )
 
 target_include_directories( models PUBLIC

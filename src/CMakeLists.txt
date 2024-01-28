@@ -49,7 +49,7 @@ IF (WIN32 OR CYGWIN)
 ENDIF()
 
 add_library(cgrowth SHARED ${SOURCE_FILES})
-set_target_properties(cgrowth PROPERTIES OUTPUT_NAME "cgrowth_py${PYTHON_VERSION}")
+set_target_properties(cgrowth PROPERTIES OUTPUT_NAME "cgrowth_py${Python3_VERSION}")
 target_link_libraries( cgrowth kernel libgrowth elements spatial ${GEOS_LIBRARY} ${GEOS_C_LIBRARY})
 target_include_directories( cgrowth PUBLIC
     ${PROJECT_SOURCE_DIR}/elements

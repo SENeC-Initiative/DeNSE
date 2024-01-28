@@ -19,11 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with DeNSE. If not, see <http://www.gnu.org/licenses/>.
 
-#!/usr/bin/env cython
-#-*- coding:utf-8 -*-
 #cython: boundscheck=False, wraparound=False, initializedcheck=False
-#cython: cdivision=True, embedsignature=True
+#cython: cdivision=True, embedsignature=False, language_level=3
 
+from cython cimport Py_ssize_t
 from libc.stdlib cimport malloc, free
 import ctypes
 
@@ -1684,15 +1683,15 @@ def _get_branches_data(gid, neurite, start_point=0):
 # ------------ #
 
 cdef _create_neurons(dict params, dict neurite_params,
-                     dict optional_args, stype n,
+                     dict optional_args, Py_ssize_t n,
                      bool return_ints) except +:
     '''
     Create several neurons, return their GIDs.
     @todo: check for unused parameters.
     '''
     cdef:
-        stype i, len_val, num_objects
-        int num_neurites
+        Py_ssize_t i, len_val, num_objects
+        Py_ssize_t num_neurites
         statusMap base_neuron_status
         unordered_map[string, statusMap] base_neurite_statuses
         string description
@@ -1810,16 +1809,16 @@ cdef _create_neurons(dict params, dict neurite_params,
 
     if return_ints:
         return tuple(i for i in range(num_objects, num_objects + n))
-    else:
-        from .elements import Neuron, Population
 
-        neurons = tuple(
-            Neuron(i) for i in range(num_objects, num_objects + n))
+    from .elements import Neuron, Population
 
-        if n == 1:
-            return neurons[0]
-        else:
-            return Population(neurons)
+    neurons = tuple(
+        Neuron(i) for i in range(num_objects, num_objects + n))
+
+    if n == 1:
+        return neurons[0]
+
+    return Population(neurons)
 
 
 def _get_observables(gid, observable, level):

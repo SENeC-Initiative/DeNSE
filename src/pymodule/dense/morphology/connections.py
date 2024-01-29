@@ -312,7 +312,9 @@ def _get_synapses_intersection(axon_polygon, d_polygon, synapse_density, somas,
     '''
     intsct = axon_polygon.intersection(d_polygon)
 
-    if not isinstance(intsct, MultiPolygon):
+    if isinstance(intsct, MultiPolygon):
+        intsct = intsct.geoms
+    else:
         intsct = [intsct]
     
     for poly in intsct:
@@ -324,8 +326,8 @@ def _get_synapses_intersection(axon_polygon, d_polygon, synapse_density, somas,
             s_soma = np.array(somas[i])
             t_soma = np.array(somas[j])
             pos    = np.array(poly.centroid.coords)[0]
-            dist   = np.linalg.norm(s_soma - pos) \
-                    + np.linalg.norm(t_soma - pos)
+            dist   = np.linalg.norm(s_soma - pos) + \
+                     np.linalg.norm(t_soma - pos)
 
             positions.extend([pos]*num_synapses)
             edges.extend([etuple]*num_synapses)
@@ -413,9 +415,11 @@ def _edges_from_spines(source_set, target_set, axons, dendrites, somas,
                                 if num_syn > 0:
                                     s_soma = np.array(somas[i])
                                     t_soma = np.array(somas[j])
-                                    pos    = insct_line.centroid
-                                    dist   = np.linalg.norm(s_soma - pos) \
-                                            + np.linalg.norm(t_soma - pos)
+                                    pos = np.array(
+                                        insct_line.centroid.coords)[0]
+
+                                    dist = np.linalg.norm(s_soma - pos) + \
+                                           np.linalg.norm(t_soma - pos)
 
                                     positions.extend([pos]*num_syn)
                                     edges.extend([etuple]*num_syn)

@@ -112,7 +112,6 @@ for i, data in enumerate(lengths):
     lower.append(low)
 
 
-
 ax.plot(resolutions, median, color="b", alpha=0.8)
 ax.plot(resolutions, lower, ls="--", color="b", alpha=0.5)
 ax.plot(resolutions, upper, ls="--", color="b", alpha=0.5)

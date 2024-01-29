@@ -5,6 +5,7 @@ sudo apt install cmake g++ python3 python3-dev python3-pip libgeos++-dev doxygen
 # workaround for PyOpenGL
 for lg in /usr/lib/x86_64-linux-gnu/libglut.so.3.*; do
     sudo ln -s "${lg}" /usr/lib/x86_64-linux-gnu/libglut.so.3
+    sudo ln -s "${lg}" /usr/lib/x86_64-linux-gnu/libglut.so
 done
 
 pip3 install --user setuptools

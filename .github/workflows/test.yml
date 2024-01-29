@@ -77,7 +77,7 @@ jobs:
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
            conda install python cmake geos boost
-           pip install "cython<3"
+           pip install setuptools "cython<3"
            pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
            pip install nngt
            cd extra

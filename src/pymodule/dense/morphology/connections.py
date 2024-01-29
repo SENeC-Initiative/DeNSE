@@ -323,7 +323,7 @@ def _get_synapses_intersection(axon_polygon, d_polygon, synapse_density, somas,
         if num_synapses > 0:
             s_soma = np.array(somas[i])
             t_soma = np.array(somas[j])
-            pos    = poly.centroid
+            pos    = np.array(poly.centroid.coords)[0]
             dist   = np.linalg.norm(s_soma - pos) \
                     + np.linalg.norm(t_soma - pos)
 

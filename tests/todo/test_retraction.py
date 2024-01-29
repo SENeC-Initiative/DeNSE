@@ -57,7 +57,8 @@ Creating the environment: a disk
 # ~ shape = geom.Shape.disk(radius=800)
 shape = geom.Shape.rectangle(1600, 1600)
 r_params = {"height": 250., "width": 250.}
-shape.random_obstacles(0.4, form="rectangle", params=r_params, heights=30., etching=20.)
+shape = shape.random_obstacles(
+    0.4, form="rectangle", params=r_params, heights=30., etching=20.)
 
 
 '''

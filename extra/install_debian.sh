@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install cmake g++ python3 python3-dev python3-pip libgeos++-dev doxygen python3-matplotlib python3-tk libboost-dev
+sudo apt install cmake g++ python3 python3-dev python3-pip libgeos++-dev doxygen python3-matplotlib python3-tk libboost-dev freeglut3
 
 # workaround for PyOpenGL
 for lg in /usr/lib/x86_64-linux-gnu/libglut.so.3.*; do

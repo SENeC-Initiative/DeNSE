@@ -10,9 +10,9 @@ echo 'export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"' >> ~/.bas
 
 export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"
 
-brew install gcc@10 cmake "python@$PYVERSION" geos doxygen boost libomp
+brew install gcc@13 cmake "python@$PYVERSION" geos doxygen boost libomp
 
-brew link gcc@10
+brew link gcc@13
 
 pip3 install --user setuptools
 pip3 install --user "cython<3"

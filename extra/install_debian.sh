@@ -2,6 +2,12 @@
 
 sudo apt install cmake g++ python3 python3-dev python3-pip libgeos++-dev doxygen python3-matplotlib python3-tk libboost-dev
 
+# workaround for PyOpenGL
+cd /usr/lib/x86_64-linux-gnu
+for lg in libglut.so.3.*; do
+    sudo ln -s "${lg}" libglut.so.3
+done
+
 pip3 install --user setuptools
 pip3 install --user "cython<3"
 pip3 install --user numpy scipy pint pyneuroml

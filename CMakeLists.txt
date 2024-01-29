@@ -77,6 +77,8 @@ cgrowth_get_color_flags()
 
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     # set discovered python local folder
+    cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+
     set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" )
     set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
 
@@ -92,10 +94,11 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     # get local user library folder as default install prefix ()
     if (Python3_EXECUTABLE MATCHES "conda")
       execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-      string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
     else ()
       execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
+
+    string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
     # sometimes the getuserbase command fails
     if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )

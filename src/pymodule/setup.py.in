@@ -88,7 +88,8 @@ class CustomBuildExt(build_ext):
             c = c[0]
 
         if c is None:
-            c = sysconfig.get_config_var('CC')
+            # if we really don't get anything, we're probably on windows
+            c = sysconfig.get_config_var('CC') or "msvc"
 
         if re.match(r"gcc|g\+\+|mingw|clang", c):
             c = "unix"
@@ -117,7 +118,7 @@ class CustomBuildExt(build_ext):
                 e.extra_link_args.append('-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@')
 
         if not @SKIP_BUILD@:
-            build_ext.build_extensions(self)
+            super().build_extensions()
 
 
 # ------------------------------------- #

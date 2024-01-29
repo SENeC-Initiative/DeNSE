@@ -714,9 +714,6 @@ def get_environment():
             for i in range(c_areas.size()):
                 pygeos_geom = <uintptr_t>c_areas[i]
                 shapely_object = geom_factory(pygeos_geom)
-                # [IMPORTANT]
-                shapely_object._other_owned = True
-                # [/IMPORTANT]
                 str_name = _to_string(names[i])
                 # separate default area from others
                 if str_name.find("default_area") == 0:
@@ -730,10 +727,6 @@ def get_environment():
     # build the environment
     pygeos_geom = <uintptr_t>geos_geom
     shapely_object = geom_factory(pygeos_geom)
-    # [IMPORTANT] tell Shapely to NOT delete the C++ object when the python
-    # wrapper goes out of scope!
-    shapely_object._other_owned = True
-    # [/IMPORTANT]
     env = Shape.from_polygon(shapely_object, min_x=None,
                              default_properties=default_properties)
 

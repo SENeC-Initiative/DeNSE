@@ -63,8 +63,12 @@ copt =  {
 
 lopt =  {
     'unix': ['-fopenmp'],
-	'msvc': ['/subsystem:windows', "/debug"],
+	'msvc': ['/subsystem:windows'],
 }
+
+if os_name == "Windows" and ("@CMAKE_BUILD_TYPE@" == "Debug"):
+    lopt["msvc"].append("/debug")
+
 
 # custom class
 
@@ -87,15 +91,11 @@ class CustomBuildExt(build_ext):
         else:
             c = c[0]
 
-        if c is None:
-            # if we really don't get anything, we're probably on windows
-            c = sysconfig.get_config_var('CC') or "msvc"
+        cc_var = sysconfig.get_config_var('CC')
 
-        if re.match(r"gcc|g\+\+|mingw|clang", c):
-            c = "unix"
-        elif "msvc" in c:
-            c = "msvc"
-        # normalize names
+        if c is None:
+            c = cc_var or self.compiler.compiler_type
+
         c = "msvc" if "msvc" in c else "unix"
 
         try:

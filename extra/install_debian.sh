@@ -2,10 +2,11 @@
 
 sudo apt install cmake g++ python3 python3-dev python3-pip libgeos++-dev doxygen python3-matplotlib python3-tk libboost-dev
 
-pip3 install setuptools
+pip3 install --upgrade pip
+pip3 install --upgrade setuptools
 pip3 install "cython<3"
 pip3 install numpy scipy pint pyneuroml
-pip3 install --upgrade shapely
+pip3 install --no-binary shapely, shapely
 pip3 install sphinx breathe sphinx-bootstrap-theme
 pip3 install networkx nngt svg.path dxfgrabber
 

@@ -76,12 +76,12 @@ jobs:
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
-           conda install python=3.11 cmake geos boost
+           conda install cmake geos boost
            pip install setuptools "cython<3"
            pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
            pip install nngt
            cd extra
-           ./install_windows.cmd 3.11
+           ./install_windows.cmd
 
        - name: Test
          run: |

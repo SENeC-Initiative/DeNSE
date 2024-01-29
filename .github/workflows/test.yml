@@ -76,13 +76,12 @@ jobs:
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
-           conda create --name dense -c conda-forge python=3.11 cmake geos boost
-           conda activate dense
+           conda install python=3.11 cmake geos boost
            pip install setuptools "cython<3"
            pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
            pip install nngt
            cd extra
-           ./install_windows.cmd
+           ./install_windows.cmd 3.11
 
        - name: Test
          run: |

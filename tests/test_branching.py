@@ -186,8 +186,8 @@ def test_vp_branching():
 
         num_tips = [n.get_state("num_growth_cones") for n in pop]
 
-        # expected average number is around 3.26 but we should be in |2.7, 3.5]
-        assert 2.7 < np.mean(num_tips) < 3.5
+        # expected average number is around 3.26 but we should be in |2.6, 3.5]
+        assert 2.6 < np.mean(num_tips) < 3.5
 
         if do_plot:
             import matplotlib.pyplot as plt

@@ -81,10 +81,9 @@ jobs:
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
-           conda install cmake geos boost
+           conda install cmake geos boost shapely
            pip install setuptools "cython<3"
            pip install scipy numpy matplotlib pytest pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
-           pip install --no-binary shapely, shapely
            pip install nngt
            cd extra
            ./install_windows.cmd

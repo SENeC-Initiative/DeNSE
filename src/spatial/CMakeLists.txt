@@ -9,7 +9,7 @@ add_library( spatial STATIC ${spatial_sources} )
 set_target_properties(
     spatial PROPERTIES
     POSITION_INDEPENDENT_CODE ON
-    OUTPUT_NAME "spatial_py${PYTHON_VERSION}"
+    OUTPUT_NAME "spatial_py${Python3_VERSION}"
 )
 
 target_include_directories( spatial PRIVATE

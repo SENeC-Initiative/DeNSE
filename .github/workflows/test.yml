@@ -38,24 +38,29 @@ jobs:
 
        - name: Cache Homebrew
          if: ${{ matrix.os == 'macos-latest' }}
-         uses: actions/cache@v2
+         uses: actions/cache@v3
          with:
            path: ~/Library/Caches/Homebrew
            key: homebrew-cache
-           restore-keys: |
-             homebrew-cache
 
        - name: Cache pip
-         uses: actions/cache@v2
+         uses: actions/cache@v3
          with:
            path: ${{ matrix.path }}
            key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-           restore-keys: |
-             ${{ matrix.os }}-pip-
+
+       - name: Cache conda
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: actions/cache@v3
+         with:
+           path: ~/conda_pkgs_dir
+           key: conda-cache
 
        - name: Activate Conda Windows
          if: ${{ matrix.os == 'windows-latest' }}
-         uses: s-weigand/setup-conda@v1
+         uses: conda-incubator/setup-miniconda@v3
+         with:
+           miniconda-version: "latest"
 
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -68,7 +73,7 @@ jobs:
          if: ${{ matrix.os == 'macos-latest' }}
          run: |
            rm -rf /usr/local/bin/2to3
-           brew unlink gcc gcc@9
+           brew unlink gcc gcc@10 || true
            chmod +x extra/install_macos.sh
            cd extra
            ./install_macos.sh
@@ -76,9 +81,9 @@ jobs:
        - name: Build Windows
          if: ${{ matrix.os == 'windows-latest' }}
          run: |
-           conda install python cmake geos boost
-           pip install cython
-           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
+           conda install cmake geos boost shapely
+           pip install setuptools "cython<3"
+           pip install scipy numpy matplotlib pytest pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
            pip install nngt
            cd extra
            ./install_windows.cmd

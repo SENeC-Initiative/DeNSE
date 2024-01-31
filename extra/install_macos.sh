@@ -10,12 +10,15 @@ echo 'export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"' >> ~/.bas
 
 export PATH="/Users/runner/Library/Python/$PYVERSION/bin:$PATH"
 
-brew install gcc@10 cmake "python@$PYVERSION" geos doxygen boost libomp
+brew install gcc@13 cmake "python@$PYVERSION" geos doxygen boost libomp
 
-brew link gcc@10
+brew link gcc@13
+
+export CXX=g++-13
+export CC=gcc-13
 
 pip3 install --user setuptools
-pip3 install --user cython
+pip3 install --user "cython<3"
 pip3 install --user numpy scipy pint pyneuroml
 pip3 install --user sphinx breathe sphinx-bootstrap-theme
 pip3 install --user --no-binary shapely, shapely
@@ -24,7 +27,7 @@ pip3 install --user matplotlib networkx nngt svg.path dxfgrabber PyOpenGL
 cd ..
 mkdir build
 cd build
-CC=gcc-10 CXX=g++-10 cmake .. -Dwith-docs=ON -Dwith-python=3
+cmake .. -Dwith-docs=ON -Dwith-python=3
 
 make
-CC=gcc-10 CXX=g++-10 make install
+make install

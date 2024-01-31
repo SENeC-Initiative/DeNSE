@@ -21,13 +21,12 @@
 
 import os
 import platform
+import re
 import sysconfig
-from distutils.command.build_ext import build_ext
+
 from setuptools import setup, Extension
-try:
-    from setuptools import find_namespace_packages as getpackages
-except ImportError:
-    from setuptools import find_packages as getpackages
+from setuptools.command.build_ext import build_ext
+from setuptools import find_namespace_packages
 
 import numpy as np
 
@@ -64,33 +63,49 @@ copt =  {
 
 lopt =  {
     'unix': ['-fopenmp'],
-	'msvc': ['/subsystem:windows', "/debug"],
+	'msvc': ['/subsystem:windows'],
 }
+
+if "@CMAKE_BUILD_TYPE@" == "Debug":
+    lopt["msvc"].append("/debug")
+
 
 # custom class
 
 class CustomBuildExt(build_ext):
 
+    def initialize_options(self):
+        super().initialize_options()
+
+        if self.distribution.ext_modules is None:
+            self.distribution.ext_modules = []
+
+        self.distribution.ext_modules = cythonize(extensions)
+
     def build_extensions(self):
-        # find environment variable for compiler
-        c = os.environ.get('CXX', None)
-        # or configuration
+        # only Unix compilers and their ports have `compiler_so`
+        c = getattr(self.compiler, 'compiler_so', None)
+
         if c is None:
-            c = sysconfig.get_config_var('CXX')
-        # or default value
+            c = os.environ.get('CC', os.environ.get('CXX'))
+        else:
+            c = c[0]
+
+        cc_var = sysconfig.get_config_var('CC')
+
         if c is None:
-            from distutils import ccompiler
-            c = ccompiler.get_default_compiler()
-        # normalize names
+            c = cc_var or self.compiler.compiler_type
+
         c = "msvc" if "msvc" in c else "unix"
 
         try:
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
-        except:
+        except Exception:
             pass
+
         try:
             self.compiler.compiler_so.remove("-O3")
-        except:
+        except Exception:
             pass
 
         for e in self.extensions:
@@ -103,7 +118,7 @@ class CustomBuildExt(build_ext):
                 e.extra_link_args.append('-Wl,-rpath,@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@')
 
         if not @SKIP_BUILD@:
-            build_ext.build_extensions(self)
+            super().build_extensions()
 
 
 # ------------------------------------- #
@@ -130,17 +145,22 @@ extensions = Extension(
     ],
     extra_compile_args = [],
     extra_link_args = [],
-    libraries = ['cgrowth_py@PYTHON_VERSION@'] + \
-                (['libgrowth_py@PYTHON_VERSION@', 'kernel_py@PYTHON_VERSION@',
-                  'elements_py@PYTHON_VERSION@', 'spatial_py@PYTHON_VERSION@']
+    libraries = ['cgrowth_py@Python3_VERSION@'] + \
+                (['libgrowth_py@Python3_VERSION@', 'kernel_py@Python3_VERSION@',
+                  'elements_py@Python3_VERSION@', 'spatial_py@Python3_VERSION@']
                   if @MSVC@ else []),
     library_dirs = ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@',],
     runtime_library_dirs = [] if (@MSVC@ or @APPLE@) else ['@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@']
 )
 
 if with_cython:
-    extensions = cythonize(extensions, gdb_debug=(not @MSVC@))
-    clean_cpp('@PYMODULE_DIR@/' + mod_name + '/_pygrowth.cpp')
+    generated_cpp = '@PYMODULE_DIR@/' + mod_name + '/_pygrowth.cpp'
+
+    if os.path.isfile(generated_cpp):
+        os.remove(generated_cpp)
+
+    extensions = cythonize(extensions, gdb_debug=("@CMAKE_BUILD_TYPE@" == "Debug"))
+    clean_cpp(generated_cpp)
 else:
     extensions = [extensions]
 
@@ -154,7 +174,7 @@ setup(
     version = '@cgrowth_VERSION@',
     description = 'Package to study the growth of neuronal networks',
     package_dir = {} if @MSVC@ else {'': '@PYMODULE_DIR@'},
-    packages = getpackages(
+    packages = find_namespace_packages(
         "." if @MSVC@ else '@PYMODULE_DIR@',
         exclude=['dist', '_*', 'build', '*.egg-info']),
 

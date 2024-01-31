@@ -1,6 +1,6 @@
 #!/usr/bin/env cython
 #-*- coding:utf-8 -*-
-# cython: language_level=@PYTHON_VERSION_MAJOR@
+# cython: language_level=@Python3_VERSION_MAJOR@
 
 """ Generation tools for NNGT """
 
@@ -15,12 +15,6 @@ from libcpp.unordered_map cimport unordered_map
 from libcpp.unordered_set cimport unordered_set
 from libcpp.vector cimport vector
 
-
-IF @MSVC@:
-    ctypedef unsigned long stype
-ELSE:
-    ctypedef size_t stype
-
 ctypedef unordered_map[string, Property] statusMap
 ctypedef unordered_map[ string, vector[double] ] mapParams
 
@@ -30,6 +24,8 @@ ctypedef unordered_map[ string, vector[double] ] mapParams
 # ---------------------- #
 
 cdef extern from "../libgrowth/config.hpp" namespace "growth":
+    ctypedef size_t stype
+
     ctypedef enum dtype:
         BOOL, DOUBLE, INT, SIZE, VEC_SIZE, VEC_LONG, STRING, VEC_STRING, SET_STRING, MAP_DOUBLE
 
@@ -96,13 +92,15 @@ cdef extern from "../module.hpp" namespace "growth":
 
     cdef void finalize_growth_()
 
-    cdef stype create_objects_(const string& object_name,
-                                const vector[statusMap]& obj_params
-                                ) except +
+    cdef stype create_objects_(
+        const string& object_name,
+        const vector[statusMap]& obj_params
+    ) except +
 
     cdef stype create_neurons_(
         const vector[statusMap]& neuron_params,
-        const unordered_map[string, vector[statusMap]]& neurite_params) except +
+        const unordered_map[string, vector[statusMap]]& neurite_params
+    ) except +
 
     cdef void create_neurites_(
         const vector[stype]& neurons, stype num_neurites,
@@ -260,9 +258,5 @@ cdef inline GEOSGeometry *geos_from_shapely(shapely_geom) except *:
     '''
     Get the GEOS geometry pointer from the given shapely geometry.
     '''
-    # [IMPORTANT] tell Shapely to NOT delete the C++ object when the python
-    # wrapper goes out of scope!
-    shapely_geom._other_owned = True
-    # [/IMPORTANT]
     cdef uintptr_t geos_geom = shapely_geom._geom
     return <GEOSGeometry *>geos_geom

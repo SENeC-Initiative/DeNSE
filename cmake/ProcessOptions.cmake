@@ -130,13 +130,13 @@ endfunction()
 function( CGROWTH_PROCESS_WITH_PYTHON )
   # Find Python
   set( HAVE_PYTHON OFF PARENT_SCOPE )
-  string(REGEX MATCH "^(2|3)([.][0-9])?" VALID_PYVERSION "${with-python}" )
+  string(REGEX MATCH "^3([.][0-9]+)?" VALID_PYVERSION "${with-python}" )
 
   if ( ${with-python} STREQUAL "ON" OR VALID_PYVERSION OR EXISTS ${with-python} )
 
     # Localize the Python interpreter
     if ( ${with-python} STREQUAL "ON" )
-      find_package( PythonInterp )
+      find_package( Python3 COMPONENTS Interpreter Development.Module )
     elseif (EXISTS ${with-python} )
         # Directly get all variables from python
         execute_process(COMMAND "${with-python}" "-c"
@@ -157,7 +157,7 @@ print(s.get_config_var('MULTIARCH') or '');
             ERROR_VARIABLE _PYTHON_ERROR_VALUE)
         # Convert the process output into a list
         if (_PYTHON_SUCCESS MATCHES 0)
-          set(PYTHONINTERP_FOUND 1)
+          set(Python3_FOUND 1)
         endif ()
         if(WIN32)
           string(REGEX REPLACE "\\\\" "/" _PYTHON_VALUES ${_PYTHON_VALUES})
@@ -165,88 +165,70 @@ print(s.get_config_var('MULTIARCH') or '');
         string(REGEX REPLACE ";" "\\\\;" _PYTHON_VALUES ${_PYTHON_VALUES})
         string(REGEX REPLACE "\n" ";" _PYTHON_VALUES ${_PYTHON_VALUES})
         list(GET _PYTHON_VALUES 0 _PYTHON_VERSION_LIST)
-        list(GET _PYTHON_VALUES 1 PYTHON_PREFIX)
-        list(GET _PYTHON_VALUES 2 PYTHON_INCLUDE_DIR)
-        list(GET _PYTHON_VALUES 3 PYTHON_SITE_PACKAGES)
-        list(GET _PYTHON_VALUES 4 PYTHON_MODULE_EXTENSION)
-        list(GET _PYTHON_VALUES 5 PYTHON_IS_DEBUG)
-        list(GET _PYTHON_VALUES 6 PYTHON_SIZEOF_VOID_P)
-        list(GET _PYTHON_VALUES 7 PYTHON_LIBRARY_SUFFIX)
-        list(GET _PYTHON_VALUES 8 PYTHON_LIBDIR)
-        list(GET _PYTHON_VALUES 9 PYTHON_MULTIARCH)
+        list(GET _PYTHON_VALUES 1 Python3_PREFIX)
+        list(GET _PYTHON_VALUES 2 Python3_INCLUDE_DIR)
+        list(GET _PYTHON_VALUES 3 Python3_SITELIBS)
+        list(GET _PYTHON_VALUES 4 Python3_MODULE_EXTENSION)
+        list(GET _PYTHON_VALUES 5 Python3_IS_DEBUG)
+        list(GET _PYTHON_VALUES 6 Python3_SIZEOF_VOID_P)
+        list(GET _PYTHON_VALUES 7 Python3_LIBRARY_SUFFIX)
+        list(GET _PYTHON_VALUES 8 Python3_LIBDIR)
+        list(GET _PYTHON_VALUES 9 Python3_MULTIARCH)
         # The built-in FindPython didn't always give the version numbers
         string(REGEX REPLACE "\\." ";" _PYTHON_VERSION_LIST ${_PYTHON_VERSION_LIST})
-        list(GET _PYTHON_VERSION_LIST 0 PYTHON_VERSION_MAJOR)
-        list(GET _PYTHON_VERSION_LIST 1 PYTHON_VERSION_MINOR)
-        list(GET _PYTHON_VERSION_LIST 2 PYTHON_VERSION_PATCH)
+        list(GET _PYTHON_VERSION_LIST 0 Python3_VERSION_MAJOR)
+        list(GET _PYTHON_VERSION_LIST 1 Python3_VERSION_MINOR)
+        list(GET _PYTHON_VERSION_LIST 2 Python3_VERSION_PATCH)
 
         # Make sure all directory separators are '/'
-        string(REGEX REPLACE "\\\\" "/" PYTHON_PREFIX ${PYTHON_PREFIX})
-        string(REGEX REPLACE "\\\\" "/" PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_DIR})
-        string(REGEX REPLACE "\\\\" "/" PYTHON_SITE_PACKAGES ${PYTHON_SITE_PACKAGES})
+        string(REGEX REPLACE "\\\\" "/" Python3_PREFIX ${Python3_PREFIX})
+        string(REGEX REPLACE "\\\\" "/" Python3_INCLUDE_DIR ${Python3_INCLUDE_DIR})
+        string(REGEX REPLACE "\\\\" "/" Python3_SITELIBS ${Python3_SITELIBS})
     else ()
-      find_package( PythonInterp ${with-python} REQUIRED )
+      find_package( Python3 ${with-python} REQUIRED COMPONENTS Interpreter Development.Module )
     endif ()
 
-    if ( PYTHONINTERP_FOUND )
-      set( PYTHONINTERP_FOUND "${PYTHONINTERP_FOUND}" PARENT_SCOPE )
-      set( PYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} PARENT_SCOPE )
-      set( PYTHON ${PYTHON_EXECUTABLE} PARENT_SCOPE )
-      set( PYTHON_VERSION_MAJOR ${PYTHON_VERSION_MAJOR} PARENT_SCOPE )
-      set( PYTHON_VERSION ${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR} PARENT_SCOPE )
+    if ( Python3_Interpreter_FOUND )
+      set( Python3_FOUND "${Python3_Interpreter_FOUND}" PARENT_SCOPE )
+      set( Python3_EXECUTABLE ${Python3_EXECUTABLE} PARENT_SCOPE )
+      set( PYTHON ${Python3_EXECUTABLE} PARENT_SCOPE )
+      set( Python3_VERSION_MAJOR ${Python3_VERSION_MAJOR} PARENT_SCOPE )
+      set( Python3_VERSION ${Python3_VERSION} PARENT_SCOPE )
+      set( HAVE_PYTHON ON PARENT_SCOPE )
 
-      # Localize Python lib/header files and make sure that their version matches
-      # the Python interpreter version
-      if (${PYTHON_VERSION})
-        find_package( PythonLibs ${PYTHON_VERSION} EXACT )
-      else ()
-        find_package( PythonLibs )
-      endif ()
+      # export found variables to parent scope
+      set( Python3_INCLUDE_DIRS "${Python3_INCLUDE_DIRS}" PARENT_SCOPE )
 
-      if ( PYTHONLIBS_FOUND )
-        set( HAVE_PYTHON ON PARENT_SCOPE )
-        # export found variables to parent scope
-        set( PYTHONLIBS_FOUND "${PYTHONLIBS_FOUND}" PARENT_SCOPE )
-        set( PYTHON_INCLUDE_DIRS "${PYTHON_INCLUDE_DIRS}" PARENT_SCOPE )
-        set( PYTHON_LIBRARIES "${PYTHON_LIBRARIES}" PARENT_SCOPE )
-
-        if ( cythonize-pybindings )
-          find_package( Cython )
-          if ( CYTHON_FOUND )
-            # confirmed working: 0.19.2+
-            if ( CYTHON_VERSION VERSION_LESS "0.19.2" )
-              message( FATAL_ERROR "Your Cython version is too old. Please install "
-                                   "newer version (0.19.2+)" )
-              set( SUCCESS 0 PARENT_SCOPE )
-            endif ()
-
-            # export found variables to parent scope
-            set( CYTHON_FOUND "${CYTHON_FOUND}" PARENT_SCOPE )
-            set( CYTHON_EXECUTABLE "${CYTHON_EXECUTABLE}" PARENT_SCOPE )
-            set( CYTHON_VERSION "${CYTHON_VERSION}" PARENT_SCOPE )
+      if ( cythonize-pybindings )
+        find_package( Cython )
+        if ( CYTHON_FOUND )
+          # confirmed working: 0.19.2+
+          if ( CYTHON_VERSION VERSION_LESS "0.19.2" )
+            message( FATAL_ERROR "Your Cython version is too old. Please install "
+                                  "newer version (0.19.2+)" )
+            set( SUCCESS 0 PARENT_SCOPE )
           endif ()
+
+          # export found variables to parent scope
+          set( CYTHON_FOUND "${CYTHON_FOUND}" PARENT_SCOPE )
+          set( CYTHON_EXECUTABLE "${CYTHON_EXECUTABLE}" PARENT_SCOPE )
+          set( CYTHON_VERSION "${CYTHON_VERSION}" PARENT_SCOPE )
         endif ()
-
-        # set local install dir for python packages
-        if (MSVC AND PYTHON_EXECUTABLE MATCHES "conda")
-          execute_process(COMMAND conda info --root OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-          string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}/Lib/site-packages")
-        else ()
-          execute_process(COMMAND ${PYTHON_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-          # create the directory if it does not exist
-          file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
-        endif ()
-
-        set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)
-
-        # set normal path for manual CMAKE_INSTALL_PREFIX
-        set( PYEXECDIR "python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages" PARENT_SCOPE )
-      else ()
-        message(
-          FATAL_ERROR "Python libraries not found, you requested "
-          "${PYTHON_VERSION_STRING} but the associated library cannot be found."
-        )
       endif ()
+
+      # set local install dir for python packages
+      if (Python3_EXECUTABLE MATCHES "conda")
+        execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print([v for v in site.getsitepackages() if v.endswith('site-packages')][0])" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+      else ()
+        execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif ()
+
+      cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+
+      # create the directory if it does not exist
+      file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
+
+      set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)
     else ()
         message(
           FATAL_ERROR "Python executable not found (you requested "
@@ -371,7 +353,7 @@ endfunction()
 
 function( FIND_PYTHON_MODULE module )
   string( TOUPPER ${module} module_upper )
-  execute_process( COMMAND "${PYTHON_EXECUTABLE}" "-c"
+  execute_process( COMMAND "${Python3_EXECUTABLE}" "-c"
     "import ${module}"
     RESULT_VARIABLE _module_status
     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE

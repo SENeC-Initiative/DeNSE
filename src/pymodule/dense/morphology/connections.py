@@ -190,7 +190,7 @@ def get_connections(source_neurons=None, target_neurons=None,
                     method="intersections", spine_density=0.5/(um**2),
                     connection_probability=0.2, autapse_allowed=False,
                     **kwargs):
-    """
+    r"""
     Obtain connection between `source_neurons` and `target_neurons` through
     a given method for synapse generation.
 
@@ -312,7 +312,9 @@ def _get_synapses_intersection(axon_polygon, d_polygon, synapse_density, somas,
     '''
     intsct = axon_polygon.intersection(d_polygon)
 
-    if not isinstance(intsct, MultiPolygon):
+    if isinstance(intsct, MultiPolygon):
+        intsct = intsct.geoms
+    else:
         intsct = [intsct]
     
     for poly in intsct:
@@ -323,9 +325,9 @@ def _get_synapses_intersection(axon_polygon, d_polygon, synapse_density, somas,
         if num_synapses > 0:
             s_soma = np.array(somas[i])
             t_soma = np.array(somas[j])
-            pos    = poly.centroid
-            dist   = np.linalg.norm(s_soma - pos) \
-                    + np.linalg.norm(t_soma - pos)
+            pos    = np.array(poly.centroid.coords)[0]
+            dist   = np.linalg.norm(s_soma - pos) + \
+                     np.linalg.norm(t_soma - pos)
 
             positions.extend([pos]*num_synapses)
             edges.extend([etuple]*num_synapses)
@@ -413,9 +415,11 @@ def _edges_from_spines(source_set, target_set, axons, dendrites, somas,
                                 if num_syn > 0:
                                     s_soma = np.array(somas[i])
                                     t_soma = np.array(somas[j])
-                                    pos    = insct_line.centroid
-                                    dist   = np.linalg.norm(s_soma - pos) \
-                                            + np.linalg.norm(t_soma - pos)
+                                    pos = np.array(
+                                        insct_line.centroid.coords)[0]
+
+                                    dist = np.linalg.norm(s_soma - pos) + \
+                                           np.linalg.norm(t_soma - pos)
 
                                     positions.extend([pos]*num_syn)
                                     edges.extend([etuple]*num_syn)
@@ -432,7 +436,7 @@ def _generate_network_future(source_neurons=None, target_neurons=None,
                      method="intersections", spine_density=0.5/(um**2),
                      default_synaptic_strength=1., only_new_connections=False,
                      autapse_allowed=False, multigraph=False, **kwargs):
-    """
+    r"""
     Create the graph.
     THIS FUNCTION IS WORKING BUT IS TOO INEFFICIENT FOR THE MOMENT, IT REQUIRES
     A REWRITE OF THE C++ LEVEL ROUTINES AND MOST PROBABLY A COMPLETE REFACTORING
@@ -594,7 +598,7 @@ def _get_connections_future(source_neurons=None, target_neurons=None,
                     method="intersections", spine_density=0.5/(um**2),
                     only_new_connections=False, autapse_allowed=False,
                     **kwargs):
-    """
+    r"""
     Obtain connection between `source_neurons` and `target_neurons` through
     a given method for synapse generation.
 

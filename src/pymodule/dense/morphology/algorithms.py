@@ -176,7 +176,7 @@ def msd_1D(array, first=1):
 
 
 def msd_2D(xy, first=1):
-    """
+    r"""
     Compute the mean square displacement of 2 dimensional vector.\
     Delta^2(n) = <(z_n - z_0)^2 >
     where z = \sqrt(x^2+y^2)

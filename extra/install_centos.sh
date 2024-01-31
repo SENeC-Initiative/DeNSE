@@ -6,7 +6,7 @@ sudo yum repolist
 sudo yum -y install cmake gcc gcc-c++ python python-devel python-pip geos geos-devel doxygen python-matplotlib python-sphinx
 
 pip install --user setuptools
-pip install --user cython
+pip install --user "cython<3"
 pip install --user numpy scipy pint pyneuroml
 pip install --user --no-binary shapely, shapely
 pip install --user sphinx breathe sphinx-bootstrap-theme

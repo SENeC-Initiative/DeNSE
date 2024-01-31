@@ -147,7 +147,7 @@ doxypath = doc_path + '/doxyfiles/xml'
 sys.path.append(doc_path + '/breathe')
 sys.path.append(doxypath)
 sys.path.insert(0, root_path)
-sys.path.insert(0, "@PYTHON_INSTALL_DIR@")
+sys.path.insert(0, "@Python3_INSTALL_DIR@")
 
 if @CPP_DOCS_AVAILABLE@:
     # run doxygen

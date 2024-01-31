@@ -217,10 +217,15 @@ print(s.get_config_var('MULTIARCH') or '');
       endif ()
 
       # set local install dir for python packages
-      execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(''.join(site.getsitepackages()))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-      cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
-      # create the directory if it does not exist
-      file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
+      if (Python3_EXECUTABLE MATCHES "conda")
+        execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(''.join(site.getsitepackages()))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+      else ()
+        execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+        # create the directory if it does not exist
+        file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
+      endif ()
 
       set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)
     else ()

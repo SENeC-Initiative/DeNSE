@@ -93,12 +93,10 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
     # get local user library folder as default install prefix ()
     if (Python3_EXECUTABLE MATCHES "conda")
-      execute_process(COMMAND conda info --root OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+      cmake_path(SET CMAKE_INSTALL_PREFIX "$ENV{CONDA_PREFIX}")
     else ()
       execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
-
-    string(REPLACE "\\" "/" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
     # sometimes the getuserbase command fails
     if ( "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
@@ -111,14 +109,17 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
       endif ()
     endif ()
 
+    cmake_path(SET CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+
     # cache it
     set( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "install prefix" FORCE)
 ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local"))
     set( CMAKE_INSTALL_PREFIX "$CACHE{CMAKE_INSTALL_PREFIX}" )
     set( Python3_INSTALL_DIR "$CACHE{Python3_INSTALL_DIR}" )
 ELSE ()
-  # make sure we get the absolute path
-  get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
+    # make sure we get the absolute path
+    get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
+    cmake_path(SET CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 ENDIF ()
 
 # set libraries in binaries installation directories

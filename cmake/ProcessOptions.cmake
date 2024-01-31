@@ -217,20 +217,12 @@ print(s.get_config_var('MULTIARCH') or '');
       endif ()
 
       # set local install dir for python packages
-      if (MSVC AND Python3_EXECUTABLE MATCHES "conda")
-        execute_process(COMMAND conda info --root OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-        string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}/Lib/site-packages")
-      else ()
-        execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-        string(REPLACE "\\" "/" PY_LOCAL_DIR "${PY_LOCAL_DIR}")
-        # create the directory if it does not exist
-        file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
-      endif ()
+      execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(''.join(site.getsitepackages()))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+      cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+      # create the directory if it does not exist
+      file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")
 
       set(PY_LOCAL_DIR "${PY_LOCAL_DIR}" PARENT_SCOPE)
-
-      # set normal path for manual CMAKE_INSTALL_PREFIX
-      set( PYEXECDIR "python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages" PARENT_SCOPE )
     else ()
         message(
           FATAL_ERROR "Python executable not found (you requested "

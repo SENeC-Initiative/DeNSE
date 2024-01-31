@@ -27,6 +27,7 @@ jobs:
            pip: pip3
          - os: windows-latest
            path: ~\AppData\Local\pip\Cache
+           conda-path: C:\Users\runneradmin\conda_pkgs_dir
                                                  
      steps:
        - name: Checkout repo content 
@@ -51,12 +52,20 @@ jobs:
            restore-keys: |
              ${{ matrix.os }}-pip-
 
+       - name: Cache conda
+         if: ${{ matrix.os == 'windows-latest' }}
+         uses: actions/cache@v2
+         with:
+           path: ${{ matrix.conda-path }}
+           key: conda-cache
+           restore-keys: |
+             conda-cache
+
        - name: Activate Conda Windows
          if: ${{ matrix.os == 'windows-latest' }}
          uses: conda-incubator/setup-miniconda@v3
          with:
            miniconda-version: "latest"
-           activate-environment: dense
 
        - name: Build Ubuntu
          if: ${{ matrix.os == 'ubuntu-latest' }}

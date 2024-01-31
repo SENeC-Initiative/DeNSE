@@ -27,7 +27,8 @@ jobs:
            pip: pip3
          - os: windows-latest
            path: ~\AppData\Local\pip\Cache
-           conda-path: C:\Users\runneradmin\conda_pkgs_dir
+           python: python
+           pip: pip
                                                  
      steps:
        - name: Checkout repo content 
@@ -37,29 +38,23 @@ jobs:
 
        - name: Cache Homebrew
          if: ${{ matrix.os == 'macos-latest' }}
-         uses: actions/cache@v2
+         uses: actions/cache@v3
          with:
            path: ~/Library/Caches/Homebrew
            key: homebrew-cache
-           restore-keys: |
-             homebrew-cache
 
        - name: Cache pip
-         uses: actions/cache@v2
+         uses: actions/cache@v3
          with:
            path: ${{ matrix.path }}
            key: ${{ matrix.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-           restore-keys: |
-             ${{ matrix.os }}-pip-
 
        - name: Cache conda
          if: ${{ matrix.os == 'windows-latest' }}
-         uses: actions/cache@v2
+         uses: actions/cache@v3
          with:
-           path: ${{ matrix.conda-path }}
+           path: ~/conda_pkgs_dir
            key: conda-cache
-           restore-keys: |
-             conda-cache
 
        - name: Activate Conda Windows
          if: ${{ matrix.os == 'windows-latest' }}

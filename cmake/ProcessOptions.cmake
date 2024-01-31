@@ -218,7 +218,7 @@ print(s.get_config_var('MULTIARCH') or '');
 
       # set local install dir for python packages
       if (Python3_EXECUTABLE MATCHES "conda")
-        execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(''.join([v for v in site.getsitepackages() if v.endswith('site-packages')]))" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print([v for v in site.getsitepackages() if v.endswith('site-packages')][0])" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
       else ()
         execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
       endif ()

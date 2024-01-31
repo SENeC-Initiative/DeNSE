@@ -190,7 +190,7 @@ def get_connections(source_neurons=None, target_neurons=None,
                     method="intersections", spine_density=0.5/(um**2),
                     connection_probability=0.2, autapse_allowed=False,
                     **kwargs):
-    """
+    r"""
     Obtain connection between `source_neurons` and `target_neurons` through
     a given method for synapse generation.
 
@@ -436,7 +436,7 @@ def _generate_network_future(source_neurons=None, target_neurons=None,
                      method="intersections", spine_density=0.5/(um**2),
                      default_synaptic_strength=1., only_new_connections=False,
                      autapse_allowed=False, multigraph=False, **kwargs):
-    """
+    r"""
     Create the graph.
     THIS FUNCTION IS WORKING BUT IS TOO INEFFICIENT FOR THE MOMENT, IT REQUIRES
     A REWRITE OF THE C++ LEVEL ROUTINES AND MOST PROBABLY A COMPLETE REFACTORING
@@ -598,7 +598,7 @@ def _get_connections_future(source_neurons=None, target_neurons=None,
                     method="intersections", spine_density=0.5/(um**2),
                     only_new_connections=False, autapse_allowed=False,
                     **kwargs):
-    """
+    r"""
     Obtain connection between `source_neurons` and `target_neurons` through
     a given method for synapse generation.
 

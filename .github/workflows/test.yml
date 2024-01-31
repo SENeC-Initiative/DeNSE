@@ -83,7 +83,8 @@ jobs:
          run: |
            conda install cmake geos boost
            pip install setuptools "cython<3"
-           pip install scipy numpy matplotlib pytest shapely pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
+           pip install scipy numpy matplotlib pytest pint PyOpenGL svg.path dxfgrabber networkx pyneuroml
+           pip install --no-binary shapely, shapely
            pip install nngt
            cd extra
            ./install_windows.cmd

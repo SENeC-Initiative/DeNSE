@@ -175,7 +175,7 @@ def plot_recording(recorder, time_units="hours", display="overlay",
                     sc = subcolors[k]
                     if level == "neurite":
                         lbl = "{} of ({}, {})".format(rec_type, neuron, neurite)
-                        lbl = lbl.replace("_", "\_")
+                        lbl = lbl.replace("_", r"\_")
                         if ev_type == "continuous":
                             lines.extend(
                                 ax.plot(data[rec_type]["times"], values,
@@ -193,7 +193,7 @@ def plot_recording(recorder, time_units="hours", display="overlay",
                                     ax.plot(times[1:], values[:-1],
                                         c=cmap(c+sc), label=lbl, ls=ls))
                             else:
-                                lbl_nrt = neurite.replace("_", "\_")
+                                lbl_nrt = neurite.replace("_", r"\_")
                                 lines.extend(ax.plot(
                                     data[rec_type]["times"][neuron][neurite],
                                     values[1:], c=cmap(c+sc), label=lbl_nrt,

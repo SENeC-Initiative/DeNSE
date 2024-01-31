@@ -135,7 +135,7 @@ if (NOT DEFINED CMAKE_INSTALL_LIBDIR)
 endif ()
 
 if (NOT DEFINED CMAKE_INSTALL_BINDIR)
-  if (MSVC AND Python3_EXECUTABLE MATCHES "Miniconda")
+  if (MSVC AND Python3_EXECUTABLE MATCHES "conda")
     set(CMAKE_INSTALL_BINDIR "Library/bin")
   else ()
     set(CMAKE_INSTALL_BINDIR "bin")

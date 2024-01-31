@@ -56,17 +56,16 @@ if ( HAVE_PYTHON )
     # reformat path for Windows because it is so annoying it does not recognize
     # slash and backslash, also wrap PYTHON between brackets because, hey,
     # there are whitespaces in "Program Files" (of course)!!
-    string(REPLACE "/" "\\\\" MS_PYTHON_INSTALL_DIR "${Python3_INSTALL_DIR}")
-    set(STR_CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH};${MS_PYTHON_INSTALL_DIR}\")")
+    set(STR_CODE "set(ENV{PYTHONPATH} \"$ENV{PYTHONPATH};${Python3_INSTALL_DIR}\")")
     install( CODE "${STR_CODE}
       execute_process(
       COMMAND \"${PYTHON}\" ${PYMODULE_DIR}/setup.py
         build -b ${CMAKE_CURRENT_BINARY_DIR}
-        install --prefix=${MS_PYTHON_INSTALL_DIR}
-            --install-scripts=${MS_PYTHON_INSTALL_DIR}
-            --install-data=${MS_PYTHON_INSTALL_DIR}\\\\${PY_NAME}
-            --install-headers=${MS_PYTHON_INSTALL_DIR}
-            --install-lib=${MS_PYTHON_INSTALL_DIR}
+        install --prefix=${Python3_INSTALL_DIR}
+            --install-scripts=${Python3_INSTALL_DIR}
+            --install-data=${Python3_INSTALL_DIR}/${PY_NAME}
+            --install-headers=${Python3_INSTALL_DIR}
+            --install-lib=${Python3_INSTALL_DIR}
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})"
     )
   else ()

@@ -132,6 +132,8 @@ function( CGROWTH_PROCESS_WITH_PYTHON )
   set( HAVE_PYTHON OFF PARENT_SCOPE )
   string(REGEX MATCH "^3([.][0-9]+)?" VALID_PYVERSION "${with-python}" )
 
+  set(Python_FIND_VIRTUALENV FIRST)
+
   if ( ${with-python} STREQUAL "ON" OR VALID_PYVERSION OR EXISTS ${with-python} )
 
     # Localize the Python interpreter
@@ -145,7 +147,7 @@ print('.'.join(str(v) for v in sys.version_info));
 print(sys.prefix);
 print(s.get_python_inc(plat_specific=True));
 print(s.get_python_lib(plat_specific=True));
-print(s.get_config_var('SO'));
+print(s.get_config_var('EXT_SUFFIX'));
 print(hasattr(sys, 'gettotalrefcount')+0);
 print(struct.calcsize('@P'));
 print(s.get_config_var('LDVERSION') or s.get_config_var('VERSION'));
@@ -217,7 +219,7 @@ print(s.get_config_var('MULTIARCH') or '');
       endif ()
 
       # set local install dir for python packages
-      if (Python3_EXECUTABLE MATCHES "conda")
+      if (Python3_EXECUTABLE MATCHES "conda" OR EXISTS "$ENV{VIRTUAL_ENV}")
         execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print([v for v in site.getsitepackages() if v.endswith('site-packages')][0])" OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
       else ()
         execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)

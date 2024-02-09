@@ -225,7 +225,7 @@ print(s.get_config_var('MULTIARCH') or '');
         execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-site OUTPUT_VARIABLE PY_LOCAL_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
       endif ()
 
-      cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+      string(REGEX REPLACE "\\\\" "/" PY_LOCAL_DIR ${PY_LOCAL_DIR})
 
       # create the directory if it does not exist
       file(MAKE_DIRECTORY "${PY_LOCAL_DIR}")

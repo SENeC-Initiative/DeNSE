@@ -77,7 +77,7 @@ cgrowth_get_color_flags()
 
 IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
     # set discovered python local folder
-    cmake_path(SET PY_LOCAL_DIR "${PY_LOCAL_DIR}")
+    string(REGEX REPLACE "\\\\" "/" PY_LOCAL_DIR ${PY_LOCAL_DIR})
 
     set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" )
     set( Python3_INSTALL_DIR "${PY_LOCAL_DIR}" CACHE STRING "python install dir" FORCE)
@@ -93,7 +93,9 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 
     # get local user library folder as default install prefix ()
     if (Python3_EXECUTABLE MATCHES "conda")
-      cmake_path(SET CMAKE_INSTALL_PREFIX "$ENV{CONDA_PREFIX}")
+      set(CMAKE_INSTALL_PREFIX "$ENV{CONDA_PREFIX}")
+    elseif (EXISTS $ENV{VIRTUAL_ENV})
+      set(CMAKE_INSTALL_PREFIX "$ENV{VIRTUAL_ENV}")
     else ()
       execute_process(COMMAND ${Python3_EXECUTABLE} -m site --user-base OUTPUT_VARIABLE CMAKE_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif ()
@@ -109,7 +111,7 @@ IF ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
       endif ()
     endif ()
 
-    cmake_path(SET CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    string(REGEX REPLACE "\\\\" "/" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
     # cache it
     set( CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "install prefix" FORCE)
@@ -119,7 +121,7 @@ ELSEIF ( ("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local") AND NOT ("$CACHE{CMAK
 ELSE ()
     # make sure we get the absolute path
     get_filename_component(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" ABSOLUTE)
-    cmake_path(SET CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+    string(REGEX REPLACE "\\\\" "/" CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 ENDIF ()
 
 # set libraries in binaries installation directories
